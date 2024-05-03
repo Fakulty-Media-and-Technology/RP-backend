@@ -1,2 +1,9 @@
-# RP-backend
-Backend for Reeplay Mobile and web app
+## REEPLAY BACKEND
+
+api documenttion goes here ....
+
+# POSTMAN DOCUMENTATION BELOW:
+
+## LICENSE
+
+MIT RP-API

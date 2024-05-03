@@ -1,0 +1,53 @@
+const NodeMediaServer = require("node-media-server");
+
+const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
+
+const connect = {
+    name: "live",
+    pkg: require("../../package"),
+    async register(server, options) {
+        const config = {
+            logType: 3,
+            rtmp: {
+                port: 1935,
+                chunk_size: 60000,
+                gop_cache: true,
+                ping: 30,
+                ping_timeout: 60,
+            },
+            http: {
+                port: process.env.MEDIA_SERVER_PORT || 8888,
+                mediaroot: "./media",
+                allow_origin: "*",
+            },
+            trans: {
+                // ffmpeg: "../../../../ffmpeg",
+                ffmpeg: ffmpegPath,
+                tasks: [
+                    {
+                        app: "live",
+                        hls: true,
+                        hlsFlags:
+                            "[hls_time=2:hls_list_size=3:hls_flags=delete_segments]",
+                        mp4: true,
+                        mp4Flags: "[movflags=frag_keyframe+empty_moov]",
+                    },
+                ],
+            },
+        };
+
+        const nms = new NodeMediaServer(config);
+
+        nms.on("prePublish", async (id, StreamPath, args) => {
+            let stream_key = getStreamKeyFromStreamPath(StreamPath);
+            console.log(
+                "[NodeEvent on prePublish]",
+                `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`
+            );
+        });
+
+        nms.run();
+    },
+};
+
+module.exports = connect;
