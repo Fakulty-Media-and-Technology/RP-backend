@@ -1,5 +1,3 @@
-// import cloudinary from "./cloudinary.js";
-
 // const videoUploader = async (req, fileHandle, unique) => {
 //     if (!req.files) return false;
 //     if (!req.files[fileHandle]) return false;
@@ -46,5 +44,3 @@
 //         return error;
 //     }
 // };
-
-// export default videoUploader;

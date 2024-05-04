@@ -33,6 +33,10 @@ const usersSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        pin: {
+            type: String,
+            required: true,
+        },
         role: {
             type: String,
             enum: [
@@ -52,8 +56,13 @@ const usersSchema = new mongoose.Schema(
         },
         auth_code: {
             type: Number,
+            default: undefined,
         },
-        verify: {
+        auth_expiry: {
+            type: Number,
+            default: undefined,
+        },
+        verified: {
             type: Boolean,
             default: false,
         },

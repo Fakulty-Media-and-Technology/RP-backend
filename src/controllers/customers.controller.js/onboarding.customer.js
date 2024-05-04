@@ -2,7 +2,13 @@ const UsersModel = require("../../models/users.model");
 const { authCode } = require("../../utils/authCode");
 const { VerifytPass, EncryptPass } = require("../../utils/bcrypt");
 const { default: Email } = require("../../utils/emailer");
-const { serverError } = require("../../utils/response.handler");
+const { accessToken } = require("../../utils/jwt");
+const {
+    serverError,
+    successResponse,
+    failedResponse,
+    invalidRequest,
+} = require("../../utils/response.handler");
 
 exports.customerSignup = async (req, res) => {
     try {
@@ -58,6 +64,8 @@ exports.customerSignup = async (req, res) => {
 
         const pin = Number(authCode(6));
 
+        const pinExpiry = Date.now() + 1000 * 60 * 5;
+
         const newUser = new UsersModel({
             first_name: first_name,
             last_name: last_name,
@@ -67,6 +75,7 @@ exports.customerSignup = async (req, res) => {
             mobile: mobile,
             role: "customer",
             auth_code: pin,
+            auth_expiry: pinExpiry,
         });
 
         await newUser.save();
@@ -86,6 +95,92 @@ exports.customerSignup = async (req, res) => {
             null,
             "New Customer Account Created successfully"
         );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+};
+
+exports.createPin = async (req, res) => {
+    try {
+        const { email, pin, cpin } = req.body;
+
+        if (!email || !pin || !cpin) {
+            return invalidRequest(
+                res,
+                400,
+                req.body,
+                "onboarding user email and pins are needed to continue"
+            );
+        }
+
+        const userExist = await UsersModel.findOne({
+            email: email,
+        });
+
+        if (!userExist) {
+            return failedResponse(res, 400, null, "User does not exist");
+        }
+
+        if (pin !== cpin) {
+            return invalidRequest(res, 400, null, "pin does not match");
+        }
+
+        await UsersModel.findOneAndUpdate(
+            {
+                _id: userExist._id,
+                email: email,
+            },
+            {
+                pin: await EncryptPass(pin?.toString()),
+            }
+        );
+
+        return successResponse(res, 200, null, "pin created successful");
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+};
+
+exports.verifyAccount = async (req, res) => {
+    try {
+        const { email, token } = req.body;
+
+        if (!email || !token) {
+            return invalidRequest(
+                res,
+                400,
+                req.body,
+                "user email and sent token are required"
+            );
+        }
+
+        const userExist = await UsersModel.findOne({
+            email: email,
+        });
+
+        if (!userExist) {
+            return failedResponse(res, 400, null, "User does not exist");
+        }
+
+        const isExpired = Date.now() > userExist.auth_expiry;
+
+        if (isExpired) {
+            return failedResponse(res, 400, null, "token has expired!");
+        }
+
+        await UsersModel.findOneAndUpdate(
+            {
+                _id: userExist._id,
+                email: userExist.email,
+            },
+            {
+                verified: true,
+                auth_code: undefined,
+                auth_expiry: undefined,
+            }
+        );
+
+        return successResponse(res, 200, null, "user account verified");
     } catch (error) {
         return serverError(res, 500, null, error.message);
     }
@@ -115,7 +210,9 @@ exports.signIn = async (req, res) => {
 
         const pin = Number(authCode(6));
 
-        if (!userExist.verify) {
+        const pinExpiry = Date.now() + 1000 * 60 * 5;
+
+        if (!userExist.verified) {
             //todo send email.....
             await UsersModel.findOneAndUpdate(
                 {
@@ -123,9 +220,7 @@ exports.signIn = async (req, res) => {
                 },
                 {
                     auth_code: pin,
-                },
-                {
-                    upsert: true,
+                    auth_expiry: pinExpiry,
                 }
             );
 
@@ -141,7 +236,7 @@ exports.signIn = async (req, res) => {
                 res,
                 400,
                 null,
-                "user email not verified, check your email for verification code"
+                "user account not verified, check your email for verification code"
             );
         }
 

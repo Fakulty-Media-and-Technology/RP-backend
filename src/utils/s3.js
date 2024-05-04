@@ -1,16 +1,29 @@
-// import { v2 as cloudinary } from "cloudinary";
-
-// import { fileURLToPath } from "url";
-// const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// import path from "path";
-// import dotenv from "dotenv";
-// dotenv.config({ path: path.join(__dirname, "..", "..", "/.env") });
-
-// cloudinary.config({
-//     cloud_name: process.env.C_NAME,
-//     api_key: process.env.C_APIKEY,
-//     api_secret: process.env.C_APISECRET,
+// const fs = require('fs');
+// var AWS = require('aws-sdk');
+// const config = require('./../config/config')
+// let s3bucket = new AWS.S3({
+//     accessKeyId: config.IAM_USER_KEY,
+//     secretAccessKey: config.IAM_USER_SECRET,
+//     Bucket: config.BUCKET_NAME
 // });
 
-// export default cloudinary;
+// exports.uploadFile = async (file, type) => {
+//     return new Promise(async (resolve, reject) => {
+//         console.log(file)
+//         const fileContent = file.path ? fs.readFileSync(file.path) : file;
+//         var params = {
+//             Bucket: config.BUCKET_NAME,
+//             Key: `${Date.now().toString()}${file.originalFilename || type}`,
+//             Body: fileContent,
+//             ContentType: file.type ?? 'pdf',
+//             ACL: 'public-read'
+//         };
+//         s3bucket.upload(params, function (err, data) {
+//             if (err) {
+//                 console.log(err)
+//             } else {
+//                 resolve(data.Location)
+//             }
+//         });
+//     })
+// }
