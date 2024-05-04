@@ -1,14 +1,15 @@
 const express = require("express");
 const superAdminRouter = require("./superadmin.route");
+const customerRouter = require("./customers.route");
 
 const router = express.Router();
 
-router.route("/customers");
+router.use("/customers", customerRouter);
 
-router.route("/clients");
+// router.use("/clients");
 
-router.route("/admins");
+// router.use("/admins");
 
-router.route("/superadmin", superAdminRouter);
+router.use("/superadmin", superAdminRouter);
 
 module.exports = router;

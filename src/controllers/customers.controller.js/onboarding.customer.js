@@ -1,7 +1,7 @@
 const UsersModel = require("../../models/users.model");
 const { authCode } = require("../../utils/authCode");
 const { VerifytPass, EncryptPass } = require("../../utils/bcrypt");
-const { default: Email } = require("../../utils/emailer");
+const Email = require("../../utils/emailer");
 const { accessToken } = require("../../utils/jwt");
 const {
     serverError,
@@ -87,7 +87,8 @@ exports.customerSignup = async (req, res) => {
             email: email,
         };
 
-        new Email(userData).sendVerifyEmail(pin);
+        const sendEmail = new Email(userData);
+        sendEmail.sendVerifyEmail(pin);
 
         return successResponse(
             res,
@@ -159,7 +160,20 @@ exports.verifyAccount = async (req, res) => {
         });
 
         if (!userExist) {
-            return failedResponse(res, 400, null, "User does not exist");
+            return failedResponse(res, 400, null, "user does not exist");
+        }
+
+        if (userExist.verified) {
+            return failedResponse(
+                res,
+                400,
+                null,
+                "user account already verified"
+            );
+        }
+
+        if (token != userExist.auth_code) {
+            return failedResponse(res, 400, null, "invalid token");
         }
 
         const isExpired = Date.now() > userExist.auth_expiry;
@@ -175,8 +189,8 @@ exports.verifyAccount = async (req, res) => {
             },
             {
                 verified: true,
-                auth_code: undefined,
-                auth_expiry: undefined,
+                auth_code: null,
+                auth_expiry: null,
             }
         );
 
@@ -230,7 +244,8 @@ exports.signIn = async (req, res) => {
                 email: userExist.email,
             };
 
-            new Email(userData).sendVerifyEmail(pin);
+            const sendEmail = new Email(userData);
+            sendEmail.sendVerifyEmail(pin);
 
             return invalidRequest(
                 res,

@@ -12,7 +12,10 @@ const db_url = process.env.MONGO_URL;
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(db_url);
+        await mongoose.connect(db_url, {
+            dbName: "reeplayDB",
+        });
+
         console.log("DB connected");
     } catch (error) {
         console.log(`Error in Connection: ${error.message}`);

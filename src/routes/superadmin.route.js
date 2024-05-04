@@ -8,7 +8,7 @@ const {
 
 const superAdminRouter = express.Router();
 
-superAdminRouter.post("/admins-login", adminSignIn);
+superAdminRouter.post("/admins-signin", adminSignIn);
 
 //apply super-admin auth middleware
 

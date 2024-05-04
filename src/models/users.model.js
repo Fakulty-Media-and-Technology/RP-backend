@@ -35,7 +35,7 @@ const usersSchema = new mongoose.Schema(
         },
         pin: {
             type: String,
-            required: true,
+            // required: true,
         },
         role: {
             type: String,

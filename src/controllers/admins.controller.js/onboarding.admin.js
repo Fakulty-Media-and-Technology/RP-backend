@@ -1,12 +1,11 @@
 const UsersModel = require("../../models/users.model");
-const { authCode } = require("../../utils/authCode");
 const { EncryptPass, VerifytPass } = require("../../utils/bcrypt");
-const { default: Email } = require("../../utils/emailer");
 const { accessToken } = require("../../utils/jwt");
 const {
     serverError,
     failedResponse,
     invalidRequest,
+    successResponse,
 } = require("../../utils/response.handler");
 
 exports.superAdminSignup = async (req, res) => {
@@ -70,6 +69,8 @@ exports.superAdminSignup = async (req, res) => {
             country_code: country_code,
             mobile: mobile,
             role: "superadmin",
+            verified: true,
+            approved: true,
         });
 
         await newUser.save();
@@ -146,6 +147,8 @@ exports.adminSignup = async (req, res) => {
             country_code: country_code,
             mobile: mobile,
             role: "admin",
+            verified: true,
+            approved: true,
         });
 
         await newUser.save();
@@ -171,6 +174,7 @@ exports.clientsSignup = async (req, res) => {
             cpassword,
             country_code,
             mobile,
+            client_type,
         } = req.body;
 
         if (
@@ -186,7 +190,7 @@ exports.clientsSignup = async (req, res) => {
             return invalidRequest(res, 400, req.body, "all input are required");
         }
 
-        if (!client_type.includes(["channel", "tvshow", "event", "podcast"])) {
+        if (!["channel", "tvshow", "event", "podcast"].includes(client_type)) {
             return invalidRequest(
                 res,
                 400,
@@ -232,6 +236,8 @@ exports.clientsSignup = async (req, res) => {
             country_code: country_code,
             mobile: mobile,
             role: client_type,
+            verified: true,
+            approved: true,
         });
 
         await newUser.save();
@@ -264,14 +270,14 @@ exports.adminSignIn = async (req, res) => {
         }
 
         if (
-            !userExist.role.includes([
+            ![
                 "channel",
                 "tvshow",
                 "event",
                 "podcast",
                 "admin",
                 "superadmin",
-            ])
+            ].includes(userExist.role)
         ) {
             return failedResponse(
                 res,
