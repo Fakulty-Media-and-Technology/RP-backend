@@ -7,7 +7,7 @@ router.route("/customers");
 
 router.route("/clients");
 
-router.route("/admin");
+router.route("/admins");
 
 router.route("/superadmin", superAdminRouter);
 

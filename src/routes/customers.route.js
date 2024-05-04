@@ -6,9 +6,9 @@ const {
 
 const customerRouter = express.Router();
 
-customerRouter.post("/general-login", signIn);
+customerRouter.post("/general-signin", signIn);
 
-customerRouter.post("/customer-signup", customerSignup);
+customerRouter.post("/signup", customerSignup);
 
 //apply auth middleware
 
