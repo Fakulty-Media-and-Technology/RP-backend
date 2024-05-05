@@ -1,3 +1,4 @@
+const UserSettingsModel = require("../../models/userSettings.model");
 const UsersModel = require("../../models/users.model");
 const { authCode } = require("../../utils/authCode");
 const { VerifytPass, EncryptPass } = require("../../utils/bcrypt");
@@ -214,6 +215,18 @@ exports.signIn = async (req, res) => {
 
         if (!userExist) {
             return failedResponse(res, 400, null, "User does not exist");
+        }
+
+        //create a customer settings DB if it doesn't exist
+        const userSettingDB = await UserSettingsModel.findOne({
+            user_id: userExist._id,
+        });
+
+        if (!userSettingDB) {
+            await new UserSettingsModel({
+                user_id: userExist._id,
+                video_quality: "720p",
+            }).save();
         }
 
         const passVerify = await VerifytPass(password, userExist.password);
