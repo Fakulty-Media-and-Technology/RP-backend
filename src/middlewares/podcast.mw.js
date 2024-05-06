@@ -1,5 +1,5 @@
-import UsersModel from "../models/users.model";
-import { validateToken } from "../utils/jwt";
+const UsersModel = require("../models/users.model");
+const { validateToken } = require("../utils/jwt");
 
 const podcastAuth = async (req, res, next) => {
     const token = req.headers["podcast-auth"];

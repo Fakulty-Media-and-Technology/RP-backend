@@ -18,6 +18,7 @@ const settingsSchema = new mongoose.Schema(
         video_quality: {
             type: String,
             lowercase: true,
+            enum: ["144p", "240p", "360p", "480p", "720p", "1080p"],
         },
         //Notification Settings
         allow_notifications: {
