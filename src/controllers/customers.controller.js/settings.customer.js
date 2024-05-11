@@ -1,4 +1,5 @@
 const UserSettingsModel = require("../../models/userSettings.model");
+
 const {
     serverError,
     successResponse,
