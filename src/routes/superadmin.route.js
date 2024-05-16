@@ -13,6 +13,9 @@ const {
     getCategory,
     remCategory,
 } = require("../controllers/admins.controller.js/enums.admin");
+const {
+    uploadLargeVideoRoute,
+} = require("../controllers/admins.controller.js/managemedia.admin");
 
 const superAdminRouter = express.Router();
 
@@ -37,5 +40,7 @@ superAdminRouter.post("/enums/add-category", addCategory);
 superAdminRouter.get("/enums/get-categories", getCategory);
 
 superAdminRouter.delete("/enums/rem-category/:id", remCategory);
+
+superAdminRouter.post("/media/upload-vid", uploadLargeVideoRoute);
 
 module.exports = superAdminRouter;
