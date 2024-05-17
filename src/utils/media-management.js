@@ -4,9 +4,10 @@ const {
     CompleteMultipartUploadCommand,
     AbortMultipartUploadCommand,
     S3Client,
+    PutObjectCommand,
 } = require("@aws-sdk/client-s3");
 
-exports.uploadLargeVideos = async (req, fileHandle, fileKey, res) => {
+exports.uploadLargeVideos = async (req, fileHandle, fileKey, expire, res) => {
     if (!req.files) return false;
     if (!req.files[fileHandle]) return false;
     let file = { ...req.files[fileHandle] };
@@ -35,7 +36,8 @@ exports.uploadLargeVideos = async (req, fileHandle, fileKey, res) => {
             new CreateMultipartUploadCommand({
                 Bucket: bucketName,
                 Key: key,
-                ContentType: file.mimetype,
+                Expires: expire ? new Date(expire) : undefined,
+                ContentType: file?.mimetype,
             })
         );
 
@@ -46,7 +48,6 @@ exports.uploadLargeVideos = async (req, fileHandle, fileKey, res) => {
         const totalBytes = buffer.length;
         let totalUploadedBytes = 0;
 
-        console.log(uploadPromises);
         for (
             let start = 0, partNumber = 1;
             start < totalBytes;
@@ -93,11 +94,10 @@ exports.uploadLargeVideos = async (req, fileHandle, fileKey, res) => {
         const uploadResults = await Promise.all(uploadPromises);
         console.log("All parts uploaded successfully.");
 
-        // Ensure parts are sorted by PartNumber
         const sortedUploadResults = uploadResults.sort(
             (a, b) => a.PartNumber - b.PartNumber
         );
-        console.log(sortedUploadResults);
+
         const completeResponse = await s3Client.send(
             new CompleteMultipartUploadCommand({
                 Bucket: bucketName,
@@ -137,93 +137,80 @@ exports.uploadLargeVideos = async (req, fileHandle, fileKey, res) => {
     }
 };
 
-// exports.uploadShortVideos = async (req, fileHandle, fileName) => {
-//     if (!req.files) return false;
-//     if (!req.files[fileHandle]) return false;
-//     let file = { ...req.files[fileHandle] };
+exports.uploadShortVideos = async (req, fileHandle, expire, fileKey) => {
+    if (!req.files) return false;
+    if (!req.files[fileHandle]) return false;
+    let file = { ...req.files[fileHandle] };
 
-//     const s3Client = new S3Client({
-//         region: process.env.S3REGION,
-//         credentials: {
-//             accessKeyId: process.env.S3ACCESS_KEY,
-//             secretAccessKey: process.env.S3SECRET_KEY,
-//         },
-//     });
+    const s3Client = new S3Client({
+        region: process.env.S3REGION,
+        credentials: {
+            accessKeyId: process.env.S3ACCESS_KEY,
+            secretAccessKey: process.env.S3SECRET_KEY,
+        },
+    });
 
-//     const bucketName = "reeplay";
-//     const key = file.name;
-//     const buffer = Buffer.from(file.data);
+    const bucketName = "reeplay";
+    const key = fileKey
+        ? `videos/${fileKey}`
+        : file
+        ? `videos/${file.name}`
+        : `videos/${Date.now()}`;
+    const buffer = file?.data;
 
-//     console.log(file, Buffer.from(file.tempFilePath));
+    try {
+        const putObjectCommand = new PutObjectCommand({
+            Bucket: bucketName,
+            Key: key,
+            Body: buffer,
+            ContentType: file?.mimetype,
+            Expires: expire ? new Date(expire) : undefined,
+        });
 
-//     let uploadId;
+        const uploadResult = await s3Client.send(putObjectCommand);
 
-//     try {
-//         const multipartUpload = await s3Client.send(
-//             new CreateMultipartUploadCommand({
-//                 Bucket: bucketName,
-//                 Key: key,
-//             })
-//         );
+        return uploadResult;
+    } catch (err) {
+        console.error("Error occurred while uploading:", err);
+        throw err;
+    }
+};
 
-//         uploadId = multipartUpload.UploadId;
+exports.uploadImage = async (req, fileHandle, fileKey) => {
+    if (!req.files) return false;
+    if (!req.files[fileHandle]) return false;
+    let file = { ...req.files[fileHandle] };
 
-//         const uploadPromises = [];
-//         // Multipart uploads require a minimum size of 5 MB per part.
-//         const minPart = 5 * 1024 * 1024;
-//         // const partSize =
+    const s3Client = new S3Client({
+        region: process.env.S3REGION,
+        credentials: {
+            accessKeyId: process.env.S3ACCESS_KEY,
+            secretAccessKey: process.env.S3SECRET_KEY,
+        },
+    });
 
-//         // Upload each part.
-//         for (let i = 0; i < 5; i++) {
-//             const start = i * partSize;
-//             const end = start + partSize;
-//             uploadPromises.push(
-//                 s3Client
-//                     .send(
-//                         new UploadPartCommand({
-//                             Bucket: bucketName,
-//                             Key: key,
-//                             UploadId: uploadId,
-//                             Body: buffer.subarray(start, end),
-//                             PartNumber: i + 1,
-//                         })
-//                     )
-//                     .then((d) => {
-//                         console.log("Part", i + 1, "uploaded");
-//                         return d;
-//                     })
-//             );
-//         }
+    console.log(file, "file passing??", file?.data);
+    const bucketName = "reeplay";
+    const key = fileKey
+        ? `photos/${fileKey}`
+        : file
+        ? `photos/${file.name}`
+        : `photos/${Date.now()}`;
+    const buffer = file?.data;
 
-//         const uploadResults = await Promise.all(uploadPromises);
+    try {
+        const putObjectCommand = new PutObjectCommand({
+            Bucket: bucketName,
+            Key: key,
+            Body: buffer,
+            ContentType: file.mimetype,
+        });
+        console.log(putObjectCommand);
+        const uploadResult = await s3Client.send(putObjectCommand);
 
-//         return await s3Client.send(
-//             new CompleteMultipartUploadCommand({
-//                 Bucket: bucketName,
-//                 Key: key,
-//                 UploadId: uploadId,
-//                 MultipartUpload: {
-//                     Parts: uploadResults.map(({ ETag }, i) => ({
-//                         ETag,
-//                         PartNumber: i + 1,
-//                     })),
-//                 },
-//             })
-//         );
-
-//         // Verify the output by downloading the file from the Amazon Simple Storage Service (Amazon S3) console.
-//         // Because the output is a 25 MB string, text editors might struggle to open the file.
-//     } catch (err) {
-//         console.error(err);
-
-//         if (uploadId) {
-//             const abortCommand = new AbortMultipartUploadCommand({
-//                 Bucket: bucketName,
-//                 Key: key,
-//                 UploadId: uploadId,
-//             });
-
-//             await s3Client.send(abortCommand);
-//         }
-//     }
-// };
+        return uploadResult;
+    } catch (err) {
+        console.error("Error occurred while uploading:", err);
+        throw err;
+    }
+};
