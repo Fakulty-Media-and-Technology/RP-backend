@@ -1,3 +1,4 @@
+const { readPhotos } = require("../../utils/media-access");
 const {
     uploadLargeVideos,
     uploadShortVideos,
@@ -62,6 +63,20 @@ exports.uploadImageRoute = async (req, res) => {
         const image = await uploadImage(req, fileHandle, fileName);
 
         return successResponse(res, 200, image, "image uploaded");
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+};
+
+exports.adminGetPhotoUrl = async (req, res) => {
+    try {
+        const user = req.user;
+
+        const { bucket, key } = req.body;
+
+        const image = await readPhotos(bucket, key);
+
+        return successResponse(res, 200, image, "image fetched");
     } catch (error) {
         return serverError(res, 500, null, error.message);
     }

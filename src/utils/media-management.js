@@ -7,6 +7,11 @@ const {
     PutObjectCommand,
 } = require("@aws-sdk/client-s3");
 
+function getFileExtension(filename) {
+    const parts = filename.split(".");
+    return parts.length > 1 ? parts.pop() : "";
+}
+
 exports.uploadLargeVideos = async (req, fileHandle, fileKey, expire, res) => {
     if (!req.files) return false;
     if (!req.files[fileHandle]) return false;
@@ -189,10 +194,9 @@ exports.uploadImage = async (req, fileHandle, fileKey) => {
         },
     });
 
-    console.log(file, "file passing??", file?.data);
     const bucketName = "reeplay";
     const key = fileKey
-        ? `photos/${fileKey}`
+        ? `photos/${fileKey + "." + getFileExtension(file.name)}`
         : file
         ? `photos/${file.name}`
         : `photos/${Date.now()}`;
@@ -205,10 +209,16 @@ exports.uploadImage = async (req, fileHandle, fileKey) => {
             Body: buffer,
             ContentType: file.mimetype,
         });
-        console.log(putObjectCommand);
-        const uploadResult = await s3Client.send(putObjectCommand);
 
-        return uploadResult;
+        const resDat = {
+            Bucket: putObjectCommand.input.Bucket,
+            Key: putObjectCommand.input.Key,
+            ContentType: putObjectCommand.input.ContentType,
+        };
+        const uploadResult = await s3Client.send(putObjectCommand);
+        // console.log(uploadResult);
+
+        return resDat;
     } catch (err) {
         console.error("Error occurred while uploading:", err);
         throw err;

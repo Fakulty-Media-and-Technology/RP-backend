@@ -17,6 +17,8 @@ const {
     uploadLargeVideoRoute,
     uploadShortVideoRoute,
     uploadImageRoute,
+    readFiles,
+    adminGetPhotoUrl,
 } = require("../controllers/admins.controller.js/managemedia.admin");
 
 const superAdminRouter = express.Router();
@@ -48,5 +50,7 @@ superAdminRouter.post("/media/upload-vid", uploadLargeVideoRoute);
 superAdminRouter.post("/media/upload-vid-short", uploadShortVideoRoute);
 
 superAdminRouter.post("/media/upload-image", uploadImageRoute);
+
+superAdminRouter.get("/media/read-photo", adminGetPhotoUrl);
 
 module.exports = superAdminRouter;
