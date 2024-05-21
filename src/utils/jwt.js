@@ -12,7 +12,7 @@ exports.accessToken = (id, email, role) => {
             },
             JWT_SECRET,
             {
-                expiresIn: "24h",
+                expiresIn: "72h",
             }
         );
 

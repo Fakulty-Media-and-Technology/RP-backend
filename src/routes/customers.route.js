@@ -13,6 +13,14 @@ const {
     remFromInterest,
 } = require("../controllers/customers.controller.js/settings.customer");
 const customerAuth = require("../middlewares/customer.gen.mw");
+const { getVideoUrl } = require("../utils/media-access");
+const {
+    customerGetVideoUrl,
+    customerGetPhotoUrl,
+    videoTranscode,
+    trancodeResHook,
+    checkandGetResHook,
+} = require("../controllers/customers.controller.js/medias.customer");
 
 const customerRouter = express.Router();
 
@@ -23,6 +31,9 @@ customerRouter.post("/signup", customerSignup);
 customerRouter.post("/signup/createpin", createPin);
 
 customerRouter.post("/signup/verifyaccount", verifyAccount);
+
+//webhook, no auth mw
+customerRouter.post("/media/vod/webhook", trancodeResHook);
 
 //apply auth middleware
 customerRouter.use(customerAuth);
@@ -36,5 +47,13 @@ customerRouter.post("/settings/watchlist/rem", remFromWatchList);
 customerRouter.post("/settings/interest/add", addToInterest);
 
 customerRouter.post("/settings/interest/rem", remFromInterest);
+
+customerRouter.post("/media/photo-url", customerGetPhotoUrl);
+
+customerRouter.post("/media/video-url", customerGetVideoUrl);
+
+customerRouter.post("/media/vod-transcode", videoTranscode);
+
+customerRouter.get("/media/vod/url/:id", checkandGetResHook);
 
 module.exports = customerRouter;
