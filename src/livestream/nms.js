@@ -10,7 +10,7 @@ const connect = {
             logType: 3,
             rtmp: {
                 port: 1935,
-                chunk_size: 60000,
+                chunk_size: 100000,
                 gop_cache: true,
                 ping: 30,
                 ping_timeout: 60,
@@ -31,6 +31,7 @@ const connect = {
                             "[hls_time=2:hls_list_size=3:hls_flags=delete_segments]",
                         mp4: true,
                         mp4Flags: "[movflags=frag_keyframe+empty_moov]",
+                        hardwareAccel: true,
                     },
                 ],
             },
