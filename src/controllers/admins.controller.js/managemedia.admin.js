@@ -81,3 +81,5 @@ exports.adminGetPhotoUrl = async (req, res) => {
         return serverError(res, 500, null, error.message);
     }
 };
+
+//Videos CRUD for both vod and live
