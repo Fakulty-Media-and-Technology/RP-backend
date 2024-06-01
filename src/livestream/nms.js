@@ -38,13 +38,25 @@ const connect = {
 
         const nms = new NodeMediaServer(config);
 
-        nms.on("prePublish", async (id, StreamPath, args) => {
-            let stream_key = getStreamKeyFromStreamPath(StreamPath);
-            console.log(
-                "[NodeEvent on prePublish]",
-                `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`
-            );
-        });
+        // nms.on('prePublish', async (id, StreamPath, args) => {
+        //     const streamKey = getStreamKeyFromStreamPath(StreamPath);
+        //     console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+
+        //     try {
+        //         const streamKeyDoc = await LiveSteam.findOne({ key: streamKey, isActive: true });
+        //         if (streamKeyDoc) {
+        //             console.log('Stream key is valid');
+        //         } else {
+        //             console.log('Invalid stream key');
+        //             const session = nms.getSession(id);
+        //             session.reject();
+        //         }
+        //     } catch (error) {
+        //         console.error('Database query error:', error);
+        //         const session = nms.getSession(id);
+        //         session.reject();
+        //     }
+        // });
 
         nms.run();
     },
