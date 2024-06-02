@@ -15,7 +15,11 @@ const liveVideosSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        photo: {
+        stream_key: {
+            type: String,
+            required: true,
+        },
+        photo_key: {
             type: String,
             required: true,
         },

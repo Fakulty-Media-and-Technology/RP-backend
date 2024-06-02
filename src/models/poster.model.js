@@ -7,7 +7,7 @@ const posterSchema = new mongoose.Schema(
             ref: "videos",
             required: true,
         },
-        url: {
+        key: {
             type: String,
             required: true,
         },

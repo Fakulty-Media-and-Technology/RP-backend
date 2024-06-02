@@ -22,7 +22,7 @@ const videosSchema = new mongoose.Schema(
             ],
             required: true,
         },
-        url: {
+        key: {
             type: String,
             trim: true,
             required: true,
