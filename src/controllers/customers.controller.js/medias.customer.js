@@ -1,13 +1,19 @@
 const {
     createTranscodingJob,
     readPhotos,
+    getVideoUrl,
 } = require("../../utils/media-access");
 const {
     successResponse,
     serverError,
+    failedResponse,
 } = require("../../utils/response.handler");
 
-const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const {
+    S3Client,
+    GetObjectCommand,
+    ListObjectsV2Command,
+} = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 exports.uploadImageRoute = async (req, res) => {
@@ -38,40 +44,20 @@ exports.customerGetPhotoUrl = async (req, res) => {
     }
 };
 
-exports.customerGetVideoUrl = async (req, res) => {
-    try {
-        const user = req.user;
+// exports.customerGetVideoUrl = async (req, res) => {
+//     try {
+//         const user = req.user;
 
-        const { bucket, key } = req.body;
+//         const { bucket, key } = req.body;
 
-        const image = await readPhotos(bucket, key);
+//         const image = await readPhotos(bucket, key);
 
-        return successResponse(res, 200, image, "image fetched");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
-};
+//         return successResponse(res, 200, image, "image fetched");
+//     } catch (error) {
+//         return serverError(res, 500, null, error.message);
+//     }
+// };
 
-exports.videoTranscode = async (req, res) => {
-    try {
-        const { url } = req.body;
-
-        const job = await createTranscodingJob(url);
-
-        return successResponse(
-            res,
-            200,
-            {
-                job: job,
-            },
-            "video sent to be transcoded"
-        );
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
-};
-
-//res hook processing
 const s3Client = new S3Client({
     region: process.env.S3REGION,
     credentials: {
@@ -80,6 +66,55 @@ const s3Client = new S3Client({
     },
 });
 
+exports.vodStream = async (req, res) => {
+    try {
+        const { bucket, key } = req.body;
+
+        const transPart = `transcode/${key.split("/").slice(1).join("")}`;
+
+        const params = {
+            Bucket: bucket,
+            Prefix: transPart,
+            MaxKeys: 1,
+        };
+
+        const command = new ListObjectsV2Command(params);
+        const data = await s3Client.send(command);
+
+        console.log(data?.Contents);
+        const checkTranscodedFolder = data.Contents?.length > 0;
+
+        if (checkTranscodedFolder != true) {
+            const url = await getVideoUrl(bucket, key);
+            console.log(url);
+
+            await createTranscodingJob(url, transPart);
+
+            return failedResponse(
+                res,
+                500,
+                null,
+                "Oops, check back in few minutes, wait while the video is being transcoded"
+            );
+        }
+        console.log("all good, video already trancoded");
+
+        // access transcoded files with cloudfront
+
+        return successResponse(
+            res,
+            200,
+            {
+                video_content: null,
+            },
+            "video streaming"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+};
+
+//res hook processing
 const bucketName = process.env.S3BUCKET;
 const expirationTime = 3600; // URL expiration time in seconds
 
@@ -112,28 +147,28 @@ exports.trancodeResHook = async (req, res) => {
         const outputs = notification.data.outputs;
         const resultUrls = {};
 
-        for (const output of outputs) {
-            if (output.type === "video") {
-                const key = new URL(output.url).pathname.substring(1);
-                resultUrls[output.key] = await generateSignedUrl(key);
-            } else if (
-                output.type === "image" ||
-                output.type === "httpstream"
-            ) {
-                const signedUrls = await Promise.all(
-                    output.urls.map(async (url) => {
-                        const key = new URL(url).pathname.substring(1);
-                        return generateSignedUrl(key);
-                    })
-                );
-                resultUrls[output.key] = signedUrls;
-            }
-        }
+        // for (const output of outputs) {
+        //     if (output.type === "video") {
+        //         const key = new URL(output.url).pathname.substring(1);
+        //         resultUrls[output.key] = await generateSignedUrl(key);
+        //     } else if (
+        //         output.type === "image" ||
+        //         output.type === "httpstream"
+        //     ) {
+        //         const signedUrls = await Promise.all(
+        //             output.urls.map(async (url) => {
+        //                 const key = new URL(url).pathname.substring(1);
+        //                 return generateSignedUrl(key);
+        //             })
+        //         );
+        //         resultUrls[output.key] = signedUrls;
+        //     }
+        // }
 
-        // Store the resultUrls in your DB or perform other operations
-        DB[notification.data.id] = resultUrls;
+        // // Store the resultUrls in your DB or perform other operations
+        // DB[notification.data.id] = resultUrls;
 
-        console.log("Result URLs:", resultUrls);
+        // console.log("Result URLs:", resultUrls);
     } else if (notification.event === "job.error") {
         // Handle the error notification
         console.error("Job error:", notification);

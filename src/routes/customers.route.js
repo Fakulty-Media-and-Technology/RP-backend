@@ -20,6 +20,7 @@ const {
     videoTranscode,
     trancodeResHook,
     checkandGetResHook,
+    vodStream,
 } = require("../controllers/customers.controller.js/medias.customer");
 
 const customerRouter = express.Router();
@@ -50,10 +51,8 @@ customerRouter.post("/settings/interest/rem", remFromInterest);
 
 customerRouter.post("/media/photo-url", customerGetPhotoUrl);
 
-customerRouter.post("/media/video-url", customerGetVideoUrl);
+customerRouter.post("/media/vod-streaming", vodStream);
 
-customerRouter.post("/media/vod-transcode", videoTranscode);
-
-customerRouter.get("/media/vod/url/:id", checkandGetResHook);
+// customerRouter.get("/media/vod/url/:id", checkandGetResHook);
 
 module.exports = customerRouter;

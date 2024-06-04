@@ -43,7 +43,7 @@ exports.getVideoUrl = async (bucket, key) => {
 
         const params = {
             Bucket: bucket,
-            Expires: 3600,
+            Expires: 36000,
             Key: key,
         };
 
@@ -78,23 +78,27 @@ coconut.storage = {
     acl: "private",
 };
 
-exports.createTranscodingJob = async (sourceUrl) => {
+exports.createTranscodingJob = async (sourceUrl, transPart) => {
     return new Promise((resolve, reject) => {
         coconut.Job.create(
             {
                 input: { url: sourceUrl },
                 outputs: {
-                    mp4: {
-                        key: "mp4",
-                        path: "/transcode/video.mp4",
-                        format: {
-                            quality: 4,
+                    httpstream: {
+                        hls: {
+                            path: `${transPart}/hls`,
+                            master: true, // Ensure the master playlist is generated
                         },
-                    },
-                    "jpg:300x": {
-                        key: "jpg",
-                        number: 3,
-                        path: "/transcode/thumbnails/thumb_%04d.jpg",
+                        dash: {
+                            path: `${transPart}/dash`,
+                        },
+                        variants: [
+                            "mp4:x:64k", // Audio-only stream
+                            "mp4:240p::quality=2",
+                            "mp4:360p::quality=2",
+                            "mp4:480p::quality=3,maxrate=1500k",
+                            "mp4:720p::quality=4,maxrate=3000k",
+                        ],
                     },
                 },
             },
