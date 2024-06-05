@@ -298,3 +298,127 @@ exports.signIn = async (req, res) => {
         return serverError(res, 500, null, error.message);
     }
 };
+
+exports.passwordChangeCode = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return invalidRequest(res, 400, null, "all input are required");
+        }
+
+        const emailUser = await UsersModel.findOne({
+            email: email,
+        });
+
+        if (!emailUser) {
+            return invalidRequest(
+                res,
+                400,
+                null,
+                "invalid email , user does not exist"
+            );
+        }
+
+        const pin = Number(authCode(6));
+
+        await UsersModel.findOneAndUpdate(
+            {
+                _id: emailUser._id,
+                email: emailUser.email,
+            },
+            {
+                auth_expiry: Date.now() + 10 * 60 * 1000, //code expires in 10 minutes
+                auth_code: pin,
+            },
+            {
+                upsert: true,
+            }
+        );
+
+        const userData = {
+            firstName: emailUser.first_name,
+            lastName: emailUser.last_name,
+            email: emailUser.email,
+        };
+
+        new Email(userData).sendResetPasswordToken(pin);
+
+        return successResponse(
+            res,
+            200,
+            null,
+            "password reset email sent to registered email"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+};
+
+exports.passwordChange = async (req, res) => {
+    try {
+        const { email, pin, password, cpassword } = req.body;
+
+        if (!email || !pin || !password || !cpassword) {
+            return invalidRequest(res, 400, null, "all input are required");
+        }
+
+        const pinUser = await UsersModel.findOne({
+            email: email,
+            auth_code: Number(pin),
+        });
+
+        if (!pinUser) {
+            return invalidRequest(
+                res,
+                400,
+                null,
+                "invalid credentials supplied"
+            );
+        }
+
+        if (password !== cpassword) {
+            return invalidRequest(res, 400, null, "paswords does not match");
+        }
+
+        if (Date.now() > Number(pinUser.auth_expiry)) {
+            return invalidRequest(
+                res,
+                400,
+                null,
+                "password reset token has expired"
+            );
+        }
+
+        const rxPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[a-zA-Z]).{8,}$/;
+
+        if (!rxPattern.test(password)) {
+            return invalidRequest(
+                res,
+                400,
+                null,
+                "password is too weak, use capital & small letter, interger and not less than 8 character"
+            );
+        }
+
+        const newPass = await EncryptPass(password);
+        await UsersModel.findOneAndUpdate(
+            {
+                _id: pinUser._id,
+                email: pinUser.email,
+            },
+            {
+                password: newPass,
+                auth_code: null,
+                auth_expiry: null,
+            },
+            {
+                upsert: true,
+            }
+        );
+
+        return successResponse(res, 200, null, "password changed successfully");
+    } catch (error) {
+        console.log(error.message);
+        return serverError(res, 500, null, error.message);
+    }
+};

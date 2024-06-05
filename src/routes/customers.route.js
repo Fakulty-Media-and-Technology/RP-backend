@@ -4,6 +4,8 @@ const {
     customerSignup,
     createPin,
     verifyAccount,
+    passwordChangeCode,
+    passwordChange,
 } = require("../controllers/customers.controller.js/onboarding.customer");
 const {
     notificationSettings,
@@ -32,6 +34,10 @@ customerRouter.post("/signup", customerSignup);
 customerRouter.post("/signup/createpin", createPin);
 
 customerRouter.post("/signup/verifyaccount", verifyAccount);
+
+customerRouter.post("/pass-reset/get-token", passwordChangeCode);
+
+customerRouter.post("/pass-reset/change-pass", passwordChange);
 
 //webhook, no auth mw
 customerRouter.post("/media/vod/webhook", trancodeResHook);
