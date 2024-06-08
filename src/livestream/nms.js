@@ -5,12 +5,12 @@ const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const connect = {
     name: "live",
     pkg: require("../../package"),
-    async register(server, options) {
+    async register() {
         const config = {
-            logType: 3,
+            logType: 4,
             rtmp: {
                 port: 1935,
-                chunk_size: 100000,
+                chunk_size: 6000,
                 gop_cache: true,
                 ping: 30,
                 ping_timeout: 60,
@@ -21,17 +21,38 @@ const connect = {
                 allow_origin: "*",
             },
             trans: {
-                // ffmpeg: "../../../../ffmpeg",
                 ffmpeg: ffmpegPath,
                 tasks: [
                     {
                         app: "live",
                         hls: true,
                         hlsFlags:
-                            "[hls_time=2:hls_list_size=3:hls_flags=delete_segments]",
+                            "[hls_time=4:hls_list_size=6:hls_flags=delete_segments]",
                         mp4: true,
                         mp4Flags: "[movflags=frag_keyframe+empty_moov]",
                         hardwareAccel: true,
+                        outputs: [
+                            {
+                                resolution: "854x480",
+                                bitrate: "1200k",
+                                output: "480p.m3u8",
+                            },
+                            {
+                                resolution: "1280x720",
+                                bitrate: "3000k",
+                                output: "720p.m3u8",
+                            },
+                            {
+                                resolution: "1920x1080",
+                                bitrate: "5000k",
+                                output: "1080p.m3u8",
+                            },
+                            {
+                                resolution: "3840x2160",
+                                bitrate: "12000k",
+                                output: "2160p.m3u8",
+                            },
+                        ],
                     },
                 ],
             },

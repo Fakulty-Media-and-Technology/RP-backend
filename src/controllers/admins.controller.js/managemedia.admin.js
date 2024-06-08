@@ -2,12 +2,12 @@ const PosterModel = require("../../models/poster.model");
 const SubtitleModel = require("../../models/subtitle.model");
 const TrailerModel = require("../../models/trailer.model");
 const VideosModel = require("../../models/videos.model");
-const { readPhotos } = require("../../utils/media-access");
+const { readPhotos } = require("../../services/media-access");
 const {
     uploadLargeVideos,
     uploadShortVideos,
     uploadImage,
-} = require("../../utils/media-management");
+} = require("../../services/media-management");
 const {
     serverError,
     successResponse,

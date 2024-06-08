@@ -1,0 +1,80 @@
+const UsersModel = require("../../models/users.model");
+const {
+    serverError,
+    successResponse,
+    failedResponse,
+    invalidRequest,
+} = require("../../utils/response.handler");
+
+exports.customerProfileFetch = async (req, res) => {
+    try {
+        const user = req.user;
+
+        const profile = await UsersModel.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $eq: [
+                            "$_id",
+                            {
+                                $toObjectId: user._id,
+                            },
+                        ],
+                    },
+                },
+            },
+            {
+                $project: {
+                    auth_code: 0,
+                    auth_expiry: 0,
+                    verified: 0,
+                    approved: 0,
+                    suspended: 0,
+                    createdAt: 0,
+                    updatedAt: 0,
+                    __v: 0,
+                    pin: 0,
+                    password: 0,
+                },
+            },
+        ]);
+
+        return successResponse(
+            res,
+            200,
+            profile[0],
+            "customer profile fetched"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+};
+
+exports.editProfile = async (req, res) => {
+    try {
+        const user = req.user;
+
+        const { first_name, last_name, country_code, mobile, photo } = req.body;
+
+        const initData = await UsersModel.findOne({ _id: user.id });
+
+        await UsersModel.findOneAndUpdate(
+            {
+                _id: user.id,
+            },
+            {
+                first_name: first_name ? first_name : initData.first_name,
+                last_name: last_name ? last_name : initData.last_name,
+                country_code: country_code
+                    ? country_code
+                    : initData.country_code,
+                mobile: mobile ? mobile : initData.mobile,
+                photo: photo ? photo : initData.photo,
+            }
+        );
+
+        return successResponse(res, 200, null, "profile updated");
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+};

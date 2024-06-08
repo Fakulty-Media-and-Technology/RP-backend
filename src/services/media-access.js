@@ -14,7 +14,7 @@ exports.readPhotos = async (bucket, key) => {
 
         const params = {
             Bucket: bucket,
-            Expires: 3600,
+            Expires: 259200, //3*24*60*60
             Key: key,
         };
 

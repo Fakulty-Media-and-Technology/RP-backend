@@ -2,7 +2,8 @@ const {
     createTranscodingJob,
     readPhotos,
     getVideoUrl,
-} = require("../../utils/media-access");
+} = require("../../services/media-access");
+const { uploadImage } = require("../../services/media-management");
 const {
     successResponse,
     serverError,
@@ -18,8 +19,6 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 exports.uploadImageRoute = async (req, res) => {
     try {
-        const user = req.user;
-
         const { fileName, fileHandle } = req.body;
 
         const image = await uploadImage(req, fileHandle, fileName);

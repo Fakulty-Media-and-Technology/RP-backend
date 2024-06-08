@@ -121,9 +121,7 @@ exports.addToInterest = async (req, res) => {
                 user_id: user._id,
             },
             {
-                $push: {
-                    interest: interest.toString(),
-                },
+                interest: interest,
             },
             {
                 upsert: true,
@@ -136,32 +134,32 @@ exports.addToInterest = async (req, res) => {
     }
 };
 
-exports.remFromInterest = async (req, res) => {
-    try {
-        const user = req.user;
+// exports.remFromInterest = async (req, res) => {
+//     try {
+//         const user = req.user;
 
-        const { interest } = req.body;
+//         const { interest } = req.body;
 
-        if (!interest) {
-            return invalidRequest(res, 400, null, "interest is required");
-        }
+//         if (!interest) {
+//             return invalidRequest(res, 400, null, "interest is required");
+//         }
 
-        await UserSettingsModel.findOneAndUpdate(
-            {
-                user_id: user._id,
-            },
-            {
-                $pull: {
-                    interest: interest.toString(),
-                },
-            },
-            {
-                new: true,
-            }
-        );
+//         await UserSettingsModel.findOneAndUpdate(
+//             {
+//                 user_id: user._id,
+//             },
+//             {
+//                 $pull: {
+//                     interest: interest.toString(),
+//                 },
+//             },
+//             {
+//                 new: true,
+//             }
+//         );
 
-        return successResponse(res, 200, null, "interest removed from list");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
-};
+//         return successResponse(res, 200, null, "interest removed from list");
+//     } catch (error) {
+//         return serverError(res, 500, null, error.message);
+//     }
+// };
