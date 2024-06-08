@@ -41,8 +41,8 @@ const customerAuth = async (req, res, next) => {
     } catch (error) {
         return res.status(400).json({
             status: 400,
-            message: error.message,
             data: null,
+            message: error.message,
         });
     }
 };

@@ -1,4 +1,5 @@
 const UsersModel = require("../../models/users.model");
+const { readPhotos } = require("../../services/media-access");
 const {
     serverError,
     successResponse,
@@ -39,10 +40,18 @@ exports.customerProfileFetch = async (req, res) => {
             },
         ]);
 
+        const signedUrl = await readPhotos(
+            profile[0].photo.Bucket,
+            profile[0].photo.Key
+        );
+
         return successResponse(
             res,
             200,
-            profile[0],
+            {
+                profile: profile[0],
+                photo_url: signedUrl,
+            },
             "customer profile fetched"
         );
     } catch (error) {
