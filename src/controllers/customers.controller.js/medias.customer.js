@@ -16,6 +16,7 @@ const {
     ListObjectsV2Command,
 } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { getSignedUrl: getCFSignedUrl } = require("@aws-sdk/cloudfront-signer");
 
 exports.uploadImageRoute = async (req, res) => {
     try {
@@ -69,25 +70,29 @@ exports.vodStream = async (req, res) => {
     try {
         const { bucket, key } = req.body;
 
-        const transPart = `transcode/${key.split("/").slice(1).join("")}`;
+        const transPath = `s3://reeplay/transcode/${key
+            .split("/")
+            .slice(1)
+            .join("/")}`;
 
         const params = {
             Bucket: bucket,
-            Prefix: transPart,
+            Prefix: `transcode/${key.split("/").slice(1).join("/")}/`,
             MaxKeys: 1,
         };
 
-        const command = new ListObjectsV2Command(params);
-        const data = await s3Client.send(command);
+        const data = await s3Client.send(new ListObjectsV2Command(params));
 
-        console.log(data?.Contents);
+        // console.log(data.Contents);
         const checkTranscodedFolder = data.Contents?.length > 0;
 
         if (checkTranscodedFolder != true) {
-            const url = await getVideoUrl(bucket, key);
-            console.log(url);
+            // const url = await getVideoUrl(bucket, key);
+            // console.log(url);
 
-            await createTranscodingJob(url, transPart);
+            const filePath = `s3://reeplay/${key}`;
+
+            await createTranscodingJob(filePath, transPath);
 
             return failedResponse(
                 res,
@@ -99,12 +104,21 @@ exports.vodStream = async (req, res) => {
         console.log("all good, video already trancoded");
 
         // access transcoded files with cloudfront
+        const signedUrl = getCFSignedUrl({
+            keyPairId: process.env.CLOUDFRONT_KEYPAIR_ID,
+            privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,
+            url: `${process.env.CFSDISTRIBUTION}/transcode/${key
+                .split("/")
+                .slice(1)
+                .join("/")}/${key.split("/").slice(1).join("/")}_480p.mp3`,
+            dateLessThan: new Date(Date.now() + 1000 /*sec*/ * 60),
+        });
 
         return successResponse(
             res,
             200,
             {
-                video_content: null,
+                video_content: signedUrl,
             },
             "video streaming"
         );

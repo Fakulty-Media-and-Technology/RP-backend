@@ -66,7 +66,7 @@ customerRouter.post("/settings/interest/add", addToInterest);
 
 customerRouter.post("/media/upload-photo", uploadImageRoute);
 
-customerRouter.post("/media/photo-url", customerGetPhotoUrl);
+// customerRouter.post("/media/photo-url", customerGetPhotoUrl);
 
 customerRouter.post("/media/vod-streaming", vodStream);
 

@@ -1,6 +1,10 @@
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const Coconut = require("coconutjs");
+const {
+    MediaConvertClient,
+    CreateJobCommand,
+    DescribeEndpointsCommand,
+} = require("@aws-sdk/client-mediaconvert");
 
 exports.readPhotos = async (bucket, key) => {
     try {
@@ -60,52 +64,255 @@ exports.getVideoUrl = async (bucket, key) => {
     }
 };
 
-const coconut = new Coconut.Client(process.env.COCONUT_API_KEY);
-
-coconut.notification = {
-    type: "http",
-    url: process.env.NOTIFICATION_URL,
-};
-
-coconut.storage = {
-    service: "s3",
-    bucket: process.env.S3BUCKET,
+const client = new MediaConvertClient({
     region: process.env.S3REGION,
     credentials: {
-        access_key_id: process.env.S3ACCESS_KEY,
-        secret_access_key: process.env.S3SECRET_KEY,
+        accessKeyId: process.env.S3ACCESS_KEY,
+        secretAccessKey: process.env.S3SECRET_KEY,
     },
-    acl: "private",
-};
+});
 
-exports.createTranscodingJob = async (sourceUrl, transPart) => {
-    return new Promise((resolve, reject) => {
-        coconut.Job.create(
-            {
-                input: { url: sourceUrl },
-                outputs: {
-                    httpstream: {
-                        hls: {
-                            path: `${transPart}/hls`,
-                            master: true, // Ensure the master playlist is generated
-                        },
-                        dash: {
-                            path: `${transPart}/dash`,
-                        },
-                        variants: [
-                            "mp4:x:64k", // Audio-only stream
-                            "mp4:240p::quality=2",
-                            "mp4:360p::quality=2",
-                            "mp4:480p::quality=3,maxrate=1500k",
-                            "mp4:720p::quality=4,maxrate=3000k",
-                        ],
-                    },
-                },
+async function getAccountEndpoint() {
+    try {
+        const command = new DescribeEndpointsCommand({});
+        const response = await client.send(command);
+        if (response.Endpoints && response.Endpoints.length > 0) {
+            const endpointUrl = response.Endpoints[0].Url;
+            console.log("MediaConvert account-specific endpoint:", endpointUrl);
+            return endpointUrl;
+        } else {
+            console.error("No endpoints found.");
+        }
+    } catch (error) {
+        console.error("Error retrieving endpoint:", error);
+    }
+}
+
+exports.createTranscodingJob = async (sourcePath, transPath) => {
+    try {
+        const endpoint = await getAccountEndpoint();
+        const emcClient = new MediaConvertClient({
+            endpoint: endpoint,
+            region: process.env.S3REGION,
+            credentials: {
+                accessKeyId: process.env.S3ACCESS_KEY,
+                secretAccessKey: process.env.S3SECRET_KEY,
             },
-            (job, err) => {
-                if (err) return reject(err);
-                resolve(job);
-            }
-        );
-    });
+        });
+
+        const videoId = Date.now();
+        const outputPath = `${transPath}/`;
+
+        const params = {
+            Role: process.env.IAM_ROLE_ARN,
+            Settings: {
+                Inputs: [
+                    {
+                        FileInput: sourcePath,
+                        AudioSelectors: {
+                            "Audio Selector 1": {
+                                SelectorType: "TRACK",
+                                Tracks: [1],
+                            },
+                        },
+                        // TimecodeSource: "ZEROBASED",
+                        // InputClippings: [
+                        //     {
+                        //         StartTimecode: "00:00:00:00",
+                        //         EndTimecode: "00:00:30:00",
+                        //     },
+                        // ],
+                    },
+                ],
+                OutputGroups: [
+                    {
+                        Name: "File Group",
+                        Outputs: [
+                            {
+                                ContainerSettings: {
+                                    Container: "MP4",
+                                },
+                                VideoDescription: {
+                                    CodecSettings: {
+                                        Codec: "H_264",
+                                        H264Settings: {
+                                            Bitrate: 1500000,
+                                            RateControlMode: "CBR",
+                                            CodecProfile: "MAIN",
+                                            CodecLevel: "AUTO",
+                                            InterlaceMode: "PROGRESSIVE",
+                                            FramerateControl:
+                                                "INITIALIZE_FROM_SOURCE",
+                                            GopSize: 90,
+                                            GopSizeUnits: "FRAMES",
+                                            GopClosedCadence: 1,
+                                            NumberBFramesBetweenReferenceFrames: 2,
+                                            NumberReferenceFrames: 3,
+                                        },
+                                    },
+                                    Height: 480,
+                                    Width: 640,
+                                    ScalingBehavior: "DEFAULT",
+                                    Sharpness: 50,
+                                },
+                                AudioDescriptions: [
+                                    {
+                                        CodecSettings: {
+                                            Codec: "AAC",
+                                            AacSettings: {
+                                                Bitrate: 96000,
+                                                CodingMode: "CODING_MODE_2_0",
+                                                SampleRate: 48000,
+                                            },
+                                        },
+                                        LanguageCodeControl: "FOLLOW_INPUT",
+                                    },
+                                ],
+                                NameModifier: "_480p",
+                            },
+                            {
+                                ContainerSettings: {
+                                    Container: "MP4",
+                                },
+                                VideoDescription: {
+                                    CodecSettings: {
+                                        Codec: "H_264",
+                                        H264Settings: {
+                                            Bitrate: 4500000,
+                                            RateControlMode: "CBR",
+                                            CodecProfile: "MAIN",
+                                            CodecLevel: "AUTO",
+                                            InterlaceMode: "PROGRESSIVE",
+                                            FramerateControl:
+                                                "INITIALIZE_FROM_SOURCE",
+                                            GopSize: 90,
+                                            GopSizeUnits: "FRAMES",
+                                            GopClosedCadence: 1,
+                                            NumberBFramesBetweenReferenceFrames: 2,
+                                            NumberReferenceFrames: 3,
+                                        },
+                                    },
+                                    Height: 720,
+                                    Width: 1280,
+                                    ScalingBehavior: "DEFAULT",
+                                    Sharpness: 50,
+                                },
+                                AudioDescriptions: [
+                                    {
+                                        CodecSettings: {
+                                            Codec: "AAC",
+                                            AacSettings: {
+                                                Bitrate: 96000,
+                                                CodingMode: "CODING_MODE_2_0",
+                                                SampleRate: 48000,
+                                            },
+                                        },
+                                        LanguageCodeControl: "FOLLOW_INPUT",
+                                    },
+                                ],
+                                NameModifier: "_720p",
+                            },
+                            {
+                                ContainerSettings: {
+                                    Container: "MP4",
+                                },
+                                VideoDescription: {
+                                    CodecSettings: {
+                                        Codec: "H_264",
+                                        H264Settings: {
+                                            Bitrate: 6000000,
+                                            RateControlMode: "CBR",
+                                            CodecProfile: "MAIN",
+                                            CodecLevel: "AUTO",
+                                            InterlaceMode: "PROGRESSIVE",
+                                            FramerateControl:
+                                                "INITIALIZE_FROM_SOURCE",
+                                            GopSize: 90,
+                                            GopSizeUnits: "FRAMES",
+                                            GopClosedCadence: 1,
+                                            NumberBFramesBetweenReferenceFrames: 2,
+                                            NumberReferenceFrames: 3,
+                                        },
+                                    },
+                                    Height: 1080,
+                                    Width: 1920,
+                                    ScalingBehavior: "DEFAULT",
+                                    Sharpness: 50,
+                                },
+                                AudioDescriptions: [
+                                    {
+                                        CodecSettings: {
+                                            Codec: "AAC",
+                                            AacSettings: {
+                                                Bitrate: 96000,
+                                                CodingMode: "CODING_MODE_2_0",
+                                                SampleRate: 48000,
+                                            },
+                                        },
+                                        LanguageCodeControl: "FOLLOW_INPUT",
+                                    },
+                                ],
+                                NameModifier: "_1080p",
+                            },
+                            // {
+                            //     ContainerSettings: {
+                            //         Container: "MP4",
+                            //     },
+                            //     VideoDescription: {
+                            //         CodecSettings: {
+                            //             Codec: "H_265",
+                            //             H265Settings: {
+                            //                 Bitrate: 10000000,
+                            //                 RateControlMode: "CBR",
+                            //                 CodecProfile: "MAIN",
+                            //                 CodecLevel: "AUTO",
+                            //                 InterlaceMode: "PROGRESSIVE",
+                            //                 FramerateControl:
+                            //                     "INITIALIZE_FROM_SOURCE",
+                            //                 GopSize: 90,
+                            //                 GopSizeUnits: "FRAMES",
+                            //                 GopClosedCadence: 1,
+                            //                 NumberBFramesBetweenReferenceFrames: 2,
+                            //                 NumberReferenceFrames: 3,
+                            //             },
+                            //         },
+                            //         Height: 2160,
+                            //         Width: 3840,
+                            //         ScalingBehavior: "DEFAULT",
+                            //         Sharpness: 50,
+                            //     },
+                            //     AudioDescriptions: [
+                            //         {
+                            //             CodecSettings: {
+                            //                 Codec: "AAC",
+                            //                 AacSettings: {
+                            //                     Bitrate: 96000,
+                            //                     CodingMode: "CODING_MODE_2_0",
+                            //                     SampleRate: 48000,
+                            //                 },
+                            //             },
+                            //             LanguageCodeControl: "FOLLOW_INPUT",
+                            //         },
+                            //     ],
+                            //     NameModifier: "_4k",
+                            // },
+                        ],
+                        OutputGroupSettings: {
+                            Type: "FILE_GROUP_SETTINGS",
+                            FileGroupSettings: {
+                                Destination: outputPath,
+                            },
+                        },
+                    },
+                ],
+            },
+        };
+
+        const data = await emcClient.send(new CreateJobCommand(params));
+        // console.log("Job created!", data);
+        return data;
+    } catch (error) {
+        console.log("Error message", error.message);
+        return error.message;
+    }
 };
