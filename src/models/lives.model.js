@@ -19,11 +19,11 @@ const liveVideosSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        photo_key: {
-            type: String,
+        cover_photo: {
+            type: Object,
             required: true,
         },
-        class: {
+        vid_class: {
             type: String,
             enum: ["free", "ad", "exclusive", "premium"],
             required: true,
@@ -41,10 +41,15 @@ const liveVideosSchema = new mongoose.Schema(
         },
         active: {
             type: Boolean,
+            default: false,
         },
         type: {
             type: String,
             enum: ["channel", "event", "tvshow"],
+        },
+        participants: {
+            type: Number,
+            default: 0,
         },
         start: {
             type: Number, //Date in milisec
