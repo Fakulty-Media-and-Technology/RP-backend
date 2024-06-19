@@ -52,7 +52,7 @@ customerRouter.use(customerAuth);
 
 customerRouter.get("/profile/fetch", customerProfileFetch);
 
-customerRouter.post("/profile/edit", editProfile);
+customerRouter.put("/profile/edit", editProfile);
 
 customerRouter.put("/settings/notification-vidquality", notificationSettings);
 

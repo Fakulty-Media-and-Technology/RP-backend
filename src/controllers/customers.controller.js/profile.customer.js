@@ -41,8 +41,8 @@ exports.customerProfileFetch = async (req, res) => {
         ]);
 
         const signedUrl = await readPhotos(
-            profile[0].photo.Bucket,
-            profile[0].photo.Key
+            profile[0]?.photo?.Bucket,
+            profile[0]?.photo?.Key
         );
 
         return successResponse(
@@ -50,7 +50,8 @@ exports.customerProfileFetch = async (req, res) => {
             200,
             {
                 profile: profile[0],
-                photo_url: signedUrl,
+                photo_url:
+                    signedUrl.status == 400 ? "no profile picture" : signedUrl,
             },
             "customer profile fetched"
         );
