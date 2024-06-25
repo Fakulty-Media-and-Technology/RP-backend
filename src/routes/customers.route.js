@@ -45,7 +45,7 @@ customerRouter.post("/pass-reset/get-token", passwordChangeCode);
 customerRouter.post("/pass-reset/change-pass", passwordChange);
 
 //webhook, no auth mw
-customerRouter.post("/media/vod/webhook", trancodeResHook);
+// customerRouter.post("/media/vod/webhook", trancodeResHook);
 
 //apply auth middleware
 customerRouter.use(customerAuth);
