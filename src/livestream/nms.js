@@ -1,4 +1,5 @@
 const NodeMediaServer = require("node-media-server");
+const LivesModel = require("../models/lives.model");
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 
@@ -7,7 +8,7 @@ const connect = {
     pkg: require("../../package"),
     async register() {
         const config = {
-            logType: 4,
+            logType: 2,
             rtmp: {
                 port: 1935,
                 chunk_size: 60000,
@@ -26,33 +27,138 @@ const connect = {
                     {
                         app: "live",
                         hls: true,
-                        hlsFlags:
-                            "[hls_time=4:hls_list_size=6:hls_flags=delete_segments]",
-                        mp4: true,
-                        mp4Flags: "[movflags=frag_keyframe+empty_moov]",
-                        hardwareAccel: true,
-                        outputs: [
-                            {
-                                resolution: "854x480",
-                                bitrate: "1200k",
-                                output: "480p.m3u8",
-                            },
-                            {
-                                resolution: "1280x720",
-                                bitrate: "3000k",
-                                output: "720p.m3u8",
-                            },
-                            {
-                                resolution: "1920x1080",
-                                bitrate: "5000k",
-                                output: "1080p.m3u8",
-                            },
-                            {
-                                resolution: "3840x2160",
-                                bitrate: "12000k",
-                                output: "2160p.m3u8",
-                            },
+                        raw: [
+                            '-vf',
+                            'scale=w=640:h=360:force_original_aspect_ratio=decrease',
+                            '-c:a',
+                            'aac',
+                            '-ar',
+                            '48000',
+                            '-c:v',
+                            'libx264',
+                            '-preset',
+                            'veryfast',
+                            '-profile:v',
+                            'main',
+                            '-crf',
+                            '20',
+                            '-sc_threshold',
+                            '0',
+                            '-g',
+                            '48',
+                            '-keyint_min',
+                            '48',
+                            '-hls_time',
+                            '6',
+                            '-hls_list_size',
+                            '10',
+                            '-hls_flags',
+                            'delete_segments',
+                            '-max_muxing_queue_size',
+                            '1024',
+                            '-start_number',
+                            '${timeInMilliseconds}',
+                            '-b:v',
+                            '800k',
+                            '-maxrate',
+                            '856k',
+                            '-bufsize',
+                            '1200k',
+                            '-b:a',
+                            '96k',
+                            '-hls_segment_filename',
+                            '${mediaroot}/${streamName}/360p/%03d.ts',
+                            '${mediaroot}/${streamName}/360p/index.m3u8',
+                            '-vf',
+                            'scale=w=842:h=480:force_original_aspect_ratio=decrease',
+                            '-c:a',
+                            'aac',
+                            '-ar',
+                            '48000',
+                            '-c:v',
+                            'libx264',
+                            '-preset',
+                            'veryfast',
+                            '-profile:v',
+                            'main',
+                            '-crf',
+                            '20',
+                            '-sc_threshold',
+                            '0',
+                            '-g',
+                            '48',
+                            '-keyint_min',
+                            '48',
+                            '-hls_time',
+                            '6',
+                            '-hls_list_size',
+                            '10',
+                            '-hls_flags',
+                            'delete_segments',
+                            '-max_muxing_queue_size',
+                            '1024',
+                            '-start_number',
+                            '${timeInMilliseconds}',
+                            '-b:v',
+                            '1400k',
+                            '-maxrate',
+                            '1498k',
+                            '-bufsize',
+                            '2100k',
+                            '-b:a',
+                            '128k',
+                            '-hls_segment_filename',
+                            '${mediaroot}/${streamName}/480p/%03d.ts',
+                            '${mediaroot}/${streamName}/480p/index.m3u8',
+                            '-vf',
+                            'scale=w=1280:h=720:force_original_aspect_ratio=decrease',
+                            '-c:a',
+                            'aac',
+                            '-ar',
+                            '48000',
+                            '-c:v',
+                            'libx264',
+                            '-preset',
+                            'veryfast',
+                            '-profile:v',
+                            'main',
+                            '-crf',
+                            '20',
+                            '-sc_threshold',
+                            '0',
+                            '-g',
+                            '48',
+                            '-keyint_min',
+                            '48',
+                            '-hls_time',
+                            '6',
+                            '-hls_list_size',
+                            '10',
+                            '-hls_flags',
+                            'delete_segments',
+                            '-max_muxing_queue_size',
+                            '1024',
+                            '-start_number',
+                            '${timeInMilliseconds}',
+                            '-b:v',
+                            '2800k',
+                            '-maxrate',
+                            '2996k',
+                            '-bufsize',
+                            '4200k',
+                            '-b:a',
+                            '128k',
+                            '-hls_segment_filename',
+                            '${mediaroot}/${streamName}/720p/%03d.ts',
+                            '${mediaroot}/${streamName}/720p/index.m3u8'
+                          ],
+                        ouPaths: [
+                            '${mediaroot}/${streamName}/360p',
+                            '${mediaroot}/${streamName}/480p',
+                            '${mediaroot}/${streamName}/720p'
                         ],
+                        hlsFlags: '',
+                        cleanup: false,
                     },
                 ],
             },
@@ -60,25 +166,42 @@ const connect = {
 
         const nms = new NodeMediaServer(config);
 
-        // nms.on('prePublish', async (id, StreamPath, args) => {
-        //     const streamKey = getStreamKeyFromStreamPath(StreamPath);
-        //     console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+        let validStreamKeys = [];
 
-        //     try {
-        //         const streamKeyDoc = await LiveSteam.findOne({ key: streamKey, isActive: true });
-        //         if (streamKeyDoc) {
-        //             console.log('Stream key is valid');
-        //         } else {
-        //             console.log('Invalid stream key');
-        //             const session = nms.getSession(id);
-        //             session.reject();
-        //         }
-        //     } catch (error) {
-        //         console.error('Database query error:', error);
-        //         const session = nms.getSession(id);
-        //         session.reject();
-        //     }
-        // });
+        const fetchStreamKeys = async () => {
+        try {
+            const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
+            validStreamKeys = streamKeys.map(doc => doc.stream_key);
+            console.log('Fetched stream keys:', validStreamKeys);
+        } catch (error) {
+            console.error('Error fetching stream keys:', error);
+        }
+        };
+
+        fetchStreamKeys();
+
+        nms.on('prePublish', async (id, StreamPath, args) => {
+            console.log("args:", args)
+
+            const streamKey = StreamPath.toString().split('/').pop()
+
+            console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+
+            try {
+                if(!validStreamKeys.includes(streamKey)){
+                    console.log('Invalid stream key');
+                    const session = nms.getSession(id);
+                    session.sendStatusMessage(session.publishStreamId, 'error', 'NetStream.publish.Unauthorized', 'Authorization required.');
+                    session.reject();
+                }else {
+                    console.log('Stream key is valid');
+                }
+            } catch (error) {
+                console.error('Database query error:', error);
+                const session = nms.getSession(id);
+                session.reject();
+            }
+        });
 
         nms.run();
     },
