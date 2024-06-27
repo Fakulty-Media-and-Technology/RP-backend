@@ -5,7 +5,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const routes = require("./routes/index");
-const connect = require("./livestream/nms");
+const { connect } = require("./livestream/nms");
+const { getActiveSessions } = require("./cron");
 
 const app = express();
 
@@ -26,6 +27,9 @@ const connectDB = async () => {
 connectDB();
 
 connect.register(app);
+
+//Cron Jobs
+// getActiveSessions()
 
 app.use(
     express.json({

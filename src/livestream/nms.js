@@ -1,14 +1,28 @@
 const NodeMediaServer = require("node-media-server");
 const LivesModel = require("../models/lives.model");
+const liveStreamAuth = require("../middlewares/ls-auth.mw");
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
+
+
+let validStreamKeys = [];
+
+const fetchStreamKeys = async () => {
+try {
+    const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
+    validStreamKeys = streamKeys.map(doc => doc.stream_key);
+    // console.log('Fetched stream keys:', validStreamKeys);
+} catch (error) {
+    console.error('Error fetching stream keys:', error);
+}
+};
 
 const connect = {
     name: "live",
     pkg: require("../../package"),
     async register() {
         const config = {
-            logType: 2,
+            logType: 0,
             rtmp: {
                 port: 1935,
                 chunk_size: 60000,
@@ -20,6 +34,11 @@ const connect = {
                 port: process.env.MEDIA_SERVER_PORT || 8888,
                 mediaroot: "./media",
                 allow_origin: "*",
+            },
+            auth: {
+                play: true,
+                publish: true,
+                secret: 'nodemedia2017privatekey'
             },
             trans: {
                 ffmpeg: ffmpegPath,
@@ -169,32 +188,28 @@ const connect = {
         let validStreamKeys = [];
 
         const fetchStreamKeys = async () => {
-        try {
-            const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
-            validStreamKeys = streamKeys.map(doc => doc.stream_key);
-            console.log('Fetched stream keys:', validStreamKeys);
-        } catch (error) {
-            console.error('Error fetching stream keys:', error);
-        }
+            try {
+                const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
+                validStreamKeys = streamKeys.map(doc => doc.stream_key);
+                // console.log('Fetched stream keys:', validStreamKeys);
+            } catch (error) {
+                console.error('Error fetching stream keys:', error);
+            }
         };
 
-        fetchStreamKeys();
+        fetchStreamKeys()
 
         nms.on('prePublish', async (id, StreamPath, args) => {
-            console.log("args:", args)
-
             const streamKey = StreamPath.toString().split('/').pop()
-
-            console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
 
             try {
                 if(!validStreamKeys.includes(streamKey)){
                     console.log('Invalid stream key');
                     const session = nms.getSession(id);
-                    session.sendStatusMessage(session.publishStreamId, 'error', 'NetStream.publish.Unauthorized', 'Authorization required.');
+                    session.sendStatusMessage(session.publishStreamId, 'error', 'NetStream.publish.Unauthorized', 'Publisehr: Authorization required.');
                     session.reject();
                 }else {
-                    console.log('Stream key is valid');
+                    console.log('Stream key is valid:', validStreamKeys);
                 }
             } catch (error) {
                 console.error('Database query error:', error);
@@ -203,8 +218,34 @@ const connect = {
             }
         });
 
+        // nms.on('postPlay', async (id, args) => {
+        //     try {
+        //         console.log("argsss:", args)
+
+        //         const token = args?.token
+
+        //         if(!token){
+        //             const session = nms.getSession(id);
+        //             session.sendStatusMessage(session.publishStreamId, 'error', 'NetStream.publish.Unauthorized', 'Streamer: Authorization required.');
+        //             session.reject();
+        //         }
+                    
+        //         const user = await liveStreamAuth(token)
+
+        //         console.log("Streaming USer:", user)
+
+        //     } catch (error) {
+        //         console.error('Error Occurred:', error?.message);
+        //         const session = nms.getSession(id);
+        //         session.reject();
+        //     }
+        // });
+
         nms.run();
     },
 };
 
-module.exports = connect;
+module.exports = {
+    connect,
+    fetchStreamKeys
+};
