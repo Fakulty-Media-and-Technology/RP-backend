@@ -1,7 +1,7 @@
 const http = require("http");
 const app = require("./app");
-const socketChat = require("./socket/socketEvents");
 const { Server } = require("socket.io");
+const socketChat = require("./socket/socketEvents");
 
 const PORT = process.env.PORT;
 

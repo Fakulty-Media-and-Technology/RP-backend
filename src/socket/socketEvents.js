@@ -1,319 +1,139 @@
-// import socketAuth from "../middlewares/socket.auth.js";
-// import MessageModel from "../models/message.model.js";
-// import RoomsModel from "../models/rooms.model.js";
-// import UsersModel from "../models/users.model.js";
+import liveStreamAuth from "../middlewares/ls-auth.mw";
+import CommentsModel from "../models/comments.model";
+import LivesModel from "../models/lives.model";
 
 const socketChat = async (io) => {
     io.on("connection", async (socket) => {
-        const { token, name } = socket.handshake.query;
+        // const { token, name } = socket.handshake.query;
 
-        const reslt = await socketAuth(token);
-        console.log(reslt);
-        if (reslt === null) {
-            console.log("validation error");
-        }
+        // const reslt = await socketAuth(token);
+        // console.log(reslt);
+        // if (reslt === null) {
+        //     console.log("validation error");
+        // }
+
         let rooms = [...socket.rooms];
 
-        console.log(
-            "user connected",
-            socket.id,
-            socket.client.conn.server.clientsCount
-        );
+        // console.log(
+        //     "user connected",
+        //     socket.id,
+        //     socket.client.conn.server.clientsCount
+        // );
 
-        // socket.on("user connected", async ({ token }) => {
-        //     let userId = await socketAuth(token);
+        socket.on("livestream join", async (data) => {
+            const { token, liveId } = data;
 
-        //     socket.userId = userId?.data?._id;
+            let user = await liveStreamAuth(token);
 
-        //     const userid = socket?.userId;
+            socket.userId = user?._id;
+            socket.liveId = liveId;
 
-        //     await UsersModel.findOneAndUpdate(
-        //         {
-        //             _id: userid,
-        //         },
-        //         {
-        //             online: true,
-        //         },
-        //         {
-        //             upsert: true,
-        //         }
-        //     );
+            const userid = socket?.userId;
 
-        //     const userRooms = await RoomsModel.aggregate([
-        //         {
-        //             $match: {
-        //                 $expr: {
-        //                     $or: [
-        //                         {
-        //                             $eq: [
-        //                                 "$sender_id",
-        //                                 {
-        //                                     $toObjectId: userid,
-        //                                 },
-        //                             ],
-        //                         },
-        //                         {
-        //                             $eq: [
-        //                                 "$receiver_id",
-        //                                 {
-        //                                     $toObjectId: userid,
-        //                                 },
-        //                             ],
-        //                         },
-        //                     ],
-        //                 },
-        //             },
-        //         },
-        //         {
-        //             $project: {
-        //                 room_id: 1,
-        //             },
-        //         },
-        //     ]);
+            const liveEvent = await LivesModel.findOne({
+                _id: liveId,
+                active: true
+            });
 
-        //     for (let roomId of userRooms) {
-        //         socket.join(roomId.room_id);
-        //     }
+            if(!liveEvent) {
+                console.log("live event not exist or not active")
+                return null
+            }
 
-        //     io.emit("user online status", { userid, online: true });
-        //     console.log("logged-in user rooms", [...socket.rooms]);
+            const live_id = liveEvent._id.toString()
+
+            if(!rooms.includes(live_id)){
+                socket.join(live_id);
+            }
+
+            await LivesModel.findOneAndUpdate(
+                {
+                    _id: live_id
+                },
+                {
+                    $inc: {
+                        views: 1,
+                        active_views: 1
+                    }
+                },
+                {
+                    upsert: true
+                }
+            );
+            
+            io.to(live_id).emit("user joins", { user_id: userid, message: 'new user joined' });
+        });
+
+        socket.on("livestream comment", async (data) => {
+            const { token, liveId, message } = data;
+
+            let user = await liveStreamAuth(token);
+
+            const liveEvent = await LivesModel.findOne({
+                _id: liveId,
+                active: true
+            });
+
+            if (!liveEvent) {
+                return null;
+            }
+
+            if (message.toString().length < 2) {
+                return null;
+            }
+
+            const live_id = liveEvent._id.toString()
+
+            if (!rooms.includes(live_id)) {
+                socket.join(live_id);
+            }
+
+            const nComment = new CommentsModel({
+                customer_id: user._id,
+                message: message,
+                type: "live"
+            })
+
+            const newComment = await nComment.save();
+
+            io.to(live_id).emit("livestream comment", {
+                message: newComment,
+                room: roomExist,
+            });
+        });
+
+        // socket.on("livestream typing", async (data) => {
+        //     const {  } = data;
+
+        //     io.to(live_id).emit("livestream typing", data);
         // });
 
-        // socket.on("new room", async (data) => {
-        //     const { sender_id, receiver_id, message } = data;
+        socket.on("disconnect", async (reason) => {
+            console.log(
+                `user ${socket.userId} disconnected: ${reason}`,
+                socket.id,
+                socket.client.conn.server.clientsCount
+            );
 
-        //     const room1 = `private-${sender_id}-${receiver_id}`;
+            const userId = socket.userId;
+            const live_id = socket.liveId;
 
-        //     const room2 = `private-${receiver_id}-${sender_id}`;
+            await LivesModel.findOneAndUpdate(
+                {
+                    _id: live_id
+                },
+                {
+                    $inc: {
+                        active_views: -1
+                    }
+                },
+                {
+                    upsert: true
+                }
+            );
 
-        //     const check1 = await UsersModel.aggregate([
-        //         {
-        //             $match: {
-        //                 $expr: {
-        //                     $and: {
-        //                         $eq: ["$_id", sender_id],
-        //                         $in: [
-        //                             {
-        //                                 $toString: receiver_id,
-        //                             },
-        //                             "$block_list",
-        //                         ],
-        //                     },
-        //                 },
-        //             },
-        //         },
-        //     ]);
-
-        //     const check2 = await UsersModel.aggregate([
-        //         {
-        //             $match: {
-        //                 $expr: {
-        //                     $and: {
-        //                         $eq: ["$_id", receiver_id],
-        //                         $in: [
-        //                             {
-        //                                 $toString: sender_id,
-        //                             },
-        //                             "$block_list",
-        //                         ],
-        //                     },
-        //                 },
-        //             },
-        //         },
-        //     ]);
-
-        //     if (check1 || check2) {
-        //         console.log("blocked user, you cannot communicate");
-        //         return null;
-        //     }
-
-        //     const roomExist = await RoomsModel.aggregate([
-        //         {
-        //             $match: {
-        //                 $expr: {
-        //                     $or: [
-        //                         {
-        //                             $eq: ["$room_id", room1],
-        //                         },
-        //                         {
-        //                             $eq: ["$room_id", room2],
-        //                         },
-        //                     ],
-        //                 },
-        //             },
-        //         },
-        //     ]);
-
-        //     if (
-        //         roomExist[0]?.room_id === room1 ||
-        //         roomExist[0]?.room_id === room2
-        //     ) {
-        //         console.log("room already exist");
-        //         return null;
-        //     }
-
-        //     const newRoomDb = new RoomsModel({
-        //         room_id: room1,
-        //         sender_id: sender_id,
-        //         receiver_id: receiver_id,
-        //     });
-
-        //     let newRoom = await newRoomDb.save();
-
-        //     if (!rooms.includes(newRoom.room_id)) {
-        //         socket.join(newRoom.room_id);
-        //     }
-
-        //     const nMessage = new MessageModel({
-        //         room_id: newRoom.room_id,
-        //         sender_id: sender_id,
-        //         message: message,
-        //         message_type: "text",
-        //     });
-
-        //     await nMessage.save();
-
-        //     io.to(newRoom.room_id).emit("new room", {
-        //         room: newRoom,
-        //         message: "new chat initiated",
-        //     });
-        // });
-
-        // socket.on("new message", async (data) => {
-        //     const { sender_id, receiver_id, room_id, message, message_type } =
-        //         data;
-
-        //     const chatroom = room_id;
-
-        //     let roomExist = await RoomsModel.findOne({
-        //         room_id: chatroom,
-        //     });
-
-        //     if (message.toString().length < 3) {
-        //         return null;
-        //     }
-
-        //     if (!roomExist || roomExist.room_id !== chatroom) {
-        //         return null;
-        //     }
-
-        //     const check1 = await UsersModel.aggregate([
-        //         {
-        //             $match: {
-        //                 $expr: {
-        //                     $and: {
-        //                         $eq: ["$_id", sender_id],
-        //                         $in: [
-        //                             {
-        //                                 $toString: receiver_id,
-        //                             },
-        //                             "$block_list",
-        //                         ],
-        //                     },
-        //                 },
-        //             },
-        //         },
-        //     ]);
-
-        //     const check2 = await UsersModel.aggregate([
-        //         {
-        //             $match: {
-        //                 $expr: {
-        //                     $and: {
-        //                         $eq: ["$_id", receiver_id],
-        //                         $in: [
-        //                             {
-        //                                 $toString: sender_id,
-        //                             },
-        //                             "$block_list",
-        //                         ],
-        //                     },
-        //                 },
-        //             },
-        //         },
-        //     ]);
-
-        //     if (check1 || check2) {
-        //         console.log("blocked user, you cannot communicate");
-        //         return null;
-        //     }
-
-        //     if (!rooms.includes(roomExist.room_id)) {
-        //         socket.join(roomExist.room_id);
-        //     }
-
-        //     const nMessage = new MessageModel({
-        //         room_id: roomExist.room_id,
-        //         sender_id: sender_id,
-        //         message: message,
-        //         message_type: "text",
-        //     });
-
-        //     const newMessage = await nMessage.save();
-
-        //     // socket.to(roomExist.room_id).emit("new message", {
-        //     //     message: newMessage,
-        //     //     room: roomExist,
-        //     // });
-
-        //     // socket.broadcast.to(roomExist.room_id).emit("new message", {
-        //     //     message: newMessage,
-        //     //     room: roomExist,
-        //     // });
-        //     io.to(roomExist.room_id).emit("new message", {
-        //         message: newMessage,
-        //         room: roomExist,
-        //     });
-        // });
-
-        // socket.on("seen status", async (data) => {
-        //     const { time_seen, user_id, room_id } = data;
-
-        //     const filter = {
-        //         sender_id: {
-        //             $ne: user_id,
-        //         },
-        //         room_id: room_id,
-        //         seen_status: false,
-        //         createdAt: {
-        //             $lte: new Date(time_seen),
-        //         },
-        //     };
-
-        //     const update = {
-        //         $set: {
-        //             seen_status: true,
-        //         },
-        //     };
-
-        //     await MessageModel.updateMany(filter, update);
-
-        //     io.to(room_id).emit("seen status", data);
-        // });
-
-        // socket.on("disconnect", async (reason) => {
-        //     console.log(
-        //         `user disconnected: ${reason}`,
-        //         socket.id,
-        //         socket.client.conn.server.clientsCount
-        //     );
-
-        //     const userId = socket.userId;
-
-        //     await UsersModel.findOneAndUpdate(
-        //         {
-        //             _id: userId,
-        //         },
-        //         {
-        //             online: false,
-        //         },
-        //         {
-        //             upsert: true,
-        //         }
-        //     );
-
-        //     io.emit("user online status", { userId, online: false });
-        // });
+            io.to().emit("disconnect", { user_id: userId, message: 'user left' });
+        });
     });
 };
 

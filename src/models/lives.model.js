@@ -57,6 +57,15 @@ const liveVideosSchema = new mongoose.Schema(
         expiry: {
             type: Number,
         },
+        views: {
+            type: Number,
+        },
+        active_views: {
+            type: Number,
+        },
+        likes: {
+            type: [String],
+        },
     },
     {
         timestamps: true,
