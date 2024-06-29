@@ -1,6 +1,6 @@
-import liveStreamAuth from "../middlewares/ls-auth.mw";
-import CommentsModel from "../models/comments.model";
-import LivesModel from "../models/lives.model";
+const liveStreamAuth = require("../middlewares/ls-auth.mw");
+const CommentsModel = require("../models/comments.model");
+const LivesModel = require("../models/lives.model");
 
 const socketChat = async (io) => {
     io.on("connection", async (socket) => {
@@ -137,4 +137,4 @@ const socketChat = async (io) => {
     });
 };
 
-export default socketChat;
+module.exports = socketChat;

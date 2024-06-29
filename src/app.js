@@ -61,17 +61,6 @@ app.get("/", (req, res) => {
     });
 });
 
-// app.get("/api/sse/upload-largevideo", (req, res) => {
-//     res.setHeader("Content-Type", "text/event-stream");
-//     res.setHeader("Cache-Control", "no-cache");
-//     res.setHeader("Connection", "keep-alive");
-//     res.flushHeaders();
-
-//     req.on("close", () => {
-//         console.log("Connection closed");
-//     });
-// });
-
-app.use("/api", routes);
+app.use("/api/v1", routes);
 
 module.exports = app;

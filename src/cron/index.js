@@ -6,6 +6,10 @@ const getActiveSessions = node_cron.schedule('*/5 * * * *', () => {
     fetchStreamKeys()
 })
 
+// TODO
+// cron and deactivate expired livestream
+// cron and delete expired video
+
 module.exports = {
     getActiveSessions
 }

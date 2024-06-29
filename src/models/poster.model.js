@@ -11,11 +11,12 @@ const posterSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        dimension: {
-            type: String,
-            enum: ["portrait", "landscape"],
-            required: true,
+        portrait_photo: {
+            type: Object
         },
+        landscape_photo: {
+            type: Object
+        }
     },
     {
         timestamps: true,

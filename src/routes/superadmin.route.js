@@ -21,12 +21,14 @@ const {
     adminGetPhotoUrl,
     createLive,
 } = require("../controllers/admins.controller.js/managemedia.admin");
+const superadminAuth = require("../middlewares/superadmin.mw");
 
 const superAdminRouter = express.Router();
 
 superAdminRouter.post("/admins-signin", adminSignIn);
 
 //apply super-admin auth middleware
+superAdminRouter.use(superadminAuth);
 
 superAdminRouter.post("/create-super-admin", superAdminSignup);
 

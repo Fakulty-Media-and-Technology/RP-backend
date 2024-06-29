@@ -24,6 +24,11 @@ const {
     checkandGetResHook,
     vodStream,
     uploadImageRoute,
+    getLiveEvents,
+    streamLiveEvent,
+    likeEvent,
+    unLikeEvent,
+    userLikedEvent,
 } = require("../controllers/customers.controller.js/medias.customer");
 const {
     customerProfileFetch,
@@ -69,5 +74,17 @@ customerRouter.post("/media/upload-photo", uploadImageRoute);
 // customerRouter.post("/media/photo-url", customerGetPhotoUrl);
 
 customerRouter.post("/media/vod-streaming", vodStream);
+
+//live events
+customerRouter.get("/live/events/fetch", getLiveEvents);
+
+customerRouter.get("/live/event/stream/:id", streamLiveEvent);
+
+customerRouter.post("/live/event/like/:id", likeEvent);
+
+customerRouter.get("/live/event/userliked/:id", userLikedEvent);
+
+customerRouter.post("/live/event/unlike/:id", unLikeEvent);
+
 
 module.exports = customerRouter;

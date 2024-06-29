@@ -10,16 +10,14 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: "*",
     methods: ["GET", "POST","PUT", "DELETE"],
-})
+});
 
 global.io = io;
 
-socketChat(io)
+socketChat(io);
 
 server.listen(PORT, () => {
     console.log(
-        `Node Server Listening on port: ${PORT} \n [http://localhost:${PORT}]`
+        `Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`
     );
-});
-
-module.exports = server;
+})

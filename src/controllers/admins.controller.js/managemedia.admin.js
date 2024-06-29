@@ -414,3 +414,12 @@ exports.createLive = async (req, res) => {
         return serverError(res, 500, null, error.message);
     }
 };
+
+
+//TODO
+// GET VIDEOS VOD BY THEIR TYPES... AS ON THE FIGMA MOVIES, SERIES, ...., GET EACH BY CATEG, AND UPLOAD EACH
+// WANT TO ALSO WORK ON HOW TO MANAGE SERIES TOGETHER WITH MOVIES EFFICIENTLY
+
+
+// ALSO HERE.... create lives by client type (channels, tvshow, ...)
+//get adctive streams.. as on the figma design

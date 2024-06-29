@@ -9,6 +9,7 @@ const {
     successResponse,
     serverError,
     failedResponse,
+    invalidRequest,
 } = require("../../utils/response.handler");
 
 const {
@@ -19,6 +20,7 @@ const {
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { getSignedUrl: getCFSignedUrl } = require("@aws-sdk/cloudfront-signer");
 const UserSettingsModel = require('../../models/userSettings.model');
+const LivesModel = require('../../models/lives.model');
 
 exports.uploadImageRoute = async (req, res) => {
     try {
@@ -137,101 +139,182 @@ exports.vodStream = async (req, res) => {
     }
 };
 
-//res hook processing
-// const bucketName = process.env.S3BUCKET;
-// const expirationTime = 3600; // URL expiration time in seconds
+exports.getLiveEvents = async (req, res) => {
+    try {
+        const liveEvents = await LivesModel.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $eq: ["$active", true]
+                    }
+                }
+            },
+            {
+                $project:{
+                    title: 1,
+                    sub_title: 1,
+                    cover_photo: 1,
+                    vid_class: 1,
+                    pg: 1,
+                    category: 1,
+                    description: 1,
+                    type: 1,
+                    participants: 1
+                }
+            }
+        ]);
 
-// const generateSignedUrl = async (key) => {
-//     const params = {
-//         Bucket: bucketName,
-//         Key: key,
-//     };
-//     const command = new GetObjectCommand(params);
-//     const signedUrl = await getSignedUrl(s3Client, command, {
-//         expiresIn: expirationTime,
-//     });
-//     return signedUrl;
-// };
+        for (let event of liveEvents) {
+            if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+                const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key);
+                event.photo_url = signedUrl.status == 400 ? "no picture" : signedUrl;
+            } else {
+                event.photo_url = "no picture";
+            }
+        }
 
-// exports.trancodeResHook = async (req, res) => {
-//     res.setHeader("Content-Type", "text/event-stream");
-//     res.setHeader("Cache-Control", "no-cache");
-//     res.setHeader("Connection", "keep-alive");
-//     res.flushHeaders();
+        return successResponse(
+            res,
+            200,
+            liveEvents,
+            "live events fetched"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
 
-//     const notification = req.body;
+exports.streamLiveEvent = async (req, res) => {
+    try {
+        const streamId = req.params.id
 
-//     if (notification.event === "job.completed") {
-//         // Handle the completed job notification
-//         console.log("Job completed:", notification);
+        const liveEvents = await LivesModel.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            {
+                                $eq: [
+                                    "$_id", 
+                                    {
+                                        $toObjectId: streamId
+                                    }
+                                ]
+                            },
+                            {
+                                $eq: ["$active", true]
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                $project:{
+                    title: 1,
+                    sub_title: 1,
+                    cover_photo: 1,
+                    stream_key: 1,
+                    vid_class: 1,
+                    pg: 1,
+                    category: 1,
+                    description: 1,
+                    type: 1,
+                    participants: 1
+                }
+            }
+        ]);
 
-//         const outputs = notification.data.outputs;
-//         const resultUrls = {};
+        const stream_url = `${process.env.RP_HLSURL}${liveEvents[0]?.stream_key}/index.m3u8`;
 
-//         // for (const output of outputs) {
-//         //     if (output.type === "video") {
-//         //         const key = new URL(output.url).pathname.substring(1);
-//         //         resultUrls[output.key] = await generateSignedUrl(key);
-//         //     } else if (
-//         //         output.type === "image" ||
-//         //         output.type === "httpstream"
-//         //     ) {
-//         //         const signedUrls = await Promise.all(
-//         //             output.urls.map(async (url) => {
-//         //                 const key = new URL(url).pathname.substring(1);
-//         //                 return generateSignedUrl(key);
-//         //             })
-//         //         );
-//         //         resultUrls[output.key] = signedUrls;
-//         //     }
-//         // }
+        liveEvents[0].stream_key = null
 
-//         // // Store the resultUrls in your DB or perform other operations
-//         // DB[notification.data.id] = resultUrls;
+        return successResponse(
+            res,
+            200,
+            {
+                live_data: liveEvents[0],
+                url: stream_url
+            },
+            "live events fetched"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
 
-//         // console.log("Result URLs:", resultUrls);
-//     } else if (notification.event === "job.error") {
-//         // Handle the error notification
-//         console.error("Job error:", notification);
-//     } else {
-//         console.log(
-//             "Received event:",
-//             notification,
-//             notification?.data?.outputs
-//         );
-//     }
+exports.likeEvent = async (req, res) => {
+    try {
+        const streamId = req.params.id
 
-//     // res.sendStatus(200);
-// };
+        const user = req.user
 
-// exports.checkandGetResHook = (req, res) => {
-//     try {
-//         res.setHeader("Content-Type", "text/event-stream");
-//         res.setHeader("Cache-Control", "no-cache");
-//         res.setHeader("Connection", "keep-alive");
-//         res.flushHeaders();
+        const resLikes = await LivesModel.findOne(
+            {
+                _id: streamId
+            }
+        )
 
-//         const hook_id = req.params.id;
+        if(resLikes.likes.includes(user._id.toString())){
+            return invalidRequest(res, 400, null, "user already liked")
+        }
 
-//         const checkForData = () => {
-//             if (DB[hook_id]) {
-//                 res.write(`data: ${JSON.stringify(DB[hook_id])}\n\n`);
-//                 res.end(); // Close the connection after sending the data
-//             }
-//         };
+        await LivesModel.findOneAndUpdate(
+            {
+                _id: streamId
+            },
+            {
+                $push: {
+                    likes: user._id
+                }
+            }
+        )
 
-//         // Check immediately in case the data is already available
-//         checkForData();
+        return successResponse( res, 200, null, "event liked");
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
 
-//         // Periodically check for user data
-//         const interval = setInterval(checkForData, 2000); // Check every 5 seconds
+exports.userLikedEvent = async (req, res) => {
+    try {
+        const streamId = req.params.id
 
-//         // Cleanup on client disconnect
-//         req.on("close", () => {
-//             clearInterval(interval);
-//             res.end();
-//         });
-//     } catch (error) {
-//         return serverError(res, 500, null, error.message);
-//     }
-// };
+        const user = req.user
+
+        const resLikes = await LivesModel.findOne(
+            {
+                _id: streamId
+            }
+        )
+
+        const userLiked = resLikes.likes.includes(user._id.toString()) ? true : false
+
+        return successResponse( res, 200, { liked: userLiked }, "checks if user alrealdy liked");
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
+exports.unLikeEvent = async (req, res) => {
+    try {
+        const streamId = req.params.id
+
+        const user = req.user
+
+        await LivesModel.findOneAndUpdate(
+            {
+                _id: streamId
+            },
+            {
+                $pull: {
+                    likes: user._id
+                }
+            }
+        )
+
+        return successResponse( res, 200, null, "event unliked");
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
