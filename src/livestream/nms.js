@@ -1,6 +1,8 @@
 const NodeMediaServer = require("node-media-server");
 const LivesModel = require("../models/lives.model");
 const liveStreamAuth = require("../middlewares/ls-auth.mw");
+const UsersModel = require("../models/users.model");
+const { VerifytPass } = require("../utils/bcrypt");
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 
@@ -8,13 +10,13 @@ const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 let validStreamKeys = [];
 
 const fetchStreamKeys = async () => {
-try {
-    const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
-    validStreamKeys = streamKeys.map(doc => doc.stream_key);
-    // console.log('Fetched stream keys:', validStreamKeys);
-} catch (error) {
-    console.error('Error fetching stream keys:', error);
-}
+    try {
+        const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
+        validStreamKeys = streamKeys.map(doc => doc.stream_key);
+        // console.log('Fetched stream keys:', validStreamKeys);
+    } catch (error) {
+        console.error('Error fetching stream keys:', error);
+    }
 };
 
 const connect = {
@@ -199,10 +201,83 @@ const connect = {
 
         fetchStreamKeys()
 
-        nms.on('prePublish', async (id, StreamPath, args) => {
-            const streamKey = StreamPath.toString().split('/').pop()
-
+        const authLiveStm = async (email, password) => {
             try {
+                const userExist = await UsersModel.findOne({
+                    email: email,
+                });
+        
+                if (!userExist) {
+                    return false
+                }
+        
+                if (
+                    ![
+                        "channel",
+                        "tvshow",
+                        "event",
+                        "podcast",
+                    ].includes(userExist.role)
+                ) {
+                    return false
+                }
+        
+                const passVerify = await VerifytPass(password, userExist.password);
+        
+                if (!passVerify) {
+                    return false
+                }
+        
+                if (userExist.suspended) {
+                    return false
+                }
+
+                return true
+            } catch (error) {
+                console.error('Error fetching stream keys:', error);
+            }
+        }
+
+        nms.on('preConnect', async (id, args) => {
+            try {
+                const extractQueryParams = (url) => {
+                    const queryParams = {};
+                    const urlObj = new URL(url, `rtmp://${config.rtmp.port}`);
+                    urlObj.searchParams.forEach((value, key) => {
+                        queryParams[key] = value.replace(/"/g, '');
+                    });
+                    return queryParams;
+                };
+        
+                const appParams = extractQueryParams(args.app);
+                const email = appParams.email;
+                const password = appParams.password;
+                
+                if (!email || !password) {
+                    const session = nms.getSession(id);
+                    session.reject();
+                    return;
+                }
+
+                const authenticate = await authLiveStm(email, password);
+                console.log("auuut", authenticate)
+
+                if(!authenticate){
+                    console.log('Invalid auth credentials');
+                    const session = nms.getSession(id);
+                    session.reject();
+                }else {
+                    console.log('Auth Credentials are valid!');
+                }
+            } catch (error) {
+                console.error('Error in validating credentials:', error);
+            }
+        });
+
+        nms.on('prePublish', async (id, StreamPath, args) => {
+            try {
+                const streamKey = StreamPath.toString().split('/').pop();
+
                 if(!validStreamKeys.includes(streamKey)){
                     console.log('Invalid stream key');
                     const session = nms.getSession(id);
@@ -217,29 +292,6 @@ const connect = {
                 session.reject();
             }
         });
-
-        // nms.on('postPlay', async (id, args) => {
-        //     try {
-        //         console.log("argsss:", args)
-
-        //         const token = args?.token
-
-        //         if(!token){
-        //             const session = nms.getSession(id);
-        //             session.sendStatusMessage(session.publishStreamId, 'error', 'NetStream.publish.Unauthorized', 'Streamer: Authorization required.');
-        //             session.reject();
-        //         }
-                    
-        //         const user = await liveStreamAuth(token)
-
-        //         console.log("Streaming USer:", user)
-
-        //     } catch (error) {
-        //         console.error('Error Occurred:', error?.message);
-        //         const session = nms.getSession(id);
-        //         session.reject();
-        //     }
-        // });
 
         nms.run();
     },

@@ -186,7 +186,7 @@ exports.createVideo = async (req, res) => {
         }
 
         if (
-            !tittl ||
+            !title ||
             !type ||
             !key ||
             !description ||

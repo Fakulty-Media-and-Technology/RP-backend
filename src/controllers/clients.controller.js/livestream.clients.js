@@ -12,7 +12,7 @@ exports.liveStreamCredentials = async (req, res) => {
     try {
         const user = req.user;
 
-        const strm_url = process.env.RP_RTMPURL;
+        const strm_url = `${process.env.RP_RTMPURL}?email=''&&password=''`;
 
         const myStream = await LivesModel.aggregate([
             {
