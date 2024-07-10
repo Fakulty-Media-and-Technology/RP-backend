@@ -32,6 +32,7 @@ const {
     likeVideo,
     userLikedVideo,
     unLikeVideo,
+    getLiveEventsGroup,
 } = require("../controllers/customers.controller.js/medias.customer");
 const {
     customerProfileFetch,
@@ -86,7 +87,9 @@ customerRouter.get("/media/vod/userliked/:id", userLikedVideo);
 customerRouter.post("/media/vod/unlike/:id", unLikeVideo);
 
 //live events
-customerRouter.get("/live/events/fetch", getLiveEvents);
+customerRouter.get("/live/events/fetch/all", getLiveEvents);
+
+customerRouter.get("/live/events/fetch/group", getLiveEventsGroup);
 
 customerRouter.get("/live/event/stream/:id", streamLiveEvent);
 

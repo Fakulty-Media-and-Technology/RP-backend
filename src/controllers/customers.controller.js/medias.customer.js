@@ -263,6 +263,69 @@ exports.getLiveEvents = async (req, res) => {
     }
 }
 
+exports.getLiveEventsGroup = async (req, res) => {
+    try {
+        const liveEvents = await LivesModel.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $eq: ["$active", true]
+                    }
+                }
+            },
+            {
+                $project: {
+                    title: 1,
+                    sub_title: 1,
+                    cover_photo: 1,
+                    vid_class: 1,
+                    pg: 1,
+                    category: 1,
+                    description: 1,
+                    type: 1,
+                    participants: 1
+                }
+            },
+            {
+                $group: {
+                    _id: "$type",
+                    events: {
+                        $push: {
+                            title: "$title",
+                            sub_title: "$sub_title",
+                            cover_photo: "$cover_photo",
+                            vid_class: "$vid_class",
+                            pg: "$pg",
+                            category: "$category",
+                            description: "$description",
+                            participants: "$participants"
+                        }
+                    }
+                }
+            }
+        ]);
+    
+        const result = {};
+    
+        for (let group of liveEvents) {
+            result[group._id] = [];
+            for (let event of group.events) {
+                if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+                    const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key);
+                    event.photo_url = signedUrl.status == 400 ? "no picture" : signedUrl;
+                } else {
+                    event.photo_url = "no picture";
+                }
+                result[group._id].push(event);
+            }
+        }
+    
+        return successResponse(res, 200, result, "live events fetched by group");
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 exports.streamLiveEvent = async (req, res) => {
     try {
         const streamId = req.params.id
