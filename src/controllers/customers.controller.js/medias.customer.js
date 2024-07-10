@@ -21,6 +21,7 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { getSignedUrl: getCFSignedUrl } = require("@aws-sdk/cloudfront-signer");
 const UserSettingsModel = require('../../models/userSettings.model');
 const LivesModel = require('../../models/lives.model');
+const VideosModel = require('../../models/videos.model');
 
 exports.uploadImageRoute = async (req, res) => {
     try {
@@ -139,6 +140,84 @@ exports.vodStream = async (req, res) => {
     }
 };
 
+
+exports.likeVideo = async (req, res) => {
+    try {
+        const streamId = req.params.id
+
+        const user = req.user
+
+        const resLikes = await VideosModel.findOne(
+            {
+                _id: streamId
+            }
+        )
+
+        if(resLikes.likes.includes(user._id.toString())){
+            return invalidRequest(res, 400, null, "user already liked")
+        }
+
+        await VideosModel.findOneAndUpdate(
+            {
+                _id: streamId
+            },
+            {
+                $push: {
+                    likes: user._id
+                }
+            }
+        )
+
+        return successResponse( res, 200, null, "video liked");
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
+exports.userLikedVideo = async (req, res) => {
+    try {
+        const streamId = req.params.id
+
+        const user = req.user
+
+        const resLikes = await VideosModel.findOne(
+            {
+                _id: streamId
+            }
+        )
+
+        const userLiked = resLikes.likes.includes(user._id.toString()) ? true : false
+
+        return successResponse( res, 200, { liked: userLiked }, "checks if user alrealdy liked");
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
+exports.unLikeVideo = async (req, res) => {
+    try {
+        const streamId = req.params.id
+
+        const user = req.user
+
+        await VideosModel.findOneAndUpdate(
+            {
+                _id: streamId
+            },
+            {
+                $pull: {
+                    likes: user._id
+                }
+            }
+        )
+
+        return successResponse( res, 200, null, "video unliked");
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
+
 exports.getLiveEvents = async (req, res) => {
     try {
         const liveEvents = await LivesModel.aggregate([
@@ -237,82 +316,6 @@ exports.streamLiveEvent = async (req, res) => {
             },
             "live events fetched"
         );
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
-}
-
-exports.likeEvent = async (req, res) => {
-    try {
-        const streamId = req.params.id
-
-        const user = req.user
-
-        const resLikes = await LivesModel.findOne(
-            {
-                _id: streamId
-            }
-        )
-
-        if(resLikes.likes.includes(user._id.toString())){
-            return invalidRequest(res, 400, null, "user already liked")
-        }
-
-        await LivesModel.findOneAndUpdate(
-            {
-                _id: streamId
-            },
-            {
-                $push: {
-                    likes: user._id
-                }
-            }
-        )
-
-        return successResponse( res, 200, null, "event liked");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
-}
-
-exports.userLikedEvent = async (req, res) => {
-    try {
-        const streamId = req.params.id
-
-        const user = req.user
-
-        const resLikes = await LivesModel.findOne(
-            {
-                _id: streamId
-            }
-        )
-
-        const userLiked = resLikes.likes.includes(user._id.toString()) ? true : false
-
-        return successResponse( res, 200, { liked: userLiked }, "checks if user alrealdy liked");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
-}
-
-exports.unLikeEvent = async (req, res) => {
-    try {
-        const streamId = req.params.id
-
-        const user = req.user
-
-        await LivesModel.findOneAndUpdate(
-            {
-                _id: streamId
-            },
-            {
-                $pull: {
-                    likes: user._id
-                }
-            }
-        )
-
-        return successResponse( res, 200, null, "event unliked");
     } catch (error) {
         return serverError(res, 500, null, error.message);
     }

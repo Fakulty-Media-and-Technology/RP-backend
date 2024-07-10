@@ -29,6 +29,9 @@ const {
     likeEvent,
     unLikeEvent,
     userLikedEvent,
+    likeVideo,
+    userLikedVideo,
+    unLikeVideo,
 } = require("../controllers/customers.controller.js/medias.customer");
 const {
     customerProfileFetch,
@@ -52,6 +55,9 @@ customerRouter.post("/pass-reset/change-pass", passwordChange);
 //webhook, no auth mw
 // customerRouter.post("/media/vod/webhook", trancodeResHook);
 
+//no auth for vod
+customerRouter.post("/media/vod-streaming", vodStream);
+
 //apply auth middleware
 customerRouter.use(customerAuth);
 
@@ -73,18 +79,15 @@ customerRouter.post("/media/upload-photo", uploadImageRoute);
 
 // customerRouter.post("/media/photo-url", customerGetPhotoUrl);
 
-customerRouter.post("/media/vod-streaming", vodStream);
+customerRouter.post("/media/vod/like/:id", likeVideo);
+
+customerRouter.get("/media/vod/userliked/:id", userLikedVideo);
+
+customerRouter.post("/media/vod/unlike/:id", unLikeVideo);
 
 //live events
 customerRouter.get("/live/events/fetch", getLiveEvents);
 
 customerRouter.get("/live/event/stream/:id", streamLiveEvent);
-
-customerRouter.post("/live/event/like/:id", likeEvent);
-
-customerRouter.get("/live/event/userliked/:id", userLikedEvent);
-
-customerRouter.post("/live/event/unlike/:id", unLikeEvent);
-
 
 module.exports = customerRouter;

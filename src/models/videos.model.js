@@ -55,6 +55,9 @@ const videosSchema = new mongoose.Schema(
         expiry_date: {
             type: Date,
         },
+        likes: {
+            type: [String],
+        },
     },
     {
         timestamps: true,
