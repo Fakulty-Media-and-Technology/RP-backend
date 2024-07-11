@@ -263,18 +263,18 @@ exports.getLiveEvents = async (req, res) => {
     }
 }
 
-exports.getLiveEventsGroup = async (req, res) => {
+exports.getLiveEventsSponsored = async (req, res) => {
     try {
         const liveEvents = await LivesModel.aggregate([
             {
                 $match: {
                     $expr: {
-                        $eq: ["$active", true]
+                        $eq: ["$sponsored", true]
                     }
                 }
             },
             {
-                $project: {
+                $project:{
                     title: 1,
                     sub_title: 1,
                     cover_photo: 1,
@@ -285,44 +285,286 @@ exports.getLiveEventsGroup = async (req, res) => {
                     type: 1,
                     participants: 1
                 }
+            }
+        ]);
+
+        for (let event of liveEvents) {
+            if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+                const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key);
+                event.photo_url = signedUrl.status == 400 ? "no picture" : signedUrl;
+            } else {
+                event.photo_url = "no picture";
+            }
+        }
+
+        return successResponse(
+            res,
+            200,
+            liveEvents,
+            "live events fetched: sponsored events"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
+exports.getLiveEventsChannels = async (req, res) => {
+    try {
+        const liveEvents = await LivesModel.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            {
+                                $eq: ["$active", true],
+                            },
+                            {
+                                $eq: ["$type", "channel"],
+                            }
+                        ]
+                    }
+                }
             },
             {
-                $group: {
-                    _id: "$type",
-                    events: {
-                        $push: {
-                            title: "$title",
-                            sub_title: "$sub_title",
-                            cover_photo: "$cover_photo",
-                            vid_class: "$vid_class",
-                            pg: "$pg",
-                            category: "$category",
-                            description: "$description",
-                            participants: "$participants"
-                        }
-                    }
+                $project:{
+                    title: 1,
+                    sub_title: 1,
+                    cover_photo: 1,
+                    vid_class: 1,
+                    pg: 1,
+                    category: 1,
+                    description: 1,
+                    type: 1,
+                    participants: 1
                 }
             }
         ]);
-    
-        const result = {};
-    
-        for (let group of liveEvents) {
-            result[group._id] = [];
-            for (let event of group.events) {
-                if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
-                    const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key);
-                    event.photo_url = signedUrl.status == 400 ? "no picture" : signedUrl;
-                } else {
-                    event.photo_url = "no picture";
-                }
-                result[group._id].push(event);
+
+        for (let event of liveEvents) {
+            if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+                const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key);
+                event.photo_url = signedUrl.status == 400 ? "no picture" : signedUrl;
+            } else {
+                event.photo_url = "no picture";
             }
         }
-    
-        return successResponse(res, 200, result, "live events fetched by group");
-    } catch (err) {
-        console.error(err);
+
+        return successResponse(
+            res,
+            200,
+            liveEvents,
+            "live events fetched: channels"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
+exports.getLiveEventsEven = async (req, res) => {
+    try {
+        const liveEvents = await LivesModel.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            {
+                                $eq: ["$active", true],
+                            },
+                            {
+                                $eq: ["$type", "events"],
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                $project:{
+                    title: 1,
+                    sub_title: 1,
+                    cover_photo: 1,
+                    vid_class: 1,
+                    pg: 1,
+                    category: 1,
+                    description: 1,
+                    type: 1,
+                    participants: 1
+                }
+            }
+        ]);
+
+        for (let event of liveEvents) {
+            if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+                const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key);
+                event.photo_url = signedUrl.status == 400 ? "no picture" : signedUrl;
+            } else {
+                event.photo_url = "no picture";
+            }
+        }
+
+        return successResponse(
+            res,
+            200,
+            liveEvents,
+            "live events fetched: events"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
+exports.getLiveEventsTvshow = async (req, res) => {
+    try {
+        const liveEvents = await LivesModel.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            {
+                                $eq: ["$active", true],
+                            },
+                            {
+                                $eq: ["$type", "tvshow"],
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                $project:{
+                    title: 1,
+                    sub_title: 1,
+                    cover_photo: 1,
+                    vid_class: 1,
+                    pg: 1,
+                    category: 1,
+                    description: 1,
+                    type: 1,
+                    participants: 1
+                }
+            }
+        ]);
+
+        for (let event of liveEvents) {
+            if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+                const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key);
+                event.photo_url = signedUrl.status == 400 ? "no picture" : signedUrl;
+            } else {
+                event.photo_url = "no picture";
+            }
+        }
+
+        return successResponse(
+            res,
+            200,
+            liveEvents,
+            "live events fetched: tvshow"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
+exports.getLiveEventsSports = async (req, res) => {
+    try {
+        const liveEvents = await LivesModel.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            {
+                                $eq: ["$active", true],
+                            },
+                            {
+                                $eq: ["$type", "sports"],
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                $project:{
+                    title: 1,
+                    sub_title: 1,
+                    cover_photo: 1,
+                    vid_class: 1,
+                    pg: 1,
+                    category: 1,
+                    description: 1,
+                    type: 1,
+                    participants: 1
+                }
+            }
+        ]);
+
+        for (let event of liveEvents) {
+            if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+                const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key);
+                event.photo_url = signedUrl.status == 400 ? "no picture" : signedUrl;
+            } else {
+                event.photo_url = "no picture";
+            }
+        }
+
+        return successResponse(
+            res,
+            200,
+            liveEvents,
+            "live events fetched: sports"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
+    }
+}
+
+exports.getLiveEventsPodcast = async (req, res) => {
+    try {
+        const liveEvents = await LivesModel.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            {
+                                $eq: ["$active", true],
+                            },
+                            {
+                                $eq: ["$type", "podcast"],
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                $project:{
+                    title: 1,
+                    sub_title: 1,
+                    cover_photo: 1,
+                    vid_class: 1,
+                    pg: 1,
+                    category: 1,
+                    description: 1,
+                    type: 1,
+                    participants: 1
+                }
+            }
+        ]);
+
+        for (let event of liveEvents) {
+            if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+                const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key);
+                event.photo_url = signedUrl.status == 400 ? "no picture" : signedUrl;
+            } else {
+                event.photo_url = "no picture";
+            }
+        }
+
+        return successResponse(
+            res,
+            200,
+            liveEvents,
+            "live events fetched: podcasts"
+        );
+    } catch (error) {
+        return serverError(res, 500, null, error.message);
     }
 }
 

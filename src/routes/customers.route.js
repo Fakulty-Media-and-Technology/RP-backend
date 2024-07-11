@@ -33,6 +33,12 @@ const {
     userLikedVideo,
     unLikeVideo,
     getLiveEventsGroup,
+    getLiveEventsChannels,
+    getLiveEventsSponsored,
+    getLiveEventsEven,
+    getLiveEventsTvshow,
+    getLiveEventsSports,
+    getLiveEventsPodcast,
 } = require("../controllers/customers.controller.js/medias.customer");
 const {
     customerProfileFetch,
@@ -89,7 +95,17 @@ customerRouter.post("/media/vod/unlike/:id", unLikeVideo);
 //live events
 customerRouter.get("/live/events/fetch/all", getLiveEvents);
 
-customerRouter.get("/live/events/fetch/group", getLiveEventsGroup);
+customerRouter.get("/live/events/fetch/sponsored", getLiveEventsSponsored);
+
+customerRouter.get("/live/events/fetch/channels", getLiveEventsChannels);
+
+customerRouter.get("/live/events/fetch/events", getLiveEventsEven);
+
+customerRouter.get("/live/events/fetch/tvshows", getLiveEventsTvshow);
+
+customerRouter.get("/live/events/fetch/sports", getLiveEventsSports);
+
+customerRouter.get("/live/events/fetch/podcasts", getLiveEventsPodcast);
 
 customerRouter.get("/live/event/stream/:id", streamLiveEvent);
 

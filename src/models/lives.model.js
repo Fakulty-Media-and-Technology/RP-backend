@@ -66,6 +66,10 @@ const liveVideosSchema = new mongoose.Schema(
         likes: {
             type: [String],
         },
+        sponsored: {
+            type: Boolean,
+            default: false
+        },
     },
     {
         timestamps: true,
