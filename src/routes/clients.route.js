@@ -1,11 +1,11 @@
 const express = require("express");
 const clientsAuth = require("../middlewares/clients.mw");
 const {
-    clientProfileFetch,
-    clientEditProfile,
+     clientProfileFetch,
+     clientEditProfile,
 } = require("../controllers/clients.controller.js/profile.clients");
 const {
-    liveStreamCredentials,
+     liveStreamCredentials,
 } = require("../controllers/clients.controller.js/livestream.clients");
 
 const clientsRouter = express.Router();

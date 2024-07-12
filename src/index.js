@@ -8,8 +8,8 @@ const PORT = process.env.PORT;
 const server = http.createServer(app);
 
 const io = new Server(server, {
-    cors: "*",
-    methods: ["GET", "POST","PUT", "DELETE"],
+     cors: "*",
+     methods: ["GET", "POST", "PUT", "DELETE"],
 });
 
 global.io = io;
@@ -17,7 +17,7 @@ global.io = io;
 socketChat(io);
 
 server.listen(PORT, () => {
-    console.log(
-        `Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`
-    );
-})
+     console.log(
+          `Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`
+     );
+});

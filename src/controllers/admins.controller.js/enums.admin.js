@@ -1,95 +1,95 @@
 const CategoryEnumModel = require("../../models/categoryEnum.model");
 const GenreEnumModels = require("../../models/genreEnum.model");
 const {
-    successResponse,
-    serverError,
+     successResponse,
+     serverError,
 } = require("../../utils/response.handler");
 
 exports.addGenre = async (req, res) => {
-    try {
-        const { name } = req.body;
+     try {
+          const { name } = req.body;
 
-        const newGenre = new GenreEnumModels({
-            name: name,
-        });
+          const newGenre = new GenreEnumModels({
+               name: name,
+          });
 
-        await newGenre.save();
+          await newGenre.save();
 
-        return successResponse(res, 200, null, "new unique genre added");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
+          return successResponse(res, 200, null, "new unique genre added");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
 };
 
 exports.getGenre = async (req, res) => {
-    try {
-        const genres = await GenreEnumModels.aggregate([
-            {
-                $match: {},
-            },
-        ]);
+     try {
+          const genres = await GenreEnumModels.aggregate([
+               {
+                    $match: {},
+               },
+          ]);
 
-        return successResponse(res, 200, genres, "genres fetched");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
+          return successResponse(res, 200, genres, "genres fetched");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
 };
 
 exports.remGenre = async (req, res) => {
-    try {
-        const id = req.params.id;
+     try {
+          const id = req.params.id;
 
-        await GenreEnumModels.findOneAndDelete({
-            _id: id,
-        });
+          await GenreEnumModels.findOneAndDelete({
+               _id: id,
+          });
 
-        return successResponse(res, 200, null, "genre deleted");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
+          return successResponse(res, 200, null, "genre deleted");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
 };
 
 //CATEGS
 exports.addCategory = async (req, res) => {
-    try {
-        const { name } = req.body;
+     try {
+          const { name } = req.body;
 
-        const newCategory = new CategoryEnumModel({
-            name: name,
-        });
+          const newCategory = new CategoryEnumModel({
+               name: name,
+          });
 
-        await newCategory.save();
+          await newCategory.save();
 
-        return successResponse(res, 200, null, "new unique category added");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
+          return successResponse(res, 200, null, "new unique category added");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
 };
 
 exports.getCategory = async (req, res) => {
-    try {
-        const categs = await CategoryEnumModel.aggregate([
-            {
-                $match: {},
-            },
-        ]);
+     try {
+          const categs = await CategoryEnumModel.aggregate([
+               {
+                    $match: {},
+               },
+          ]);
 
-        return successResponse(res, 200, categs, "categories fetched");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
+          return successResponse(res, 200, categs, "categories fetched");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
 };
 
 exports.remCategory = async (req, res) => {
-    try {
-        const id = req.params.id;
+     try {
+          const id = req.params.id;
 
-        await CategoryEnumModel.findOneAndDelete({
-            _id: id,
-        });
+          await CategoryEnumModel.findOneAndDelete({
+               _id: id,
+          });
 
-        return successResponse(res, 200, null, "category deleted");
-    } catch (error) {
-        return serverError(res, 500, null, error.message);
-    }
+          return successResponse(res, 200, null, "category deleted");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
 };

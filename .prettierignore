@@ -1,0 +1,6 @@
+/node_modules
+
+/media
+
+./package.json
+./package-lock.json

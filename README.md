@@ -1,7 +1,7 @@
 ## REEPLAY BACKEND
 
--   built in nodejs and mongoDB
--   more information goes here
+-    built in nodejs and mongoDB
+-    more information goes here
 
 ## DEPLOYMENT
 

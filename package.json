@@ -1,41 +1,43 @@
 {
-    "name": "reeplay-backend",
-    "version": "1.0.0",
-    "description": "",
-    "main": "src/index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "nodemon src/index.js",
-        "start": "node src/index.js"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "dependencies": {
-        "@aws-sdk/client-mediaconvert": "^3.592.0",
-        "@aws-sdk/client-s3": "^3.577.0",
-        "@aws-sdk/cloudfront-signer": "^3.598.0",
-        "@aws-sdk/s3-request-presigner": "^3.577.0",
-        "@ffmpeg-installer/ffmpeg": "^1.1.0",
-        "axios": "^1.6.8",
-        "bcrypt": "^5.1.1",
-        "cors": "^2.8.5",
-        "dotenv": "^16.4.5",
-        "ejs": "^3.1.10",
-        "express": "^4.19.2",
-        "express-eventsource": "^0.0.4",
-        "express-fileupload": "^1.5.0",
-        "firebase-admin": "^12.1.1",
-        "google-auth-library": "^9.11.0",
-        "jsonwebtoken": "^9.0.2",
-        "mongoose": "^8.4.3",
-        "node-cron": "^3.0.3",
-        "node-media-server": "^2.7.0",
-        "node-schedule": "^2.1.1",
-        "nodemailer": "^6.9.13",
-        "socket.io": "^4.7.5"
-    },
-    "devDependencies": {
-        "nodemon": "^3.1.0"
-    }
+     "name": "reeplay-backend",
+     "version": "1.0.0",
+     "description": "",
+     "main": "src/index.js",
+     "scripts": {
+          "test": "echo \"Error: no test specified\" && exit 1",
+          "format": "prettier --write .",
+          "start": "nodemon --exec \"npm run format && node\" src/index.js",
+          "dev": "npm run start"
+     },
+     "keywords": [],
+     "author": "",
+     "license": "ISC",
+     "dependencies": {
+          "@aws-sdk/client-mediaconvert": "^3.592.0",
+          "@aws-sdk/client-s3": "^3.577.0",
+          "@aws-sdk/cloudfront-signer": "^3.598.0",
+          "@aws-sdk/s3-request-presigner": "^3.577.0",
+          "@ffmpeg-installer/ffmpeg": "^1.1.0",
+          "axios": "^1.6.8",
+          "bcrypt": "^5.1.1",
+          "cors": "^2.8.5",
+          "dotenv": "^16.4.5",
+          "ejs": "^3.1.10",
+          "express": "^4.19.2",
+          "express-eventsource": "^0.0.4",
+          "express-fileupload": "^1.5.0",
+          "firebase-admin": "^12.1.1",
+          "google-auth-library": "^9.11.0",
+          "jsonwebtoken": "^9.0.2",
+          "mongoose": "^8.4.3",
+          "node-cron": "^3.0.3",
+          "node-media-server": "^2.7.0",
+          "node-schedule": "^2.1.1",
+          "nodemailer": "^6.9.13",
+          "socket.io": "^4.7.5"
+     },
+     "devDependencies": {
+          "nodemon": "^3.1.0",
+          "prettier": "^3.3.2"
+     }
 }

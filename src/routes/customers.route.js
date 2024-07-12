@@ -1,50 +1,55 @@
 const express = require("express");
 const {
-    signIn,
-    customerSignup,
-    createPin,
-    verifyAccount,
-    passwordChangeCode,
-    passwordChange,
+     signIn,
+     customerSignup,
+     createPin,
+     verifyAccount,
+     passwordChangeCode,
+     passwordChange,
 } = require("../controllers/customers.controller.js/onboarding.customer");
 const {
-    notificationSettings,
-    addToWatchList,
-    remFromWatchList,
-    addToInterest,
-    remFromInterest,
+     notificationSettings,
+     addToWatchList,
+     remFromWatchList,
+     addToInterest,
+     remFromInterest,
 } = require("../controllers/customers.controller.js/settings.customer");
 const customerAuth = require("../middlewares/customer.gen.mw");
 const { getVideoUrl } = require("../services/media-access");
 const {
-    customerGetVideoUrl,
-    customerGetPhotoUrl,
-    videoTranscode,
-    trancodeResHook,
-    checkandGetResHook,
-    vodStream,
-    uploadImageRoute,
-    getLiveEvents,
-    streamLiveEvent,
-    likeEvent,
-    unLikeEvent,
-    userLikedEvent,
-    likeVideo,
-    userLikedVideo,
-    unLikeVideo,
-    getLiveEventsGroup,
-    getLiveEventsChannels,
-    getLiveEventsSponsored,
-    getLiveEventsEven,
-    getLiveEventsTvshow,
-    getLiveEventsSports,
-    getLiveEventsPodcast,
+     customerGetVideoUrl,
+     customerGetPhotoUrl,
+     videoTranscode,
+     trancodeResHook,
+     checkandGetResHook,
+     vodStream,
+     uploadImageRoute,
+     getLiveEvents,
+     streamLiveEvent,
+     likeEvent,
+     unLikeEvent,
+     userLikedEvent,
+     likeVideo,
+     userLikedVideo,
+     unLikeVideo,
+     getLiveEventsGroup,
+     getLiveEventsChannels,
+     getLiveEventsSponsored,
+     getLiveEventsEven,
+     getLiveEventsTvshow,
+     getLiveEventsSports,
+     getLiveEventsPodcast,
 } = require("../controllers/customers.controller.js/medias.customer");
 const {
-    customerProfileFetch,
-    editProfile,
+     customerProfileFetch,
+     editProfile,
 } = require("../controllers/customers.controller.js/profile.customer");
-const { upComingFetch, upComingSubscribe, upComingIsUserSubscribed, upComingUnsubscribe } = require("../controllers/customers.controller.js/upcoming.customer");
+const {
+     upComingFetch,
+     upComingSubscribe,
+     upComingIsUserSubscribed,
+     upComingUnsubscribe,
+} = require("../controllers/customers.controller.js/upcoming.customer");
 
 const customerRouter = express.Router();
 
@@ -115,9 +120,11 @@ customerRouter.get("/upcoming/events/fetch", upComingFetch);
 
 customerRouter.put("/upcoming/events/subscribe/:id", upComingSubscribe);
 
-customerRouter.get("/upcoming/events/is-subscribed/:id", upComingIsUserSubscribed);
+customerRouter.get(
+     "/upcoming/events/is-subscribed/:id",
+     upComingIsUserSubscribed
+);
 
 customerRouter.put("/upcoming/events/unsubscribe/:id", upComingUnsubscribe);
-
 
 module.exports = customerRouter;

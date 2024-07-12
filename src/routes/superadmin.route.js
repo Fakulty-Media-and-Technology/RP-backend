@@ -1,28 +1,30 @@
 const express = require("express");
 const {
-    superAdminSignup,
-    adminSignup,
-    clientsSignup,
-    adminSignIn,
+     superAdminSignup,
+     adminSignup,
+     clientsSignup,
+     adminSignIn,
 } = require("../controllers/admins.controller.js/onboarding.admin");
 const {
-    addGenre,
-    getGenre,
-    remGenre,
-    addCategory,
-    getCategory,
-    remCategory,
+     addGenre,
+     getGenre,
+     remGenre,
+     addCategory,
+     getCategory,
+     remCategory,
 } = require("../controllers/admins.controller.js/enums.admin");
 const {
-    uploadLargeVideoRoute,
-    uploadShortVideoRoute,
-    uploadImageRoute,
-    readFiles,
-    adminGetPhotoUrl,
-    createLive,
+     uploadLargeVideoRoute,
+     uploadShortVideoRoute,
+     uploadImageRoute,
+     readFiles,
+     adminGetPhotoUrl,
+     createLive,
 } = require("../controllers/admins.controller.js/managemedia.admin");
 const superadminAuth = require("../middlewares/superadmin.mw");
-const { createUpcomingEvent } = require("../controllers/admins.controller.js/upcoming.admin");
+const {
+     createUpcomingEvent,
+} = require("../controllers/admins.controller.js/upcoming.admin");
 
 const superAdminRouter = express.Router();
 
