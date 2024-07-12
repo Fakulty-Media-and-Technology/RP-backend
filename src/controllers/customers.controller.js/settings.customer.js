@@ -10,6 +10,10 @@ exports.notificationSettings = async (req, res) => {
     try {
         const user = req.user;
 
+        if(!user._id && user.role === "guest") {
+            return invalidRequest(res, 403, null, "you are not authenticated")
+        }
+
         const {
             video_quality,
             allow_notifications,
@@ -46,6 +50,10 @@ exports.addToWatchList = async (req, res) => {
     try {
         const user = req.user;
 
+        if(!user._id && user.role === "guest") {
+            return invalidRequest(res, 403, null, "you are not authenticated")
+        }
+
         const { vid_id } = req.body;
 
         if (!vid_id) {
@@ -78,6 +86,10 @@ exports.remFromWatchList = async (req, res) => {
     try {
         const user = req.user;
 
+        if(!user._id && user.role === "guest") {
+            return invalidRequest(res, 403, null, "you are not authenticated")
+        }
+
         const { vid_id } = req.body;
 
         if (!vid_id) {
@@ -109,6 +121,10 @@ exports.remFromWatchList = async (req, res) => {
 exports.addToInterest = async (req, res) => {
     try {
         const user = req.user;
+
+        if(!user._id && user.role === "guest") {
+            return invalidRequest(res, 403, null, "you are not authenticated")
+        }
 
         const { interest } = req.body;
 

@@ -12,6 +12,14 @@ const customerAuth = async (req, res, next) => {
         });
     }
 
+    if(token === process.env.GUEST_TOKEN) {
+        req.user = {
+            "first_name": "guest",
+            "last_name": "user",
+            "role": "guest"
+        }
+    }
+
     try {
         const authUser = await validateToken(token);
 

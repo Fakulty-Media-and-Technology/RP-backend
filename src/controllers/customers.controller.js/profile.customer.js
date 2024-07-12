@@ -11,6 +11,10 @@ exports.customerProfileFetch = async (req, res) => {
     try {
         const user = req.user;
 
+        if(!user._id && user.role === "guest") {
+            return invalidRequest(res, 403, user, "you are not authenticated")
+        }
+
         const profile = await UsersModel.aggregate([
             {
                 $match: {
@@ -63,6 +67,10 @@ exports.customerProfileFetch = async (req, res) => {
 exports.editProfile = async (req, res) => {
     try {
         const user = req.user;
+
+        if(!user._id && user.role === "guest") {
+            return invalidRequest(res, 403, null, "you are not authenticated")
+        }
 
         const { first_name, last_name, country_code, mobile, photo } = req.body;
 

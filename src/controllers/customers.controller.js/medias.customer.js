@@ -25,6 +25,11 @@ const VideosModel = require('../../models/videos.model');
 
 exports.uploadImageRoute = async (req, res) => {
     try {
+        const user = req.user
+        if(!user._id && user.role === "guest") {
+            return invalidRequest(res, 403, null, "you are not authenticated")
+        }
+
         const { fileName, fileHandle } = req.body;
 
         const image = await uploadImage(req, fileHandle, fileName);
@@ -37,7 +42,11 @@ exports.uploadImageRoute = async (req, res) => {
 
 exports.customerGetPhotoUrl = async (req, res) => {
     try {
-        const user = req.user;
+        // const user = req.user;
+
+        // if(!user._id && user.role === "guest") {
+        //     return invalidRequest(res, 403, null, "you are not authenticated")
+        // }
 
         const { bucket, key } = req.body;
 
@@ -153,6 +162,10 @@ exports.likeVideo = async (req, res) => {
             }
         )
 
+        if(!user._id && user.role === "guest") {
+            return invalidRequest(res, 403, null, "you are not authenticated")
+        }
+
         if(resLikes.likes.includes(user._id.toString())){
             return invalidRequest(res, 400, null, "user already liked")
         }
@@ -163,7 +176,7 @@ exports.likeVideo = async (req, res) => {
             },
             {
                 $push: {
-                    likes: user._id
+                    likes: user?._id
                 }
             }
         )
@@ -199,6 +212,10 @@ exports.unLikeVideo = async (req, res) => {
         const streamId = req.params.id
 
         const user = req.user
+
+        if(!user._id && user.role === "guest") {
+            return invalidRequest(res, 403, null, "you are not authenticated")
+        }
 
         await VideosModel.findOneAndUpdate(
             {
