@@ -22,6 +22,7 @@ const {
     createLive,
 } = require("../controllers/admins.controller.js/managemedia.admin");
 const superadminAuth = require("../middlewares/superadmin.mw");
+const { createUpcomingEvent } = require("../controllers/admins.controller.js/upcoming.admin");
 
 const superAdminRouter = express.Router();
 
@@ -57,5 +58,8 @@ superAdminRouter.post("/media/upload-image", uploadImageRoute);
 superAdminRouter.get("/media/read-photo", adminGetPhotoUrl);
 
 superAdminRouter.post("/lives/create", createLive);
+
+//upcoming events routes
+superAdminRouter.post("/upcoming/event/create", createUpcomingEvent);
 
 module.exports = superAdminRouter;

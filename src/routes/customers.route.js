@@ -44,6 +44,7 @@ const {
     customerProfileFetch,
     editProfile,
 } = require("../controllers/customers.controller.js/profile.customer");
+const { upComingFetch, upComingSubscribe, upComingIsUserSubscribed, upComingUnsubscribe } = require("../controllers/customers.controller.js/upcoming.customer");
 
 const customerRouter = express.Router();
 
@@ -108,5 +109,15 @@ customerRouter.get("/live/events/fetch/sports", getLiveEventsSports);
 customerRouter.get("/live/events/fetch/podcasts", getLiveEventsPodcast);
 
 customerRouter.get("/live/event/stream/:id", streamLiveEvent);
+
+//Upcoming Events
+customerRouter.get("/upcoming/events/fetch", upComingFetch);
+
+customerRouter.put("/upcoming/events/subscribe/:id", upComingSubscribe);
+
+customerRouter.get("/upcoming/events/is-subscribed/:id", upComingIsUserSubscribed);
+
+customerRouter.put("/upcoming/events/unsubscribe/:id", upComingUnsubscribe);
+
 
 module.exports = customerRouter;

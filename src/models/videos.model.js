@@ -14,11 +14,11 @@ const videosSchema = new mongoose.Schema(
         type: {
             type: String,
             enum: [
-                "movies",
+                "movie",
                 "series",
-                "music videos",
-                "ducumentaries",
-                "skits",
+                "music video",
+                "ducumentary",
+                "skit",
             ],
             required: true,
         },

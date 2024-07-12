@@ -6,9 +6,23 @@ const upcomingSchema = new mongoose.Schema(
             type: String,
             required: true
         },
+        type: {
+            type: String,
+            enum: [
+                "movie",
+                "series",
+                "music video",
+                "ducumentary",
+                "skit",
+            ],
+            required: true,
+        },
         details: {
             type: String,
             required: true
+        },
+        reminder: {
+            type: [String], //user ids that subscribe
         },
         release_date: {
             type: Date,
@@ -21,6 +35,10 @@ const upcomingSchema = new mongoose.Schema(
         landscape_photo: {
             type: Object,
             required: true
+        },
+        active: {
+            type: Boolean,
+            default: true
         }
     },
     {

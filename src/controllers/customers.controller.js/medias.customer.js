@@ -201,7 +201,7 @@ exports.userLikedVideo = async (req, res) => {
 
         const userLiked = resLikes.likes.includes(user._id.toString()) ? true : false
 
-        return successResponse( res, 200, { liked: userLiked }, "checks if user alrealdy liked");
+        return successResponse( res, 200, { user_liked: userLiked }, "checks if user alrealdy liked");
     } catch (error) {
         return serverError(res, 500, null, error.message);
     }
