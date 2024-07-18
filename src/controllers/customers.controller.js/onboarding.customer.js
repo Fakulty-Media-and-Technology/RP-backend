@@ -69,7 +69,7 @@ exports.customerSignup = async (req, res) => {
                );
           }
 
-          const pin = Number(authCode(6));
+          const pin = Number(await authCode(6));
 
           const pinExpiry = Date.now() + 1000 * 60 * 5;
 
@@ -201,7 +201,32 @@ exports.verifyAccount = async (req, res) => {
                }
           );
 
-          return successResponse(res, 200, null, "user account verified");
+          if (userExist.suspended) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "you have been suspended from using our services, contact the admin"
+               );
+          }
+
+          const authToken = await accessToken(
+               userExist._id,
+               userExist.email,
+               userExist.role
+          );
+
+          return successResponse(
+               res,
+               200,
+               {
+                    _id: userExist._id,
+                    email: userExist.email,
+                    role: userExist.role,
+                    token: authToken,
+               },
+               "user account verified"
+          );
      } catch (error) {
           return serverError(res, 500, null, error.message);
      }
@@ -246,7 +271,7 @@ exports.signIn = async (req, res) => {
                return invalidRequest(res, 400, null, "incorrect password");
           }
 
-          const pin = Number(authCode(6));
+          const pin = Number(await authCode(6));
 
           const pinExpiry = Date.now() + 1000 * 60 * 5;
 
@@ -310,6 +335,55 @@ exports.signIn = async (req, res) => {
      }
 };
 
+exports.getVerificationToken = async (req, res) => {
+     try {
+          const u_email = req.query.email;
+
+          const userExist = await UsersModel.findOne({ email: u_email });
+
+          if (userExist.verified) {
+               return failedResponse(
+                    res,
+                    400,
+                    null,
+                    "something went wrong, account already verified"
+               );
+          }
+
+          const pin = Number(await authCode(6));
+
+          const pinExpiry = Date.now() + 1000 * 60 * 5;
+
+          await UsersModel.findOneAndUpdate(
+               {
+                    email: userExist.email,
+               },
+               {
+                    auth_code: pin,
+                    auth_expiry: pinExpiry,
+               }
+          );
+
+          const userData = {
+               firstName: userExist.first_name,
+               lastName: userExist.last_name,
+               email: userExist.email,
+          };
+
+          const sendEmail = new Email(userData);
+          sendEmail.sendVerifyEmail(pin);
+
+          return invalidRequest(
+               res,
+               200,
+               null,
+               "verification code sent to registered email successfully"
+          );
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
 exports.passwordChangeCode = async (req, res) => {
      try {
           const { email } = req.body;
@@ -330,7 +404,7 @@ exports.passwordChangeCode = async (req, res) => {
                );
           }
 
-          const pin = Number(authCode(6));
+          const pin = Number(await authCode(6));
 
           await UsersModel.findOneAndUpdate(
                {

@@ -6,6 +6,7 @@ const {
      verifyAccount,
      passwordChangeCode,
      passwordChange,
+     getVerificationToken,
 } = require("../controllers/customers.controller.js/onboarding.customer");
 const {
      notificationSettings,
@@ -58,6 +59,8 @@ customerRouter.post("/general-signin", signIn);
 customerRouter.post("/signup", customerSignup);
 
 customerRouter.post("/signup/createpin", createPin);
+
+customerRouter.get("/verification/get-token", getVerificationToken);
 
 customerRouter.post("/signup/verifyaccount", verifyAccount);
 
