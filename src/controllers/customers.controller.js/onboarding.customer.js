@@ -143,7 +143,12 @@ exports.createPin = async (req, res) => {
                }
           );
 
-          return successResponse(res, 200, null, "pin created successful");
+          return successResponse(
+               res,
+               200,
+               null,
+               "pin created/updated successfully"
+          );
      } catch (error) {
           return serverError(res, 500, null, error.message);
      }
