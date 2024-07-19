@@ -43,7 +43,7 @@ exports.customerProfileFetch = async (req, res) => {
                          createdAt: 0,
                          updatedAt: 0,
                          __v: 0,
-                         pin: 0,
+                         // pin: 0,
                          password: 0,
                     },
                },

@@ -139,7 +139,7 @@ exports.createPin = async (req, res) => {
                     email: email,
                },
                {
-                    pin: await EncryptPass(pin?.toString()),
+                    pin: pin?.toString(),
                }
           );
 
