@@ -7,6 +7,7 @@ const {
      passwordChangeCode,
      passwordChange,
      getVerificationToken,
+     authTokenValidity,
 } = require("../controllers/customers.controller.js/onboarding.customer");
 const {
      notificationSettings,
@@ -55,6 +56,8 @@ const {
 const customerRouter = express.Router();
 
 customerRouter.post("/general-signin", signIn);
+
+customerRouter.get("/general/validate-token", authTokenValidity);
 
 customerRouter.post("/signup", customerSignup);
 

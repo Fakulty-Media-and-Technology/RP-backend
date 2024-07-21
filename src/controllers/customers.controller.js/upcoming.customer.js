@@ -1,4 +1,5 @@
 const UpcomingModel = require("../../models/upcoming.model");
+const { readPhotos } = require("../../services/media-access");
 const {
      successResponse,
      serverError,
@@ -8,7 +9,7 @@ const {
 
 exports.upComingFetch = async (req, res) => {
      try {
-          const comingSoon = await UpcomingModel.aggregate([
+          let comingSoon = await UpcomingModel.aggregate([
                {
                     $match: {
                          $expr: {
@@ -17,6 +18,22 @@ exports.upComingFetch = async (req, res) => {
                     },
                },
           ]);
+
+          comingSoon = await Promise.all(
+               comingSoon.map(async (ele) => {
+                    ele.portrait_photo = await readPhotos(
+                         ele?.portrait_photo?.Bucket,
+                         ele?.portrait_photo?.Key
+                    );
+
+                    ele.landscape_photo = await readPhotos(
+                         ele?.landscape_photo?.Bucket,
+                         ele?.landscape_photo?.Key
+                    );
+
+                    return ele;
+               })
+          );
 
           return successResponse(
                res,

@@ -3,7 +3,7 @@ const UsersModel = require("../../models/users.model");
 const { authCode } = require("../../utils/authCode");
 const { VerifytPass, EncryptPass } = require("../../utils/bcrypt");
 const Email = require("../../utils/emailer");
-const { accessToken } = require("../../utils/jwt");
+const { accessToken, validateToken } = require("../../utils/jwt");
 const {
      serverError,
      successResponse,
@@ -334,6 +334,32 @@ exports.signIn = async (req, res) => {
                     token: token,
                },
                "Sign In successful"
+          );
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.authTokenValidity = async (req, res) => {
+     try {
+          const { token } = req.query;
+
+          const authUser = await validateToken(token);
+
+          if (!authUser || authUser == "jwt expired") {
+               return successResponse(
+                    res,
+                    200,
+                    { valid: false },
+                    "invalid token/expired"
+               );
+          }
+
+          return successResponse(
+               res,
+               200,
+               { valid: true },
+               "token is still valid"
           );
      } catch (error) {
           return serverError(res, 500, null, error.message);
