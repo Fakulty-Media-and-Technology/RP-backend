@@ -25,6 +25,9 @@ const superadminAuth = require("../middlewares/superadmin.mw");
 const {
      createUpcomingEvent,
 } = require("../controllers/admins.controller.js/upcoming.admin");
+const {
+     createTrailer,
+} = require("../controllers/admins.controller.js/trailer.admin");
 
 const superAdminRouter = express.Router();
 
@@ -63,5 +66,8 @@ superAdminRouter.post("/lives/create", createLive);
 
 //upcoming events routes
 superAdminRouter.post("/upcoming/event/create", createUpcomingEvent);
+
+//trailer
+superAdminRouter.post("/trailer/create", createTrailer);
 
 module.exports = superAdminRouter;

@@ -17,6 +17,39 @@ exports.upComingFetch = async (req, res) => {
                          },
                     },
                },
+               {
+                    $lookup: {
+                         from: "trailers",
+                         let: {
+                              tid: "$trailer_id",
+                         },
+                         pipeline: [
+                              {
+                                   $match: {
+                                        $expr: {
+                                             $eq: [
+                                                  "$_id",
+                                                  {
+                                                       $toObjectId: "$$tid",
+                                                  },
+                                             ],
+                                        },
+                                   },
+                              },
+                              {
+                                   $project: {
+                                        __v: 0,
+                                   },
+                              },
+                         ],
+                         as: "trailer",
+                    },
+               },
+               {
+                    $addFields: {
+                         trailer: { $arrayElemAt: ["$trailer", 0] },
+                    },
+               },
           ]);
 
           comingSoon = await Promise.all(

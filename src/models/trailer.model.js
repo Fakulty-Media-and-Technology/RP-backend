@@ -5,6 +5,18 @@ const trailerSchema = new mongoose.Schema(
           video_id: {
                type: mongoose.Types.ObjectId,
                ref: "videos",
+               unique: true,
+          },
+          video_title: {
+               type: String,
+               // required: true,
+          },
+          details: {
+               type: String,
+               // required: true,
+          },
+          bucket: {
+               type: String,
                required: true,
           },
           key: {

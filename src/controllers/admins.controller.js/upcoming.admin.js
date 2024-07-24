@@ -1,4 +1,5 @@
 // ....
+const TrailerModel = require("../../models/trailer.model");
 const UpcomingModel = require("../../models/upcoming.model");
 const {
      successResponse,
@@ -16,6 +17,7 @@ exports.createUpcomingEvent = async (req, res) => {
                release_date,
                portrait_photo,
                landscape_photo,
+               trailer_id,
           } = req.body;
 
           if (
@@ -30,6 +32,17 @@ exports.createUpcomingEvent = async (req, res) => {
                );
           }
 
+          const checkTrailer = await TrailerModel.findOne({ _id: trailer_id });
+
+          if (!checkTrailer) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "invalid trailer_id supplied"
+               );
+          }
+
           const upcomingEvent = new UpcomingModel({
                title: title,
                type: type,
@@ -37,6 +50,7 @@ exports.createUpcomingEvent = async (req, res) => {
                release_date: new Date(release_date),
                portrait_photo: portrait_photo,
                landscape_photo: landscape_photo,
+               trailer_id: trailer_id,
           });
 
           await upcomingEvent.save();

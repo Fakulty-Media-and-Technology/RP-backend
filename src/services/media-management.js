@@ -176,7 +176,11 @@ exports.uploadShortVideos = async (req, fileHandle, expire, fileKey) => {
 
           const uploadResult = await s3Client.send(putObjectCommand);
 
-          return uploadResult;
+          return {
+               s3_res: uploadResult,
+               Bucket: bucketName,
+               Key: key,
+          };
      } catch (err) {
           console.error("Error occurred while uploading:", err);
           throw err;

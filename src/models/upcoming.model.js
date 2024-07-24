@@ -34,6 +34,11 @@ const upcomingSchema = new mongoose.Schema(
                type: Boolean,
                default: true,
           },
+          trailer_id: {
+               type: mongoose.Types.ObjectId,
+               ref: "trailer",
+               required: true,
+          },
      },
      {
           timestamps: true,
