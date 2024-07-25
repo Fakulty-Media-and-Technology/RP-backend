@@ -29,25 +29,30 @@ const Paystack = {
 
                return response.data;
           } catch (error) {
-               console.log(`Payment Init Error: ${error}`);
+               console.log(`Paystack Init Error: ${error}`);
                return error.message;
           }
      },
 
-     async verifyPayment(ref) {
-          const options = {
-               method: "GET",
-               url: `https://api.paystack.co/transaction/verify/:${ref}`,
-               headers: {
-                    Authorization: `Bearer ${paySecretKey}`,
-                    "content-type": "application/json",
-                    "cache-control": "no-cache",
-               },
-          };
+     async verifyPayment({ reference }) {
+          try {
+               const options = {
+                    method: "GET",
+                    url: `https://api.paystack.co/transaction/verify/${reference}`,
+                    headers: {
+                         Authorization: `Bearer ${paySecretKey}`,
+                         "content-type": "application/json",
+                         "cache-control": "no-cache",
+                    },
+               };
 
-          const response = await axios.request(options);
+               const response = await axios.request(options);
 
-          return response.data;
+               return response.data;
+          } catch (error) {
+               console.log(`Paystack Init Error: ${error}`);
+               return error.message;
+          }
      },
 };
 

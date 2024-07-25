@@ -17,11 +17,12 @@ const PaymentServices = {
           try {
                const payment = await Paystack.verifyPayment(ref);
 
-               const { amount, reference, status } = payment;
+               const { amount, reference, status } = payment.data;
 
                const newPayment = new PaymentsModel({
-                    user_id: payment.metadata.userId,
-                    email: payment.customer.email,
+                    user_id: payment.data.metadata.user_id,
+                    full_name: payment.data.metadata.full_name,
+                    email: payment.data.customer.email,
                     amount: amount,
                     reference: reference,
                     status: status,
@@ -36,9 +37,11 @@ const PaymentServices = {
           }
      },
 
-     async paystackPaymentReciept(ref) {
+     async paystackPaymentReciept({ reference }) {
           try {
-               const reciept = await PaymentsModel.findOne({ reference: ref });
+               const reciept = await PaymentsModel.findOne({
+                    reference: reference,
+               });
 
                return reciept;
           } catch (error) {

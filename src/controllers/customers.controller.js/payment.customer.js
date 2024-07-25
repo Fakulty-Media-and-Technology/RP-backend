@@ -42,7 +42,7 @@ exports.getPaymentReceipt = async (req, res) => {
      try {
           const { reference } = req.query;
 
-          const response = await PaymentServices.getPaymentReceipt({
+          const response = await PaymentServices.paystackPaymentReciept({
                reference,
           });
 

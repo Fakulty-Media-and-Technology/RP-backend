@@ -4,7 +4,11 @@ const paymentSchema = new mongoose.Schema(
      {
           user_id: {
                type: mongoose.Types.ObjectId,
-               ref: "videos",
+               ref: "users",
+               required: true,
+          },
+          full_name: {
+               type: String,
                required: true,
           },
           email: {
