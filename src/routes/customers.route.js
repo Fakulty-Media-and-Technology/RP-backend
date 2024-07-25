@@ -52,6 +52,11 @@ const {
      upComingIsUserSubscribed,
      upComingUnsubscribe,
 } = require("../controllers/customers.controller.js/upcoming.customer");
+const {
+     startPayment,
+     getPaymentReceipt,
+     createPayment,
+} = require("../controllers/customers.controller.js/payment.customer");
 
 const customerRouter = express.Router();
 
@@ -73,10 +78,11 @@ customerRouter.post("/pass-reset/change-pass", passwordChange);
 // customerRouter.post("/media/vod/webhook", trancodeResHook);
 
 //no auth for vod
-customerRouter.post("/media/vod-streaming", vodStream);
 
 //apply auth middleware
 customerRouter.use(customerAuth);
+
+customerRouter.post("/media/vod-streaming", vodStream);
 
 customerRouter.post("/signup/createpin", createPin);
 
@@ -132,5 +138,12 @@ customerRouter.get(
 );
 
 customerRouter.put("/upcoming/events/unsubscribe/:id", upComingUnsubscribe);
+
+//payments and wallets
+customerRouter.post("/payment/paystack/start-payment", startPayment);
+
+customerRouter.post("/payment/paystack/create-payment", createPayment);
+
+customerRouter.get("/payment/paystack/payment-receipt", getPaymentReceipt);
 
 module.exports = customerRouter;
