@@ -27,6 +27,14 @@ const paymentSchema = new mongoose.Schema(
                type: String,
                required: true,
           },
+          is_used: {
+               type: Boolean,
+               default: false,
+          },
+          use_case: {
+               type: String,
+               enum: ["subscription", "topup"],
+          },
      },
      {
           timestamps: true,
