@@ -28,6 +28,11 @@ const {
 const {
      createTrailer,
 } = require("../controllers/admins.controller.js/trailer.admin");
+const {
+     createPlan,
+     updatePlan,
+     fetchPlans,
+} = require("../controllers/admins.controller.js/plan-sub.admin");
 
 const superAdminRouter = express.Router();
 
@@ -69,5 +74,12 @@ superAdminRouter.post("/upcoming/event/create", createUpcomingEvent);
 
 //trailer
 superAdminRouter.post("/trailer/create", createTrailer);
+
+//plans and sub
+superAdminRouter.post("/subscription/plans/create", createPlan);
+
+superAdminRouter.put("/subscription/plans/update/:id", updatePlan);
+
+superAdminRouter.get("/subscription/plans/fetch", fetchPlans);
 
 module.exports = superAdminRouter;

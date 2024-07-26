@@ -58,6 +58,8 @@ const {
      createPayment,
      topupWallet,
      fetchWallet,
+     fetchPlans,
+     createSubscription,
 } = require("../controllers/customers.controller.js/payment.customer");
 
 const customerRouter = express.Router();
@@ -152,8 +154,8 @@ customerRouter.post("/wallet/topup", topupWallet);
 
 customerRouter.get("/wallet/fetch", fetchWallet);
 
-customerRouter.get("/subscription/fetch-packages");
+customerRouter.get("/subscription/fetch-plans", fetchPlans);
 
-customerRouter.post("/subscription/create");
+customerRouter.post("/subscription/create", createSubscription);
 
 module.exports = customerRouter;

@@ -1,4 +1,6 @@
 const PaymentsModel = require("../../models/payments.model");
+const PlansModel = require("../../models/plans.model");
+const SubscriptionModel = require("../../models/subscription.model");
 const UsersModel = require("../../models/users.model");
 const WalletModel = require("../../models/wallet.model");
 const PaymentServices = require("../../paymentIntegration");
@@ -56,14 +58,37 @@ exports.getPaymentReceipt = async (req, res) => {
      }
 };
 
+exports.fetchPlans = async (req, res) => {
+     try {
+          const plans = await PlansModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $gt: ["$months_duration", 0],
+                         },
+                    },
+               },
+               {
+                    $project: {
+                         __v: 0,
+                    },
+               },
+          ]);
+
+          return successResponse(res, 200, plans, "plan fetched");
+     } catch (error) {
+          serverError(req, 500, null, error.message);
+     }
+};
+
 exports.createSubscription = async (req, res) => {
      try {
           const user = req.user;
 
-          const { source, reference } = req.body;
+          const { source, plan_id, reference } = req.body;
 
           if (!["wallet", "payment"].includes(source)) {
-               invalidRequest(
+               return invalidRequest(
                     res,
                     400,
                     null,
@@ -71,10 +96,102 @@ exports.createSubscription = async (req, res) => {
                );
           }
 
+          const checkSub = await SubscriptionModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $and: [
+                                   {
+                                        $eq: ["$user_id", user._id],
+                                   },
+                                   {
+                                        $eq: ["$active", true],
+                                   },
+                                   {
+                                        $gte: ["$expiry_date", new Date()],
+                                   },
+                              ],
+                         },
+                    },
+               },
+          ]);
+
+          if (checkSub[0] || checkSub.length > 0) {
+               return failedResponse(
+                    res,
+                    400,
+                    null,
+                    "you still have an active subscription"
+               );
+          }
+
           if (source === "wallet") {
+               const cusWallet = await WalletModel.findOne({
+                    user_id: user._id,
+               });
+
+               const plan = await PlansModel.findOne({
+                    _id: plan_id,
+               });
+
+               if (!Number(cusWallet.balance) >= Number(plan.price)) {
+                    return failedResponse(
+                         res,
+                         400,
+                         null,
+                         "insufficient balance"
+                    );
+               }
+
+               const currentDate = new Date();
+
+               const millisecondsInAMonth = 30 * 24 * 60 * 60 * 1000;
+
+               const futureDate = new Date(
+                    currentDate.getTime() +
+                         Number(plan.months_duration) * millisecondsInAMonth
+               );
+
+               await new SubscriptionModel({
+                    user_id: user._id,
+                    plan_id: plan_id,
+                    start_date: new Date(),
+                    expiry_date: futureDate,
+                    payment_method: "wallet",
+                    amount: Number(plan.price),
+               }).save();
+
+               await WalletModel.findOneAndUpdate(
+                    {
+                         _id: cusWallet._id,
+                         user_id: user._id,
+                    },
+                    {
+                         $inc: {
+                              balance: -Number(plan.price),
+                         },
+                    },
+                    {
+                         upsert: true,
+                    }
+               );
+
+               return successResponse(
+                    res,
+                    200,
+                    null,
+                    "subscription created successfully from wallet"
+               );
           }
 
           if (source === "payment") {
+               return successResponse(
+                    res,
+                    200,
+                    null,
+                    "not yet implemented"
+                    // "subscription created successfully by direct payment"
+               );
           }
      } catch (error) {
           serverError(res, 500, null, error.message);
