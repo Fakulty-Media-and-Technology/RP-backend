@@ -14,7 +14,7 @@ exports.accessToken = (id, email, role) => {
                },
                JWT_SECRET,
                {
-                    expiresIn: "72h",
+                    expiresIn: "7d",
                }
           );
 
@@ -35,7 +35,7 @@ exports.refreshToken = (id, email, role) => {
                },
                JWT_SECRET_REFRESH_TOKEN,
                {
-                    expiresIn: "7d",
+                    expiresIn: "30d",
                }
           );
 
