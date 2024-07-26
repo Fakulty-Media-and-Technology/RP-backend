@@ -91,3 +91,31 @@ exports.fetchPlans = async (req, res) => {
           serverError(req, 500, null, error.message);
      }
 };
+
+
+exports.deletePlans =async(req,res)=>{
+     try{
+          const admin = req.user._id;
+
+          const id = req.params.id;
+          const deletePlan= await plansModel.findOneAndDelete({
+               _id:id,
+               
+               admin_id:admin
+          })
+           if(!deletePlans){
+               return failedResponse(
+                    res,
+                    400,
+                    null,
+                    "plan can not be deleted or not found"
+               );
+           }
+           return successResponse(res, 200, deletePlan, "plan deleted successfully")
+
+
+     }catch(error){
+          serverError(req, 500, null, error.message)
+     }
+
+}
