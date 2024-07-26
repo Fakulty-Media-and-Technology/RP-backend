@@ -8,6 +8,7 @@ const {
      passwordChange,
      getVerificationToken,
      authTokenValidity,
+     refreshAccessToken,
 } = require("../controllers/customers.controller.js/onboarding.customer");
 const {
      notificationSettings,
@@ -67,6 +68,8 @@ const customerRouter = express.Router();
 customerRouter.post("/general-signin", signIn);
 
 customerRouter.get("/general/validate-token", authTokenValidity);
+
+customerRouter.get("/general/renew-accesstoken", refreshAccessToken);
 
 customerRouter.post("/signup", customerSignup);
 
