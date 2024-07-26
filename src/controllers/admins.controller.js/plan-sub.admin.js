@@ -92,30 +92,26 @@ exports.fetchPlans = async (req, res) => {
      }
 };
 
-
-exports.deletePlans =async(req,res)=>{
-     try{
+exports.deletePlans = async (req, res) => {
+     try {
           const admin = req.user._id;
 
           const id = req.params.id;
-          const deletePlan= await plansModel.findOneAndDelete({
-               _id:id,
-               
-               admin_id:admin
-          })
-           if(!deletePlans){
+          const deletePlan = await PlansModel.findOneAndDelete({
+               _id: id,
+          });
+
+          if (!deletePlan) {
                return failedResponse(
                     res,
                     400,
                     null,
                     "plan can not be deleted or not found"
                );
-           }
-           return successResponse(res, 200, deletePlan, "plan deleted successfully")
+          }
 
-
-     }catch(error){
-          serverError(req, 500, null, error.message)
+          return successResponse(res, 200, null, "plan deleted successfully");
+     } catch (error) {
+          serverError(req, 500, null, error.message);
      }
-
-}
+};

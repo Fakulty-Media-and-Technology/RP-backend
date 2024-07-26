@@ -82,7 +82,7 @@ superAdminRouter.post("/subscription/plans/create", createPlan);
 superAdminRouter.put("/subscription/plans/update/:id", updatePlan);
 
 superAdminRouter.get("/subscription/plans/fetch", fetchPlans);
-superAdminRouter.delete("/subscription/plans/delete/:id", deletePlans);
 
+superAdminRouter.delete("/subscription/plans/delete/:id", deletePlans);
 
 module.exports = superAdminRouter;
