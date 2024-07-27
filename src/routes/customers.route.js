@@ -62,6 +62,10 @@ const {
      fetchPlans,
      createSubscription,
 } = require("../controllers/customers.controller.js/payment.customer");
+const {
+     registerDeviceToken,
+     updateDeviceToken,
+} = require("../controllers/customers.controller.js/pushNotification.customer");
 
 const customerRouter = express.Router();
 
@@ -160,5 +164,10 @@ customerRouter.get("/wallet/fetch", fetchWallet);
 customerRouter.get("/subscription/fetch-plans", fetchPlans);
 
 customerRouter.post("/subscription/create", createSubscription);
+
+//push notification
+customerRouter.post("/notification/device/register", registerDeviceToken);
+
+customerRouter.post("/notification/device/update", updateDeviceToken);
 
 module.exports = customerRouter;
