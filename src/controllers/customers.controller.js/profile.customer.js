@@ -7,6 +7,11 @@ const {
      invalidRequest,
 } = require("../../utils/response.handler");
 
+function isValidEmail(email) {
+     const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+     return emailRegex.test(email);
+}
+
 exports.customerProfileFetch = async (req, res) => {
      try {
           const user = req.user;
@@ -84,8 +89,14 @@ exports.editProfile = async (req, res) => {
                );
           }
 
-          const { first_name, last_name, country_code, mobile, photo } =
+          const { first_name, last_name, country_code, mobile, photo, email } =
                req.body;
+
+          const bool = isValidEmail(email);
+
+          if (!bool) {
+               return invalidRequest(res, 400, null, "invalid email format");
+          }
 
           const initData = await UsersModel.findOne({ _id: user.id });
 
@@ -94,6 +105,7 @@ exports.editProfile = async (req, res) => {
                     _id: user.id,
                },
                {
+                    email: email ? email : initData.email,
                     first_name: first_name ? first_name : initData.first_name,
                     last_name: last_name ? last_name : initData.last_name,
                     country_code: country_code

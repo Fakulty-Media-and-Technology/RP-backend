@@ -55,11 +55,12 @@ exports.updatePlan = async (req, res) => {
                     _id: id,
                },
                {
-                    admin_id: admin._id || oldValues.admin_id,
-                    months_duration:
-                         Number(months) || oldValues.months_duration,
-                    price: Number(price) || oldValues.price,
-                    details: details || oldValues.details,
+                    admin_id: admin._id ? admin._id : oldValues.admin_id,
+                    months_duration: months
+                         ? Number(months)
+                         : oldValues.months_duration,
+                    price: price ? Number(price) : oldValues.price,
+                    details: details ? details : oldValues.details,
                }
           );
 

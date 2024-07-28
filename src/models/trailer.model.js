@@ -5,7 +5,7 @@ const trailerSchema = new mongoose.Schema(
           video_id: {
                type: mongoose.Types.ObjectId,
                ref: "videos",
-               unique: true,
+               // unique: true,
           },
           video_title: {
                type: String,

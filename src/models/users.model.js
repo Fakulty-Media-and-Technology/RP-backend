@@ -17,7 +17,12 @@ const usersSchema = new mongoose.Schema(
           email: {
                type: String,
                trim: true,
-               required: true,
+               required: [true, "Email is required"],
+               unique: true,
+               match: [
+                    /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+                    "Please fill a valid email address",
+               ],
           },
           country_code: {
                type: String,
