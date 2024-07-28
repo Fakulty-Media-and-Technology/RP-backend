@@ -37,7 +37,7 @@ exports.uploadLargeVideoRoute = async (req, res) => {
                expire,
                res
           );
-          console.log(video);
+          // console.log(video);
           // return successResponse(res, 200, video, "video uploaded");
      } catch (error) {
           return serverError(res, 500, null, error.message);

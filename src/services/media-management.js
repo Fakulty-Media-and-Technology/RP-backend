@@ -6,6 +6,7 @@ const {
      S3Client,
      PutObjectCommand,
 } = require("@aws-sdk/client-s3");
+const { createTranscodingJob } = require("./media-access");
 
 function getFileExtension(filename) {
      const parts = filename.split(".");
@@ -127,7 +128,17 @@ exports.uploadLargeVideos = async (req, fileHandle, fileKey, expire, res) => {
                })}\n\n`
           );
           res.end();
-          return completeResponse;
+
+          const filePath = `s3://reeplay/${key}`;
+          const transPath = `s3://reeplay/transcode/${key.split("/").slice(1).join("/")}`;
+
+          await createTranscodingJob(filePath, transPath);
+
+          return {
+               s3_res: completeResponse,
+               Bucket: bucketName,
+               Key: key,
+          };
      } catch (err) {
           console.error("Error occurred:", err);
 
@@ -175,6 +186,11 @@ exports.uploadShortVideos = async (req, fileHandle, expire, fileKey) => {
           });
 
           const uploadResult = await s3Client.send(putObjectCommand);
+
+          const filePath = `s3://reeplay/${key}`;
+          const transPath = `s3://reeplay/transcode/${key.split("/").slice(1).join("/")}`;
+
+          await createTranscodingJob(filePath, transPath);
 
           return {
                s3_res: uploadResult,

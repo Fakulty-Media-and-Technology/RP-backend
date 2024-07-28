@@ -321,7 +321,7 @@ exports.createTranscodingJob = async (sourcePath, transPath) => {
           };
 
           const data = await emcClient.send(new CreateJobCommand(params));
-          // console.log("Job created!", data);
+          console.log("Transcoding Job Created!");
           return data;
      } catch (error) {
           console.log("Error message", error.message);
