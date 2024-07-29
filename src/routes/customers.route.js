@@ -46,6 +46,7 @@ const {
 const {
      customerProfileFetch,
      editProfile,
+     createSuggestion,
 } = require("../controllers/customers.controller.js/profile.customer");
 const {
      upComingFetch,
@@ -169,5 +170,8 @@ customerRouter.post("/subscription/create", createSubscription);
 customerRouter.post("/notification/device/register", registerDeviceToken);
 
 customerRouter.post("/notification/device/update", updateDeviceToken);
+
+//suggestion
+customerRouter.post("/suggestion/create", createSuggestion);
 
 module.exports = customerRouter;

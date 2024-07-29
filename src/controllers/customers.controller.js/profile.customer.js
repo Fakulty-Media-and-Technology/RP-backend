@@ -1,3 +1,4 @@
+const SuggestionsModel = require("../../models/suggestions.model");
 const UsersModel = require("../../models/users.model");
 const { readPhotos } = require("../../services/media-access");
 const {
@@ -117,6 +118,37 @@ exports.editProfile = async (req, res) => {
           );
 
           return successResponse(res, 200, null, "profile updated");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.createSuggestion = async (req, res) => {
+     try {
+          const user = req.user;
+
+          const { message } = req.body;
+
+          if (!user._id && user.role === "guest") {
+               return invalidRequest(
+                    res,
+                    403,
+                    null,
+                    "you are not authenticated"
+               );
+          }
+
+          await new SuggestionsModel({
+               user_id: user._id,
+               message: message,
+          }).save();
+
+          return successResponse(
+               res,
+               200,
+               null,
+               "suggestion created and submitted to the admin"
+          );
      } catch (error) {
           return serverError(res, 500, null, error.message);
      }
