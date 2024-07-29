@@ -34,6 +34,10 @@ const {
      deletePlans,
      fetchPlans,
 } = require("../controllers/admins.controller.js/plan-sub.admin");
+const {
+     createGiftCard,
+     fetchGiftCards,
+} = require("../controllers/admins.controller.js/giftcard.admin");
 
 const superAdminRouter = express.Router();
 
@@ -84,5 +88,10 @@ superAdminRouter.put("/subscription/plans/update/:id", updatePlan);
 superAdminRouter.get("/subscription/plans/fetch", fetchPlans);
 
 superAdminRouter.delete("/subscription/plans/delete/:id", deletePlans);
+
+//gift cards
+superAdminRouter.post("/giftcard/generate/new", createGiftCard);
+
+superAdminRouter.get("/giftcard/generated/fetch", fetchGiftCards);
 
 module.exports = superAdminRouter;

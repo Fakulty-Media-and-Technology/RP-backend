@@ -1,3 +1,4 @@
+const GiftcardModel = require("../../models/giftcard.model");
 const PaymentsModel = require("../../models/payments.model");
 const PlansModel = require("../../models/plans.model");
 const SubscriptionModel = require("../../models/subscription.model");
@@ -274,6 +275,77 @@ exports.fetchWallet = async (req, res) => {
           ]);
 
           return successResponse(res, 200, custBalance, "user wallet info");
+     } catch (error) {
+          serverError(res, 500, null, error.message);
+     }
+};
+
+exports.redeemGiftCard = async (req, res) => {
+     try {
+          const user = req.user;
+
+          const { gift_code } = req.query;
+
+          const checkValidity = await GiftcardModel.findOne({
+               code: gift_code,
+          });
+
+          if (!checkValidity) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "invalid gift code entered"
+               );
+          }
+
+          const isUsed = await GiftcardModel.findOne({
+               code: gift_code,
+               used: false,
+          });
+
+          if (!isUsed) {
+               return failedResponse(
+                    res,
+                    400,
+                    null,
+                    "Oops, voucher has been used"
+               );
+          }
+
+          await WalletModel.findOneAndUpdate(
+               {
+                    user_id: user._id,
+               },
+               {
+                    $inc: {
+                         balance: Number(isUsed.amount),
+                    },
+               },
+               {
+                    upsert: true,
+               }
+          );
+
+          await GiftcardModel.findOneAndUpdate(
+               {
+                    _id: isUsed._id,
+                    code: gift_code,
+               },
+               {
+                    used: true,
+               },
+               {
+                    upsert: true,
+               }
+          );
+
+          return successResponse(
+               res,
+               200,
+               null,
+               "giftcard has been redeemed and credited to your wallet successfully"
+          );
      } catch (error) {
           serverError(res, 500, null, error.message);
      }

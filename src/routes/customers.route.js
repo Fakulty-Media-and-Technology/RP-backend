@@ -62,6 +62,7 @@ const {
      fetchWallet,
      fetchPlans,
      createSubscription,
+     redeemGiftCard,
 } = require("../controllers/customers.controller.js/payment.customer");
 const {
      registerDeviceToken,
@@ -161,6 +162,8 @@ customerRouter.get("/payment/paystack/payment-receipt", getPaymentReceipt);
 customerRouter.post("/wallet/topup", topupWallet);
 
 customerRouter.get("/wallet/fetch", fetchWallet);
+
+customerRouter.get("/giftcard/redeem", redeemGiftCard);
 
 customerRouter.get("/subscription/fetch-plans", fetchPlans);
 

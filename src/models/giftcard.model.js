@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const liveVideosSchema = new mongoose.Schema(
+const giftcardVideosSchema = new mongoose.Schema(
      {
           admin_id: {
                type: mongoose.Types.ObjectId,
@@ -8,9 +8,10 @@ const liveVideosSchema = new mongoose.Schema(
                required: true,
           },
           serial_number: {
-               type: String,
-               required: true,
+               type: Number,
+               //    required: true,
                unique: true,
+               default: 0,
           },
           amount: {
                type: Number,
@@ -31,4 +32,4 @@ const liveVideosSchema = new mongoose.Schema(
      }
 );
 
-module.exports = mongoose.model("live", liveVideosSchema);
+module.exports = mongoose.model("giftcard", giftcardVideosSchema);
