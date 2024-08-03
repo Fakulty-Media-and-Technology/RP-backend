@@ -356,9 +356,18 @@ exports.authTokenValidity = async (req, res) => {
      try {
           const { token } = req.query;
 
+          if (!token) {
+               return invalidRequest(
+                    res,
+                    400,
+                    { valid: false },
+                    "token must be provided"
+               );
+          }
+
           const authUser = await validateToken(token);
 
-          if (!authUser || authUser == "jwt expired") {
+          if (!authUser || typeof authUser !== "object") {
                return invalidRequest(
                     res,
                     400,

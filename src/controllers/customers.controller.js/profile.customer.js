@@ -99,6 +99,19 @@ exports.editProfile = async (req, res) => {
                return invalidRequest(res, 400, null, "invalid email format");
           }
 
+          const existUs = await UsersModel.findOne({
+               email: email,
+          });
+
+          if (existUs) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "user with email already exist"
+               );
+          }
+
           const initData = await UsersModel.findOne({ _id: user.id });
 
           await UsersModel.findOneAndUpdate(
