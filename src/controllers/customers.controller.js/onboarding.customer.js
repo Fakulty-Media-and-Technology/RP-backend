@@ -387,6 +387,41 @@ exports.authTokenValidity = async (req, res) => {
      }
 };
 
+exports.refTokenValidity = async (req, res) => {
+     try {
+          const { token } = req.query;
+
+          if (!token) {
+               return invalidRequest(
+                    res,
+                    400,
+                    { valid: false },
+                    "token must be provided"
+               );
+          }
+
+          const authUser = await validateRefreshToken(token);
+
+          if (!authUser || typeof authUser !== "object") {
+               return invalidRequest(
+                    res,
+                    400,
+                    { valid: false },
+                    "invalid refresh token/expired"
+               );
+          }
+
+          return successResponse(
+               res,
+               200,
+               { valid: true },
+               "refresh token is still valid"
+          );
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
 exports.refreshAccessToken = async (req, res) => {
      try {
           const { ref_token } = req.query;

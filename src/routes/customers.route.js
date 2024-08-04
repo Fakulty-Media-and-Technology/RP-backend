@@ -9,6 +9,7 @@ const {
      getVerificationToken,
      authTokenValidity,
      refreshAccessToken,
+     refTokenValidity,
 } = require("../controllers/customers.controller.js/onboarding.customer");
 const {
      notificationSettings,
@@ -63,6 +64,7 @@ const {
      fetchPlans,
      createSubscription,
      redeemGiftCard,
+     userSubStatus,
 } = require("../controllers/customers.controller.js/payment.customer");
 const {
      registerDeviceToken,
@@ -74,6 +76,8 @@ const customerRouter = express.Router();
 customerRouter.post("/general-signin", signIn);
 
 customerRouter.get("/general/validate-token", authTokenValidity);
+
+customerRouter.get("/general/validate-reftoken", refTokenValidity);
 
 customerRouter.get("/general/renew-accesstoken", refreshAccessToken);
 
@@ -168,6 +172,8 @@ customerRouter.get("/giftcard/redeem", redeemGiftCard);
 customerRouter.get("/subscription/fetch-plans", fetchPlans);
 
 customerRouter.post("/subscription/create", createSubscription);
+
+customerRouter.get("/subscription/status", userSubStatus);
 
 //push notification
 customerRouter.post("/notification/device/register", registerDeviceToken);

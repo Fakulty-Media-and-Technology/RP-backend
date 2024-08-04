@@ -199,6 +199,50 @@ exports.createSubscription = async (req, res) => {
      }
 };
 
+exports.userSubStatus = async (req, res) => {
+     try {
+          const user = req.user;
+
+          const checkSub = await SubscriptionModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $and: [
+                                   {
+                                        $eq: ["$user_id", user._id],
+                                   },
+                                   {
+                                        $eq: ["$active", true],
+                                   },
+                                   {
+                                        $gte: ["$expiry_date", new Date()],
+                                   },
+                              ],
+                         },
+                    },
+               },
+          ]);
+
+          if (!checkSub[0] || !checkSub.length > 0) {
+               return failedResponse(
+                    res,
+                    400,
+                    null,
+                    "you do not have any active subscription"
+               );
+          }
+
+          return successResponse(
+               res,
+               200,
+               checkSub[0],
+               "subscription status fetched"
+          );
+     } catch (error) {
+          serverError(res, 500, null, error.message);
+     }
+};
+
 exports.topupWallet = async (req, res) => {
      try {
           const user = req.user;
