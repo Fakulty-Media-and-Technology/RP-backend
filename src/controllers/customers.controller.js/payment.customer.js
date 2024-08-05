@@ -186,12 +186,71 @@ exports.createSubscription = async (req, res) => {
           }
 
           if (source === "payment") {
+               const payDet = await PaymentsModel.findOne({
+                    reference: reference,
+                    user_id: user._id,
+                    status: "success",
+                    is_used: false,
+               });
+
+               if (!payDet) {
+                    return failedResponse(
+                         res,
+                         400,
+                         null,
+                         "smthing went wrong: payment unsuccessful or used by you"
+                    );
+               }
+
+               const plan = await PlansModel.findOne({
+                    _id: plan_id,
+               });
+
+               if (Number(payDet?.amount) !== Number(plan.price)) {
+                    return failedResponse(
+                         res,
+                         400,
+                         null,
+                         "amount paid and subscription plan price does not match"
+                    );
+               }
+
+               const currentDate = new Date();
+
+               const millisecondsInAMonth = 30 * 24 * 60 * 60 * 1000;
+
+               const futureDate = new Date(
+                    currentDate.getTime() +
+                         Number(plan.months_duration) * millisecondsInAMonth
+               );
+
+               await new SubscriptionModel({
+                    user_id: user._id,
+                    plan_id: plan_id,
+                    start_date: new Date(),
+                    expiry_date: futureDate,
+                    payment_method: "wallet",
+                    amount: Number(plan.price),
+               }).save();
+
+               await PaymentsModel.findOneAndUpdate(
+                    {
+                         _id: payDet._id,
+                         reference: reference,
+                    },
+                    {
+                         is_used: true,
+                    },
+                    {
+                         upsert: true,
+                    }
+               );
+
                return successResponse(
                     res,
                     200,
                     null,
-                    "not yet implemented"
-                    // "subscription created successfully by direct payment"
+                    "subscription created successfully by direct payment"
                );
           }
      } catch (error) {
