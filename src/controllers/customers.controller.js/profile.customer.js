@@ -55,10 +55,69 @@ exports.customerProfileFetch = async (req, res) => {
                },
           ]);
 
-          const signedUrl = await readPhotos(
-               profile[0]?.photo?.Bucket,
-               profile[0]?.photo?.Key
-          );
+          if (!profile.length) {
+               return successResponse(
+                    res,
+                    200,
+                    {
+                         profile: null,
+                         photo_url: "no profile picture",
+                    },
+                    "customer profile fetched but no profile data"
+               );
+          }
+          // const signedUrl = await readPhotos(
+          //      profile[0]?.photo?.Bucket,
+          //      profile[0]?.photo?.Key
+          // );
+
+          // const photoUrl =
+          //      signedUrl.status == 400 ? "no profile picture" : signedUrl;
+
+          // return successResponse(
+          //      res,
+          //      200,
+          //      {
+          //           profile: profile[0],
+          //           photo_url: photoUrl,
+          //      },
+          //      "customer profile fetched"
+          // );
+          // const signedUrl = await readPhotos(
+          //      profile[0]?.photo?.Bucket,
+          //      profile[0]?.photo?.Key
+          // );
+          // // const signedUrl = await readPhotos(profile[0]?.photo?.Bucket, profile[0]?.photo?.Key);
+          // console.log("Profile Photo Bucket:", profile[0]?.photo?.Bucket);
+          // console.log("Profile Photo Key:", profile[0]?.photo?.Key);
+          // console.log("Signed URL:", signedUrl);
+
+          // return successResponse(
+          //      res,
+          //      200,
+          //      {
+          //           profile: profile[0],
+          //           photo_url:
+          //                signedUrl.status === 400
+          //                     ? "no profile picture"
+          //                     : signedUrl,
+          //      },
+          //      "client profile fetched"
+          // );
+          const userPhoto = profile[0]?.photo;
+          if (!userPhoto || !userPhoto.Bucket || !userPhoto.Key) {
+               return successResponse(
+                    res,
+                    200,
+                    { profile: profile[0], photo_url: "no profile picture" },
+                    "client profile fetched"
+               );
+          }
+
+          const signedUrl = await readPhotos(userPhoto.Bucket, userPhoto.Key);
+          console.log("Photo Bucket:", userPhoto.Bucket);
+          console.log("Photo Key:", userPhoto.Key);
+          console.log("Signed URL:", signedUrl);
 
           return successResponse(
                res,
@@ -66,11 +125,11 @@ exports.customerProfileFetch = async (req, res) => {
                {
                     profile: profile[0],
                     photo_url:
-                         signedUrl.status == 400
+                         signedUrl.status === 400
                               ? "no profile picture"
                               : signedUrl,
                },
-               "customer profile fetched"
+               "client profile fetched"
           );
      } catch (error) {
           return serverError(res, 500, null, error.message);

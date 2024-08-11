@@ -6,20 +6,46 @@ const {
      failedResponse,
 } = require("../../utils/response.handler");
 
+async function convertToLocalCurrency(usdAmount, userCurrency) {
+     const response = await fetch(
+          `https://api.exchangerate-api.com/v4/latest/USD`
+     );
+     const data = await response.json();
+     const rate = data.rates[userCurrency];
+     if (!rate) {
+          throw new Error("Currency not supported");
+     }
+     return (usdAmount * rate).toFixed(2);
+}
 exports.createPlan = async (req, res) => {
      try {
           const admin = req.user;
 
-          const { months, price, details } = req.body;
+          const { months, price, details, userCurrency } = req.body;
 
-          if (!months || !price || !details) {
+          if (!months || !price || !details || userCurrency) {
                return invalidRequest(res, 400, null, "all input are required");
           }
 
+          const numMonths = Number(months);
+          const numPrice = Number(price);
+          if (isNaN(numMonths) || isNaN(numPrice)) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "Months and price must be valid numbers"
+               );
+          }
+          // Convert price to user’s currency
+          const convertedPrice = await convertToLocalCurrency(
+               numPrice,
+               userCurrency
+          );
           await new PlansModel({
                admin_id: admin._id,
-               months_duration: Number(months),
-               price: Number(price),
+               months_duration: numMonths,
+               price: convertedPrice,
                details: details,
           }).save();
 
