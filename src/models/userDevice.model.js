@@ -20,6 +20,7 @@ const userdeviceSchema = new mongoose.Schema(
                enum: ["ios", "android", "web"],
                required: true,
           },
+       
      },
      {
           timestamps: true,
