@@ -59,6 +59,43 @@ exports.getPaymentReceipt = async (req, res) => {
      }
 };
 
+exports.transactionHistory = async (req, res) => {
+     try {
+          const user = req.user;
+
+          const response = await PaymentsModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: ["$user_id", user._id],
+                         },
+                    },
+               },
+               {
+                    $project: {
+                         user_id: 0,
+                         is_used: 0,
+                         __v: 0,
+                    },
+               },
+               {
+                    $sort: {
+                         createdAt: -1,
+                    },
+               },
+          ]);
+
+          return successResponse(
+               res,
+               200,
+               response,
+               "transaction history fetched"
+          );
+     } catch (error) {
+          serverError(res, 500, null, error.message);
+     }
+};
+
 exports.fetchPlans = async (req, res) => {
      try {
           const plans = await PlansModel.aggregate([

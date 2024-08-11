@@ -65,6 +65,7 @@ const {
      createSubscription,
      redeemGiftCard,
      userSubStatus,
+     transactionHistory,
 } = require("../controllers/customers.controller.js/payment.customer");
 const {
      registerDeviceToken,
@@ -162,6 +163,8 @@ customerRouter.post("/payment/paystack/start-payment", startPayment);
 customerRouter.post("/payment/paystack/create-payment", createPayment);
 
 customerRouter.get("/payment/paystack/payment-receipt", getPaymentReceipt);
+
+customerRouter.get("/payment/paystack/transaction-history", transactionHistory);
 
 customerRouter.post("/wallet/topup", topupWallet);
 
