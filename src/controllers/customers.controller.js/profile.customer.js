@@ -1,6 +1,7 @@
 const SuggestionsModel = require("../../models/suggestions.model");
 const UsersModel = require("../../models/users.model");
 const { readPhotos } = require("../../services/media-access");
+const { deletePhoto } = require("../../services/media-management");
 const {
      serverError,
      successResponse,
@@ -81,38 +82,46 @@ exports.editProfile = async (req, res) => {
      try {
           const user = req.user;
 
-          if (!user._id && user.role === "guest") {
-               return invalidRequest(
-                    res,
-                    403,
-                    null,
-                    "you are not authenticated"
-               );
-          }
-
           const { first_name, last_name, country_code, mobile, photo, email } =
                req.body;
 
-          const bool = isValidEmail(email);
+          if (email) {
+               const bol = isValidEmail(email);
 
-          if (!bool) {
-               return invalidRequest(res, 400, null, "invalid email format");
+               if (!bol) {
+                    console.log("Invalid email format:", email);
+                    return invalidRequest(
+                         res,
+                         400,
+                         null,
+                         "invalid email format"
+                    );
+               }
+
+               const existUs = await UsersModel.findOne({ email: email });
+
+               if (existUs) {
+                    console.log("Email already in use:", email);
+                    return invalidRequest(
+                         res,
+                         409,
+                         null,
+                         "Email already in use"
+                    );
+               }
           }
 
-          const existUs = await UsersModel.findOne({
-               email: email,
-          });
-
-          if (existUs) {
-               return invalidRequest(
-                    res,
-                    400,
-                    null,
-                    "user with email already exist"
-               );
+          let initData = await UsersModel.findOne({ _id: user.id });
+          if (!initData) {
+               console.log("User not found:", user.id);
+               return invalidRequest(res, 404, null, "User not found");
           }
 
-          const initData = await UsersModel.findOne({ _id: user.id });
+          if (photo) {
+               await deletePhoto(initData.photo);
+
+               initData.photo = {};
+          }
 
           await UsersModel.findOneAndUpdate(
                {
@@ -132,6 +141,7 @@ exports.editProfile = async (req, res) => {
 
           return successResponse(res, 200, null, "profile updated");
      } catch (error) {
+          console.error("Server error:", error);
           return serverError(res, 500, null, error.message);
      }
 };

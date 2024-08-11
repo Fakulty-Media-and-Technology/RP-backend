@@ -5,6 +5,7 @@ const {
      AbortMultipartUploadCommand,
      S3Client,
      PutObjectCommand,
+     DeleteObjectCommand,
 } = require("@aws-sdk/client-s3");
 const { createTranscodingJob } = require("./media-access");
 
@@ -13,18 +14,18 @@ function getFileExtension(filename) {
      return parts.length > 1 ? parts.pop() : "";
 }
 
+const s3Client = new S3Client({
+     region: process.env.S3REGION,
+     credentials: {
+          accessKeyId: process.env.S3ACCESS_KEY,
+          secretAccessKey: process.env.S3SECRET_KEY,
+     },
+});
+
 exports.uploadLargeVideos = async (req, fileHandle, fileKey, expire, res) => {
      if (!req.files) return false;
      if (!req.files[fileHandle]) return false;
      let file = { ...req.files[fileHandle] };
-
-     const s3Client = new S3Client({
-          region: process.env.S3REGION,
-          credentials: {
-               accessKeyId: process.env.S3ACCESS_KEY,
-               secretAccessKey: process.env.S3SECRET_KEY,
-          },
-     });
 
      const bucketName = "reeplay";
      const key = fileKey
@@ -160,14 +161,6 @@ exports.uploadShortVideos = async (req, fileHandle, expire, fileKey) => {
      if (!req.files[fileHandle]) return false;
      let file = { ...req.files[fileHandle] };
 
-     const s3Client = new S3Client({
-          region: process.env.S3REGION,
-          credentials: {
-               accessKeyId: process.env.S3ACCESS_KEY,
-               secretAccessKey: process.env.S3SECRET_KEY,
-          },
-     });
-
      const bucketName = "reeplay";
      const key = fileKey
           ? `videos/${fileKey}`
@@ -208,14 +201,6 @@ exports.uploadImage = async (req, fileHandle, fileKey) => {
      if (!req.files[fileHandle]) return false;
      let file = { ...req.files[fileHandle] };
 
-     const s3Client = new S3Client({
-          region: process.env.S3REGION,
-          credentials: {
-               accessKeyId: process.env.S3ACCESS_KEY,
-               secretAccessKey: process.env.S3SECRET_KEY,
-          },
-     });
-
      const bucketName = "reeplay";
      const key = fileKey
           ? `photos/${fileKey + "." + getFileExtension(file.name)}`
@@ -227,7 +212,7 @@ exports.uploadImage = async (req, fileHandle, fileKey) => {
      try {
           const putObjectCommand = new PutObjectCommand({
                Bucket: bucketName,
-               Key: key,
+               Key: key + Date.now(),
                Body: buffer,
                ContentType: file.mimetype,
           });
@@ -244,5 +229,23 @@ exports.uploadImage = async (req, fileHandle, fileKey) => {
      } catch (err) {
           console.error("Error occurred while uploading:", err);
           throw err;
+     }
+};
+
+exports.deletePhoto = async (payload) => {
+     try {
+          const params = {
+               Bucket: payload.Bucket || "reeplay",
+               Key: payload?.Key,
+          };
+
+          const data = await s3Client.send(new DeleteObjectCommand(params));
+
+          return true;
+     } catch (error) {
+          console.log(error);
+          return error.message;
+     } finally {
+          s3Client.destroy();
      }
 };
