@@ -24,11 +24,22 @@ const PaymentServices = {
 
                const { amount, reference, status } = payment.data;
 
-               if (status !== "success") {
-                    return "payment unsuccessful";
-               }
-
                const nairaAmount = convertKoboToNaira(amount);
+
+               if (status !== "success") {
+                    const newPayment = new PaymentsModel({
+                         user_id: payment.data.metadata.user_id,
+                         full_name: payment.data.metadata.full_name,
+                         email: payment.data.customer.email,
+                         amount: nairaAmount,
+                         reference: reference,
+                         status: status,
+                    });
+
+                    const nPayment = await newPayment.save();
+
+                    return nPayment;
+               }
 
                const newPayment = new PaymentsModel({
                     user_id: payment.data.metadata.user_id,
