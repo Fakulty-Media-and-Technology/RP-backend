@@ -1,4 +1,5 @@
 const GiftcardModel = require("../../models/giftcard.model");
+const PaymentDetailsModel = require("../../models/paymentDetails.model.js");
 const PaymentsModel = require("../../models/payments.model");
 const PlansModel = require("../../models/plans.model");
 const SubscriptionModel = require("../../models/subscription.model");
@@ -91,6 +92,33 @@ exports.transactionHistory = async (req, res) => {
                response,
                "transaction history fetched"
           );
+     } catch (error) {
+          serverError(res, 500, null, error.message);
+     }
+};
+
+exports.addPayment = async (req, res) => {
+     try {
+          const user = req.user;
+          const { authorization_codes, last4, brand } = req.body;
+
+          if (!authorization_codes || !last4 || !brand) {
+               return invalidRequest(res, 200, null, "all input are required");
+          }
+
+          await PaymentDetailsModel.findOneAndUpdate(
+               {
+                    user_id: user._id,
+               },
+               {
+                    authorization_codes,
+                    last4,
+                    brand,
+               },
+               { new: true, upsert: true }
+          );
+
+          return successResponse(res, 200, null, "payment added successfully");
      } catch (error) {
           serverError(res, 500, null, error.message);
      }

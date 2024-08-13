@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 const paymentDetailsSchema = new mongoose.Schema(
      {
-          user: {
+          user_id: {
                type: mongoose.Schema.Types.ObjectId,
-               ref: "User", // Reference to the User model
+               ref: "users",
                required: true,
           },
           authorization_codes: {
@@ -22,4 +22,4 @@ const paymentDetailsSchema = new mongoose.Schema(
      }
 );
 
-module.exports = mongoose.model("PaymentDetails", paymentDetailsSchema);
+module.exports = mongoose.model("payment_details", paymentDetailsSchema);
