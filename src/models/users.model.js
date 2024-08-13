@@ -79,6 +79,17 @@ const usersSchema = new mongoose.Schema(
                type: Boolean,
                default: false,
           },
+          paystack_details: {
+               authorization_code: {
+                    type: String,
+               },
+               last4: {
+                    type: String,
+               },
+               brand: {
+                    type: String,
+               },
+          },
      },
      {
           timestamps: true,
