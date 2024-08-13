@@ -87,7 +87,6 @@ exports.customerProfileFetch = async (req, res) => {
                          verified: 0,
                          approved: 0,
                          suspended: 0,
-                         pin: 0,
                     },
                },
           ]);
