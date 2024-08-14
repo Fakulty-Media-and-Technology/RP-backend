@@ -2,6 +2,7 @@ const SuggestionsModel = require("../../models/suggestions.model");
 const UsersModel = require("../../models/users.model");
 const { readPhotos } = require("../../services/media-access");
 const { deletePhoto } = require("../../services/media-management");
+const PaymentDetails = require("../../models/paymentDetails.model.js");
 const {
      serverError,
      successResponse,
@@ -23,7 +24,7 @@ exports.customerProfileFetch = async (req, res) => {
                     res,
                     403,
                     user,
-                    "you are not authenticated"
+                    "You are not authenticated"
                );
           }
 
@@ -41,17 +42,51 @@ exports.customerProfileFetch = async (req, res) => {
                     },
                },
                {
+                    $lookup: {
+                         from: "payment_details",
+                         let: {
+                              uid: "$_id",
+                         },
+                         pipeline: [
+                              {
+                                   $match: {
+                                        $expr: {
+                                             $eq: [
+                                                  "$user_id",
+                                                  {
+                                                       $toObjectId: "$$uid",
+                                                  },
+                                             ],
+                                        },
+                                   },
+                              },
+                              {
+                                   $project: {
+                                        __v: 0,
+                                        _id: 0,
+                                        user_id: 0,
+                                   },
+                              },
+                         ],
+                         as: "paymentDetails",
+                    },
+               },
+               {
+                    $addFields: {
+                         paymentDetails: {
+                              $arrayElemAt: ["$paymentDetails", 0],
+                         },
+                    },
+               },
+               {
                     $project: {
+                         __v: 0,
+                         password: 0,
                          auth_code: 0,
                          auth_expiry: 0,
                          verified: 0,
                          approved: 0,
                          suspended: 0,
-                         // createdAt: 0,
-                         updatedAt: 0,
-                         __v: 0,
-                         // pin: 0,
-                         password: 0,
                     },
                },
           ]);
@@ -64,24 +99,26 @@ exports.customerProfileFetch = async (req, res) => {
                          profile: null,
                          photo_url: "no profile picture",
                     },
-                    "customer profile fetched but no profile data"
+                    "Customer profile fetched but no profile data"
                );
           }
 
           const userPhoto = profile[0]?.photo;
+
           if (!userPhoto || !userPhoto.Bucket || !userPhoto.Key) {
                return successResponse(
                     res,
                     200,
-                    { profile: profile[0], photo_url: "no profile picture" },
-                    "client profile fetched"
+                    {
+                         profile: profile[0],
+
+                         photo_url: "no profile picture",
+                    },
+                    "Client profile fetched"
                );
           }
 
           const signedUrl = await readPhotos(userPhoto.Bucket, userPhoto.Key);
-          console.log("Photo Bucket:", userPhoto.Bucket);
-          console.log("Photo Key:", userPhoto.Key);
-          console.log("Signed URL:", signedUrl);
 
           return successResponse(
                res,
@@ -93,7 +130,7 @@ exports.customerProfileFetch = async (req, res) => {
                               ? "no profile picture"
                               : signedUrl,
                },
-               "client profile fetched"
+               "Client profile fetched"
           );
      } catch (error) {
           return serverError(res, 500, null, error.message);
@@ -104,8 +141,15 @@ exports.editProfile = async (req, res) => {
      try {
           const user = req.user;
 
-          const { first_name, last_name, country_code, mobile, photo, email } =
-               req.body;
+          const {
+               first_name,
+               last_name,
+               country_code,
+               mobile,
+               photo,
+               email,
+               payment,
+          } = req.body;
 
           if (email) {
                const bol = isValidEmail(email);
@@ -161,7 +205,12 @@ exports.editProfile = async (req, res) => {
                }
           );
 
-          return successResponse(res, 200, null, "profile updated");
+          return successResponse(
+               res,
+               200,
+               null,
+               "Profile and payment details updated"
+          );
      } catch (error) {
           console.error("Server error:", error);
           return serverError(res, 500, null, error.message);
