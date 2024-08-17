@@ -125,3 +125,71 @@ exports.addVoteContestant = async (req, res) => {
           return serverError(res, 500, null, error.message);
      }
 };
+
+exports.votestatusInfo = async (req, res) => {
+     try {
+          const { live_id } = req.query;
+
+          const user = req.user;
+          if (user.role !== "tvshow") {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "this feature is not available to you"
+               );
+          }
+
+          const voteInfo = await VoteInfoModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: [
+                                   "$live_id",
+                                   {
+                                        $toObjectId: live_id,
+                                   },
+                              ],
+                         },
+                    },
+               },
+               {
+                    $project: {
+                         __v: 0,
+                    },
+               },
+          ]);
+
+          const contestantInfo = await ContestantsModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: [
+                                   "$live_id",
+                                   {
+                                        $toObjectId: live_id,
+                                   },
+                              ],
+                         },
+                    },
+               },
+               {
+                    $sort: {
+                         votes: -1,
+                    },
+               },
+          ]);
+
+          return successResponse(
+               res,
+               200,
+               {
+                    vote_info: voteInfo,
+                    contestant_ranking: contestantInfo,
+               },
+               "voting progress info"
+          );
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
