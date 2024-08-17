@@ -7,6 +7,10 @@ const {
 const {
      liveStreamCredentials,
 } = require("../controllers/clients.controller.js/livestream.clients");
+const {
+     createVoteInfo,
+     addVoteContestant,
+} = require("../controllers/clients.controller.js/vote.clients");
 
 const clientsRouter = express.Router();
 
@@ -17,5 +21,9 @@ clientsRouter.get("/profile/fetch", clientProfileFetch);
 clientsRouter.put("/profile/edit", clientEditProfile);
 
 clientsRouter.get("/livestream/streamkey", liveStreamCredentials);
+
+clientsRouter.post("/livestream/vote/info", createVoteInfo);
+
+clientsRouter.post("/livestream/vote/contestant", addVoteContestant);
 
 module.exports = clientsRouter;

@@ -104,12 +104,13 @@ exports.authorizePayment = async (req, res) => {
 
 exports.createPayment = async (req, res) => {
      try {
-          const { reference } = req.body;
+          const { reference, save_card } = req.body;
 
           const user = req.user;
 
           const response = await PaymentServices.paystackCreatePayment(
                reference,
+               save_card,
                user._id
           );
 
@@ -184,19 +185,19 @@ exports.addPayment = async (req, res) => {
                return invalidRequest(res, 200, null, "all input are required");
           }
 
-          await PaymentDetailsModel.findOneAndUpdate(
-               {
-                    user_id: user._id,
-               },
-               {
-                    authorization_code,
-                    last4,
-                    brand,
-               },
-               { new: true, upsert: true }
-          );
+          // await PaymentDetailsModel.findOneAndUpdate(
+          //      {
+          //           user_id: user._id,
+          //      },
+          //      {
+          //           authorization_code,
+          //           last4,
+          //           brand,
+          //      },
+          //      { new: true, upsert: true }
+          // );
 
-          return successResponse(res, 200, null, "payment added successfully");
+          // return successResponse(res, 200, null, "payment added successfully");
      } catch (error) {
           serverError(res, 500, null, error.message);
      }

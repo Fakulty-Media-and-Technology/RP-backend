@@ -6,17 +6,17 @@ const { VerifytPass } = require("../utils/bcrypt");
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 
-let validStreamKeys = [];
+// let validStreamKeys = [];
 
-const fetchStreamKeys = async () => {
-     try {
-          const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
-          validStreamKeys = streamKeys.map((doc) => doc.stream_key);
-          // console.log('Fetched stream keys:', validStreamKeys);
-     } catch (error) {
-          console.error("Error fetching stream keys:", error);
-     }
-};
+// const fetchStreamKeys = async () => {
+//      try {
+//           const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
+//           validStreamKeys = streamKeys.map((doc) => doc.stream_key);
+//           // console.log('Fetched stream keys:', validStreamKeys);
+//      } catch (error) {
+//           console.error("Error fetching stream keys:", error);
+//      }
+// };
 
 const connect = {
      name: "live",
@@ -306,5 +306,5 @@ const connect = {
 
 module.exports = {
      connect,
-     fetchStreamKeys,
+     // fetchStreamKeys,
 };

@@ -33,7 +33,7 @@ const paymentSchema = new mongoose.Schema(
           },
           use_case: {
                type: String,
-               enum: ["subscription", "topup"],
+               enum: ["subscription", "topup", "vote", "donate"],
           },
      },
      {

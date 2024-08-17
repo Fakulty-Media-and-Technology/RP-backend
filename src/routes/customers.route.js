@@ -168,7 +168,7 @@ customerRouter.get("/payment/paystack/payment-receipt", getPaymentReceipt);
 
 customerRouter.get("/payment/paystack/transaction-history", transactionHistory);
 
-customerRouter.put("/payment/paystack/add-payment", addPayment);
+// customerRouter.put("/payment/paystack/add-payment", addPayment);
 
 customerRouter.post("/payment/paystack/authorize-payment", authorizePayment);
 
@@ -191,5 +191,9 @@ customerRouter.post("/notification/device/update", updateDeviceToken);
 
 //suggestion
 customerRouter.post("/suggestion/create", createSuggestion);
+
+//tvshow livestream voting
+customerRouter.get("livestream/vote/fetch-contestants");
+customerRouter.post("livestream/vote/create-vote");
 
 module.exports = customerRouter;

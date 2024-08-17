@@ -1,13 +1,14 @@
 {
      "name": "reeplay-backend",
      "version": "1.0.0",
-     "description": "",
+     "description": "reeplay mobile app, netflix and other similar apps compatible",
      "main": "src/index.js",
      "scripts": {
           "test": "jest",
           "format": "prettier --write .",
-          "start": "nodemon --exec \"npm run format && node\" src/index.js",
-          "dev": "npm run start"
+          "prest": "nodemon --exec \"npm run format && node\" src/index.js",
+          "dev": "npm run prest",
+          "start": "node src/index.js"
      },
      "keywords": [],
      "author": "",

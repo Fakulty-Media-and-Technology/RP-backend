@@ -30,7 +30,7 @@ const PaymentServices = {
           }
      },
 
-     async paystackCreatePayment(ref, uid) {
+     async paystackCreatePayment(ref, save_card, uid) {
           try {
                const payment = await Paystack.verifyPayment(ref);
 
@@ -45,7 +45,7 @@ const PaymentServices = {
                     channel,
                } = payment.data.authorization;
 
-               if (channel === "card" && status === "success") {
+               if (save_card && channel === "card" && status === "success") {
                     await PaymentDetailsModel.findOneAndUpdate(
                          {
                               user_id: uid,
