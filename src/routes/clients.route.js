@@ -10,6 +10,7 @@ const {
 const {
      createVoteInfo,
      addVoteContestant,
+     updateVoteInfo,
 } = require("../controllers/clients.controller.js/vote.clients");
 
 const clientsRouter = express.Router();
@@ -23,6 +24,8 @@ clientsRouter.put("/profile/edit", clientEditProfile);
 clientsRouter.get("/livestream/streamkey", liveStreamCredentials);
 
 clientsRouter.post("/livestream/vote/info", createVoteInfo);
+
+clientsRouter.put("/livestream/vote/info/update", updateVoteInfo);
 
 clientsRouter.post("/livestream/vote/contestant", addVoteContestant);
 

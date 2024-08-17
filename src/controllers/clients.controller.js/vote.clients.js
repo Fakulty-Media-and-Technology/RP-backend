@@ -21,16 +21,74 @@ exports.createVoteInfo = async (req, res) => {
           }
 
           if (!live_id || !price || !status) {
-               invalidRequest(res, 400, null, "all inputs are required");
+               return invalidRequest(res, 400, null, "all inputs are required");
+          }
+
+          const voteExits = await VoteInfoModel.findOne({
+               live_id: live_id,
+          });
+
+          if (voteExits) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "vote poll has already been created for this live event"
+               );
+          }
+
+          if (!live_id || !price || !status) {
+               return invalidRequest(res, 400, null, "all inputs are required");
           }
 
           await new VoteInfoModel({
                live_id: live_id,
+               client_id: user._id,
                price: Number(price),
                status: status,
           }).save();
 
           return successResponse(res, 200, null, "vote-info instace created");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.updateVoteInfo = async (req, res) => {
+     try {
+          const { live_id, price, status } = req.body;
+
+          const user = req.user;
+
+          const voteEx = await VoteInfoModel.findOne({
+               live_id: live_id,
+               client_id: user._id,
+          });
+
+          if (!voteEx) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "cannot find your live voting instance"
+               );
+          }
+
+          await VoteInfoModel.findOneAndUpdate(
+               {
+                    live_id: live_id,
+                    client_id: user._id,
+               },
+               {
+                    price: price ? Number(price) : voteEx.price,
+                    status: status ? status : voteEx.status,
+               },
+               {
+                    upsert: true,
+               }
+          );
+
+          return successResponse(res, 200, null, "vote-info updated");
      } catch (error) {
           return serverError(res, 500, null, error.message);
      }
@@ -51,7 +109,7 @@ exports.addVoteContestant = async (req, res) => {
           }
 
           if (!live_id || !names || !occupation || !bio || !contact) {
-               invalidRequest(res, 400, null, "all inputs are required");
+               return invalidRequest(res, 400, null, "all inputs are required");
           }
 
           await new ContestantsModel({

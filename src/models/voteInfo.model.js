@@ -7,8 +7,14 @@ const voteinfoSchema = new mongoose.Schema(
                ref: "lives",
                required: true,
           },
+          client_id: {
+               type: mongoose.Types.ObjectId,
+               ref: "users",
+               required: true,
+          },
           price: {
                type: Number,
+               required: true,
           },
           status: {
                type: Boolean,

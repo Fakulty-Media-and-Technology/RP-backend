@@ -73,6 +73,11 @@ const {
      registerDeviceToken,
      updateDeviceToken,
 } = require("../controllers/customers.controller.js/pushNotification.customer");
+const {
+     fetchVoteContestants,
+     fetchVoteInfo,
+     createVote,
+} = require("../controllers/customers.controller.js/vote.custumers");
 
 const customerRouter = express.Router();
 
@@ -193,7 +198,10 @@ customerRouter.post("/notification/device/update", updateDeviceToken);
 customerRouter.post("/suggestion/create", createSuggestion);
 
 //tvshow livestream voting
-customerRouter.get("livestream/vote/fetch-contestants");
-customerRouter.post("livestream/vote/create-vote");
+customerRouter.get("/livestream/vote/fetch-info", fetchVoteInfo);
+
+customerRouter.get("/livestream/vote/fetch-contestants", fetchVoteContestants);
+
+customerRouter.post("/livestream/vote/create-vote", createVote);
 
 module.exports = customerRouter;
