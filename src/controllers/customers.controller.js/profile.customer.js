@@ -191,7 +191,7 @@ exports.editProfile = async (req, res) => {
 
           await UsersModel.findOneAndUpdate(
                {
-                    _id: user.id,
+                    _id: user._id,
                },
                {
                     email: email ? email : initData.email,
