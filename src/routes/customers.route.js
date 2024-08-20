@@ -77,6 +77,7 @@ const {
      fetchVoteContestants,
      fetchVoteInfo,
      createVote,
+     donateFund,
 } = require("../controllers/customers.controller.js/vote.custumers");
 
 const customerRouter = express.Router();
@@ -203,5 +204,7 @@ customerRouter.get("/livestream/vote/fetch-info", fetchVoteInfo);
 customerRouter.get("/livestream/vote/fetch-contestants", fetchVoteContestants);
 
 customerRouter.post("/livestream/vote/create-vote", createVote);
+
+customerRouter.post("/livestream/donate/dash-fund", donateFund);
 
 module.exports = customerRouter;
