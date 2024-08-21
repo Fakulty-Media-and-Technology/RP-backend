@@ -373,7 +373,7 @@ exports.createSubscription = async (req, res) => {
                     plan_id: plan_id,
                     start_date: new Date(),
                     expiry_date: futureDate,
-                    payment_method: "wallet",
+                    payment_method: "direct-payment",
                     amount: Number(plan.price),
                }).save();
 

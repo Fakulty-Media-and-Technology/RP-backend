@@ -2,6 +2,7 @@ const http = require("http");
 const app = require("./app");
 const { Server } = require("socket.io");
 const socketChat = require("./socket/socketEvents");
+const { getActiveSessions, autoRenewSubscription } = require("./cron");
 
 const PORT = process.env.PORT || 8000;
 
@@ -20,4 +21,8 @@ server.listen(PORT, () => {
      console.log(
           `Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`
      );
+
+     //Cron Jobs
+     getActiveSessions();
+     autoRenewSubscription();
 });
