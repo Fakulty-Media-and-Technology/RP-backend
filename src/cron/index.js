@@ -25,8 +25,6 @@ const getActiveSessions = node_cron.schedule("*/5 * * * *", async () => {
 
 const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
      try {
-          const dateNow = new Date().getTime();
-
           const expiredSubs = await SubscriptionModel.aggregate([
                {
                     $match: {
@@ -37,8 +35,10 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
                                    },
                                    {
                                         $gte: [
-                                             dateNow,
-                                             new Date("$expiry_date").getTime(),
+                                             new Date(),
+                                             {
+                                                  $toDate: "$expiry_date",
+                                             },
                                         ],
                                    },
                               ],
@@ -48,6 +48,7 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
           ]);
 
           if (expiredSubs.length === 0) {
+               console.log("AUTO-RENEW: No Expired Sub");
                return "no expired sub";
           }
 
@@ -75,7 +76,7 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
                });
 
                const cardDetails = await PaymentDetailsModel.findOne({
-                    user_id: customer._id,
+                    user_id: customerDetl._id,
                });
 
                if (cardDetails) {
@@ -107,8 +108,8 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
 
                          //TODO: send email and push notification here
                          const mailData = {
-                              first_name: customerDetl.first_name,
-                              last_name: customerDetl.last_name,
+                              firstName: customerDetl.first_name,
+                              lastName: customerDetl.last_name,
                               email: customerDetl.email,
                          };
 
@@ -140,12 +141,12 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
                     );
 
                     await new SubscriptionModel({
-                         user_id: user._id,
-                         plan_id: plan_id,
+                         user_id: customerDetl._id,
+                         plan_id: subPlan._id,
                          start_date: new Date(),
                          expiry_date: futureDate,
                          payment_method: "auto-renew",
-                         amount: Number(plan.price),
+                         amount: Number(subPlan.price),
                     }).save();
 
                     await PaymentsModel.findOneAndUpdate(
@@ -164,8 +165,8 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
 
                     //TODO: send successful email and push notification here with reciept
                     const mailData = {
-                         first_name: customerDetl.first_name,
-                         last_name: customerDetl.last_name,
+                         firstName: customerDetl.first_name,
+                         lastName: customerDetl.last_name,
                          email: customerDetl.email,
                     };
 
@@ -180,17 +181,18 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
                     user_id: sub.user_id,
                });
 
-               if (!Number(cusWallet.balance) >= Number(subPlan.price)) {
+               if (Number(cusWallet.balance) < Number(subPlan.price)) {
                     //TODO: send email and push
                     const mailData = {
-                         first_name: customerDetl.first_name,
-                         last_name: customerDetl.last_name,
+                         firstName: customerDetl.first_name,
+                         lastName: customerDetl.last_name,
                          email: customerDetl.email,
                     };
 
                     await new Email(mailData).sendAutoRenewFailure(
                          "insufficient wallet balance"
                     );
+
                     return "insufficient balance";
                }
 
@@ -204,22 +206,22 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
                );
 
                await new SubscriptionModel({
-                    user_id: user._id,
-                    plan_id: plan_id,
+                    user_id: customerDetl._id,
+                    plan_id: subPlan._id,
                     start_date: new Date(),
                     expiry_date: futureDate,
                     payment_method: "auto-renew",
-                    amount: Number(plan.price),
+                    amount: Number(subPlan.price),
                }).save();
 
                await WalletModel.findOneAndUpdate(
                     {
                          _id: cusWallet._id,
-                         user_id: user._id,
+                         user_id: customerDetl._id,
                     },
                     {
                          $inc: {
-                              balance: -Number(plan.price),
+                              balance: -Number(subPlan.price),
                          },
                     },
                     {
@@ -229,17 +231,18 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
 
                //TODO: send email and push
                const mailData = {
-                    first_name: customerDetl.first_name,
-                    last_name: customerDetl.last_name,
+                    firstName: customerDetl.first_name,
+                    lastName: customerDetl.last_name,
                     email: customerDetl.email,
                };
 
                await new Email(mailData).sendAutoRenewSuccess("wallet balance");
 
+               console.log("sub renewed");
                return "auto renew sub successful";
           }
      } catch (error) {
-          console.log("Cron Error: auto-renew", error.message);
+          console.log("Cron Error: auto-renew", error);
      }
 });
 
