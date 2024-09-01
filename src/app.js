@@ -3,6 +3,7 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 
 const routes = require("./routes/index");
 const { connect } = require("./livestream/nms");
@@ -54,6 +55,11 @@ app.use(
           useTempFiles: false,
           // tempFileDir: "/tmp/",
      })
+);
+
+app.use(
+     "/static/images",
+     express.static(path.join(__dirname, "public/static"))
 );
 
 app.get("/", (req, res) => {
