@@ -31,7 +31,7 @@ connectDB();
 
 connect.register(app);
 
-sendPush();
+// sendPush();
 
 app.use(
      express.json({
