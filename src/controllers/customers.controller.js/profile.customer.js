@@ -79,6 +79,38 @@ exports.customerProfileFetch = async (req, res) => {
                     },
                },
                {
+                    $lookup: {
+                         from: "settings",
+                         let: {
+                              cid: "$_id",
+                         },
+                         pipeline: [
+                              {
+                                   $match: {
+                                        $expr: {
+                                             $eq: ["$$cid", "$user_id"],
+                                        },
+                                   },
+                              },
+                              {
+                                   $project: {
+                                        createdAt: 0,
+                                        updatedAt: 0,
+                                        __v: 0,
+                                   },
+                              },
+                         ],
+                         as: "settings_info",
+                    },
+               },
+               {
+                    $set: {
+                         settings_info: {
+                              $first: "$settings_info",
+                         },
+                    },
+               },
+               {
                     $project: {
                          __v: 0,
                          password: 0,

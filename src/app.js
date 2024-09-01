@@ -6,6 +6,10 @@ const cors = require("cors");
 
 const routes = require("./routes/index");
 const { connect } = require("./livestream/nms");
+const {
+     sendPushNotification,
+     sendPush,
+} = require("./notifications/notification");
 
 const app = express();
 
@@ -26,6 +30,8 @@ const connectDB = async () => {
 connectDB();
 
 connect.register(app);
+
+sendPush();
 
 app.use(
      express.json({
