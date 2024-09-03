@@ -70,10 +70,6 @@ const liveVideosSchema = new mongoose.Schema(
                type: Boolean,
                required: true,
           },
-          sponsored: {
-               type: Boolean,
-               required: true,
-          },
           popular: {
                type: Boolean,
                required: true,

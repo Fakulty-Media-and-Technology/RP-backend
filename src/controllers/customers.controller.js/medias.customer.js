@@ -269,6 +269,8 @@ exports.getLiveEvents = async (req, res) => {
                          description: 1,
                          type: 1,
                          participants: 1,
+                         start: 1,
+                         expiry: 1,
                     },
                },
           ]);

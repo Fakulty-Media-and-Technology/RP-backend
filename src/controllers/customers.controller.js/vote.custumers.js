@@ -94,7 +94,6 @@ exports.fetchVoteContestants = async (req, res) => {
                }
           }
 
-
           return successResponse(
                res,
                200,
