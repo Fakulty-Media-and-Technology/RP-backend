@@ -11,6 +11,10 @@ const contestantSchema = new mongoose.Schema(
                type: String,
                required: true,
           },
+          photo: {
+               type: Object,
+               required: true,
+          },
           occupation: {
                type: String,
                required: true,

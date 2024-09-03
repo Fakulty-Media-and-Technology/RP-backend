@@ -6,6 +6,7 @@ const UsersModel = require("../../models/users.model");
 const VoteInfoModel = require("../../models/voteInfo.model");
 const VotesModel = require("../../models/votes.model");
 const WalletModel = require("../../models/wallet.model");
+const { readPhotos } = require("../../services/media-access");
 const {
      invalidRequest,
      successResponse,
@@ -79,6 +80,19 @@ exports.fetchVoteContestants = async (req, res) => {
                     },
                },
           ]);
+
+          for (let event of voteContes) {
+               if (event.photo && event.photo.Bucket && event.photo.Key) {
+                    const signedUrl = await readPhotos(
+                         event.photo.Bucket,
+                         event.photo.Key
+                    );
+                    event.photo_url =
+                         signedUrl.status == 400 ? "no picture" : signedUrl;
+               } else {
+                    event.photo_url = "no picture";
+               }
+          }
 
           return successResponse(
                res,

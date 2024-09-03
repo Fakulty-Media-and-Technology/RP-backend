@@ -1,5 +1,6 @@
 const ContestantsModel = require("../../models/contestants.model");
 const VoteInfoModel = require("../../models/voteInfo.model");
+const { readPhotos } = require("../../services/media-access");
 const {
      invalidRequest,
      successResponse,
@@ -96,7 +97,7 @@ exports.updateVoteInfo = async (req, res) => {
 
 exports.addVoteContestant = async (req, res) => {
      try {
-          const { live_id, names, occupation, bio, contact } = req.body;
+          const { live_id, names, photo, occupation, bio, contact } = req.body;
 
           const user = req.user;
           if (user.role !== "tvshow") {
@@ -115,6 +116,7 @@ exports.addVoteContestant = async (req, res) => {
           await new ContestantsModel({
                live_id: live_id,
                names: names,
+               photo: photo,
                occupation: occupation,
                bio: bio,
                contact: contact,
@@ -179,6 +181,19 @@ exports.votestatusInfo = async (req, res) => {
                     },
                },
           ]);
+
+          for (let event of contestantInfo) {
+               if (event.photo && event.photo.Bucket && event.photo.Key) {
+                    const signedUrl = await readPhotos(
+                         event.photo.Bucket,
+                         event.photo.Key
+                    );
+                    event.photo_url =
+                         signedUrl.status == 400 ? "no picture" : signedUrl;
+               } else {
+                    event.photo_url = "no picture";
+               }
+          }
 
           return successResponse(
                res,
