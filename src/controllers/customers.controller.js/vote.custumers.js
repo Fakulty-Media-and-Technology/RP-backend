@@ -76,7 +76,7 @@ exports.fetchVoteContestants = async (req, res) => {
                },
                {
                     $sort: {
-                         names: 1,
+                         names: -1,
                     },
                },
           ]);
