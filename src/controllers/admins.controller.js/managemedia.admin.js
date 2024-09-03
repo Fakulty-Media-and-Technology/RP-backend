@@ -263,6 +263,8 @@ exports.createLive = async (req, res) => {
                type,
                start,
                expiry,
+               sponsored,
+               popular,
           } = req.body;
 
           if (
@@ -275,6 +277,8 @@ exports.createLive = async (req, res) => {
                !category ||
                !description ||
                !type ||
+               !sponsored ||
+               !popular ||
                !start
           ) {
                return invalidRequest(
@@ -417,6 +421,8 @@ exports.createLive = async (req, res) => {
                type: type,
                start: start,
                expiry: expiry,
+               sponsored,
+               popular,
           }).save();
 
           return successResponse(

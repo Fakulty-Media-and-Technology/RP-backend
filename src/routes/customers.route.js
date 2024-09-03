@@ -43,6 +43,11 @@ const {
      getLiveEventsTvshow,
      getLiveEventsSports,
      getLiveEventsPodcast,
+     getLiveEventsChannelsPop,
+     getLiveEventsEvenPop,
+     getLiveEventsTvshowPop,
+     getLiveEventsSportsPop,
+     getLiveEventsPodcastPop,
 } = require("../controllers/customers.controller.js/medias.customer");
 const {
      customerProfileFetch,
@@ -142,14 +147,19 @@ customerRouter.get("/live/events/fetch/all", getLiveEvents);
 customerRouter.get("/live/events/fetch/sponsored", getLiveEventsSponsored);
 
 customerRouter.get("/live/events/fetch/channels", getLiveEventsChannels);
+customerRouter.get("/live/events/fetch/pop/channels", getLiveEventsChannelsPop);
 
 customerRouter.get("/live/events/fetch/events", getLiveEventsEven);
+customerRouter.get("/live/events/fetch/pop/events", getLiveEventsEvenPop);
 
 customerRouter.get("/live/events/fetch/tvshows", getLiveEventsTvshow);
+customerRouter.get("/live/events/fetch/pop/tvshows", getLiveEventsTvshowPop);
 
 customerRouter.get("/live/events/fetch/sports", getLiveEventsSports);
+customerRouter.get("/live/events/fetch/pop/sports", getLiveEventsSportsPop);
 
 customerRouter.get("/live/events/fetch/podcasts", getLiveEventsPodcast);
+customerRouter.get("/live/events/fetch/pop/podcasts", getLiveEventsPodcastPop);
 
 customerRouter.get("/live/event/stream/:id", streamLiveEvent);
 
