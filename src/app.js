@@ -28,11 +28,10 @@ const connectDB = async () => {
      }
 };
 
-connectDB();
+// connectDB();
 
-connect.register(app);
-
-// sendPush();
+// connect.register(app);
+// console.log("rtmp server connected");
 
 app.use(
      express.json({
@@ -71,4 +70,4 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1", routes);
 
-module.exports = app;
+(module.exports = connectDB), app;

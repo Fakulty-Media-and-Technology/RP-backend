@@ -3,6 +3,8 @@ const app = require("./app");
 const { Server } = require("socket.io");
 const socketChat = require("./socket/socketEvents");
 const { getActiveSessions, autoRenewSubscription } = require("./cron");
+const { connect } = require("./livestream/nms");
+const connectDB = require("./app");
 
 const PORT = process.env.PORT || 8000;
 
@@ -17,10 +19,15 @@ global.io = io;
 
 socketChat(io);
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
      console.log(
           `Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`
      );
+
+     await connectDB();
+
+     await connect.register(app);
+     console.log("rtmp server connected");
 
      //Cron Jobs
      getActiveSessions();
