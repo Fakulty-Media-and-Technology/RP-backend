@@ -80,6 +80,7 @@ exports.reqPayout = async (req, res) => {
           await new PayoutsModel({
                client_id: user._id,
                amount: finAmount,
+               charges: (Number(amount) * Number(percent)) / 100,
                account_number,
                account_name,
                bank_name,

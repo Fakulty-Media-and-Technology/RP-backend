@@ -7,9 +7,16 @@ const payoutSchema = new mongoose.Schema(
                ref: "users",
                required: true,
           },
+          processed_by: {
+               type: [mongoose.Types.ObjectId],
+               ref: "users",
+          },
           amount: {
                type: Number,
                required: true,
+          },
+          charges: {
+               type: Number,
           },
           account_number: {
                type: String,
@@ -29,8 +36,8 @@ const payoutSchema = new mongoose.Schema(
                     "pending",
                     "processing",
                     "reversed",
-                    "successful",
                     "failed",
+                    "completed",
                ],
                default: "pending",
           },

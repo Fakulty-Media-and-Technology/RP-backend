@@ -41,6 +41,7 @@ const {
 const {
      payoutReqAll,
      payoutReqGroup,
+     payoutStatusUpdate,
 } = require("../controllers/admins.controller.js/payouts.admin");
 
 const superAdminRouter = express.Router();
@@ -97,5 +98,6 @@ superAdminRouter.get("/giftcard/generated/fetch", fetchGiftCards);
 //payout processing
 superAdminRouter.get("/payouts/request/all", payoutReqAll);
 superAdminRouter.get("/payouts/request/group", payoutReqGroup);
+superAdminRouter.put("/payouts/request/status/:id", payoutStatusUpdate);
 
 module.exports = superAdminRouter;
