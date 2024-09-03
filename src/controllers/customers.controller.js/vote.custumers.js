@@ -76,7 +76,7 @@ exports.fetchVoteContestants = async (req, res) => {
                },
                {
                     $sort: {
-                         names: -1,
+                         names: 1,
                     },
                },
           ]);
@@ -93,6 +93,7 @@ exports.fetchVoteContestants = async (req, res) => {
                     event.photo_url = "no picture";
                }
           }
+
 
           return successResponse(
                res,
