@@ -9,6 +9,7 @@ const PlansModel = require("../models/plans.model");
 const PaymentsModel = require("../models/payments.model");
 const WalletModel = require("../models/wallet.model");
 const Email = require("../utils/emailer.js");
+const LivesModel = require("../models/lives.model.js");
 
 function convertKoboToNaira(kobo) {
      const naira = kobo / 100;
@@ -250,7 +251,108 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
 // cron and deactivate expired livestream
 // cron and delete expired video
 
+const activateLiveStream = node_cron.schedule("*/2 * * * *", async () => {
+     try {
+          const dateN = Date.now() + 60000 * 5;
+
+          const openClientConnect = await LivesModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $and: [
+                                   {
+                                        $gte: [dateN, "$start"],
+                                   },
+                                   {
+                                        $eq: ["$active", false],
+                                   },
+                                   {
+                                        $eq: ["$expired", false],
+                                   },
+                              ],
+                         },
+                    },
+               },
+          ]);
+
+          if (openClientConnect.length === 0) {
+               console.log("No Livestream Time Elapse");
+               return;
+          }
+
+          Promise.all(
+               openClientConnect.map(async (ele) => {
+                    await LivesModel.findOneAndUpdate(
+                         { _id: ele._id },
+                         {
+                              active: true,
+                         }
+                    );
+               })
+          );
+
+          console.log("Next Livestream Permission Activated");
+     } catch (error) {
+          console.log("Cron Error: activate livestream", error.message);
+     }
+});
+
+const deActivateLiveStream = node_cron.schedule("*/5 * * * *", async () => {
+     try {
+          const dateN = Date.now();
+
+          const openClientConnect = await LivesModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $and: [
+                                   {
+                                        $ne: [
+                                             { $ifNull: ["$expiry", null] },
+                                             null,
+                                        ],
+                                   },
+                                   {
+                                        $gte: [dateN, "$expiry"],
+                                   },
+                                   {
+                                        $eq: ["$active", true],
+                                   },
+                                   {
+                                        $eq: ["$expired", false],
+                                   },
+                              ],
+                         },
+                    },
+               },
+          ]);
+
+          if (openClientConnect.length === 0) {
+               console.log("No Expired Livestream");
+               return;
+          }
+
+          Promise.all(
+               openClientConnect.map(async (ele) => {
+                    await LivesModel.findOneAndUpdate(
+                         { _id: ele._id },
+                         {
+                              active: false,
+                              expired: true,
+                         }
+                    );
+               })
+          );
+
+          console.log("Expired Live Event Deactivated");
+     } catch (error) {
+          console.log("Cron Error: deactivate livestream", error.message);
+     }
+});
+
 module.exports = {
      getActiveSessions,
      autoRenewSubscription,
+     activateLiveStream,
+     deActivateLiveStream,
 };

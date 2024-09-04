@@ -6,6 +6,7 @@ const {
 } = require("../controllers/clients.controller.js/profile.clients");
 const {
      liveStreamCredentials,
+     postPreviewVid,
 } = require("../controllers/clients.controller.js/livestream.clients");
 const {
      createVoteInfo,
@@ -29,6 +30,7 @@ clientsRouter.get("/profile/fetch", clientProfileFetch);
 clientsRouter.put("/profile/edit", clientEditProfile);
 
 clientsRouter.get("/livestream/streamkey", liveStreamCredentials);
+clientsRouter.put("/livestream/preview-vid/:live_id", postPreviewVid);
 
 clientsRouter.post("/livestream/vote/info", createVoteInfo);
 

@@ -260,17 +260,15 @@ exports.getLiveEvents = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
-                         start: 1,
-                         expiry: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -310,15 +308,15 @@ exports.getLiveEventsSponsored = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -359,7 +357,7 @@ exports.getLiveEventsChannels = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "channel"],
@@ -370,15 +368,15 @@ exports.getLiveEventsChannels = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -419,7 +417,7 @@ exports.getLiveEventsChannelsPop = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "channel"],
@@ -433,15 +431,15 @@ exports.getLiveEventsChannelsPop = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -482,7 +480,7 @@ exports.getLiveEventsEven = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "events"],
@@ -493,15 +491,15 @@ exports.getLiveEventsEven = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -542,7 +540,7 @@ exports.getLiveEventsEvenPop = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "events"],
@@ -556,15 +554,15 @@ exports.getLiveEventsEvenPop = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -605,7 +603,7 @@ exports.getLiveEventsTvshow = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "tvshow"],
@@ -616,15 +614,15 @@ exports.getLiveEventsTvshow = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -665,7 +663,7 @@ exports.getLiveEventsTvshowPop = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "tvshow"],
@@ -679,15 +677,15 @@ exports.getLiveEventsTvshowPop = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -728,7 +726,7 @@ exports.getLiveEventsSports = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "sports"],
@@ -739,15 +737,15 @@ exports.getLiveEventsSports = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -788,7 +786,7 @@ exports.getLiveEventsSportsPop = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "sports"],
@@ -802,15 +800,15 @@ exports.getLiveEventsSportsPop = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -851,7 +849,7 @@ exports.getLiveEventsPodcast = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "podcast"],
@@ -862,15 +860,15 @@ exports.getLiveEventsPodcast = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -911,7 +909,7 @@ exports.getLiveEventsPodcastPop = async (req, res) => {
                          $expr: {
                               $and: [
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                                    {
                                         $eq: ["$type", "podcast"],
@@ -925,15 +923,15 @@ exports.getLiveEventsPodcastPop = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
                     },
                },
           ]);
@@ -984,7 +982,7 @@ exports.streamLiveEvent = async (req, res) => {
                                         ],
                                    },
                                    {
-                                        $eq: ["$active", true],
+                                        $eq: ["$expired", false],
                                    },
                               ],
                          },
@@ -992,16 +990,14 @@ exports.streamLiveEvent = async (req, res) => {
                },
                {
                     $project: {
-                         title: 1,
-                         sub_title: 1,
-                         cover_photo: 1,
-                         stream_key: 1,
-                         vid_class: 1,
-                         pg: 1,
-                         category: 1,
-                         description: 1,
-                         type: 1,
-                         participants: 1,
+                         __v: 0,
+                         _id: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
                     },
                },
           ]);

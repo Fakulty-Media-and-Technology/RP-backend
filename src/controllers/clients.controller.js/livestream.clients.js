@@ -44,3 +44,26 @@ exports.liveStreamCredentials = async (req, res) => {
           return serverError(res, 500, null, error.message);
      }
 };
+
+exports.postPreviewVid = async (req, res) => {
+     try {
+          const { live_id } = req.params;
+          const { video } = req.body;
+
+          await LivesModel.findOneAndUpdate(
+               {
+                    _id: live_id,
+               },
+               {
+                    preview_video: video,
+               },
+               {
+                    upsert: true,
+               }
+          );
+
+          return successResponse(res, 200, null, "event preview video posted");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
