@@ -261,7 +261,6 @@ exports.getLiveEvents = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -309,7 +308,6 @@ exports.getLiveEventsSponsored = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -369,7 +367,6 @@ exports.getLiveEventsChannels = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -432,7 +429,6 @@ exports.getLiveEventsChannelsPop = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -492,7 +488,6 @@ exports.getLiveEventsEven = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -555,7 +550,6 @@ exports.getLiveEventsEvenPop = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -615,7 +609,6 @@ exports.getLiveEventsTvshow = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -678,7 +671,6 @@ exports.getLiveEventsTvshowPop = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -738,7 +730,6 @@ exports.getLiveEventsSports = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -801,7 +792,6 @@ exports.getLiveEventsSportsPop = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -861,7 +851,6 @@ exports.getLiveEventsPodcast = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -924,7 +913,6 @@ exports.getLiveEventsPodcastPop = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
@@ -991,7 +979,6 @@ exports.streamLiveEvent = async (req, res) => {
                {
                     $project: {
                          __v: 0,
-                         _id: 0,
                          client_id: 0,
                          createdAt: 0,
                          updatedAt: 0,
