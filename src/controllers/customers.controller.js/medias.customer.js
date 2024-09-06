@@ -254,7 +254,7 @@ exports.getLiveEvents = async (req, res) => {
                {
                     $match: {
                          $expr: {
-                              $eq: ["$active", true],
+                              $eq: ["$expired", false],
                          },
                     },
                },
