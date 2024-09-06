@@ -26,10 +26,14 @@ server.listen(PORT, async () => {
      console.log(
           `Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`
      );
+     console.log(new Date("2024-09-20T15:00:00.000Z").getTime());
+     console.log(new Date("2024-09-25T15:00:00.000Z").getTime());
+
+     console.log(new Date(1726844400000), new Date(1727276400000));
 
      //Cron Jobs
      getActiveSessions();
-     autoRenewSubscription();
-     activateLiveStream();
+     autoRenewSubscription(); //1725572611210
+     activateLiveStream(); //1725572685813
      deActivateLiveStream();
 });

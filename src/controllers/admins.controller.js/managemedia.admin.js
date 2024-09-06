@@ -265,6 +265,8 @@ exports.createLive = async (req, res) => {
                expiry,
                sponsored,
                popular,
+               video,
+               location,
           } = req.body;
 
           if (
@@ -279,7 +281,8 @@ exports.createLive = async (req, res) => {
                !type ||
                !sponsored ||
                !popular ||
-               !start
+               !start ||
+               !location
           ) {
                return invalidRequest(
                     res,
@@ -423,6 +426,8 @@ exports.createLive = async (req, res) => {
                expiry: expiry,
                sponsored,
                popular,
+               location,
+               preview_video: video,
           }).save();
 
           return successResponse(

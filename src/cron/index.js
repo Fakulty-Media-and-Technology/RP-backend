@@ -251,9 +251,9 @@ const autoRenewSubscription = schedule.scheduleJob("0 0 * * *", async () => {
 // cron and deactivate expired livestream
 // cron and delete expired video
 
-const activateLiveStream = node_cron.schedule("*/2 * * * *", async () => {
+const activateLiveStream = node_cron.schedule("*/5 * * * *", async () => {
      try {
-          const dateN = Date.now() + 60000 * 5;
+          const dateN = Date.now() + 60000 * 30;
 
           const openClientConnect = await LivesModel.aggregate([
                {

@@ -19,6 +19,10 @@ const liveVideosSchema = new mongoose.Schema(
                type: String,
                required: true,
           },
+          location: {
+               type: String,
+               required: true,
+          },
           cover_photo: {
                type: Object,
                required: true,
