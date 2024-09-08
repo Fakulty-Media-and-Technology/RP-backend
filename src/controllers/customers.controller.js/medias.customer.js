@@ -301,7 +301,14 @@ exports.getLiveEventsSponsored = async (req, res) => {
                {
                     $match: {
                          $expr: {
-                              $eq: ["$sponsored", true],
+                              $and: [
+                                   {
+                                        $eq: ["$sponsored", true],
+                                   },
+                                   {
+                                        $eq: ["$expired", false],
+                                   },
+                              ],
                          },
                     },
                },
