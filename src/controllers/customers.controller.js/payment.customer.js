@@ -118,7 +118,7 @@ exports.createPayment = async (req, res) => {
                     res,
                     400,
                     null,
-                    "payment reference alrealdy existed"
+                    "payment reference already existed"
                );
           }
 
