@@ -108,6 +108,20 @@ exports.createPayment = async (req, res) => {
 
           const user = req.user;
 
+          const refExist = await PaymentsModel.findOne({
+               reference: reference,
+               // user_id: user._id,
+          });
+
+          if (refExist) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "payment reference alrealdy existed"
+               );
+          }
+
           const response = await PaymentServices.paystackCreatePayment(
                reference,
                save_card,
