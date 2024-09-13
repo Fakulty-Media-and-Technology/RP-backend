@@ -151,6 +151,46 @@ exports.vodStream = async (req, res) => {
      }
 };
 
+exports.getFeaturedVods = async (req, res) => {
+     try {
+          const vods = await VideosModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: ["$featured", true],
+                         },
+                    },
+               },
+          ]);
+
+          // for (let vod of vods) {
+          //      if (
+          //           vod.cover_photo &&
+          //           vod.cover_photo.Bucket &&
+          //           vod.cover_photo.Key
+          //      ) {
+          //           const signedUrl = await readPhotos(
+          //                vod.cover_photo.Bucket,
+          //                vod.cover_photo.Key
+          //           );
+          //           vod.photo_url =
+          //                signedUrl.status == 400 ? "no picture" : signedUrl;
+          //      } else {
+          //           vod.photo_url = "no picture";
+          //      }
+          // }
+
+          return successResponse(
+               res,
+               200,
+               vods,
+               "featured contents fetched successful"
+          );
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
 exports.likeVideo = async (req, res) => {
      try {
           const streamId = req.params.id;
@@ -290,6 +330,65 @@ exports.getLiveEvents = async (req, res) => {
           }
 
           return successResponse(res, 200, liveEvents, "live events fetched");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.getLiveEventsFeatured = async (req, res) => {
+     try {
+          const liveEvents = await LivesModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $and: [
+                                   {
+                                        $eq: ["$featured", true],
+                                   },
+                                   {
+                                        $eq: ["$expired", false],
+                                   },
+                              ],
+                         },
+                    },
+               },
+               {
+                    $project: {
+                         __v: 0,
+                         client_id: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                         sponsored: 0,
+                         popular: 0,
+                         likes: 0,
+                         stream_key: 0,
+                    },
+               },
+          ]);
+
+          for (let event of liveEvents) {
+               if (
+                    event.cover_photo &&
+                    event.cover_photo.Bucket &&
+                    event.cover_photo.Key
+               ) {
+                    const signedUrl = await readPhotos(
+                         event.cover_photo.Bucket,
+                         event.cover_photo.Key
+                    );
+                    event.photo_url =
+                         signedUrl.status == 400 ? "no picture" : signedUrl;
+               } else {
+                    event.photo_url = "no picture";
+               }
+          }
+
+          return successResponse(
+               res,
+               200,
+               liveEvents,
+               "live events fetched: featured events"
+          );
      } catch (error) {
           return serverError(res, 500, null, error.message);
      }

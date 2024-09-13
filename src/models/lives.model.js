@@ -85,6 +85,13 @@ const liveVideosSchema = new mongoose.Schema(
                type: Boolean,
                required: true,
           },
+          featured: {
+               type: Boolean,
+               default: false,
+          },
+          feat_expiry: {
+               type: Date,
+          },
      },
      {
           timestamps: true,

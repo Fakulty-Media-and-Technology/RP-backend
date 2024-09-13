@@ -52,6 +52,13 @@ const videosSchema = new mongoose.Schema(
           likes: {
                type: [String],
           },
+          featured: {
+               type: Boolean,
+               default: false,
+          },
+          feat_expiry: {
+               type: Date,
+          },
      },
      {
           timestamps: true,

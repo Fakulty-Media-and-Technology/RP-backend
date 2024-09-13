@@ -43,6 +43,11 @@ const {
      payoutReqGroup,
      payoutStatusUpdate,
 } = require("../controllers/admins.controller.js/payouts.admin");
+const {
+     searchContents,
+     addToFeatured,
+     getFeaturedContents,
+} = require("../controllers/admins.controller.js/featured.admin");
 
 const superAdminRouter = express.Router();
 
@@ -99,5 +104,10 @@ superAdminRouter.get("/giftcard/generated/fetch", fetchGiftCards);
 superAdminRouter.get("/payouts/request/all", payoutReqAll);
 superAdminRouter.get("/payouts/request/group", payoutReqGroup);
 superAdminRouter.put("/payouts/request/status/:id", payoutStatusUpdate);
+
+//featured contents
+superAdminRouter.get("/featured/contents/search", searchContents);
+superAdminRouter.post("/featured/contents/add", addToFeatured);
+superAdminRouter.get("/featured/contents/fetch", getFeaturedContents);
 
 module.exports = superAdminRouter;

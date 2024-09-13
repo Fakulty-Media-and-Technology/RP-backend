@@ -48,6 +48,8 @@ const {
      getLiveEventsTvshowPop,
      getLiveEventsSportsPop,
      getLiveEventsPodcastPop,
+     getLiveEventsFeatured,
+     getFeaturedVods,
 } = require("../controllers/customers.controller.js/medias.customer");
 const {
      customerProfileFetch,
@@ -113,8 +115,6 @@ customerRouter.post("/pass-reset/change-pass", passwordChange);
 //apply auth middleware
 customerRouter.use(customerAuth);
 
-customerRouter.post("/media/vod-streaming", vodStream);
-
 customerRouter.post("/signup/createpin", createPin);
 
 customerRouter.get("/profile/fetch", customerProfileFetch);
@@ -135,15 +135,17 @@ customerRouter.post("/media/upload-photo", uploadImageRoute);
 
 // customerRouter.post("/media/photo-url", customerGetPhotoUrl);
 
+customerRouter.post("/media/vod-streaming", vodStream);
+customerRouter.get("/media/vod/fetch/featured", getFeaturedVods);
+
 customerRouter.post("/media/vod/like/:id", likeVideo);
-
 customerRouter.get("/media/vod/userliked/:id", userLikedVideo);
-
 customerRouter.post("/media/vod/unlike/:id", unLikeVideo);
 
 //live events
 customerRouter.get("/live/events/fetch/all", getLiveEvents);
 
+customerRouter.get("/live/events/fetch/featured", getLiveEventsFeatured);
 customerRouter.get("/live/events/fetch/sponsored", getLiveEventsSponsored);
 
 customerRouter.get("/live/events/fetch/channels", getLiveEventsChannels);
