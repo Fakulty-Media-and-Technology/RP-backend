@@ -10,6 +10,7 @@ const PaymentsModel = require("../models/payments.model");
 const WalletModel = require("../models/wallet.model");
 const Email = require("../utils/emailer.js");
 const LivesModel = require("../models/lives.model.js");
+const VideosModel = require("../models/videos.model.js");
 
 function convertKoboToNaira(kobo) {
      const naira = kobo / 100;
@@ -350,9 +351,109 @@ const deActivateLiveStream = node_cron.schedule("*/5 * * * *", async () => {
      }
 });
 
+const expireFeaturedContents = node_cron.schedule("*/10 * * * *", async () => {
+     try {
+          const dateNow = new Date();
+
+          const expiredFeatured = await LivesModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $and: [
+                                   {
+                                        $ne: [
+                                             { $ifNull: ["$featured", null] },
+                                             null,
+                                        ],
+                                   },
+                                   {
+                                        $eq: ["$featured", true],
+                                   },
+                                   {
+                                        $gte: [
+                                             dateNow,
+                                             {
+                                                  $toDate: "$feat_expiry",
+                                             },
+                                        ],
+                                   },
+                              ],
+                         },
+                    },
+               },
+          ]);
+
+          if (expiredFeatured.length === 0) {
+               console.log("No Expired Featured Content");
+               return;
+          }
+
+          Promise.all(
+               expiredFeatured.map(async (ele) => {
+                    await LivesModel.findOneAndUpdate(
+                         { _id: ele._id },
+                         {
+                              featured: false,
+                         }
+                    );
+               })
+          );
+
+          //VOD
+          const expiredFeaturedVod = await VideosModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $and: [
+                                   {
+                                        $ne: [
+                                             { $ifNull: ["$featured", null] },
+                                             null,
+                                        ],
+                                   },
+                                   {
+                                        $eq: ["$featured", true],
+                                   },
+                                   {
+                                        $gte: [
+                                             dateNow,
+                                             {
+                                                  $toDate: "$feat_expiry",
+                                             },
+                                        ],
+                                   },
+                              ],
+                         },
+                    },
+               },
+          ]);
+
+          if (expiredFeaturedVod.length === 0) {
+               console.log("No Expired Featured Content");
+               return;
+          }
+
+          Promise.all(
+               expiredFeaturedVod.map(async (ele) => {
+                    await VideosModel.findOneAndUpdate(
+                         { _id: ele._id },
+                         {
+                              featured: false,
+                         }
+                    );
+               })
+          );
+
+          console.log("Expired Featured Contents Expired");
+     } catch (error) {
+          console.log("Cron Error: expire featured content", error.message);
+     }
+});
+
 module.exports = {
      getActiveSessions,
      autoRenewSubscription,
      activateLiveStream,
      deActivateLiveStream,
+     expireFeaturedContents,
 };
