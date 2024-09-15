@@ -2,12 +2,14 @@ const express = require("express");
 const superAdminRouter = require("./superadmin.route");
 const customerRouter = require("./customers.route");
 const clientsRouter = require("./clients.route");
+const adminRouter = require("./admin.route");
 
 const router = express.Router();
 
 router.use("/customers", customerRouter);
 
 router.use("/clients", clientsRouter);
+router.use("/admin", adminRouter);
 
 // router.use("/admins");
 
