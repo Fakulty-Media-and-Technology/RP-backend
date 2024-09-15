@@ -1,3 +1,4 @@
+const CastEnumModel = require("../../models/castEnum.model");
 const CategoryEnumModel = require("../../models/categoryEnum.model");
 const GenreEnumModels = require("../../models/genreEnum.model");
 const {
@@ -89,6 +90,51 @@ exports.remCategory = async (req, res) => {
           });
 
           return successResponse(res, 200, null, "category deleted");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+//CAST
+exports.addCast = async (req, res) => {
+     try {
+          const { name } = req.body;
+
+          const newCast = new CastEnumModel({
+               name: name,
+          });
+
+          await newCast.save();
+
+          return successResponse(res, 200, null, "new unique cast added");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.getCast = async (req, res) => {
+     try {
+          const cast = await CastEnumModel.aggregate([
+               {
+                    $match: {},
+               },
+          ]);
+
+          return successResponse(res, 200, cast, "casts fetched");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.remCast = async (req, res) => {
+     try {
+          const id = req.params.id;
+
+          await CastEnumModel.findOneAndDelete({
+               _id: id,
+          });
+
+          return successResponse(res, 200, null, "cast deleted");
      } catch (error) {
           return serverError(res, 500, null, error.message);
      }

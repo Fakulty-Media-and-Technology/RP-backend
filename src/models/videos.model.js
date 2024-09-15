@@ -10,23 +10,33 @@ const videosSchema = new mongoose.Schema(
           title: {
                type: String,
                required: true,
+               unique: true,
+          },
+          sub_title: {
+               type: String,
           },
           type: {
                type: String,
-               enum: ["movie", "series", "music video", "ducumentary", "skit"],
+               enum: ["movie", "series", "music video", "skit"],
                required: true,
+          },
+          bucket: {
+               type: String,
+               trim: true,
+               // required: true,
           },
           key: {
                type: String,
                trim: true,
-               required: true,
+               unique: true,
+               // required: true,
           },
           description: {
                type: String,
                trim: true,
-               required: true,
+               // required: true,
           },
-          class: {
+          vid_class: {
                type: String,
                enum: ["free", "ad", "exclusive", "premium"],
                required: true,
@@ -43,6 +53,10 @@ const videosSchema = new mongoose.Schema(
                type: [String],
                ref: "category_enum",
           },
+          cast: {
+               type: [String],
+               ref: "cast_enum",
+          },
           released_date: {
                type: Date,
           },
@@ -52,12 +66,39 @@ const videosSchema = new mongoose.Schema(
           likes: {
                type: [String],
           },
+          runtime: {
+               type: String,
+          },
+          default_rating: {
+               type: Number,
+          },
           featured: {
                type: Boolean,
                default: false,
           },
           feat_expiry: {
                type: Date,
+          },
+          is_series: {
+               type: Boolean,
+               required: true,
+          },
+          // seasons: {
+          //      type: Number,
+          // },
+          episodes: [
+               {
+                    season: Number,
+                    episode_number: Number,
+                    episode_title: String,
+                    episode_description: String,
+                    bucket: String,
+                    key: String,
+               },
+          ],
+          artist_name: {
+               //for music video
+               type: String,
           },
      },
      {
