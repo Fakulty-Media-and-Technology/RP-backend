@@ -38,6 +38,16 @@ const {
      createGiftCard,
      fetchGiftCards,
 } = require("../controllers/admins.controller.js/giftcard.admin");
+const {
+     payoutReqAll,
+     payoutReqGroup,
+     payoutStatusUpdate,
+} = require("../controllers/admins.controller.js/payouts.admin");
+const {
+     searchContents,
+     addToFeatured,
+     getFeaturedContents,
+} = require("../controllers/admins.controller.js/featured.admin");
 
 const superAdminRouter = express.Router();
 
@@ -82,16 +92,22 @@ superAdminRouter.post("/trailer/create", createTrailer);
 
 //plans and sub
 superAdminRouter.post("/subscription/plans/create", createPlan);
-
 superAdminRouter.put("/subscription/plans/update/:id", updatePlan);
-
 superAdminRouter.get("/subscription/plans/fetch", fetchPlans);
-
 superAdminRouter.delete("/subscription/plans/delete/:id", deletePlans);
 
 //gift cards
 superAdminRouter.post("/giftcard/generate/new", createGiftCard);
-
 superAdminRouter.get("/giftcard/generated/fetch", fetchGiftCards);
+
+//payout processing
+superAdminRouter.get("/payouts/request/all", payoutReqAll);
+superAdminRouter.get("/payouts/request/group", payoutReqGroup);
+superAdminRouter.put("/payouts/request/status/:id", payoutStatusUpdate);
+
+//featured contents
+superAdminRouter.get("/featured/contents/search", searchContents);
+superAdminRouter.post("/featured/contents/add", addToFeatured);
+superAdminRouter.get("/featured/contents/fetch", getFeaturedContents);
 
 module.exports = superAdminRouter;

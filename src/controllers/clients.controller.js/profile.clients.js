@@ -25,6 +25,41 @@ exports.clientProfileFetch = async (req, res) => {
                     },
                },
                {
+                    $lookup: {
+                         from: "wallets",
+                         let: {
+                              cid: "$_id",
+                         },
+                         pipeline: [
+                              {
+                                   $match: {
+                                        $expr: {
+                                             $eq: [
+                                                  "$user_id",
+                                                  {
+                                                       $toObjectId: "$$cid",
+                                                  },
+                                             ],
+                                        },
+                                   },
+                              },
+                              {
+                                   $project: {
+                                        balance: 1,
+                                   },
+                              },
+                         ],
+                         as: "wallet_bal",
+                    },
+               },
+               {
+                    $set: {
+                         wallet_bal: {
+                              $first: "$wallet_bal",
+                         },
+                    },
+               },
+               {
                     $project: {
                          auth_code: 0,
                          auth_expiry: 0,

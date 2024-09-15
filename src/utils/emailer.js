@@ -66,6 +66,22 @@ class Email {
      sendResetPasswordToken(pin) {
           this.sendMsg("reset-pass", "Reset Password Token", pin);
      }
+
+     sendAutoRenewSuccess(source) {
+          this.sendMsg(
+               "autorenew-success",
+               "Auto Renew Subscription Success",
+               source
+          );
+     }
+
+     sendAutoRenewFailure(reason) {
+          this.sendMsg(
+               "autorenew-fail",
+               "Auto Renew Subscription Failure",
+               reason
+          );
+     }
 }
 
 module.exports = Email;

@@ -43,6 +43,13 @@ const {
      getLiveEventsTvshow,
      getLiveEventsSports,
      getLiveEventsPodcast,
+     getLiveEventsChannelsPop,
+     getLiveEventsEvenPop,
+     getLiveEventsTvshowPop,
+     getLiveEventsSportsPop,
+     getLiveEventsPodcastPop,
+     getLiveEventsFeatured,
+     getFeaturedVods,
 } = require("../controllers/customers.controller.js/medias.customer");
 const {
      customerProfileFetch,
@@ -67,11 +74,18 @@ const {
      userSubStatus,
      transactionHistory,
      addPayment,
+     authorizePayment,
 } = require("../controllers/customers.controller.js/payment.customer");
 const {
      registerDeviceToken,
      updateDeviceToken,
 } = require("../controllers/customers.controller.js/pushNotification.customer");
+const {
+     fetchVoteContestants,
+     fetchVoteInfo,
+     createVote,
+     donateFund,
+} = require("../controllers/customers.controller.js/vote.custumers");
 
 const customerRouter = express.Router();
 
@@ -101,8 +115,6 @@ customerRouter.post("/pass-reset/change-pass", passwordChange);
 //apply auth middleware
 customerRouter.use(customerAuth);
 
-customerRouter.post("/media/vod-streaming", vodStream);
-
 customerRouter.post("/signup/createpin", createPin);
 
 customerRouter.get("/profile/fetch", customerProfileFetch);
@@ -123,26 +135,33 @@ customerRouter.post("/media/upload-photo", uploadImageRoute);
 
 // customerRouter.post("/media/photo-url", customerGetPhotoUrl);
 
+customerRouter.post("/media/vod-streaming", vodStream);
+customerRouter.get("/media/vod/fetch/featured", getFeaturedVods);
+
 customerRouter.post("/media/vod/like/:id", likeVideo);
-
 customerRouter.get("/media/vod/userliked/:id", userLikedVideo);
-
 customerRouter.post("/media/vod/unlike/:id", unLikeVideo);
 
 //live events
 customerRouter.get("/live/events/fetch/all", getLiveEvents);
 
+customerRouter.get("/live/events/fetch/featured", getLiveEventsFeatured);
 customerRouter.get("/live/events/fetch/sponsored", getLiveEventsSponsored);
 
 customerRouter.get("/live/events/fetch/channels", getLiveEventsChannels);
+customerRouter.get("/live/events/fetch/pop/channels", getLiveEventsChannelsPop);
 
 customerRouter.get("/live/events/fetch/events", getLiveEventsEven);
+customerRouter.get("/live/events/fetch/pop/events", getLiveEventsEvenPop);
 
 customerRouter.get("/live/events/fetch/tvshows", getLiveEventsTvshow);
+customerRouter.get("/live/events/fetch/pop/tvshows", getLiveEventsTvshowPop);
 
 customerRouter.get("/live/events/fetch/sports", getLiveEventsSports);
+customerRouter.get("/live/events/fetch/pop/sports", getLiveEventsSportsPop);
 
 customerRouter.get("/live/events/fetch/podcasts", getLiveEventsPodcast);
+customerRouter.get("/live/events/fetch/pop/podcasts", getLiveEventsPodcastPop);
 
 customerRouter.get("/live/event/stream/:id", streamLiveEvent);
 
@@ -167,7 +186,9 @@ customerRouter.get("/payment/paystack/payment-receipt", getPaymentReceipt);
 
 customerRouter.get("/payment/paystack/transaction-history", transactionHistory);
 
-customerRouter.put("/payment/paystack/add-payment", addPayment);
+// customerRouter.put("/payment/paystack/add-payment", addPayment);
+
+customerRouter.post("/payment/paystack/authorize-payment", authorizePayment);
 
 customerRouter.post("/wallet/topup", topupWallet);
 
@@ -188,5 +209,14 @@ customerRouter.post("/notification/device/update", updateDeviceToken);
 
 //suggestion
 customerRouter.post("/suggestion/create", createSuggestion);
+
+//tvshow livestream voting
+customerRouter.get("/livestream/vote/fetch-info", fetchVoteInfo);
+
+customerRouter.get("/livestream/vote/fetch-contestants", fetchVoteContestants);
+
+customerRouter.post("/livestream/vote/create-vote", createVote);
+
+customerRouter.post("/livestream/donate/dash-fund", donateFund);
 
 module.exports = customerRouter;

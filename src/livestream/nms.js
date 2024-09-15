@@ -6,18 +6,6 @@ const { VerifytPass } = require("../utils/bcrypt");
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 
-let validStreamKeys = [];
-
-const fetchStreamKeys = async () => {
-     try {
-          const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
-          validStreamKeys = streamKeys.map((doc) => doc.stream_key);
-          // console.log('Fetched stream keys:', validStreamKeys);
-     } catch (error) {
-          console.error("Error fetching stream keys:", error);
-     }
-};
-
 const connect = {
      name: "live",
      pkg: require("../../package"),
@@ -190,7 +178,7 @@ const connect = {
 
           const fetchStreamKeys = async () => {
                try {
-                    const streamKeys = await LivesModel.find(); //{ isActive: true }, 'stream_key'
+                    const streamKeys = await LivesModel.find({ active: true }); //, 'stream_key'
                     validStreamKeys = streamKeys.map((doc) => doc.stream_key);
                     // console.log('Fetched stream keys:', validStreamKeys);
                } catch (error) {
@@ -200,81 +188,81 @@ const connect = {
 
           fetchStreamKeys();
 
-          const authLiveStm = async (email, password) => {
-               try {
-                    const userExist = await UsersModel.findOne({
-                         email: email,
-                    });
+          // const authLiveStm = async (email, password) => {
+          //      try {
+          //           const userExist = await UsersModel.findOne({
+          //                email: email,
+          //           });
 
-                    if (!userExist) {
-                         return false;
-                    }
+          //           if (!userExist) {
+          //                return false;
+          //           }
 
-                    if (
-                         !["channel", "tvshow", "event", "podcast"].includes(
-                              userExist.role
-                         )
-                    ) {
-                         return false;
-                    }
+          //           if (
+          //                !["channel", "tvshow", "event", "podcast"].includes(
+          //                     userExist.role
+          //                )
+          //           ) {
+          //                return false;
+          //           }
 
-                    const passVerify = await VerifytPass(
-                         password,
-                         userExist.password
-                    );
+          //           const passVerify = await VerifytPass(
+          //                password,
+          //                userExist.password
+          //           );
 
-                    if (!passVerify) {
-                         return false;
-                    }
+          //           if (!passVerify) {
+          //                return false;
+          //           }
 
-                    if (userExist.suspended) {
-                         return false;
-                    }
+          //           if (userExist.suspended) {
+          //                return false;
+          //           }
 
-                    return true;
-               } catch (error) {
-                    console.error("Error fetching stream keys:", error);
-               }
-          };
+          //           return true;
+          //      } catch (error) {
+          //           console.error("Error fetching stream keys:", error);
+          //      }
+          // };
 
-          nms.on("preConnect", async (id, args) => {
-               try {
-                    const extractQueryParams = (url) => {
-                         const queryParams = {};
-                         const urlObj = new URL(
-                              url,
-                              `rtmp://${config.rtmp.port}`
-                         );
-                         urlObj.searchParams.forEach((value, key) => {
-                              queryParams[key] = value.replace(/"/g, "");
-                         });
-                         return queryParams;
-                    };
+          // nms.on("preConnect", async (id, args) => {
+          //      try {
+          //           const extractQueryParams = (url) => {
+          //                const queryParams = {};
+          //                const urlObj = new URL(
+          //                     url,
+          //                     `rtmp://${config.rtmp.port}`
+          //                );
+          //                urlObj.searchParams.forEach((value, key) => {
+          //                     queryParams[key] = value.replace(/"/g, "");
+          //                });
+          //                return queryParams;
+          //           };
 
-                    const appParams = extractQueryParams(args.app);
-                    const email = appParams.email;
-                    const password = appParams.password;
+          //           const appParams = extractQueryParams(args.app);
+          //           const email = appParams.email;
+          //           const password = appParams.password;
 
-                    if (!email || !password) {
-                         const session = nms.getSession(id);
-                         session.reject();
-                         return;
-                    }
+          //           if (!email || !password) {
+          //                const session = nms.getSession(id);
+          //                session.reject();
+          //                return;
+          //           }
 
-                    const authenticate = await authLiveStm(email, password);
-                    console.log("auuut", authenticate);
+          //           const authenticate = await authLiveStm(email, password);
+          //           console.log("auuut", authenticate);
 
-                    if (!authenticate) {
-                         console.log("Invalid auth credentials");
-                         const session = nms.getSession(id);
-                         session.reject();
-                    } else {
-                         console.log("Auth Credentials are valid!");
-                    }
-               } catch (error) {
-                    console.error("Error in validating credentials:", error);
-               }
-          });
+          //           if (!authenticate) {
+          //                console.log("Invalid auth credentials");
+          //                const session = nms.getSession(id);
+          //                session.reject();
+          //           } else {
+          //                console.log("Auth Credentials are valid!");
+          //           }
+          //      } catch (error) {
+          //           console.error("Error in validating credentials:", error);
+          //      }
+          // });
 
           nms.on("prePublish", async (id, StreamPath, args) => {
                try {
@@ -306,5 +294,5 @@ const connect = {
 
 module.exports = {
      connect,
-     fetchStreamKeys,
+     // fetchStreamKeys,
 };

@@ -3,10 +3,14 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 
 const routes = require("./routes/index");
 const { connect } = require("./livestream/nms");
-const { getActiveSessions } = require("./cron");
+const {
+     sendPushNotification,
+     sendPush,
+} = require("./notifications/notification");
 
 const app = express();
 
@@ -27,9 +31,6 @@ const connectDB = async () => {
 connectDB();
 
 connect.register(app);
-
-//Cron Jobs
-// getActiveSessions()
 
 app.use(
      express.json({
@@ -52,6 +53,11 @@ app.use(
           useTempFiles: false,
           // tempFileDir: "/tmp/",
      })
+);
+
+app.use(
+     "/static/images",
+     express.static(path.join(__dirname, "public/static"))
 );
 
 app.get("/", (req, res) => {

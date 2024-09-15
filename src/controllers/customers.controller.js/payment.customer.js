@@ -32,15 +32,108 @@ exports.startPayment = async (req, res) => {
      }
 };
 
-exports.createPayment = async (req, res) => {
-     try {
-          const { reference } = req.body;
+function convertKoboToNaira(kobo) {
+     const naira = kobo / 100;
+     return naira.toFixed(2);
+}
 
-          const response = await PaymentServices.paystackCreatePayment({
-               reference,
+exports.authorizePayment = async (req, res) => {
+     try {
+          const { amount_charge } = req.body;
+
+          const { _id, first_name, last_name, email } = req.user;
+
+          const payAuth = await PaymentDetailsModel.findOne({
+               user_id: _id,
           });
 
-          return successResponse(res, 200, response, "payment created");
+          const response = await PaymentServices.paystackAuthorizePayment({
+               authorization_code: payAuth.authorization_code,
+               email: email,
+               amount: Number(amount_charge),
+               user_id: _id,
+               full_name: `${first_name} ${last_name}`,
+          });
+
+          const { status, amount, metadata, customer, reference } =
+               response.data;
+
+          const nairaAmount = convertKoboToNaira(amount);
+
+          if (status !== "success") {
+               const newPayment = new PaymentsModel({
+                    user_id: metadata.user_id,
+                    full_name: metadata.full_name,
+                    email: customer.email,
+                    amount: nairaAmount,
+                    reference: reference,
+                    status: status,
+               });
+
+               const nPayment = await newPayment.save();
+
+               return failedResponse(
+                    res,
+                    400,
+                    nPayment,
+                    "authorize payment request unsuccessfull"
+               );
+          }
+
+          const newPayment = new PaymentsModel({
+               user_id: metadata.user_id,
+               full_name: metadata.full_name,
+               email: customer.email,
+               amount: nairaAmount,
+               reference: reference,
+               status: status,
+          });
+
+          const nPayment = await newPayment.save();
+
+          return successResponse(
+               res,
+               200,
+               nPayment,
+               "payment authorization successfull"
+          );
+     } catch (error) {
+          serverError(res, 500, null, error.message);
+     }
+};
+
+exports.createPayment = async (req, res) => {
+     try {
+          const { reference, save_card } = req.body;
+
+          const user = req.user;
+
+          const refExist = await PaymentsModel.findOne({
+               reference: reference,
+               // user_id: user._id,
+          });
+
+          if (refExist) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "payment reference already existed"
+               );
+          }
+
+          const response = await PaymentServices.paystackCreatePayment(
+               reference,
+               save_card,
+               user._id
+          );
+
+          return successResponse(
+               res,
+               200,
+               response,
+               "payment created and authorization activated"
+          );
      } catch (error) {
           serverError(res, 500, null, error.message);
      }
@@ -100,25 +193,25 @@ exports.transactionHistory = async (req, res) => {
 exports.addPayment = async (req, res) => {
      try {
           const user = req.user;
-          const { authorization_codes, last4, brand } = req.body;
+          const { authorization_code, last4, brand } = req.body;
 
-          if (!authorization_codes || !last4 || !brand) {
+          if (!authorization_code || !last4 || !brand) {
                return invalidRequest(res, 200, null, "all input are required");
           }
 
-          await PaymentDetailsModel.findOneAndUpdate(
-               {
-                    user_id: user._id,
-               },
-               {
-                    authorization_codes,
-                    last4,
-                    brand,
-               },
-               { new: true, upsert: true }
-          );
+          // await PaymentDetailsModel.findOneAndUpdate(
+          //      {
+          //           user_id: user._id,
+          //      },
+          //      {
+          //           authorization_code,
+          //           last4,
+          //           brand,
+          //      },
+          //      { new: true, upsert: true }
+          // );
 
-          return successResponse(res, 200, null, "payment added successfully");
+          // return successResponse(res, 200, null, "payment added successfully");
      } catch (error) {
           serverError(res, 500, null, error.message);
      }
@@ -294,7 +387,7 @@ exports.createSubscription = async (req, res) => {
                     plan_id: plan_id,
                     start_date: new Date(),
                     expiry_date: futureDate,
-                    payment_method: "wallet",
+                    payment_method: "direct-payment",
                     amount: Number(plan.price),
                }).save();
 

@@ -1,3 +1,4 @@
+const PaymentDetailsModel = require("../models/paymentDetails.model.js");
 const PaymentsModel = require("../models/payments.model");
 const Paystack = require("./paystack");
 
@@ -18,11 +19,50 @@ const PaymentServices = {
           }
      },
 
-     async paystackCreatePayment(ref) {
+     async paystackAuthorizePayment(data) {
+          try {
+               const payment = await Paystack.authorizePayment(data);
+
+               return payment;
+          } catch (error) {
+               console.log(`Payment Authorization Error: ${error}`);
+               return error.message;
+          }
+     },
+
+     async paystackCreatePayment(ref, save_card, uid) {
           try {
                const payment = await Paystack.verifyPayment(ref);
 
                const { amount, reference, status } = payment.data;
+
+               const {
+                    authorization_code,
+                    last4,
+                    brand,
+                    exp_month,
+                    exp_year,
+                    channel,
+               } = payment.data.authorization;
+
+               if (save_card && channel === "card" && status === "success") {
+                    await PaymentDetailsModel.findOneAndUpdate(
+                         {
+                              user_id: uid,
+                         },
+                         {
+                              authorization_code,
+                              last4,
+                              exp_month,
+                              exp_year,
+                              brand,
+                         },
+                         {
+                              new: true,
+                              upsert: true,
+                         }
+                    );
+               }
 
                const nairaAmount = convertKoboToNaira(amount);
 
@@ -54,7 +94,7 @@ const PaymentServices = {
 
                return nPayment;
           } catch (error) {
-               console.log(`Payment Init Error: ${error}`);
+               console.log(`Payment Verification Error: ${error}`);
                return error.message;
           }
      },
@@ -67,7 +107,6 @@ const PaymentServices = {
 
                return reciept;
           } catch (error) {
-               console.log(`Payment Init Error: ${error}`);
                return error.message;
           }
      },

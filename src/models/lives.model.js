@@ -19,9 +19,16 @@ const liveVideosSchema = new mongoose.Schema(
                type: String,
                required: true,
           },
+          location: {
+               type: String,
+               required: true,
+          },
           cover_photo: {
                type: Object,
                required: true,
+          },
+          preview_video: {
+               type: Object,
           },
           vid_class: {
                type: String,
@@ -43,9 +50,13 @@ const liveVideosSchema = new mongoose.Schema(
                type: Boolean,
                default: false,
           },
+          expired: {
+               type: Boolean,
+               default: false,
+          },
           type: {
                type: String,
-               enum: ["channel", "event", "tvshow"],
+               enum: ["channel", "event", "tvshow", "podcast", "sport"],
           },
           participants: {
                type: Number,
@@ -68,7 +79,18 @@ const liveVideosSchema = new mongoose.Schema(
           },
           sponsored: {
                type: Boolean,
+               required: true,
+          },
+          popular: {
+               type: Boolean,
+               required: true,
+          },
+          featured: {
+               type: Boolean,
                default: false,
+          },
+          feat_expiry: {
+               type: Date,
           },
      },
      {

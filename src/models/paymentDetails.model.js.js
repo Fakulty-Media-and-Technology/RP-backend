@@ -7,10 +7,16 @@ const paymentDetailsSchema = new mongoose.Schema(
                ref: "users",
                required: true,
           },
-          authorization_codes: {
+          authorization_code: {
                type: String,
           },
           last4: {
+               type: String,
+          },
+          exp_month: {
+               type: String,
+          },
+          exp_year: {
                type: String,
           },
           brand: {
