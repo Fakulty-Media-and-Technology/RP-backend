@@ -196,6 +196,40 @@ exports.uploadShortVideos = async (req, fileHandle, expire, fileKey) => {
      }
 };
 
+exports.uploadSubtitle = async (req, fileHandle, fileKey) => {
+     if (!req.files) return false;
+     if (!req.files[fileHandle]) return false;
+     let file = { ...req.files[fileHandle] };
+
+     const bucketName = "reeplay";
+     const key = fileKey
+          ? `subtitles/${fileKey}`
+          : file
+            ? `subtitles/${file.name}`
+            : `subtitles/${Date.now()}`;
+     const buffer = file?.data;
+
+     try {
+          const putObjectCommand = new PutObjectCommand({
+               Bucket: bucketName,
+               Key: key,
+               Body: buffer,
+               ContentType: file?.mimetype,
+          });
+
+          const uploadResult = await s3Client.send(putObjectCommand);
+
+          return {
+               s3_res: uploadResult,
+               Bucket: bucketName,
+               Key: key,
+          };
+     } catch (err) {
+          console.error("Error occurred while uploading:", err);
+          throw err;
+     }
+};
+
 exports.uploadImage = async (req, fileHandle, fileKey) => {
      if (!req.files) return false;
      if (!req.files[fileHandle]) return false;

@@ -1,3 +1,4 @@
+const PosterModel = require("../../models/poster.model");
 const VideosModel = require("../../models/videos.model");
 const {
      serverError,
@@ -23,6 +24,8 @@ exports.addMovie = async (req, res) => {
                expiry_date,
                runtime,
                default_rating,
+               poster1_data,
+               poster2_data,
           } = req.body;
 
           if (
@@ -45,7 +48,26 @@ exports.addMovie = async (req, res) => {
                     "all required fields are mandatory"
                );
           }
-          await new VideosModel({
+
+          if (!poster1_data.key || !poster1_data.dimension) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "video poster details are required"
+               );
+          }
+
+          if (!poster2_data.key || !poster2_data.dimension) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "video poster details are required"
+               );
+          }
+
+          const videoData = await new VideosModel({
                admin_id: admin._id,
                title,
                sub_title,
@@ -62,6 +84,20 @@ exports.addMovie = async (req, res) => {
                runtime,
                default_rating,
                is_series: false,
+          }).save();
+
+          await new PosterModel({
+               video_id: videoData._id,
+               bucket: poster1_data.bucket,
+               key: poster1_data.key,
+               dimension: poster1_data.dimension,
+          }).save();
+
+          await new PosterModel({
+               video_id: videoData._id,
+               bucket: poster2_data.bucket,
+               key: poster2_data.key,
+               dimension: poster2_data.dimension,
           }).save();
 
           return successResponse(res, 200, null, "movie added successfully");
@@ -208,6 +244,8 @@ exports.addSkit = async (req, res) => {
                expiry_date,
                runtime,
                default_rating,
+               poster1_data,
+               poster2_data,
           } = req.body;
 
           if (
@@ -230,7 +268,26 @@ exports.addSkit = async (req, res) => {
                     "all required fields are mandatory"
                );
           }
-          await new VideosModel({
+
+          if (!poster1_data.key || !poster1_data.dimension) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "video poster details are required"
+               );
+          }
+
+          if (!poster2_data.key || !poster2_data.dimension) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "video poster details are required"
+               );
+          }
+
+          const videoData = await new VideosModel({
                admin_id: admin._id,
                title,
                sub_title,
@@ -247,6 +304,20 @@ exports.addSkit = async (req, res) => {
                runtime,
                default_rating,
                is_series: false,
+          }).save();
+
+          await new PosterModel({
+               video_id: videoData._id,
+               bucket: poster1_data.bucket,
+               key: poster1_data.key,
+               dimension: poster1_data.dimension,
+          }).save();
+
+          await new PosterModel({
+               video_id: videoData._id,
+               bucket: poster2_data.bucket,
+               key: poster2_data.key,
+               dimension: poster2_data.dimension,
           }).save();
 
           return successResponse(res, 200, null, "skit added successfully");
@@ -387,6 +458,8 @@ exports.addMusicVid = async (req, res) => {
                runtime,
                default_rating,
                artist_name,
+               poster1_data,
+               poster2_data,
           } = req.body;
 
           if (
@@ -408,7 +481,26 @@ exports.addMusicVid = async (req, res) => {
                     "all required fields are mandatory"
                );
           }
-          await new VideosModel({
+
+          if (!poster1_data.key || !poster1_data.dimension) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "video poster details are required"
+               );
+          }
+
+          if (!poster2_data.key || !poster2_data.dimension) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "video poster details are required"
+               );
+          }
+
+          const videoData = await new VideosModel({
                admin_id: admin._id,
                title,
                sub_title,
@@ -424,6 +516,20 @@ exports.addMusicVid = async (req, res) => {
                runtime,
                default_rating,
                is_series: false,
+          }).save();
+
+          await new PosterModel({
+               video_id: videoData._id,
+               bucket: poster1_data.bucket,
+               key: poster1_data.key,
+               dimension: poster1_data.dimension,
+          }).save();
+
+          await new PosterModel({
+               video_id: videoData._id,
+               bucket: poster2_data.bucket,
+               key: poster2_data.key,
+               dimension: poster2_data.dimension,
           }).save();
 
           return successResponse(
@@ -574,6 +680,8 @@ exports.addSeries = async (req, res) => {
                runtime,
                episodes,
                default_rating,
+               poster1_data,
+               poster2_data,
           } = req.body;
 
           if (
@@ -595,7 +703,26 @@ exports.addSeries = async (req, res) => {
                     "all required fields are mandatory"
                );
           }
-          await new VideosModel({
+
+          if (!poster1_data.key || !poster1_data.dimension) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "video poster details are required"
+               );
+          }
+
+          if (!poster2_data.key || !poster2_data.dimension) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "video poster details are required"
+               );
+          }
+
+          const videoData = await new VideosModel({
                admin_id: admin._id,
                title,
                sub_title,
@@ -609,6 +736,20 @@ exports.addSeries = async (req, res) => {
                default_rating,
                is_series: true,
                episodes,
+          }).save();
+
+          await new PosterModel({
+               video_id: videoData._id,
+               bucket: poster1_data.bucket,
+               key: poster1_data.key,
+               dimension: poster1_data.dimension,
+          }).save();
+
+          await new PosterModel({
+               video_id: videoData._id,
+               bucket: poster2_data.bucket,
+               key: poster2_data.key,
+               dimension: poster2_data.dimension,
           }).save();
 
           return successResponse(res, 200, null, "Series added successfully");

@@ -7,6 +7,10 @@ const subtitleSchema = new mongoose.Schema(
                ref: "videos",
                required: true,
           },
+          bucket: {
+               type: String,
+               required: true,
+          },
           key: {
                type: String,
                required: true,
@@ -15,6 +19,10 @@ const subtitleSchema = new mongoose.Schema(
                type: String,
                trim: true,
                lowercase: true,
+               required: true,
+          },
+          is_series: {
+               type: Boolean,
                required: true,
           },
      },

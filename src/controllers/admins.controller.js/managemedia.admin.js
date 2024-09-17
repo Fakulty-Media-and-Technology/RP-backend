@@ -10,6 +10,7 @@ const {
      uploadLargeVideos,
      uploadShortVideos,
      uploadImage,
+     uploadSubtitle,
 } = require("../../services/media-management");
 const {
      serverError,
@@ -64,6 +65,20 @@ exports.uploadShortVideoRoute = async (req, res) => {
      }
 };
 
+exports.uploadVidSubtitle = async (req, res) => {
+     try {
+          const user = req.user;
+
+          const { fileName, fileHandle } = req.body;
+          console.log(req.body);
+          const video = await uploadSubtitle(req, fileHandle, fileName);
+
+          return successResponse(res, 200, video, "video subtitle uploaded");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
 exports.uploadImageRoute = async (req, res) => {
      try {
           const user = req.user;
@@ -107,42 +122,12 @@ exports.createVideo = async (req, res) => {
                category,
                released_date,
                expiry_date,
-               subtitle_data,
                trailer_data,
                poster1_data,
                poster2_data,
           } = req.body;
 
           const vidDb = await new VideosModel({ admin_id: user._id }).save();
-
-          if (!subtitle_data.key || !subtitle_data.language) {
-               return invalidRequest(
-                    res,
-                    400,
-                    null,
-                    "subtitle file(key) and langauge is required"
-               );
-          }
-
-          await new SubtitleModel({
-               video_id: vidDb._id,
-               key: subtitle_data.key,
-               language: subtitle_data.language,
-          }).save();
-
-          if (!trailer_data.key) {
-               return invalidRequest(
-                    res,
-                    400,
-                    null,
-                    "trailer file(key) is required"
-               );
-          }
-
-          await new TrailerModel({
-               video_id: vidDb._id,
-               key: trailer_data.key,
-          }).save();
 
           if (!poster1_data.key || !poster1_data.dimension) {
                return invalidRequest(
@@ -436,6 +421,35 @@ exports.createLive = async (req, res) => {
                null,
                "live stream event scheduled, credentials are on attached user dashboard"
           );
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.addSubtitle = async (req, res) => {
+     try {
+          const { vid_id, bucket, key, language, is_series } = req.body;
+
+          const vid = await VideosModel.findOne({ _id: vid_id });
+
+          if (!vid) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "specified video id not found"
+               );
+          }
+
+          await new SubtitleModel({
+               video_id: vid_id,
+               bucket,
+               key,
+               language,
+               is_series,
+          }).save();
+
+          return successResponse(res, 200, null, "subtitle added successfully");
      } catch (error) {
           return serverError(res, 500, null, error.message);
      }

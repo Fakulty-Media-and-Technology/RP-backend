@@ -7,15 +7,17 @@ const posterSchema = new mongoose.Schema(
                ref: "videos",
                required: true,
           },
+          bucket: {
+               type: String,
+               required: true,
+          },
           key: {
                type: String,
                required: true,
           },
-          portrait_photo: {
-               type: Object,
-          },
-          landscape_photo: {
-               type: Object,
+          dimension: {
+               type: String,
+               enum: ["landscape", "portrait"],
           },
      },
      {

@@ -23,6 +23,8 @@ const {
      readFiles,
      adminGetPhotoUrl,
      createLive,
+     uploadVidSubtitle,
+     addSubtitle,
 } = require("../controllers/admins.controller.js/managemedia.admin");
 const superadminAuth = require("../middlewares/superadmin.mw");
 const {
@@ -95,8 +97,11 @@ superAdminRouter.delete("/enums/rem-cast/:id", remCast);
 
 superAdminRouter.post("/media/upload-vid", uploadLargeVideoRoute);
 superAdminRouter.post("/media/upload-vid-short", uploadShortVideoRoute);
+superAdminRouter.post("/media/upload-subtitle", uploadVidSubtitle);
 superAdminRouter.post("/media/upload-image", uploadImageRoute);
 superAdminRouter.get("/media/read-photo", adminGetPhotoUrl);
+
+superAdminRouter.post("/media/add-subtitle", addSubtitle);
 
 superAdminRouter.post("/lives/create", createLive);
 
