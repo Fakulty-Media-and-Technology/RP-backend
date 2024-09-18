@@ -31,12 +31,12 @@ exports.adminFetchUser = async (req, res) => {
                },
           ]);
 
-          return successResponse(res, 200, result, null);
+          return successResponse(res, 200, result,"user details fetched");
      } catch (error) {
           console.error("Error fetching users:", error);
 
           // Return the response on failure
-          return failedResponse(res, 404, null, "Error fetching user data");
+          return serverError(res, 500, null, "Error fetching user data");
      }
 };
 
@@ -78,14 +78,14 @@ exports.adminUpdateUser = async (req, res) => {
                { new: true, runValidators: true }
           );
           if (!updatedUser) {
-               return failedResponse(res, 404, "User not found", null);
+               return failedResponse(res, 404,null, "User not found");
           }
 
           console.log("update user", updatedUser);
-          return successResponse(res, 200, updatedUser, null);
+          return successResponse(res, 200, updatedUser, "user details upadted successfully");
      } catch (error) {
           console.log(error);
-          return failedResponse(res, 200, null, "Error updating user", error);
+          return serverError(res, 500, null, "Error updating user");
      }
 };
 
@@ -97,8 +97,8 @@ exports.adminDeleteUser = async (req, res) => {
                return failedResponse(res, 404, null, "User not found");
           }
           console.log("user deleted");
-          return successResponse(res, 200, "User deleted", null);
+          return successResponse(res, 200,user, "User deleted");
      } catch (error) {
-          return failedResponse(res, 404, null, "cant delete user", error);
+          return serverError(res, 500, null, "cant delete user");
      }
 };

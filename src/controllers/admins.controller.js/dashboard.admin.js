@@ -15,7 +15,7 @@ exports.fetchUsersByVideoType = async (req, res) => {
      try {
           const { type } = req.query;
           if (!type) {
-               return failedResponse(
+               return invalidResponse(
                     res,
                     400,
                     null,
@@ -39,9 +39,9 @@ exports.fetchUsersByVideoType = async (req, res) => {
           ]);
 
           console.log(users);
-          return successResponse(res, 200, users, null);
+          return successResponse(res, 200, users);
      } catch (error) {
-          return failedResponse(res, 200, null, "failed to fetch users");
+          return serverError(res, 500, null, "failed to fetch users");
      }
 };
 
@@ -54,9 +54,9 @@ exports.adminFetchChannel = async (req, res) => {
                { $project: { title: 1, cover_photo: 1 } },
           ]);
 
-          return successResponse(res, 200, channels, null);
+          return successResponse(res, 200, channels);
      } catch (error) {
-          return failedResponse(res, 404, null, "error fetching channels");
+          return serverError(res, 500, null, "error fetching channels");
      }
 };
 
@@ -89,12 +89,12 @@ exports.adminFetchBalanceAndUser = async (req, res) => {
                     },
                },
           ]);
-          return successResponse(res, 200, result, null);
+          return successResponse(res, 200, result);
      } catch (error) {
           console.error("Error fetching total balance and users:", error);
-          return failedResponse(
+          return serverError(
                res,
-               404,
+               500,
                null,
                "error in calculating the total balance and user"
           );
@@ -117,16 +117,16 @@ exports.countFreeUsers = async (req, res) => {
                res,
                200,
                { totalFreeUsers: totalFreeUsers },
-               null
+               "total of free user count"
           );
      } catch (error) {
           console.error("Error counting free users:", error);
-          return failedResponse(
+          return serverError(
                res,
-               404,
+               500,
                null,
                "error in calculating the total of free user",
-               error
+               
           );
      }
 };
@@ -143,14 +143,14 @@ exports.countActiveUsers = async (req, res) => {
           if (result.length > 0 && result[0].totalActiveUsers) {
                totalActiveUsers = result[0].totalActiveUsers;
           }
-          return successResponse(res, 200, totalActiveUsers, null);
+          return successResponse(res, 200, totalActiveUsers,"total active user fetched");
      } catch (error) {
-          return failedResponse(
+          return serverError(
                res,
-               404,
+               500,
                null,
                "error in calculating the total of Active user",
-               error
+          
           );
      }
 };
@@ -167,14 +167,14 @@ exports.countChannels = async (req, res) => {
           if (result.length > 0 && result[0].totalChannels) {
                totalChannels = result[0].totalChannels;
           }
-          return successResponse(res, 200, totalChannels, null);
+          return successResponse(res, 200, totalChannels,"total channel fetched");
      } catch (error) {
-          return failedResponse(
+          return serverError(
                res,
-               404,
+               500,
                null,
                "error in calculating the total of channels",
-               error
+               
           );
      }
 };
@@ -191,14 +191,14 @@ exports.countEvents = async (req, res) => {
           if (result.length > 0 && result[0].totalEvents) {
                totalEvents = result[0].totalEvents;
           }
-          return successResponse(res, 200, totalEvents, null);
+          return successResponse(res, 200, totalEvents,"total events fetched");
      } catch (error) {
-          return failedResponse(
+          return serverError(
                res,
-               404,
+               500,
                null,
                "error in calculating the total of events",
-               error
+          
           );
      }
 };
