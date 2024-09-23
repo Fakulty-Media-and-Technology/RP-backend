@@ -60,3 +60,33 @@ exports.createUpcomingEvent = async (req, res) => {
           return serverError(res, 500, null, error.message);
      }
 };
+
+exports.upcomingsAllGet = async (req, res) => {
+     try {
+          const limit = req.query.limit || 10;
+          const page = req.query.page || 1;
+
+          const allDat = await UpcomingModel.aggregate([
+               {
+                    $match: {},
+               },
+               {
+                    $project: {
+                         __v: 0,
+                         createdAt: 0,
+                         updatedAt: 0,
+                    },
+               },
+               {
+                    $skip: Number(page - 1) * Number(limit) || 0,
+               },
+               {
+                    $limit: Number(limit),
+               },
+          ]);
+
+          return successResponse(res, 200, allDat, "all upcomings fetched");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};

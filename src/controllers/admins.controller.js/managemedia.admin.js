@@ -484,7 +484,7 @@ exports.searchClient = async (req, res) => {
 
 exports.livesChannels = async (req, res) => {
      try {
-          const limit = req.querylimit || 10;
+          const limit = req.query.limit || 10;
           const page = req.query.page || 1;
 
           const allDat = await LivesModel.aggregate([
@@ -523,7 +523,7 @@ exports.livesChannels = async (req, res) => {
 
 exports.livesEvents = async (req, res) => {
      try {
-          const limit = req.querylimit || 10;
+          const limit = req.query.limit || 10;
           const page = req.query.page || 1;
 
           const allDat = await LivesModel.aggregate([
@@ -562,7 +562,7 @@ exports.livesEvents = async (req, res) => {
 
 exports.livesTvshows = async (req, res) => {
      try {
-          const limit = req.querylimit || 10;
+          const limit = req.query.limit || 10;
           const page = req.query.page || 1;
 
           const allDat = await LivesModel.aggregate([

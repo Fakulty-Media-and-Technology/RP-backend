@@ -33,6 +33,7 @@ const {
 const superadminAuth = require("../middlewares/superadmin.mw");
 const {
      createUpcomingEvent,
+     upcomingsAllGet,
 } = require("../controllers/admins.controller.js/upcoming.admin");
 const {
      createTrailer,
@@ -115,6 +116,7 @@ superAdminRouter.get("/lives/all/tvshows", livesTvshows);
 
 //upcoming events routes
 superAdminRouter.post("/upcoming/event/create", createUpcomingEvent);
+superAdminRouter.get("/upcoming/event/getall", upcomingsAllGet);
 
 //trailer
 superAdminRouter.post("/trailer/create", createTrailer);

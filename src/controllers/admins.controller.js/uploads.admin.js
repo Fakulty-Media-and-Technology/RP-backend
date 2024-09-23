@@ -184,7 +184,7 @@ exports.deleteMovie = async (req, res) => {
 
 exports.fetchMovies = async (req, res) => {
      try {
-          const limit = req.querylimit || 10;
+          const limit = req.query.limit || 10;
           const page = req.query.page || 1;
 
           const videos = await VideosModel.aggregate([
@@ -399,7 +399,7 @@ exports.deleteSkit = async (req, res) => {
 
 exports.fetchSkits = async (req, res) => {
      try {
-          const limit = req.querylimit || 10;
+          const limit = req.query.limit || 10;
           const page = req.query.page || 1;
 
           const videos = await VideosModel.aggregate([
@@ -621,7 +621,7 @@ exports.deleteMusicVid = async (req, res) => {
 
 exports.fetchMusicVid = async (req, res) => {
      try {
-          const limit = req.querylimit || 10;
+          const limit = req.query.limit || 10;
           const page = req.query.page || 1;
 
           const videos = await VideosModel.aggregate([
@@ -829,7 +829,7 @@ exports.deleteSeries = async (req, res) => {
 
 exports.fetchSeries = async (req, res) => {
      try {
-          const limit = req.querylimit || 10;
+          const limit = req.query.limit || 10;
           const page = req.query.page || 1;
 
           const videos = await VideosModel.aggregate([
