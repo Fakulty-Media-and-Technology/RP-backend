@@ -1,3 +1,4 @@
+const { title } = require("process");
 const CategoryEnumModel = require("../../models/categoryEnum.model");
 const LivesModel = require("../../models/lives.model");
 const PosterModel = require("../../models/poster.model");
@@ -425,6 +426,180 @@ exports.createLive = async (req, res) => {
           return serverError(res, 500, null, error.message);
      }
 };
+
+exports.searchClient = async (req, res) => {
+     try {
+          const search = req.query.search;
+
+          const client = await UsersModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $in: [
+                                   "$role",
+                                   ["channel", "tvshow", "event", "podcast"],
+                              ],
+                         },
+                    },
+               },
+               {
+                    $match: {
+                         $or: [
+                              {
+                                   first_name: {
+                                        $regex: search,
+                                        $options: "i",
+                                   },
+                              },
+                              {
+                                   last_name: {
+                                        $regex: search,
+                                        $options: "i",
+                                   },
+                              },
+                              {
+                                   email: {
+                                        $regex: search,
+                                        $options: "i",
+                                   },
+                              },
+                         ],
+                    },
+               },
+               {
+                    $project: {
+                         _id: 1,
+                         first_name: 1,
+                         last_name: 1,
+                         role: 1,
+                    },
+               },
+          ]);
+
+          return successResponse(res, 200, client, "matched clients fetched");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.livesChannels = async (req, res) => {
+     try {
+          const limit = req.querylimit || 10;
+          const page = req.query.page || 1;
+
+          const allDat = await LivesModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: ["$type", "channel"],
+                         },
+                    },
+               },
+               {
+                    $project: {
+                         _id: 1,
+                         title: 1,
+                         pg: 1,
+                         vid_class: 1,
+                         active: 1,
+                         expiry: 1,
+                         cover_photo: 1,
+                         views: 1,
+                    },
+               },
+               {
+                    $skip: Number(page - 1) * Number(limit) || 0,
+               },
+               {
+                    $limit: Number(limit),
+               },
+          ]);
+
+          return successResponse(res, 200, allDat, "live channels fetched");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.livesEvents = async (req, res) => {
+     try {
+          const limit = req.querylimit || 10;
+          const page = req.query.page || 1;
+
+          const allDat = await LivesModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: ["$type", "event"],
+                         },
+                    },
+               },
+               {
+                    $project: {
+                         _id: 1,
+                         title: 1,
+                         pg: 1,
+                         vid_class: 1,
+                         active: 1,
+                         expiry: 1,
+                         cover_photo: 1,
+                         views: 1,
+                    },
+               },
+               {
+                    $skip: Number(page - 1) * Number(limit) || 0,
+               },
+               {
+                    $limit: Number(limit),
+               },
+          ]);
+
+          return successResponse(res, 200, allDat, "live events fetched");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.livesTvshows = async (req, res) => {
+     try {
+          const limit = req.querylimit || 10;
+          const page = req.query.page || 1;
+
+          const allDat = await LivesModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: ["$type", "tvshow"],
+                         },
+                    },
+               },
+               {
+                    $project: {
+                         _id: 1,
+                         title: 1,
+                         pg: 1,
+                         vid_class: 1,
+                         active: 1,
+                         expiry: 1,
+                         cover_photo: 1,
+                         views: 1,
+                    },
+               },
+               {
+                    $skip: Number(page - 1) * Number(limit) || 0,
+               },
+               {
+                    $limit: Number(limit),
+               },
+          ]);
+
+          return successResponse(res, 200, allDat, "live tvshows fetched");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+//TODO delete and edit channel
 
 exports.addSubtitle = async (req, res) => {
      try {

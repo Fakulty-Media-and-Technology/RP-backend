@@ -25,6 +25,10 @@ const {
      createLive,
      uploadVidSubtitle,
      addSubtitle,
+     searchClient,
+     livesChannels,
+     livesEvents,
+     livesTvshows,
 } = require("../controllers/admins.controller.js/managemedia.admin");
 const superadminAuth = require("../middlewares/superadmin.mw");
 const {
@@ -104,6 +108,10 @@ superAdminRouter.get("/media/read-photo", adminGetPhotoUrl);
 superAdminRouter.post("/media/add-subtitle", addSubtitle);
 
 superAdminRouter.post("/lives/create", createLive);
+superAdminRouter.get("/lives/search-clients", searchClient);
+superAdminRouter.get("/lives/all/channels", livesChannels);
+superAdminRouter.get("/lives/all/events", livesEvents);
+superAdminRouter.get("/lives/all/tvshows", livesTvshows);
 
 //upcoming events routes
 superAdminRouter.post("/upcoming/event/create", createUpcomingEvent);

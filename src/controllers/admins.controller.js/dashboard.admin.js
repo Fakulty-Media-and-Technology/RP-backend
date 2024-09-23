@@ -125,8 +125,7 @@ exports.countFreeUsers = async (req, res) => {
                res,
                500,
                null,
-               "error in calculating the total of free user",
-               
+               "error in calculating the total of free user"
           );
      }
 };
@@ -143,14 +142,18 @@ exports.countActiveUsers = async (req, res) => {
           if (result.length > 0 && result[0].totalActiveUsers) {
                totalActiveUsers = result[0].totalActiveUsers;
           }
-          return successResponse(res, 200, totalActiveUsers,"total active user fetched");
+          return successResponse(
+               res,
+               200,
+               totalActiveUsers,
+               "total active user fetched"
+          );
      } catch (error) {
           return serverError(
                res,
                500,
                null,
-               "error in calculating the total of Active user",
-          
+               "error in calculating the total of Active user"
           );
      }
 };
@@ -167,14 +170,18 @@ exports.countChannels = async (req, res) => {
           if (result.length > 0 && result[0].totalChannels) {
                totalChannels = result[0].totalChannels;
           }
-          return successResponse(res, 200, totalChannels,"total channel fetched");
+          return successResponse(
+               res,
+               200,
+               totalChannels,
+               "total channel fetched"
+          );
      } catch (error) {
           return serverError(
                res,
                500,
                null,
-               "error in calculating the total of channels",
-               
+               "error in calculating the total of channels"
           );
      }
 };
@@ -191,14 +198,13 @@ exports.countEvents = async (req, res) => {
           if (result.length > 0 && result[0].totalEvents) {
                totalEvents = result[0].totalEvents;
           }
-          return successResponse(res, 200, totalEvents,"total events fetched");
+          return successResponse(res, 200, totalEvents, "total events fetched");
      } catch (error) {
           return serverError(
                res,
                500,
                null,
-               "error in calculating the total of events",
-          
+               "error in calculating the total of events"
           );
      }
 };
