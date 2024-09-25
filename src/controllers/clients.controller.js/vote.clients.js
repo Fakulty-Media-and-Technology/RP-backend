@@ -128,6 +128,66 @@ exports.addVoteContestant = async (req, res) => {
      }
 };
 
+exports.fetchVoteContestants = async (req, res) => {
+     try {
+          const { live_id } = req.query;
+
+          const user = req.user;
+          if (user.role !== "tvshow") {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "this feature is not available to you"
+               );
+          }
+
+          const contests = await ContestantsModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: [
+                                   "$live_id",
+                                   {
+                                        $toObjectId: live_id,
+                                   },
+                              ],
+                         },
+                    },
+               },
+          ]);
+
+          return successResponse(res, 200, contests, "vote contestants");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.rmVoteContestants = async (req, res) => {
+     try {
+          const { contestant_id, live_id } = req.query;
+
+          const user = req.user;
+          if (user.role !== "tvshow") {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "this feature is not available to you"
+               );
+          }
+
+          await ContestantsModel.findOneAndDelete({
+               live_id,
+               _id: contestant_id,
+          });
+
+          return successResponse(res, 200, contests, "vote contestants");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
 exports.votestatusInfo = async (req, res) => {
      try {
           const { live_id } = req.query;

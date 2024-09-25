@@ -16,6 +16,8 @@ const {
      addVoteContestant,
      updateVoteInfo,
      votestatusInfo,
+     fetchVoteContestants,
+     rmVoteContestants,
 } = require("../controllers/clients.controller.js/vote.clients");
 const {
      reqPayout,
@@ -42,7 +44,9 @@ clientsRouter.get("/livestream/streamkey", liveStreamCredentials);
 
 clientsRouter.post("/livestream/vote/info", createVoteInfo);
 clientsRouter.put("/livestream/vote/info/update", updateVoteInfo);
+clientsRouter.get("/livestream/vote/contestant/fetch", fetchVoteContestants);
 clientsRouter.post("/livestream/vote/contestant", addVoteContestant);
+clientsRouter.post("/livestream/vote/contestant/remove", rmVoteContestants);
 clientsRouter.get("/livestream/vote/voting-status", votestatusInfo);
 
 clientsRouter.post("/payouts/payment/request", reqPayout);

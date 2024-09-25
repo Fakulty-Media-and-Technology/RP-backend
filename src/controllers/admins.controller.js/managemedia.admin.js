@@ -380,7 +380,10 @@ exports.createLive = async (req, res) => {
                                         ],
                                    },
                                    {
-                                        $lte: ["$start", Date.now()],
+                                        $eq: ["$active", false],
+                                   },
+                                   {
+                                        $eq: ["$expired", false],
                                    },
                               ],
                          },
