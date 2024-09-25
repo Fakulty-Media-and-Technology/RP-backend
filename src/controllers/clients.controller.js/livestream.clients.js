@@ -40,6 +40,17 @@ exports.liveStreamCredentials = async (req, res) => {
                     },
                },
                {
+                    $addFields: {
+                         stream_url: {
+                              $concat: [
+                                   process.env.RP_HLSURL,
+                                   "$stream_key",
+                                   "/index.m3u8",
+                              ],
+                         },
+                    },
+               },
+               {
                     $sort: {
                          createdAt: -1,
                     },
