@@ -11,6 +11,10 @@ const liveVideosSchema = new mongoose.Schema(
                type: mongoose.Types.ObjectId,
                ref: "payments",
           },
+          extpayment_id: {
+               type: mongoose.Types.ObjectId,
+               ref: "payments",
+          },
           title: {
                type: String,
                required: true,

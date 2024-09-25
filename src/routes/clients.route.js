@@ -10,6 +10,7 @@ const {
      postPreviewVid,
      createLiveClient,
      calculateEventCharges,
+     extendLiveEvent,
 } = require("../controllers/clients.controller.js/livestream.clients");
 const {
      createVoteInfo,
@@ -58,5 +59,6 @@ clientsRouter.post("/payment/paystack/init", startPayment);
 clientsRouter.post("/event/create/payment", createPayment);
 clientsRouter.get("/event/payment/estimate", calculateEventCharges);
 clientsRouter.post("/event/live/schedule", createLiveClient);
+clientsRouter.post("/event/live/extend", extendLiveEvent);
 
 module.exports = clientsRouter;

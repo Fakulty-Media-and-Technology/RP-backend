@@ -368,3 +368,91 @@ exports.createLiveClient = async (req, res) => {
           return serverError(res, 500, null, error.message);
      }
 };
+
+exports.extendLiveEvent = async (req, res) => {
+     try {
+          const client_id = req.user._id;
+          const { live_id, new_expiry, payment_id } = req.body;
+
+          if (!payment_id || !new_expiry || !live_id) {
+               return invalidRequest(
+                    res,
+                    400,
+                    null,
+                    "all important fields are required"
+               );
+          }
+
+          const confirmPayment = await PaymentsModel.findOne({
+               _id: payment_id,
+               user_id: client_id,
+               status: "success",
+               is_used: false,
+          });
+
+          if (!confirmPayment) {
+               return failedResponse(res, 400, null, "your payment is invalid");
+          }
+
+          const liveEvent = await LivesModel.findOne({
+               _id: live_id,
+               client_id: client_id,
+               active: true,
+          });
+
+          if (!liveEvent) {
+               return failedResponse(
+                    res,
+                    400,
+                    null,
+                    "event not found or not active"
+               );
+          }
+
+          const calcCharges = calcLiveCharges(liveEvent.expiry, new_expiry);
+
+          if (Number(confirmPayment.amount) !== Number(calcCharges)) {
+               return failedResponse(
+                    res,
+                    200,
+                    null,
+                    "payment made does not match charges"
+               );
+          }
+
+          const streamId = await genRandUniqId(12);
+
+          const streamIdExist = await LivesModel.findOne({
+               stream_key: streamId,
+          });
+
+          if (streamIdExist) {
+               return failedResponse(res, 400, null, "Oops, please try again");
+          }
+
+          await LivesModel.findOneAndUpdate(
+               {
+                    _id: live_id,
+                    client_id: client_id,
+               },
+               {
+                    expiry: new Date(new_expiry),
+                    extpayment_id: confirmPayment._id,
+               }
+          );
+
+          await PaymentsModel.findOneAndUpdate(
+               {
+                    _id: confirmPayment._id,
+               },
+               {
+                    is_used: true,
+                    use_case: "live schedule ext",
+               }
+          );
+
+          return successResponse(res, 200, null, "live stream event extended");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};

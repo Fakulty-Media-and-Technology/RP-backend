@@ -39,6 +39,7 @@ const paymentSchema = new mongoose.Schema(
                     "vote",
                     "donate",
                     "live schedule",
+                    "live schedule ext",
                ],
           },
      },

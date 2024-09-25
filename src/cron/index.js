@@ -262,7 +262,12 @@ const activateLiveStream = node_cron.schedule("*/5 * * * *", async () => {
                          $expr: {
                               $and: [
                                    {
-                                        $gte: [dateN, "$start"],
+                                        $gte: [
+                                             new Date(dateN),
+                                             {
+                                                  $toDate: "$start",
+                                             },
+                                        ],
                                    },
                                    {
                                         $eq: ["$active", false],
@@ -314,7 +319,12 @@ const deActivateLiveStream = node_cron.schedule("*/5 * * * *", async () => {
                                         ],
                                    },
                                    {
-                                        $gte: [dateN, "$expiry"],
+                                        $gte: [
+                                             new Date(dateN),
+                                             {
+                                                  $toDate: "$expiry",
+                                             },
+                                        ],
                                    },
                                    {
                                         $eq: ["$active", true],
