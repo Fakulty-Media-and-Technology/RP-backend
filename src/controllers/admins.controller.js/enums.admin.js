@@ -98,10 +98,11 @@ exports.remCategory = async (req, res) => {
 //CAST
 exports.addCast = async (req, res) => {
      try {
-          const { name } = req.body;
+          const { name, title } = req.body;
 
           const newCast = new CastEnumModel({
                name: name,
+               title,
           });
 
           await newCast.save();

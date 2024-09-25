@@ -7,6 +7,10 @@ const liveVideosSchema = new mongoose.Schema(
                ref: "users",
                required: true,
           },
+          payment_id: {
+               type: mongoose.Types.ObjectId,
+               ref: "payments",
+          },
           title: {
                type: String,
                required: true,

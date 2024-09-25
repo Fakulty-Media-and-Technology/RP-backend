@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const castEnumSchema = new mongoose.Schema(
      {
+          title: {
+               type: String,
+               trim: true,
+               required: true,
+          },
           name: {
                type: String,
                trim: true,

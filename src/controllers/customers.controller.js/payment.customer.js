@@ -110,6 +110,7 @@ exports.createPayment = async (req, res) => {
 
           const refExist = await PaymentsModel.findOne({
                reference: reference,
+               status: "success",
                // user_id: user._id,
           });
 
