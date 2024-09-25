@@ -25,6 +25,7 @@ const {
 } = require("../controllers/clients.controller.js/withdrawal.clients");
 const {
      createPayment,
+     startPayment,
 } = require("../controllers/customers.controller.js/payment.customer");
 
 const clientsRouter = express.Router();
@@ -49,6 +50,7 @@ clientsRouter.put("/payouts/payment/request/ed/:id", reqPayoutEdit);
 clientsRouter.get("/payouts/payment/request/his", payoutReqInfoAll);
 clientsRouter.get("/payouts/payment/request/group", payoutReqInfoGroup);
 
+clientsRouter.post("/payment/paystack/init", startPayment);
 clientsRouter.post("/event/create/payment", createPayment);
 clientsRouter.get("/event/payment/estimate", calculateEventCharges);
 clientsRouter.post("/event/live/schedule", createLiveClient);

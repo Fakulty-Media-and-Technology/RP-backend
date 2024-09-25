@@ -2,6 +2,7 @@ const LivesModel = require("../../models/lives.model");
 const PaymentsModel = require("../../models/payments.model");
 const UsersModel = require("../../models/users.model");
 const { readPhotos } = require("../../services/media-access");
+const crypto = require("crypto");
 const {
      serverError,
      successResponse,
@@ -27,7 +28,7 @@ exports.liveStreamCredentials = async (req, res) => {
                                         ],
                                    },
                                    {
-                                        $eq: ["$active", "true"],
+                                        $eq: ["$expired", false],
                                    },
                               ],
                          },
@@ -241,16 +242,6 @@ exports.createLiveClient = async (req, res) => {
                );
           }
 
-          await PaymentsModel.findOneAndUpdate(
-               {
-                    _id: confirmPayment._id,
-               },
-               {
-                    is_used: true,
-                    use_case: "live schedule",
-               }
-          );
-
           const streamId = await genRandUniqId(12);
 
           const streamIdExist = await LivesModel.findOne({
@@ -306,7 +297,10 @@ exports.createLiveClient = async (req, res) => {
                                         ],
                                    },
                                    {
-                                        $lte: ["$start", Date.now()],
+                                        $eq: ["$active", false],
+                                   },
+                                   {
+                                        $eq: ["$expired", false],
                                    },
                               ],
                          },
@@ -342,6 +336,16 @@ exports.createLiveClient = async (req, res) => {
                preview_video: video,
                payment_id: confirmPayment._id,
           }).save();
+
+          await PaymentsModel.findOneAndUpdate(
+               {
+                    _id: confirmPayment._id,
+               },
+               {
+                    is_used: true,
+                    use_case: "live schedule",
+               }
+          );
 
           return successResponse(
                res,

@@ -30,7 +30,7 @@ server.listen(PORT, async () => {
      // console.log(new Date("2024-09-20T15:00:00.000Z").getTime());
      // console.log(new Date("2024-09-25T15:00:00.000Z").getTime());
 
-     console.log(new Date(), new Date("2024-09-26T06:39:17.257+00:00"));
+     // console.log(new Date(), new Date("2024-09-26T06:39:17.257+00:00"));
 
      //Cron Jobs
      getActiveSessions();
