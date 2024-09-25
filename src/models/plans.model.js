@@ -7,6 +7,10 @@ const planSchema = new mongoose.Schema(
                ref: "users",
                required: true,
           },
+          title: {
+               type: String,
+               required: true,
+          },
           months_duration: {
                type: Number,
                unique: true,

@@ -1,4 +1,5 @@
 const PlansModel = require("../../models/plans.model");
+const SubscriptionModel = require("../../models/subscription.model");
 const {
      serverError,
      successResponse,
@@ -17,35 +18,38 @@ async function convertToLocalCurrency(usdAmount, userCurrency) {
      }
      return (usdAmount * rate).toFixed(2);
 }
+
 exports.createPlan = async (req, res) => {
      try {
           const admin = req.user;
 
-          const { months, price, details, userCurrency } = req.body;
+          const { title, months, price, details, userCurrency } = req.body;
 
-          if (!months || !price || !details || userCurrency) {
+          if (!months || !title || !price || !details || userCurrency) {
                return invalidRequest(res, 400, null, "all input are required");
           }
 
-          const numMonths = Number(months);
-          const numPrice = Number(price);
-          if (isNaN(numMonths) || isNaN(numPrice)) {
-               return invalidRequest(
-                    res,
-                    400,
-                    null,
-                    "Months and price must be valid numbers"
-               );
-          }
-          // Convert price to user’s currency
-          const convertedPrice = await convertToLocalCurrency(
-               numPrice,
-               userCurrency
-          );
+          // const numMonths = Number(months);
+          // const numPrice = Number(price);
+          // if (isNaN(numMonths) || isNaN(numPrice)) {
+          //      return invalidRequest(
+          //           res,
+          //           400,
+          //           null,
+          //           "Months and price must be valid numbers"
+          //      );
+          // }
+          // // Convert price to user’s currency
+          // const convertedPrice = await convertToLocalCurrency(
+          //      numPrice,
+          //      userCurrency
+          // );
+
           await new PlansModel({
                admin_id: admin._id,
-               months_duration: numMonths,
-               price: convertedPrice,
+               title,
+               months_duration: Number(months),
+               price: Number(price),
                details: details,
           }).save();
 
@@ -61,7 +65,7 @@ exports.updatePlan = async (req, res) => {
 
           const id = req.params.id;
 
-          const { months, price, details } = req.body;
+          const { title, months, price, details } = req.body;
 
           const oldValues = await PlansModel.findOne({
                _id: id,
@@ -82,6 +86,7 @@ exports.updatePlan = async (req, res) => {
                },
                {
                     admin_id: admin._id ? admin._id : oldValues.admin_id,
+                    title,
                     months_duration: months
                          ? Number(months)
                          : oldValues.months_duration,
@@ -110,6 +115,77 @@ exports.fetchPlans = async (req, res) => {
                     $project: {
                          __v: 0,
                     },
+               },
+          ]);
+
+          return successResponse(res, 200, plans, "plan fetched");
+     } catch (error) {
+          serverError(req, 500, null, error.message);
+     }
+};
+
+exports.fetchSubscriptions = async (req, res) => {
+     try {
+          const limit = req.query.limit || 10;
+          const page = req.query.page || 1;
+
+          const plans = await SubscriptionModel.aggregate([
+               {
+                    $match: {},
+               },
+               {
+                    $project: {
+                         __v: 0,
+                    },
+               },
+               {
+                    $lookup: {
+                         from: "plans",
+                         let: {
+                              pid: "$plan_id",
+                         },
+                         pipeline: [
+                              {
+                                   $match: {
+                                        $expr: {
+                                             $eq: [
+                                                  "$_id",
+                                                  {
+                                                       $toObjectId: "$$pid",
+                                                  },
+                                             ],
+                                        },
+                                   },
+                              },
+                              {
+                                   $project: {
+                                        title: 1,
+                                        price: 1,
+                                        months_duration: 1,
+                                        description: 1,
+                                   },
+                              },
+                         ],
+                         as: "plan",
+                    },
+               },
+               {
+                    $set: {
+                         plan: {
+                              $first: "$plan",
+                         },
+                    },
+               },
+               {
+                    $sort: {
+                         createdAt: -1,
+                    },
+               },
+               {
+                    $skip: Number(page - 1) * Number(limit) || 0,
+               },
+               {
+                    $limit: Number(limit),
                },
           ]);
 

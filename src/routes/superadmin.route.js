@@ -43,6 +43,7 @@ const {
      updatePlan,
      deletePlans,
      fetchPlans,
+     fetchSubscriptions,
 } = require("../controllers/admins.controller.js/plan-sub.admin");
 const {
      createGiftCard,
@@ -126,6 +127,7 @@ superAdminRouter.post("/subscription/plans/create", createPlan);
 superAdminRouter.put("/subscription/plans/update/:id", updatePlan);
 superAdminRouter.get("/subscription/plans/fetch", fetchPlans);
 superAdminRouter.delete("/subscription/plans/delete/:id", deletePlans);
+superAdminRouter.get("/subscription/all/fetch", fetchSubscriptions);
 
 //gift cards
 superAdminRouter.post("/giftcard/generate/new", createGiftCard);
