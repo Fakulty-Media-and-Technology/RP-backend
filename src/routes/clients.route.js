@@ -3,6 +3,7 @@ const clientsAuth = require("../middlewares/clients.mw");
 const {
      clientProfileFetch,
      clientEditProfile,
+     clientsPaymentHis,
 } = require("../controllers/clients.controller.js/profile.clients");
 const {
      liveStreamCredentials,
@@ -31,6 +32,7 @@ const clientsRouter = express.Router();
 clientsRouter.use(clientsAuth);
 
 clientsRouter.get("/profile/fetch", clientProfileFetch);
+clientsRouter.get("/history/payment/fetch", clientsPaymentHis);
 
 clientsRouter.put("/profile/edit", clientEditProfile);
 

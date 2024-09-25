@@ -79,17 +79,22 @@ exports.liveStreamCredentials = async (req, res) => {
 //      }
 // };
 
+function calcLiveCharges(start, expiry) {
+     const startDate = new Date(start).getTime();
+     const expiryDate = new Date(expiry).getTime();
+
+     const hoursDifference = (expiryDate - startDate) / (60 * 60000);
+
+     const totalCharge =
+          hoursDifference * parseFloat(process.env.EVENT_HOURLY_CHARGES);
+     return totalCharge;
+}
+
 exports.calculateEventCharges = async (req, res) => {
      try {
           const { start, expiry } = req.query;
 
-          const startDate = new Date(start).getTime();
-          const expiryDate = new Date(expiry).getTime();
-
-          const hoursDifference = (expiryDate - startDate) / (60 * 60000);
-
-          const totalCharge =
-               hoursDifference * parseFloat(process.env.EVENT_HOURLY_CHARGES);
+          const totalCharge = calcLiveCharges(start, expiry);
 
           return successResponse(
                res,
@@ -225,9 +230,26 @@ exports.createLiveClient = async (req, res) => {
                return failedResponse(res, 400, null, "your payment is invalid");
           }
 
-          const calcCharges =
-               new Date(expiry - start).getHours() *
-               process.env.EVENT_HOURLY_CHARGES;
+          const calcCharges = calcLiveCharges(start, expiry);
+
+          if (Number(confirmPayment.amount) !== Number(calcCharges)) {
+               return failedResponse(
+                    res,
+                    200,
+                    null,
+                    "payment made does not match charges"
+               );
+          }
+
+          await PaymentsModel.findOneAndUpdate(
+               {
+                    _id: confirmPayment._id,
+               },
+               {
+                    is_used: true,
+                    use_case: "live schedule",
+               }
+          );
 
           const streamId = await genRandUniqId(12);
 
@@ -312,8 +334,8 @@ exports.createLiveClient = async (req, res) => {
                category: category,
                description: description,
                type: type,
-               start: start,
-               expiry: expiry,
+               start: new Date(start),
+               expiry: new Date(expiry),
                sponsored,
                popular,
                location,

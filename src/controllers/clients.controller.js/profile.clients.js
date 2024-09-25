@@ -1,4 +1,6 @@
+const PaymentsModel = require("../../models/payments.model");
 const UsersModel = require("../../models/users.model");
+const WalletModel = require("../../models/wallet.model");
 const { readPhotos } = require("../../services/media-access");
 const {
      serverError,
@@ -91,6 +93,36 @@ exports.clientProfileFetch = async (req, res) => {
                               : signedUrl,
                },
                "client profile fetched"
+          );
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.clientsPaymentHis = async (req, res) => {
+     try {
+          const user = req.user;
+
+          const wallHis = await PaymentsModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: [
+                                   "$user_id",
+                                   {
+                                        $toObjectId: user._id,
+                                   },
+                              ],
+                         },
+                    },
+               },
+          ]);
+
+          return successResponse(
+               res,
+               200,
+               wallHis,
+               "client payment history fetched"
           );
      } catch (error) {
           return serverError(res, 500, null, error.message);

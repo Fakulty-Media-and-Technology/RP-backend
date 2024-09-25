@@ -67,10 +67,10 @@ const liveVideosSchema = new mongoose.Schema(
                default: 0,
           },
           start: {
-               type: Number, //Date in milisec
+               type: Date,
           },
           expiry: {
-               type: Number,
+               type: Date,
           },
           views: {
                type: Number,
