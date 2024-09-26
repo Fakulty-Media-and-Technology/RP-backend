@@ -8,8 +8,8 @@ const {
 
 exports.suggestionsAll = async (req, res) => {
      try {
-          const limit = req.params.limit || 10;
-          const page = req.params.page || 1;
+          const limit = req.query.limit || 10;
+          const page = req.query.page || 1;
 
           const suggestions = await SuggestionsModel.aggregate([
                {

@@ -132,8 +132,8 @@ exports.getAClient = async (req, res) => {
 
 exports.clientDeposits = async (req, res) => {
      try {
-          const limit = req.params.limit || 10;
-          const page = req.params.page || 1;
+          const limit = req.query.limit || 10;
+          const page = req.query.page || 1;
 
           const clients = await PaymentsModel.aggregate([
                {
