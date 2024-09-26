@@ -104,6 +104,8 @@ const {
      countEvents,
      currentAdminProfile,
      editAdminProfile,
+     fetchTopVideosByType,
+     totContentsAndChunks,
 } = require("../controllers/admins.controller.js/dashboard.admin");
 
 const superAdminRouter = express.Router();
@@ -201,20 +203,25 @@ superAdminRouter.get("/suggestions/all", suggestionsAll);
 superAdminRouter.put("/suggestion/markread/:id", suggestionRead);
 superAdminRouter.delete("/suggestion/del/:id", suggestionDel);
 
-//Dorcas Endpoints
+//DashBoards
+superAdminRouter.get("/dashboard/profile/fetch", currentAdminProfile);
+superAdminRouter.put("/dashboard/profile/edit", editAdminProfile);
+
 superAdminRouter.get("/user/fetch", adminFetchUser);
 superAdminRouter.patch("/user/update/:userId", adminUpdateUser);
 superAdminRouter.delete("/user/deleteUser/:userId", adminDeleteUser);
 
-superAdminRouter.get("/dashboard/profile/fetch", currentAdminProfile);
-superAdminRouter.put("/dashboard/profile/edit", editAdminProfile);
+superAdminRouter.get("/dashboard/topvideosbytype", fetchTopVideosByType);
+// superAdminRouter.get("/dashboard/fetchchannels", adminFetchChannel);
+superAdminRouter.get(
+     "/dashboard/fetchbalanceandusers",
+     adminFetchBalanceAndUser
+);
+superAdminRouter.get("/dashboard/totcontentsandchunks", totContentsAndChunks);
 
-superAdminRouter.get("/dashboard/fetchByVideoType", fetchUsersByVideoType);
-superAdminRouter.get("/dashboard/fetchchannels", adminFetchChannel);
-superAdminRouter.get("/dashboard/fetchbalance", adminFetchBalanceAndUser);
-superAdminRouter.get("/dashboard/countFreeUsers", countFreeUsers);
-superAdminRouter.get("/dashboard/countActiveUser", countActiveUsers);
-superAdminRouter.get("/dashboard/countChannel", countChannels);
-superAdminRouter.get("/dashboard/countEvents", countEvents);
+// superAdminRouter.get("/dashboard/countFreeUsers", countFreeUsers);
+// superAdminRouter.get("/dashboard/countActiveUser", countActiveUsers);
+// superAdminRouter.get("/dashboard/countChannel", countChannels);
+// superAdminRouter.get("/dashboard/countEvents", countEvents);
 
 module.exports = superAdminRouter;
