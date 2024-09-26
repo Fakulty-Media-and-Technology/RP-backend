@@ -10,6 +10,126 @@ const {
      failedResponse,
      invalidRequest,
 } = require("../../utils/response.handler");
+const UsersModel = require("../../models/users.model");
+const { EncryptPass } = require("../../utils/bcrypt");
+const { deletePhoto } = require("../../services/media-management");
+
+function isValidEmail(email) {
+     const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+     return emailRegex.test(email);
+}
+
+exports.currentAdminProfile = async (req, res) => {
+     try {
+          const id = req.user._id;
+
+          const admin = await UsersModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: [
+                                   "$_id",
+                                   {
+                                        $toObjectId: id,
+                                   },
+                              ],
+                         },
+                    },
+               },
+               {
+                    $project: {
+                         auth_code: 0,
+                         auth_expiry: 0,
+                         approved: 0,
+                         suspended: 0,
+                         updatedAt: 0,
+                         __v: 0,
+                         pin: 0,
+                         password: 0,
+                    },
+               },
+          ]);
+
+          return successResponse(res, 200, admin, "admin profile");
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
+
+exports.editAdminProfile = async (req, res) => {
+     try {
+          const user = req.user;
+
+          const {
+               first_name,
+               last_name,
+               country_code,
+               mobile,
+               photo,
+               email,
+               password,
+          } = req.body;
+
+          if (email) {
+               const bol = isValidEmail(email);
+
+               if (!bol) {
+                    return invalidRequest(
+                         res,
+                         400,
+                         null,
+                         "invalid email format"
+                    );
+               }
+
+               const existUs = await UsersModel.findOne({ email: email });
+
+               if (existUs) {
+                    return invalidRequest(
+                         res,
+                         409,
+                         null,
+                         "Email already in use"
+                    );
+               }
+          }
+
+          let initData = await UsersModel.findOne({ _id: user.id });
+          if (!initData) {
+               return invalidRequest(res, 404, null, "User not found");
+          }
+
+          if (photo) {
+               await deletePhoto(initData.photo);
+
+               initData.photo = {};
+          }
+
+          await UsersModel.findOneAndUpdate(
+               {
+                    _id: user._id,
+               },
+               {
+                    email: email ? email : initData.email,
+                    password: password
+                         ? await EncryptPass(password)
+                         : initData.password,
+                    first_name: first_name ? first_name : initData.first_name,
+                    last_name: last_name ? last_name : initData.last_name,
+                    country_code: country_code
+                         ? country_code
+                         : initData.country_code,
+                    mobile: mobile ? mobile : initData.mobile,
+                    photo: photo ? photo : initData.photo,
+               }
+          );
+
+          return successResponse(res, 200, null, "Profile updated");
+     } catch (error) {
+          console.error("Server error:", error);
+          return serverError(res, 500, null, error.message);
+     }
+};
 
 exports.fetchUsersByVideoType = async (req, res) => {
      try {
@@ -22,7 +142,7 @@ exports.fetchUsersByVideoType = async (req, res) => {
                     "video type query parameter is required "
                );
           }
-          const users = await Video.aggregate([
+          const videos = await Video.aggregate([
                // Match videos by the specified type
 
                { $match: { type: type } },
@@ -38,10 +158,9 @@ exports.fetchUsersByVideoType = async (req, res) => {
                },
           ]);
 
-          console.log(users);
-          return successResponse(res, 200, users);
+          return successResponse(res, 200, videos, "videos fetched by types");
      } catch (error) {
-          return serverError(res, 500, null, "failed to fetch users");
+          return serverError(res, 500, null, error.message);
      }
 };
 

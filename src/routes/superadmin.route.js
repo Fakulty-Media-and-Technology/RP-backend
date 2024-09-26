@@ -89,6 +89,23 @@ const {
      suggestionDel,
 } = require("../controllers/admins.controller.js/suggestions.admin");
 
+const {
+     adminFetchUser,
+     adminUpdateUser,
+     adminDeleteUser,
+} = require("../controllers/admins.controller.js/users.admin");
+const {
+     fetchUsersByVideoType,
+     adminFetchChannel,
+     adminFetchBalanceAndUser,
+     countFreeUsers,
+     countActiveUsers,
+     countChannels,
+     countEvents,
+     currentAdminProfile,
+     editAdminProfile,
+} = require("../controllers/admins.controller.js/dashboard.admin");
+
 const superAdminRouter = express.Router();
 
 superAdminRouter.post("/admins-signin", adminSignIn);
@@ -183,5 +200,21 @@ superAdminRouter.get("/uploads/series/fetch", fetchSeries);
 superAdminRouter.get("/suggestions/all", suggestionsAll);
 superAdminRouter.put("/suggestion/markread/:id", suggestionRead);
 superAdminRouter.delete("/suggestion/del/:id", suggestionDel);
+
+//Dorcas Endpoints
+superAdminRouter.get("/user/fetch", adminFetchUser);
+superAdminRouter.patch("/user/update/:userId", adminUpdateUser);
+superAdminRouter.delete("/user/deleteUser/:userId", adminDeleteUser);
+
+superAdminRouter.get("/dashboard/profile/fetch", currentAdminProfile);
+superAdminRouter.put("/dashboard/profile/edit", editAdminProfile);
+
+superAdminRouter.get("/dashboard/fetchByVideoType", fetchUsersByVideoType);
+superAdminRouter.get("/dashboard/fetchchannels", adminFetchChannel);
+superAdminRouter.get("/dashboard/fetchbalance", adminFetchBalanceAndUser);
+superAdminRouter.get("/dashboard/countFreeUsers", countFreeUsers);
+superAdminRouter.get("/dashboard/countActiveUser", countActiveUsers);
+superAdminRouter.get("/dashboard/countChannel", countChannels);
+superAdminRouter.get("/dashboard/countEvents", countEvents);
 
 module.exports = superAdminRouter;
