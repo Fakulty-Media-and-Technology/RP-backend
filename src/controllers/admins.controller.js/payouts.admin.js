@@ -9,7 +9,10 @@ const {
 
 exports.payoutReqAll = async (req, res) => {
      try {
-          const initVal = await PayoutsModel.aggregate([
+          const limit = req.params.limit || 10;
+          const page = req.params.page || 1;
+
+          const payouts = await PayoutsModel.aggregate([
                {
                     $match: {
                          $expr: {},
@@ -20,9 +23,82 @@ exports.payoutReqAll = async (req, res) => {
                          updatedAt: -1,
                     },
                },
+               {
+                    $skip: Number(page - 1) * Number(limit) || 0,
+               },
+               {
+                    $limit: Number(limit),
+               },
           ]);
 
-          return successResponse(res, 200, initVal, "payout requests all");
+          return successResponse(res, 200, payouts, "payout requests all");
+     } catch (error) {
+          return serverError(res, 400, null, error.message);
+     }
+};
+
+exports.payoutReqOne = async (req, res) => {
+     try {
+          const id = req.params.id;
+
+          const payoutt = await PayoutsModel.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: [
+                                   "$_id",
+                                   {
+                                        $toObjectId: id,
+                                   },
+                              ],
+                         },
+                    },
+               },
+               {
+                    $lookup: {
+                         from: "users",
+                         let: {
+                              uid: "$client_id",
+                         },
+                         pipeline: [
+                              {
+                                   $match: {
+                                        $expr: {
+                                             $eq: [
+                                                  {
+                                                       $toObjectId: "$_id",
+                                                  },
+                                                  {
+                                                       $toObjectId: "$$uid",
+                                                  },
+                                             ],
+                                        },
+                                   },
+                              },
+                              {
+                                   $project: {
+                                        first_name: 1,
+                                        last_name: 1,
+                                        photo: 1,
+                                        email: 1,
+                                        country_code: 1,
+                                        mobile: 1,
+                                   },
+                              },
+                         ],
+                         as: "user",
+                    },
+               },
+               {
+                    $set: {
+                         user: {
+                              $first: "$user",
+                         },
+                    },
+               },
+          ]);
+
+          return successResponse(res, 200, payoutt, "payout request one");
      } catch (error) {
           return serverError(res, 400, null, error.message);
      }
@@ -30,7 +106,7 @@ exports.payoutReqAll = async (req, res) => {
 
 exports.payoutReqGroup = async (req, res) => {
      try {
-          const initVal = await PayoutsModel.aggregate([
+          const payout = await PayoutsModel.aggregate([
                {
                     $match: {
                          $expr: {
@@ -46,7 +122,7 @@ exports.payoutReqGroup = async (req, res) => {
                },
           ]);
 
-          return successResponse(res, 200, initVal, "payout requests grouped");
+          return successResponse(res, 200, payout, "payout requests grouped");
      } catch (error) {
           return serverError(res, 400, null, error.message);
      }

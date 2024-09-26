@@ -187,6 +187,8 @@ exports.clientsSignup = async (req, res) => {
                country_code,
                mobile,
                client_type,
+               verified,
+               photo,
           } = req.body;
 
           if (
@@ -197,6 +199,7 @@ exports.clientsSignup = async (req, res) => {
                !cpassword ||
                !country_code ||
                !mobile ||
+               !verified ||
                !client_type
           ) {
                return invalidRequest(
@@ -256,8 +259,9 @@ exports.clientsSignup = async (req, res) => {
                country_code: country_code,
                mobile: mobile,
                role: client_type,
-               verified: true,
+               verified,
                approved: true,
+               photo,
           });
 
           await newUser.save();

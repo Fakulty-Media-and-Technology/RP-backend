@@ -36,7 +36,7 @@ const payoutSchema = new mongoose.Schema(
                     "pending",
                     "processing",
                     "reversed",
-                    "failed",
+                    "rejected",
                     "completed",
                ],
                default: "pending",

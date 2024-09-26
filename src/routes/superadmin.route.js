@@ -53,6 +53,7 @@ const {
      payoutReqAll,
      payoutReqGroup,
      payoutStatusUpdate,
+     payoutReqOne,
 } = require("../controllers/admins.controller.js/payouts.admin");
 const {
      searchContents,
@@ -77,6 +78,16 @@ const {
      deleteSeries,
      fetchSeries,
 } = require("../controllers/admins.controller.js/uploads.admin");
+const {
+     getAllClients,
+     getAClient,
+     clientDeposits,
+} = require("../controllers/admins.controller.js/clients.admin");
+const {
+     suggestionsAll,
+     suggestionRead,
+     suggestionDel,
+} = require("../controllers/admins.controller.js/suggestions.admin");
 
 const superAdminRouter = express.Router();
 
@@ -87,7 +98,11 @@ superAdminRouter.use(superadminAuth);
 
 superAdminRouter.post("/create-super-admin", superAdminSignup);
 superAdminRouter.post("/create-admin", adminSignup);
+
 superAdminRouter.post("/create-clients", clientsSignup);
+superAdminRouter.get("/clients/allfetch", getAllClients);
+superAdminRouter.get("/clients/onefetch/:id", getAClient);
+superAdminRouter.get("/clients/deposits", clientDeposits);
 
 superAdminRouter.post("/enums/add-genre", addGenre);
 superAdminRouter.get("/enums/get-genres", getGenre);
@@ -135,7 +150,8 @@ superAdminRouter.get("/giftcard/generated/fetch", fetchGiftCards);
 
 //payout processing
 superAdminRouter.get("/payouts/request/all", payoutReqAll);
-superAdminRouter.get("/payouts/request/group", payoutReqGroup);
+superAdminRouter.get("/payouts/request/one/:id", payoutReqOne);
+// superAdminRouter.get("/payouts/request/group", payoutReqGroup);
 superAdminRouter.put("/payouts/request/status/:id", payoutStatusUpdate);
 
 //featured contents
@@ -163,5 +179,9 @@ superAdminRouter.post("/uploads/series/add", addSeries);
 superAdminRouter.put("/uploads/series/edit/:id", editSeries);
 superAdminRouter.delete("/uploads/series/remove/:id", deleteSeries);
 superAdminRouter.get("/uploads/series/fetch", fetchSeries);
+
+superAdminRouter.get("/suggestions/all", suggestionsAll);
+superAdminRouter.put("/suggestion/markread/:id", suggestionRead);
+superAdminRouter.delete("/suggestion/del/:id", suggestionDel);
 
 module.exports = superAdminRouter;

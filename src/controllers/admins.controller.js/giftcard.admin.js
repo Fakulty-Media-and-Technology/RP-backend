@@ -61,6 +61,9 @@ exports.createGiftCard = async (req, res) => {
 
 exports.fetchGiftCards = async (req, res) => {
      try {
+          const limit = req.query.limit || 10;
+          const page = req.query.page || 1;
+
           const getCards = await GiftcardModel.aggregate([
                {
                     $match: {
@@ -74,6 +77,24 @@ exports.fetchGiftCards = async (req, res) => {
                          createdAt: -1,
                          serial_number: -1,
                     },
+               },
+               {
+                    $addFields: {
+                         serial_number: {
+                              $concat: [
+                                   "SN",
+                                   {
+                                        $toString: "$serial_number",
+                                   },
+                              ],
+                         },
+                    },
+               },
+               {
+                    $skip: Number(page - 1) * Number(limit) || 0,
+               },
+               {
+                    $limit: Number(limit),
                },
           ]);
 
