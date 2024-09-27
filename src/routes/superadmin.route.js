@@ -93,6 +93,7 @@ const {
      adminFetchUser,
      adminUpdateUser,
      adminDeleteUser,
+     adminOneUser,
 } = require("../controllers/admins.controller.js/users.admin");
 const {
      fetchUsersByVideoType,
@@ -107,6 +108,11 @@ const {
      fetchTopVideosByType,
      totContentsAndChunks,
 } = require("../controllers/admins.controller.js/dashboard.admin");
+const {
+     addAds,
+     getAds,
+     remAds,
+} = require("../controllers/admins.controller.js/ads.admin");
 
 const superAdminRouter = express.Router();
 
@@ -208,6 +214,7 @@ superAdminRouter.get("/dashboard/profile/fetch", currentAdminProfile);
 superAdminRouter.put("/dashboard/profile/edit", editAdminProfile);
 
 superAdminRouter.get("/user/fetch", adminFetchUser);
+superAdminRouter.get("/user/fetch/:userId", adminOneUser);
 superAdminRouter.patch("/user/update/:userId", adminUpdateUser);
 superAdminRouter.delete("/user/deleteUser/:userId", adminDeleteUser);
 
@@ -223,5 +230,10 @@ superAdminRouter.get("/dashboard/totcontentsandchunks", totContentsAndChunks);
 // superAdminRouter.get("/dashboard/countActiveUser", countActiveUsers);
 // superAdminRouter.get("/dashboard/countChannel", countChannels);
 // superAdminRouter.get("/dashboard/countEvents", countEvents);
+
+//ADS
+superAdminRouter.post("/ads/create", addAds);
+superAdminRouter.get("/ads/fetchall", getAds);
+superAdminRouter.delete("/ads/remove/:id", remAds);
 
 module.exports = superAdminRouter;

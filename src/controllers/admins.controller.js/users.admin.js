@@ -33,10 +33,24 @@ exports.adminFetchUser = async (req, res) => {
 
           return successResponse(res, 200, result, "user details fetched");
      } catch (error) {
-          console.error("Error fetching users:", error);
-
-          // Return the response on failure
           return serverError(res, 500, null, "Error fetching user data");
+     }
+};
+
+exports.adminOneUser = async (req, res) => {
+     try {
+          const { userId } = req.params;
+
+          const oneUser = await User.findOne({ _id: userId });
+
+          return successResponse(
+               res,
+               200,
+               oneUser,
+               "one user fetched successfully"
+          );
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
      }
 };
 
@@ -64,7 +78,7 @@ exports.adminUpdateUser = async (req, res) => {
                email,
                mobile,
                gender,
-               date_of_birth,
+               dob: date_of_birth,
                verified: true,
           };
 
@@ -81,7 +95,6 @@ exports.adminUpdateUser = async (req, res) => {
                return failedResponse(res, 404, null, "User not found");
           }
 
-          console.log("update user", updatedUser);
           return successResponse(
                res,
                200,
