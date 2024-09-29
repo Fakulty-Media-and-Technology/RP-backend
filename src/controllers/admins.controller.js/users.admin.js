@@ -8,6 +8,11 @@ const {
      invalidRequest,
 } = require("../../utils/response.handler");
 
+function isValidEmail(email) {
+     const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+     return emailRegex.test(email);
+}
+
 exports.adminFetchUser = async (req, res) => {
      try {
           const result = await User.aggregate([
@@ -37,86 +42,143 @@ exports.adminFetchUser = async (req, res) => {
      }
 };
 
-exports.adminOneUser = async (req, res) => {
+exports.adminFetchSingleUser = async (req, res) => {
      try {
           const { userId } = req.params;
 
-          const oneUser = await User.findOne({ _id: userId });
+          const user = await User.aggregate([
+               {
+                    $match: {
+                         $expr: {
+                              $eq: [
+                                   "$_id",
+                                   {
+                                        $toObjectId: userId,
+                                   },
+                              ],
+                         },
+                    },
+               },
+               {
+                    $project: {
+                         fullname: {
+                              $concat: [
+                                   { $ifNull: ["$first_name", ""] },
+                                   " ",
+                                   { $ifNull: ["$last_name", ""] },
+                              ],
+                         },
+                         email: 1,
+                         mobile: 1,
+                         gender: 1,
+                         dob: 1,
+                         joined: "$createdAt",
+                         verified: 1,
+                         substatus: {
+                              $cond: {
+                                   if: { $eq: ["$verified", true] },
+                                   then: "Active",
+                                   else: "Inactive",
+                              },
+                         },
+                    },
+               },
+          ]);
 
-          return successResponse(
-               res,
-               200,
-               oneUser,
-               "one user fetched successfully"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
-
-exports.adminUpdateUser = async (req, res) => {
-     try {
-          const { userId } = req.params;
-          const {
-               first_name,
-               last_name,
-               email,
-               mobile,
-               gender,
-               date_of_birth,
-               password,
-          } = req.body;
-
-          // Hash the password if it's being updated
-
-          let hashedPassword = await EncryptPass(password);
-
-          // Prepare the update fields
-          const updateFields = {
-               first_name,
-               last_name,
-               email,
-               mobile,
-               gender,
-               dob: date_of_birth,
-               verified: true,
-          };
-
-          if (hashedPassword) {
-               updateFields.password = hashedPassword;
-          }
-          // Find the user by ID and update
-          const updatedUser = await User.findOneAndUpdate(
-               { _id: userId },
-               { $set: updateFields },
-               { new: true, runValidators: true }
-          );
-          if (!updatedUser) {
+          if (!user) {
                return failedResponse(res, 404, null, "User not found");
           }
 
           return successResponse(
                res,
                200,
-               updatedUser,
-               "user details upadted successfully"
+               user,
+               "One user fetched successfully"
           );
      } catch (error) {
           console.log(error);
-          return serverError(res, 500, null, "Error updating user");
+          return serverError(res, 500, null, "Error fetching user");
+     }
+};
+
+exports.editUserProfile = async (req, res) => {
+     try {
+          const { userId } = req.params;
+          const {
+               first_name,
+               last_name,
+               country_code,
+               mobile,
+               dob,
+               email,
+               gender,
+               password,
+          } = req.body;
+
+          if (email) {
+               const bol = isValidEmail(email);
+
+               if (!bol) {
+                    return invalidRequest(
+                         res,
+                         400,
+                         null,
+                         "invalid email format"
+                    );
+               }
+          }
+
+          const updatedUser = await User.findOneAndUpdate(
+               {
+                    _id: userId,
+               },
+               {
+                    email: email,
+                    password: await EncryptPass(password),
+
+                    first_name: first_name,
+                    last_name: last_name,
+
+                    mobile: mobile,
+
+                    gender: gender,
+                    dob: dob,
+                    verified: true,
+                    approved: true,
+               },
+               { new: true }
+          );
+          console.log("userr", updatedUser);
+          // Check if user was found and updated
+          if (!updatedUser) {
+               return invalidRequest(res, 404, null, "User not found");
+          }
+
+          return successResponse(res, 200, updatedUser, "Profile updated");
+     } catch (error) {
+          console.error("Server error:", error);
+          return serverError(res, 500, null, error.message);
      }
 };
 
 exports.adminDeleteUser = async (req, res) => {
      try {
           const { userId } = req.params;
-          const user = await User.findByIdAndDelete(userId);
-          if (!user) {
-               return failedResponse(res, 404, null, "User not found");
+          const deleteUser = await User.findOneAndDelete({
+               _id: userId,
+          });
+
+          if (!deleteUser) {
+               return failedResponse(
+                    res,
+                    400,
+                    null,
+                    "user can not be deleted or not found"
+               );
           }
-          console.log("user deleted");
-          return successResponse(res, 200, user, "User deleted");
+
+          return successResponse(res, 200, null, "user deleted successfully");
      } catch (error) {
-          return serverError(res, 500, null, "cant delete user");
+          serverError(res, 500, null, error.message);
      }
 };

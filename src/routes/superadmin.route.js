@@ -91,9 +91,9 @@ const {
 
 const {
      adminFetchUser,
-     adminUpdateUser,
+     editUserProfile,
      adminDeleteUser,
-     adminOneUser,
+     adminFetchSingleUser,
 } = require("../controllers/admins.controller.js/users.admin");
 const {
      fetchUsersByVideoType,
@@ -214,8 +214,8 @@ superAdminRouter.get("/dashboard/profile/fetch", currentAdminProfile);
 superAdminRouter.put("/dashboard/profile/edit", editAdminProfile);
 
 superAdminRouter.get("/user/fetch", adminFetchUser);
-superAdminRouter.get("/user/fetch/:userId", adminOneUser);
-superAdminRouter.patch("/user/update/:userId", adminUpdateUser);
+superAdminRouter.get("/user/fetch/:userId", adminFetchSingleUser);
+superAdminRouter.patch("/user/update/:userId", editUserProfile);
 superAdminRouter.delete("/user/deleteUser/:userId", adminDeleteUser);
 
 superAdminRouter.get("/dashboard/topvideosbytype", fetchTopVideosByType);

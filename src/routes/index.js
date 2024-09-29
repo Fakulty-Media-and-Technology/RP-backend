@@ -11,8 +11,6 @@ router.use("/customers", customerRouter);
 router.use("/clients", clientsRouter);
 router.use("/admin", adminRouter);
 
-// router.use("/admins");
-
 router.use("/superadmin", superAdminRouter);
 
 module.exports = router;
