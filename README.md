@@ -28,10 +28,9 @@ backend [base_url](https://reeplay.app)
 Link to the published postman documentation
 [Documentation](https://documenter.getpostman.com/view/18227483/2sA3JGePHa)
 
-## LICENSE
 
-MIT
-```markdown
+
+
 # Reeplay Backend Service
 
 A robust Node.js backend service for video streaming and media management, built with Express.js and MongoDB.
@@ -248,4 +247,3 @@ For support, email [support@email.com] or join our Slack channel.
 - List any third-party services or libraries that deserve special mention
 - Credits to team members or contributors
 - Inspiration sources
-```
