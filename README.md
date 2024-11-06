@@ -96,7 +96,7 @@ SMTP_PASS=your_smtp_password
 
 ### Development
 ```bash
-npm run dev
+npm run prest
 ```
 
 ### Production
