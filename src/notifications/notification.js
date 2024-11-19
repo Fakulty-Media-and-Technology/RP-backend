@@ -1,69 +1,58 @@
 const admin = require("../firebase/firebase");
 const NotificationsModel = require("../models/notifications.model");
+const UserDeviceModel = require("../models/userDevice.model");
 
-// exports.sendPushNotification = async (
-//      device_token,
-//      title,
-//      body_message,
-//      device_type,
-//      notificationData,
-//      sound = "default"
-// ) => {
-//      try {
-//           notificationData.sender_id = "1020677113768";
-//           //      notificationData.sender_id.toString() || ;
-//           // //process.env.FCM_SENDERID;
-//           notificationData.receiver_id =
-//                notificationData.receiver_id.toString();
-//           notificationData.value_id = notificationData.value_id
-//                ? notificationData.value_id.toString()
-//                : "";
-//           notificationData.title = title;
-//           notificationData.body = body_message;
+exports.sendPushNotification = async (title, body, notificationData = {}) => {
+     try {
+          // Get all user devices
+          const userDevices = await UserDeviceModel.find({
+               user_id: notificationData.user_id,
+          });
 
-//           const notification = {
-//                title: title,
-//                body: body_message,
-//                //   imageUrl: "",
-//           };
+          // Send to all user devices
+          const notifications = userDevices.map((device) => ({
+               token: device.device_token,
+               notification: {
+                    title,
+                    body,
+               },
+               data: {
+                    ...notificationData,
+                    click_action: "NOTIFICATION_CLICK",
+                    // Add any additional data needed by the frontend
+                    notification_id: notificationData._id?.toString(),
+                    type: notificationData.type,
+               },
+               android: {
+                    priority: "high",
+                    notification: {
+                         channelId: "default_channel",
+                         sound: "default",
+                    },
+               },
+               apns: {
+                    payload: {
+                         aps: {
+                              sound: "default",
+                         },
+                    },
+               },
+          }));
 
-//           var message = {
-//                notification: notification,
-//                data: notificationData,
-//                apns: {
-//                     headers: {
-//                          "apns-priority": "10",
-//                     },
-//                     payload: {
-//                          aps: {
-//                               sound: "default",
-//                          },
-//                     },
-//                },
-//                android: {
-//                     priority: "high",
-//                     notification: {
-//                          sound: "default",
-//                     },
-//                },
-//                token: device_token,
-//           };
+          // Send notifications in parallel
+          const results = await Promise.all(
+               notifications.map((notification) =>
+                    admin.messaging().send(notification)
+               )
+          );
 
-//           console.log("final message", message);
-
-//           admin.messaging()
-//                .send(message)
-//                .then((response) => {
-//                     console.log("Successfully sent message:", response);
-//                })
-//                .catch((error) => {
-//                     console.log("Error sending message:", error);
-//                });
-//      } catch (err) {
-//           console.log(err);
-//           return false;
-//      }
-// };
+          console.log("Push notifications sent:", results);
+          return true;
+     } catch (error) {
+          console.error("Error sending push notification:", error);
+          return false;
+     }
+};
 
 exports.sendPush = async () => {
      const message = {

@@ -71,3 +71,25 @@ exports.getNotifications = async (req, res) => {
           return serverError(res, 500, null, error.message);
      }
 };
+
+exports.handleNotificationClick = async (req, res) => {
+     try {
+          const { notification_id } = req.params;
+          const user = req.user;
+
+          // Mark notification as seen
+          await NotificationsModel.findOneAndUpdate(
+               { _id: notification_id, user_id: user._id },
+               { seen: true }
+          );
+
+          return successResponse(
+               res,
+               200,
+               { notification_id },
+               "Notification marked as seen"
+          );
+     } catch (error) {
+          return serverError(res, 500, null, error.message);
+     }
+};
