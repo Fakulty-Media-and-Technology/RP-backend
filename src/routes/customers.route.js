@@ -88,6 +88,7 @@ const {
 } = require("../controllers/customers.controller.js/vote.custumers");
 const {
      getNotifications,
+     handleNotificationClick,
 } = require("../controllers/customers.controller.js/notifications.customer");
 
 const customerRouter = express.Router();
@@ -223,5 +224,10 @@ customerRouter.post("/livestream/vote/create-vote", createVote);
 customerRouter.post("/livestream/donate/dash-fund", donateFund);
 
 customerRouter.get("/notifications", getNotifications);
+
+customerRouter.post(
+     "/notifications/:notification_id/click",
+     handleNotificationClick
+);
 
 module.exports = customerRouter;
