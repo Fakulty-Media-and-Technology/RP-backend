@@ -86,6 +86,9 @@ const {
      createVote,
      donateFund,
 } = require("../controllers/customers.controller.js/vote.custumers");
+const {
+     getNotifications,
+} = require("../controllers/customers.controller.js/notifications.customer");
 
 const customerRouter = express.Router();
 
@@ -218,5 +221,7 @@ customerRouter.get("/livestream/vote/fetch-contestants", fetchVoteContestants);
 customerRouter.post("/livestream/vote/create-vote", createVote);
 
 customerRouter.post("/livestream/donate/dash-fund", donateFund);
+
+customerRouter.get("/notifications", getNotifications);
 
 module.exports = customerRouter;
