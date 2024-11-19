@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const notificationSchema = new mongoose.Schema(
      {
           user_id: {
-               type: mongoose.SchemaTypes.ObjectId,
+               type: mongoose.Types.ObjectId,
                ref: "users",
                required: true,
           },
@@ -12,7 +12,12 @@ const notificationSchema = new mongoose.Schema(
           },
           type: {
                type: String,
-               // enum: [],
+               enum: ["NEW_ARRIVAL", "SYSTEM"],
+               default: "NEW_ARRIVAL",
+          },
+          content_id: {
+               type: mongoose.Types.ObjectId,
+               ref: "videos",
                required: true,
           },
           title: {
@@ -24,12 +29,14 @@ const notificationSchema = new mongoose.Schema(
                required: true,
           },
           photo: {
-               type: String,
+               Bucket: String,
+               Key: String,
           },
           seen: {
                type: Boolean,
                default: false,
           },
+          categories: [String],
      },
      {
           timestamps: true,
