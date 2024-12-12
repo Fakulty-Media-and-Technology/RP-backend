@@ -4,52 +4,52 @@ A robust Node.js backend service for video streaming and media management, built
 
 ## 🚀 Features
 
--    **Authentication & Authorization**
+- **Authentication & Authorization**
 
-     -    JWT-based authentication
-     -    Firebase integration
-     -    Role-based access control
-     -    Secure password handling with bcrypt
+  - JWT-based authentication
+  - Firebase integration
+  - Role-based access control
+  - Secure password handling with bcrypt
 
--    **Media Management**
+- **Media Management**
 
-     -    Video upload and processing
-     -    AWS S3 storage integration
-     -    CloudFront CDN distribution
-     -    FFmpeg media manipulation
+  - Video upload and processing
+  - AWS S3 storage integration
+  - CloudFront CDN distribution
+  - FFmpeg media manipulation
 
--    **Streaming Capabilities**
+- **Streaming Capabilities**
 
-     -    Live streaming support
-     -    Video on demand (VOD)
-     -    Adaptive bitrate streaming
-     -    Real-time analytics
+  - Live streaming support
+  - Video on demand (VOD)
+  - Adaptive bitrate streaming
+  - Real-time analytics
 
--    **User Management**
-     -    Profile management
-     -    Watch history
-     -    Preferences
-     -    Playlists and favorites
+- **User Management**
+  - Profile management
+  - Watch history
+  - Preferences
+  - Playlists and favorites
 
 ## 🛠️ Tech Stack
 
--    **Runtime**: Node.js
--    **Framework**: Express.js
--    **Database**: MongoDB with Mongoose
--    **Authentication**: JWT, Firebase Admin
--    **Cloud Services**: AWS (S3, MediaConvert, CloudFront)
--    **Media Processing**: FFmpeg
--    **Real-time Communication**: Socket.io
--    **Email Service**: Nodemailer
--    **Testing**: Jest, Mocha, Chai, Supertest
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB with Mongoose
+- **Authentication**: JWT, Firebase Admin
+- **Cloud Services**: AWS (S3, MediaConvert, CloudFront)
+- **Media Processing**: FFmpeg
+- **Real-time Communication**: Socket.io
+- **Email Service**: Nodemailer
+- **Testing**: Jest, Mocha, Chai, Supertest
 
 ## 📋 Prerequisites
 
--    Node.js (v14 or higher)
--    MongoDB
--    AWS Account with appropriate credentials
--    Firebase project setup
--    FFmpeg installed locally
+- Node.js (v14 or higher)
+- MongoDB
+- AWS Account with appropriate credentials
+- Firebase project setup
+- FFmpeg installed locally
 
 ## 🔧 Installation
 
@@ -136,32 +136,32 @@ src/
 
 ### Authentication Endpoints
 
--    `POST /api/auth/register` - User registration
--    `POST /api/auth/login` - User login
--    `POST /api/auth/refresh` - Refresh token
--    `POST /api/auth/logout` - User logout
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/refresh` - Refresh token
+- `POST /api/auth/logout` - User logout
 
 ### Media Endpoints
 
--    `POST /api/media/upload` - Upload media
--    `GET /api/media/stream/:id` - Stream media
--    `GET /api/media/list` - List available media
--    `PUT /api/media/:id` - Update media metadata
+- `POST /api/media/upload` - Upload media
+- `GET /api/media/stream/:id` - Stream media
+- `GET /api/media/list` - List available media
+- `PUT /api/media/:id` - Update media metadata
 
 ### User Endpoints
 
--    `GET /api/users/profile` - Get user profile
--    `PUT /api/users/profile` - Update user profile
--    `GET /api/users/history` - Get watch history
--    `POST /api/users/favorites` - Manage favorites
+- `GET /api/users/profile` - Get user profile
+- `PUT /api/users/profile` - Update user profile
+- `GET /api/users/history` - Get watch history
+- `POST /api/users/favorites` - Manage favorites
 
 ## 🧪 Testing
 
 The project uses multiple testing frameworks:
 
--    Unit tests with Jest
--    Integration tests with Mocha and Chai
--    API testing with Supertest
+- Unit tests with Jest
+- Integration tests with Mocha and Chai
+- API testing with Supertest
 
 Run tests with:
 
@@ -176,12 +176,12 @@ npm run test:integration
 
 ## 🔐 Security
 
--    JWT token-based authentication
--    Password hashing with bcrypt
--    Input validation and sanitization
--    Rate limiting
--    CORS configuration
--    Security headers with Helmet.js
+- JWT token-based authentication
+- Password hashing with bcrypt
+- Input validation and sanitization
+- Rate limiting
+- CORS configuration
+- Security headers with Helmet.js
 
 ## 🚀 Deployment
 
@@ -200,10 +200,10 @@ npm start
 
 ## 📈 Monitoring
 
--    Application logging with Winston
--    Error tracking
--    Performance monitoring
--    API usage metrics
+- Application logging with Winston
+- Error tracking
+- Performance monitoring
+- API usage metrics
 
 ## DEMO
 
@@ -230,8 +230,8 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## 👥 Team
 
--    [Developer Name] - _Initial work_ - [GitHub Profile]
--    [Developer Name] - _Feature X_ - [GitHub Profile]
+- [Developer Name] - _Initial work_ - [GitHub Profile]
+- [Developer Name] - _Feature X_ - [GitHub Profile]
 
 ## 📞 Support
 
@@ -239,6 +239,6 @@ For support, email [support@email.com] or join our Slack channel.
 
 ## 🙏 Acknowledgments
 
--    List any third-party services or libraries that deserve special mention
--    Credits to team members or contributors
--    Inspiration sources
+- List any third-party services or libraries that deserve special mention
+- Credits to team members or contributors
+- Inspiration sources

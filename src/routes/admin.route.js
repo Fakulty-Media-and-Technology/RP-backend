@@ -1,7 +1,7 @@
-const express = require("express");
-const adminAuth = require("../middlewares/admin.mw");
-const adminRouter = express.Router();
+const express = require('express')
+const adminAuth = require('../middlewares/admin.mw')
+const adminRouter = express.Router()
 
-adminRouter.use(adminAuth);
+adminRouter.use(adminAuth)
 
-module.exports = adminRouter;
+module.exports = adminRouter

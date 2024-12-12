@@ -1,1114 +1,912 @@
-const path = require("path");
+const path = require('path')
+const { createTranscodingJob, readPhotos, getVideoUrl } = require('../../services/media-access')
+const { uploadImage } = require('../../services/media-management')
 const {
-     createTranscodingJob,
-     readPhotos,
-     getVideoUrl,
-} = require("../../services/media-access");
-const { uploadImage } = require("../../services/media-management");
-const {
-     successResponse,
-     serverError,
-     failedResponse,
-     invalidRequest,
-} = require("../../utils/response.handler");
+  successResponse,
+  serverError,
+  failedResponse,
+  invalidRequest,
+} = require('../../utils/response.handler')
 
-const {
-     S3Client,
-     GetObjectCommand,
-     ListObjectsV2Command,
-} = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const { getSignedUrl: getCFSignedUrl } = require("@aws-sdk/cloudfront-signer");
-const UserSettingsModel = require("../../models/userSettings.model");
-const LivesModel = require("../../models/lives.model");
-const VideosModel = require("../../models/videos.model");
+const { S3Client, GetObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3')
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner')
+const { getSignedUrl: getCFSignedUrl } = require('@aws-sdk/cloudfront-signer')
+const UserSettingsModel = require('../../models/userSettings.model')
+const LivesModel = require('../../models/lives.model')
+const VideosModel = require('../../models/videos.model')
 
 exports.uploadImageRoute = async (req, res) => {
-     try {
-          const user = req.user;
-          if (!user._id && user.role === "guest") {
-               return invalidRequest(
-                    res,
-                    403,
-                    null,
-                    "you are not authenticated"
-               );
-          }
+  try {
+    const user = req.user
+    if (!user._id && user.role === 'guest') {
+      return invalidRequest(res, 403, null, 'you are not authenticated')
+    }
 
-          const { fileName, fileHandle } = req.body;
+    const { fileName, fileHandle } = req.body
 
-          const image = await uploadImage(req, fileHandle, fileName);
+    const image = await uploadImage(req, fileHandle, fileName)
 
-          return successResponse(res, 200, image, "image uploaded");
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, image, 'image uploaded')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.customerGetPhotoUrl = async (req, res) => {
-     try {
-          // const user = req.user;
+  try {
+    // const user = req.user;
 
-          // if(!user._id && user.role === "guest") {
-          //     return invalidRequest(res, 403, null, "you are not authenticated")
-          // }
+    // if(!user._id && user.role === "guest") {
+    //     return invalidRequest(res, 403, null, "you are not authenticated")
+    // }
 
-          const { bucket, key } = req.body;
+    const { bucket, key } = req.body
 
-          const image = await readPhotos(bucket, key);
+    const image = await readPhotos(bucket, key)
 
-          return successResponse(res, 200, image, "image fetched");
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, image, 'image fetched')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 const s3Client = new S3Client({
-     region: process.env.S3REGION,
-     credentials: {
-          accessKeyId: process.env.S3ACCESS_KEY,
-          secretAccessKey: process.env.S3SECRET_KEY,
-     },
-});
+  region: process.env.S3REGION,
+  credentials: {
+    accessKeyId: process.env.S3ACCESS_KEY,
+    secretAccessKey: process.env.S3SECRET_KEY,
+  },
+})
 
 exports.vodStream = async (req, res) => {
-     try {
-          const { bucket, key } = req.body;
-          const user = req.user;
+  try {
+    const { bucket, key } = req.body
+    const user = req.user
 
-          const transPath = `s3://reeplay/transcode/${key.split("/").slice(1).join("/")}`;
+    const transPath = `s3://reeplay/transcode/${key.split('/').slice(1).join('/')}`
 
-          const params = {
-               Bucket: bucket,
-               Prefix: `transcode/${key.split("/").slice(1).join("/")}/`,
-               MaxKeys: 1,
-          };
+    const params = {
+      Bucket: bucket,
+      Prefix: `transcode/${key.split('/').slice(1).join('/')}/`,
+      MaxKeys: 1,
+    }
 
-          const data = await s3Client.send(new ListObjectsV2Command(params));
+    const data = await s3Client.send(new ListObjectsV2Command(params))
 
-          // console.log(data.Contents);
-          const checkTranscodedFolder = data.Contents?.length > 0;
+    // console.log(data.Contents);
+    const checkTranscodedFolder = data.Contents?.length > 0
 
-          if (checkTranscodedFolder != true) {
-               // const url = await getVideoUrl(bucket, key);
-               // console.log(url);
+    if (checkTranscodedFolder != true) {
+      // const url = await getVideoUrl(bucket, key);
+      // console.log(url);
 
-               const filePath = `s3://reeplay/${key}`;
+      const filePath = `s3://reeplay/${key}`
 
-               await createTranscodingJob(filePath, transPath);
+      await createTranscodingJob(filePath, transPath)
 
-               return failedResponse(
-                    res,
-                    500,
-                    null,
-                    "Oops, check back in few minutes, wait while the video is being transcoded"
-               );
-          }
-          console.log("all good, video already trancoded");
+      return failedResponse(
+        res,
+        500,
+        null,
+        'Oops, check back in few minutes, wait while the video is being transcoded',
+      )
+    }
+    console.log('all good, video already trancoded')
 
-          const user_resolution = await UserSettingsModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $eq: ["$user_id", { $toObjectId: user.id }],
-                         },
-                    },
-               },
-          ]);
+    const user_resolution = await UserSettingsModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $eq: ['$user_id', { $toObjectId: user.id }],
+          },
+        },
+      },
+    ])
 
-          const userRes = user_resolution[0].video_quality || "480p";
+    const userRes = user_resolution[0].video_quality || '480p'
 
-          const url = `${process.env.CFSDISTRIBUTION}/${key
-               .split("/")
-               .slice(1)
-               .join("/")}/${key.split("/").slice(1).join("/")}_${userRes}.mp4`;
+    const url = `${process.env.CFSDISTRIBUTION}/${key
+      .split('/')
+      .slice(1)
+      .join('/')}/${key.split('/').slice(1).join('/')}_${userRes}.mp4`
 
-          const privateKey = (process.env.CFS_PRIVATE_KEY ?? "").replaceAll(
-               /\\n/g,
-               "\n"
-          );
+    const privateKey = (process.env.CFS_PRIVATE_KEY ?? '').replaceAll(/\\n/g, '\n')
 
-          const expirationDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    const expirationDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
 
-          // access transcoded files with cloudfront
-          const signedUrl = getCFSignedUrl({
-               url: url,
-               keyPairId: process.env.KEY_PAIR_ID,
-               dateLessThan: expirationDate.toISOString(),
-               privateKey: privateKey,
-          });
+    // access transcoded files with cloudfront
+    const signedUrl = getCFSignedUrl({
+      url: url,
+      keyPairId: process.env.KEY_PAIR_ID,
+      dateLessThan: expirationDate.toISOString(),
+      privateKey: privateKey,
+    })
 
-          return successResponse(
-               res,
-               200,
-               {
-                    video_content: signedUrl,
-               },
-               "video streaming"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(
+      res,
+      200,
+      {
+        video_content: signedUrl,
+      },
+      'video streaming',
+    )
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getFeaturedVods = async (req, res) => {
-     try {
-          const vods = await VideosModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $eq: ["$featured", true],
-                         },
-                    },
-               },
-          ]);
+  try {
+    const vods = await VideosModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $eq: ['$featured', true],
+          },
+        },
+      },
+    ])
 
-          // for (let vod of vods) {
-          //      if (
-          //           vod.cover_photo &&
-          //           vod.cover_photo.Bucket &&
-          //           vod.cover_photo.Key
-          //      ) {
-          //           const signedUrl = await readPhotos(
-          //                vod.cover_photo.Bucket,
-          //                vod.cover_photo.Key
-          //           );
-          //           vod.photo_url =
-          //                signedUrl.status == 400 ? "no picture" : signedUrl;
-          //      } else {
-          //           vod.photo_url = "no picture";
-          //      }
-          // }
+    // for (let vod of vods) {
+    //      if (
+    //           vod.cover_photo &&
+    //           vod.cover_photo.Bucket &&
+    //           vod.cover_photo.Key
+    //      ) {
+    //           const signedUrl = await readPhotos(
+    //                vod.cover_photo.Bucket,
+    //                vod.cover_photo.Key
+    //           );
+    //           vod.photo_url =
+    //                signedUrl.status == 400 ? "no picture" : signedUrl;
+    //      } else {
+    //           vod.photo_url = "no picture";
+    //      }
+    // }
 
-          return successResponse(
-               res,
-               200,
-               vods,
-               "featured contents fetched successful"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, vods, 'featured contents fetched successful')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.likeVideo = async (req, res) => {
-     try {
-          const streamId = req.params.id;
+  try {
+    const streamId = req.params.id
 
-          const user = req.user;
+    const user = req.user
 
-          const resLikes = await VideosModel.findOne({
-               _id: streamId,
-          });
+    const resLikes = await VideosModel.findOne({
+      _id: streamId,
+    })
 
-          if (!user._id && user.role === "guest") {
-               return invalidRequest(
-                    res,
-                    403,
-                    null,
-                    "you are not authenticated"
-               );
-          }
+    if (!user._id && user.role === 'guest') {
+      return invalidRequest(res, 403, null, 'you are not authenticated')
+    }
 
-          if (resLikes.likes.includes(user._id.toString())) {
-               return invalidRequest(res, 400, null, "user already liked");
-          }
+    if (resLikes.likes.includes(user._id.toString())) {
+      return invalidRequest(res, 400, null, 'user already liked')
+    }
 
-          await VideosModel.findOneAndUpdate(
-               {
-                    _id: streamId,
-               },
-               {
-                    $push: {
-                         likes: user?._id,
-                    },
-               }
-          );
+    await VideosModel.findOneAndUpdate(
+      {
+        _id: streamId,
+      },
+      {
+        $push: {
+          likes: user?._id,
+        },
+      },
+    )
 
-          return successResponse(res, 200, null, "video liked");
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, null, 'video liked')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.userLikedVideo = async (req, res) => {
-     try {
-          const streamId = req.params.id;
+  try {
+    const streamId = req.params.id
 
-          const user = req.user;
+    const user = req.user
 
-          const resLikes = await VideosModel.findOne({
-               _id: streamId,
-          });
+    const resLikes = await VideosModel.findOne({
+      _id: streamId,
+    })
 
-          const userLiked = resLikes.likes.includes(user._id.toString())
-               ? true
-               : false;
+    const userLiked = resLikes.likes.includes(user._id.toString()) ? true : false
 
-          return successResponse(
-               res,
-               200,
-               { user_liked: userLiked },
-               "checks if user alrealdy liked"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, { user_liked: userLiked }, 'checks if user alrealdy liked')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.unLikeVideo = async (req, res) => {
-     try {
-          const streamId = req.params.id;
+  try {
+    const streamId = req.params.id
 
-          const user = req.user;
+    const user = req.user
 
-          if (!user._id && user.role === "guest") {
-               return invalidRequest(
-                    res,
-                    403,
-                    null,
-                    "you are not authenticated"
-               );
-          }
+    if (!user._id && user.role === 'guest') {
+      return invalidRequest(res, 403, null, 'you are not authenticated')
+    }
 
-          await VideosModel.findOneAndUpdate(
-               {
-                    _id: streamId,
-               },
-               {
-                    $pull: {
-                         likes: user._id,
-                    },
-               }
-          );
+    await VideosModel.findOneAndUpdate(
+      {
+        _id: streamId,
+      },
+      {
+        $pull: {
+          likes: user._id,
+        },
+      },
+    )
 
-          return successResponse(res, 200, null, "video unliked");
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, null, 'video unliked')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEvents = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $eq: ["$expired", false],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $eq: ['$expired', false],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(res, 200, liveEvents, "live events fetched");
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsFeatured = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$featured", true],
-                                   },
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$featured', true],
+              },
+              {
+                $eq: ['$expired', false],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: featured events"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: featured events')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsSponsored = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$sponsored", true],
-                                   },
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$sponsored', true],
+              },
+              {
+                $eq: ['$expired', false],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: sponsored events"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: sponsored events')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsChannels = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "channel"],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'channel'],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: channels"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: channels')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsChannelsPop = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "channel"],
-                                   },
-                                   {
-                                        $eq: ["$popular", true],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'channel'],
+              },
+              {
+                $eq: ['$popular', true],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: popular channels"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: popular channels')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsEven = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "events"],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'events'],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: events"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: events')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsEvenPop = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "events"],
-                                   },
-                                   {
-                                        $eq: ["$popular", true],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'events'],
+              },
+              {
+                $eq: ['$popular', true],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: popular events"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: popular events')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsTvshow = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "tvshow"],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'tvshow'],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: tvshow"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: tvshow')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsTvshowPop = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "tvshow"],
-                                   },
-                                   {
-                                        $eq: ["$popular", true],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'tvshow'],
+              },
+              {
+                $eq: ['$popular', true],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: popular tvshow"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: popular tvshow')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsSports = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "sports"],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'sports'],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: sports"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: sports')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsSportsPop = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "sports"],
-                                   },
-                                   {
-                                        $eq: ["$popular", true],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'sports'],
+              },
+              {
+                $eq: ['$popular', true],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: popular sports"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: popular sports')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsPodcast = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "podcast"],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'podcast'],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: podcasts"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: podcasts')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.getLiveEventsPodcastPop = async (req, res) => {
-     try {
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                                   {
-                                        $eq: ["$type", "podcast"],
-                                   },
-                                   {
-                                        $eq: ["$popular", true],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                         stream_key: 0,
-                    },
-               },
-          ]);
+  try {
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: ['$expired', false],
+              },
+              {
+                $eq: ['$type', 'podcast'],
+              },
+              {
+                $eq: ['$popular', true],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+          stream_key: 0,
+        },
+      },
+    ])
 
-          for (let event of liveEvents) {
-               if (
-                    event.cover_photo &&
-                    event.cover_photo.Bucket &&
-                    event.cover_photo.Key
-               ) {
-                    const signedUrl = await readPhotos(
-                         event.cover_photo.Bucket,
-                         event.cover_photo.Key
-                    );
-                    event.photo_url =
-                         signedUrl.status == 400 ? "no picture" : signedUrl;
-               } else {
-                    event.photo_url = "no picture";
-               }
-          }
+    for (let event of liveEvents) {
+      if (event.cover_photo && event.cover_photo.Bucket && event.cover_photo.Key) {
+        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
+        event.photo_url = signedUrl.status == 400 ? 'no picture' : signedUrl
+      } else {
+        event.photo_url = 'no picture'
+      }
+    }
 
-          return successResponse(
-               res,
-               200,
-               liveEvents,
-               "live events fetched: popular podcasts"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(res, 200, liveEvents, 'live events fetched: popular podcasts')
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}
 
 exports.streamLiveEvent = async (req, res) => {
-     try {
-          const streamId = req.params.id;
+  try {
+    const streamId = req.params.id
 
-          const liveEvents = await LivesModel.aggregate([
-               {
-                    $match: {
-                         $expr: {
-                              $and: [
-                                   {
-                                        $eq: [
-                                             "$_id",
-                                             {
-                                                  $toObjectId: streamId,
-                                             },
-                                        ],
-                                   },
-                                   {
-                                        $eq: ["$expired", false],
-                                   },
-                              ],
-                         },
-                    },
-               },
-               {
-                    $project: {
-                         __v: 0,
-                         client_id: 0,
-                         createdAt: 0,
-                         updatedAt: 0,
-                         sponsored: 0,
-                         popular: 0,
-                         likes: 0,
-                    },
-               },
-          ]);
+    const liveEvents = await LivesModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $eq: [
+                  '$_id',
+                  {
+                    $toObjectId: streamId,
+                  },
+                ],
+              },
+              {
+                $eq: ['$expired', false],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          client_id: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          sponsored: 0,
+          popular: 0,
+          likes: 0,
+        },
+      },
+    ])
 
-          const stream_url = `${process.env.RP_HLSURL}${liveEvents[0]?.stream_key}/index.m3u8`;
+    const stream_url = `${process.env.RP_HLSURL}${liveEvents[0]?.stream_key}/index.m3u8`
 
-          liveEvents[0].stream_key = null;
+    liveEvents[0].stream_key = null
 
-          return successResponse(
-               res,
-               200,
-               {
-                    live_data: liveEvents[0],
-                    url: stream_url,
-               },
-               "live events fetched"
-          );
-     } catch (error) {
-          return serverError(res, 500, null, error.message);
-     }
-};
+    return successResponse(
+      res,
+      200,
+      {
+        live_data: liveEvents[0],
+        url: stream_url,
+      },
+      'live events fetched',
+    )
+  } catch (error) {
+    return serverError(res, 500, null, error.message)
+  }
+}

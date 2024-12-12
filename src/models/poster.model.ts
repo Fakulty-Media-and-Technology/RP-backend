@@ -1,0 +1,30 @@
+import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+
+const posterSchema = new Schema(
+  {
+    video_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'Video',
+      required: true,
+    },
+    bucket: {
+      type: String,
+      required: true,
+    },
+    key: {
+      type: String,
+      required: true,
+    },
+    dimension: {
+      type: String,
+      enum: ['landscape', 'portrait'],
+    },
+  },
+  {
+    timestamps: true,
+  },
+)
+
+export const PosterImageModel = model('PosterImage', posterSchema)
+export type PosterImageSchema = InferSchemaType<typeof posterSchema>
+export type PosterImage = HydratedDocumentFromSchema<typeof posterSchema>
