@@ -1,8 +1,9 @@
 import { createServer } from 'node:http'
 import express from 'express'
 import { connectMongoDB } from './utils/connectDB'
+import env from './env'
 
-const port = 5050
+const { PORT } = env
 
 ;(async () => {
   const mongoDBConnectionRes = await connectMongoDB()
@@ -10,7 +11,7 @@ const port = 5050
 
   const server = createServer(express())
 
-  server.listen(port, () => {
-    console.log(`Server is listening oo port ${port}`)
+  server.listen(PORT, () => {
+    console.log(`Server is listening oo port ${PORT}`)
   })
 })()

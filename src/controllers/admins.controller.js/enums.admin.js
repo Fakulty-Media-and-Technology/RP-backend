@@ -1,7 +1,7 @@
 const CastEnumModel = require('../../models/castEnum.model')
 const CategoryEnumModel = require('../../models/categoryEnum.model')
 const GenreEnumModels = require('../../models/genreEnum.model')
-const { successResponse, serverError } = require('../../utils/response.handler')
+const { successResponse, serverError } = require('../../utils/responder.ts')
 
 exports.addGenre = async (req, res) => {
   try {

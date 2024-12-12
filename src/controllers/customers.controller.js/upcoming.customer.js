@@ -5,7 +5,7 @@ const {
   serverError,
   failedResponse,
   invalidRequest,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 exports.upComingFetch = async (req, res) => {
   try {

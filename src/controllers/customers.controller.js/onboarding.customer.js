@@ -1,7 +1,7 @@
 const UserSettingsModel = require('../../models/userSettings.model')
 const UsersModel = require('../../models/users.model')
 const { authCode } = require('../../utils/authCode')
-const { VerifytPass, EncryptPass } = require('../../utils/bcrypt')
+const { VerifytPass, EncryptPass } = require('../../utils/Password')
 const Email = require('../../utils/emailer')
 const {
   accessToken,
@@ -14,7 +14,7 @@ const {
   successResponse,
   failedResponse,
   invalidRequest,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 exports.customerSignup = async (req, res) => {
   try {

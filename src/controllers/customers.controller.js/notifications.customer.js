@@ -1,6 +1,6 @@
 const NotificationsModel = require('../../models/notifications.model')
 const { readPhotos } = require('../../services/media-access')
-const { successResponse, serverError } = require('../../utils/response.handler')
+const { successResponse, serverError } = require('../../utils/responder.ts')
 
 exports.getNotifications = async (req, res) => {
   try {

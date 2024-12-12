@@ -8,7 +8,7 @@ const {
   successResponse,
   failedResponse,
   invalidRequest,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 function isValidEmail(email) {
   const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/

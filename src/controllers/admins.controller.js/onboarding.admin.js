@@ -1,12 +1,12 @@
 const UsersModel = require('../../models/users.model')
-const { EncryptPass, VerifytPass } = require('../../utils/bcrypt')
+const { EncryptPass, VerifytPass } = require('../../utils/Password')
 const { accessToken } = require('../../utils/jwt')
 const {
   serverError,
   failedResponse,
   invalidRequest,
   successResponse,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 exports.superAdminSignup = async (req, res) => {
   try {

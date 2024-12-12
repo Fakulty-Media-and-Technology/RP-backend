@@ -1,6 +1,6 @@
 const PaymentsModel = require('../../models/payments.model')
 const UsersModel = require('../../models/users.model')
-const { successResponse, serverError } = require('../../utils/response.handler')
+const { successResponse, serverError } = require('../../utils/responder.ts')
 
 exports.getAllClients = async (req, res) => {
   try {

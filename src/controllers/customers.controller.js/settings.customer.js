@@ -1,6 +1,6 @@
 const UserSettingsModel = require('../../models/userSettings.model')
 
-const { serverError, successResponse, invalidRequest } = require('../../utils/response.handler')
+const { serverError, successResponse, invalidRequest } = require('../../utils/responder.ts')
 
 exports.notificationSettings = async (req, res) => {
   try {

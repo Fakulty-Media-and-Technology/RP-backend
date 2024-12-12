@@ -9,9 +9,9 @@ const {
   successResponse,
   failedResponse,
   invalidRequest,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 const UsersModel = require('../../models/users.model')
-const { EncryptPass } = require('../../utils/bcrypt')
+const { EncryptPass } = require('../../utils/Password')
 const { deletePhoto } = require('../../services/media-management')
 const { readPhotos } = require('../../services/media-access')
 const PosterModel = require('../../models/poster.model')

@@ -1,5 +1,5 @@
 const UserDeviceModel = require('../../models/userDevice.model')
-const { serverError, successResponse, failedResponse } = require('../../utils/response.handler')
+const { serverError, successResponse, failedResponse } = require('../../utils/responder.ts')
 
 exports.registerDeviceToken = async (req, res) => {
   try {

@@ -18,7 +18,7 @@ const {
   successResponse,
   invalidRequest,
   failedResponse,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 const crypto = require('crypto')
 
 exports.uploadLargeVideoRoute = async (req, res) => {

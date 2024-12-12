@@ -5,7 +5,7 @@ const {
   successResponse,
   invalidRequest,
   failedResponse,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 async function convertToLocalCurrency(usdAmount, userCurrency) {
   const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`)

@@ -1,5 +1,5 @@
 const AdmanagerModel = require('../../models/admanager.model')
-const { successResponse, serverError } = require('../../utils/response.handler')
+const { successResponse, serverError } = require('../../utils/responder.ts')
 
 exports.addAds = async (req, res) => {
   try {

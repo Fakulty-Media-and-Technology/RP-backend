@@ -1,6 +1,7 @@
 import { connect, connection } from 'mongoose'
+import env from '../env'
 
-export const connectMongoDB = async (url = process.env.MONGO_DB_URL || '') => {
+export const connectMongoDB = async (url = env.MONGO_DB_URL) => {
   if (connection.readyState === 1) {
     return 'Already Connected to MongoDB'
   }

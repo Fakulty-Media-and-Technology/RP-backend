@@ -1,7 +1,7 @@
 const ContestantsModel = require('../../models/contestants.model')
 const VoteInfoModel = require('../../models/voteInfo.model')
 const { readPhotos } = require('../../services/media-access')
-const { invalidRequest, successResponse, serverError } = require('../../utils/response.handler')
+const { invalidRequest, successResponse, serverError } = require('../../utils/responder.ts')
 
 exports.createVoteInfo = async (req, res) => {
   try {

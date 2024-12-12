@@ -1,4 +1,4 @@
-exports.authCode = async digit => {
+export const authCode = async (digit: string | number) => {
   try {
     let pin = ''
     for (let i = 0; i < Number(digit); i++) {

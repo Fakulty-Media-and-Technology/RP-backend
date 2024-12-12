@@ -1,6 +1,6 @@
 const GiftcardModel = require('../../models/giftcard.model')
 const uniqueRef = require('../../services/unique-ref')
-const { serverError, successResponse, failedResponse } = require('../../utils/response.handler')
+const { serverError, successResponse, failedResponse } = require('../../utils/responder.ts')
 
 exports.createGiftCard = async (req, res) => {
   try {

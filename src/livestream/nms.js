@@ -2,7 +2,7 @@ const NodeMediaServer = require('node-media-server')
 const LivesModel = require('../models/lives.model')
 const liveStreamAuth = require('../middlewares/ls-auth.mw')
 const UsersModel = require('../models/users.model')
-const { VerifytPass } = require('../utils/bcrypt')
+const { VerifytPass } = require('../utils/Password')
 
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path
 

@@ -20,6 +20,8 @@
     "@aws-sdk/cloudfront-signer": "^3.598.0",
     "@aws-sdk/s3-request-presigner": "^3.577.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@types/ejs": "^3.1.5",
+    "@types/nodemailer": "^6.4.17",
     "axios": "^1.6.8",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
@@ -43,6 +45,7 @@
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/fluent-ffmpeg": "^2.1.27",

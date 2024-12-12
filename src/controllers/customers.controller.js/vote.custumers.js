@@ -12,7 +12,7 @@ const {
   successResponse,
   serverError,
   failedResponse,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 exports.fetchVoteInfo = async (req, res) => {
   try {

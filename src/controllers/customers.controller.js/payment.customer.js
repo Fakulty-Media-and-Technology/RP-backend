@@ -11,7 +11,7 @@ const {
   successResponse,
   failedResponse,
   invalidRequest,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 exports.startPayment = async (req, res) => {
   try {

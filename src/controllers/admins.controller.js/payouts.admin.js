@@ -5,7 +5,7 @@ const {
   successResponse,
   failedResponse,
   invalidRequest,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 exports.payoutReqAll = async (req, res) => {
   try {

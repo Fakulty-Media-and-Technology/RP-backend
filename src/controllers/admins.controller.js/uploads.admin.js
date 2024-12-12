@@ -1,6 +1,6 @@
 const PosterModel = require('../../models/poster.model')
 const VideosModel = require('../../models/videos.model')
-const { serverError, successResponse, invalidRequest } = require('../../utils/response.handler')
+const { serverError, successResponse, invalidRequest } = require('../../utils/responder.ts')
 
 //MOVIES
 exports.addMovie = async (req, res) => {

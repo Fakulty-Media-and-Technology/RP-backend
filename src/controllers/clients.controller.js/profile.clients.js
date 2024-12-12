@@ -7,7 +7,7 @@ const {
   successResponse,
   failedResponse,
   invalidRequest,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 exports.clientProfileFetch = async (req, res) => {
   try {

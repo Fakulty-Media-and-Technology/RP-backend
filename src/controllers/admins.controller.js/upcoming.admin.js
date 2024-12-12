@@ -6,7 +6,7 @@ const {
   serverError,
   failedResponse,
   invalidRequest,
-} = require('../../utils/response.handler')
+} = require('../../utils/responder.ts')
 
 exports.createUpcomingEvent = async (req, res) => {
   try {
