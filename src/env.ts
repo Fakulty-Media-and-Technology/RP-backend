@@ -1,4 +1,3 @@
-
 import 'dotenv/config'
 
 const getValidEnv = <T extends Record<string, any>>(variables: Partial<T>) => {
@@ -14,6 +13,9 @@ const getValidEnv = <T extends Record<string, any>>(variables: Partial<T>) => {
 export const env = getValidEnv({
   PORT: process.env.PORT,
   MONGO_DB_URL: process.env.MONGO_DB_URL,
+
+  // ??
+  MEDIA_SERVER_PORT: process.env.MEDIA_SERVER_PORT,
 
   // emails
   MAIL_SENDER: process.env.MAIL_SENDER,

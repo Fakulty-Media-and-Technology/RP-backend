@@ -84,6 +84,24 @@ const usersSchema = new Schema(
   },
   {
     timestamps: true,
+
+    methods: {
+      restricted() {
+        const user = this.toObject()
+
+        return {
+          ...user,
+          auth_code: undefined,
+          auth_expiry: undefined,
+          approved: undefined,
+          suspended: undefined,
+          updatedAt: undefined,
+          password: undefined,
+          pin: undefined,
+          __v: undefined,
+        }
+      },
+    },
   },
 )
 
