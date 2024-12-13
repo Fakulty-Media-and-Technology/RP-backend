@@ -16,6 +16,11 @@ export const env = getValidEnv({
 
   // ??
   MEDIA_SERVER_PORT: process.env.MEDIA_SERVER_PORT,
+  EVENT_HOURLY_CHARGES: process.env.EVENT_HOURLY_CHARGES,
+
+  // livestream
+  RP_HLSURL: process.env.RP_HLSURL,
+  RP_RTMPURL: process.env.RP_RTMPURL,
 
   // emails
   MAIL_SENDER: process.env.MAIL_SENDER,
@@ -25,6 +30,10 @@ export const env = getValidEnv({
   //   secrets
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_SECRET_REFRESH_TOKEN: process.env.JWT_SECRET_REFRESH_TOKEN,
+  
+  // *** new
+  MIN_WITHDRAWAL_AMOUNT: Number(process.env.MIN_WITHDRAWAL_AMOUNT ?? 50000),
+  WITHDRAWAL_PERCENT: Number(process.env.WITHDRAWAL_PERCENT ?? 15),
 })
 
 export default env

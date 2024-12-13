@@ -1,6 +1,6 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
-const liveVideosSchema = new Schema(
+const livesSchema = new Schema(
   {
     client_id: {
       type: Schema.Types.ObjectId,
@@ -106,6 +106,6 @@ const liveVideosSchema = new Schema(
   },
 )
 
-export const LiveVideoModel = model('Live', liveVideosSchema)
-export type LiveVideoSchema = InferSchemaType<typeof liveVideosSchema>
-export type LiveVideo = HydratedDocumentFromSchema<typeof liveVideosSchema>
+export const LiveModel = model('Live', livesSchema)
+export type LiveSchema = InferSchemaType<typeof livesSchema>
+export type Live = HydratedDocumentFromSchema<typeof livesSchema>

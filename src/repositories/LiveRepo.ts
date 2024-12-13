@@ -1,5 +1,41 @@
-import { LiveVideoModel } from "../models/lives.model";
+import { LiveModel } from '../models/lives.model'
 
-export class LiveVideoRepo {
-  static getChannels = () => LiveVideoModel.find({ type: 'channel' })
+export class LiveRepo {
+  static getChannels = () => LiveModel.find({ type: 'channel' })
+
+  static totalActiveVideosQuery = () => LiveModel.find({ active: true })
+
+  static searchLivesByTextReg = (textReg: RegExp) => {
+    return LiveModel.find({
+      $or: [
+        { title: { $regex: textReg } },
+        { sub_title: { $regex: textReg } },
+        { description: { $regex: textReg } },
+      ],
+    })
+  }
+
+  static getFeatured = () => {
+    return LiveModel.find({
+      featured: true,
+      expired: false,
+    })
+  }
+
+  static addFeatured = (id: string, expiry: string) => {
+    return LiveModel.findByIdAndUpdate(
+      id,
+      {
+        featured: true,
+        feat_expiry: new Date(expiry),
+      },
+      {
+        upsert: true,
+      },
+    )
+  }
+
+  static getActiveById = (id: string) => {
+    return LiveModel.findOne({ _id: id, active: true })
+  }
 }

@@ -1,21 +1,83 @@
 import { UpdateQuery } from 'mongoose'
 import { UserModel, UserSchema } from '../models/users.model'
 
+type UserRole = UserSchema['role']
+type UserRoles = Array<UserRole>
+
 export class UserRepo {
   static getUserById = (userId: string) => UserModel.findById(userId)
 
+  static totalUsersCount = () => UserModel.find({}).countDocuments()
+
   static getByEmail = (emailAddr: string) => UserModel.findOne({ email: emailAddr })
 
-  static getAdminById = (adminId: string) =>
-    UserModel.findOne({ _id: adminId, role: { $in: ['admin', 'superadmin'] } })
+  static getAdminById = (adminId: string) => {
+    return UserModel.findOne({ _id: adminId, role: { $in: ['admin', 'superadmin'] } })
+  }
 
-  static getAllClientsByRoles = () =>
-    UserModel.find({
-      role: { $in: ['tvshow', 'channel', 'podcast', 'event'] },
+  static getAllClientsByRoles = (roles: UserRoles = ['tvshow', 'channel', 'podcast', 'event']) => {
+    return UserModel.find({
+      role: { $in: roles },
     })
+  }
 
-  static updateById = (userId: string, data: UpdateQuery<UserSchema>) =>
-    UserModel.findByIdAndUpdate(userId, data, { new: true })
+  static getClientByRolesAndId = (id: string, roles: UserRoles) => {
+    return UserModel.findOne({ _id: id, role: { $in: roles } })
+  }
+
+  static updateById = (userId: string, data: UpdateQuery<UserSchema>) => {
+    return UserModel.findByIdAndUpdate(userId, data, { new: true })
+  }
+
+  static getFreeUsers = async () => {
+    return await UserModel.aggregate([
+      {
+        $lookup: {
+          from: 'subscriptions',
+          let: {
+            uid: '$_id',
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: [
+                        '$user_id',
+                        {
+                          $toObjectId: '$$uid',
+                        },
+                      ],
+                    },
+                    {
+                      $eq: ['$active', true],
+                    },
+                    {
+                      $lte: [
+                        new Date(),
+                        {
+                          $toDate: '$expiry_date',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+          as: 'user_sub',
+        },
+      },
+      {
+        $match: {
+          $expr: {
+            $eq: ['$user_sub', []],
+          },
+        },
+      },
+    ])
+  }
 
   static getAClient = (clinetId: string) => {
     return UserModel.aggregate([

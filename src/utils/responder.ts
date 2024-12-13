@@ -2,29 +2,34 @@ import { Response } from 'express'
 
 type SendResponseParams = {
   res: Response
-  statusCode: number
-  data: any
-  message: string
+  statusCode?: number
+  data?: any
+  message?: string
 }
 
 const between = (value: number, min: number, max: number) => value >= min && value <= max
 
-export const sendResponse = ({ statusCode, ...params }: SendResponseParams) => {
-  let messagePrefix: string = ':'
-
-  if (between(statusCode, 400, 402)) {
-    messagePrefix = '`Invalid Request:'
-  } else if (between(statusCode, 403, 499)) {
-    messagePrefix = 'Request Failed:'
-  } else if (between(statusCode, 500, 600)) {
-    messagePrefix = 'Server Error:'
-  } else if (between(statusCode, 200, 299)) {
-    messagePrefix = 'Request Successful:'
+const getMessagePrefixFromStatusCode = (statusCode: number) => {
+  switch (true) {
+    case between(statusCode, 200, 299):
+      return 'Request Successful:'
+    case between(statusCode, 400, 402):
+      return '`Invalid Request:'
+    case between(statusCode, 403, 499):
+      return 'Request Failed:'
+    case between(statusCode, 500, 600):
+      return 'Server Error:'
+    default:
+      return ':'
   }
+}
 
-  params.res.status(statusCode).json({
+export const sendResponse = (params: SendResponseParams) => {
+  const { statusCode = 200, data = null, message = 'success', res } = params
+
+  res.status(statusCode).json({
     status: statusCode,
-    message: messagePrefix + ' ' + params.message,
-    data: params.data,
+    message: getMessagePrefixFromStatusCode(statusCode) + ' ' + message,
+    data,
   })
 }
