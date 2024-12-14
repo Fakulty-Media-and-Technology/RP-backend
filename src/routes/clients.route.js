@@ -4,14 +4,14 @@ const {
   clientProfileFetch,
   clientEditProfile,
   clientsPaymentHis,
-} = require('../controllers/clients.controller.js/profile.clients')
+} = require('../controllers/clients/profile.clients')
 const {
   liveStreamCredentials,
   postPreviewVid,
   createLiveClient,
   calculateEventCharges,
   extendLiveEvent,
-} = require('../controllers/clients.controller.js/livestream.clients')
+} = require('../controllers/clients/livestream.clients')
 const {
   createVoteInfo,
   addVoteContestant,
@@ -19,13 +19,13 @@ const {
   votestatusInfo,
   fetchVoteContestants,
   rmVoteContestants,
-} = require('../controllers/clients.controller.js/vote.clients')
+} = require('../controllers/clients/vote.clients')
 const {
   reqPayout,
   reqPayoutEdit,
   payoutReqInfoAll,
   payoutReqInfoGroup,
-} = require('../controllers/clients.controller.js/withdrawal.clients')
+} = require('../controllers/clients/withdrawal.clients')
 const {
   createPayment,
   startPayment,
