@@ -15,6 +15,6 @@ const genreEnumSchema = new Schema(
   },
 )
 
-export const GenreEnumModel = model('GenreEnum', genreEnumSchema)
+export const GenreEnumModel = model('genre_enums', genreEnumSchema)
 export type GenreEnumSchema = InferSchemaType<typeof genreEnumSchema>
 export type GenreEnum = HydratedDocumentFromSchema<typeof genreEnumSchema>

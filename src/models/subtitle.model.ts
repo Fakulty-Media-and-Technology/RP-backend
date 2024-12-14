@@ -31,6 +31,6 @@ const subtitleSchema = new Schema(
   },
 )
 
-export const SubtitleModel = model('Subtitle', subtitleSchema)
+export const SubtitleModel = model('sub_titles', subtitleSchema)
 export type SubtitleSchema = InferSchemaType<typeof subtitleSchema>
 export type Subtitle = HydratedDocumentFromSchema<typeof subtitleSchema>

@@ -1,0 +1,336 @@
+import { UserModel } from '../../models/users.model'
+import { SettingsModel } from '../../models/userSettings.model'
+import { UserRepo } from '../../repositories/UserRepo'
+import { authCode } from '../../utils/authCode'
+import Email from '../../utils/emailer'
+import { TokenManager } from '../../utils/jwt'
+import { OperationalError } from '../../utils/OperationalError'
+import { Password } from '../../utils/Password'
+
+export class OnboardingService {
+  static validateToken = async (token: unknown, type: 'access' | 'refresh') => {
+    if (typeof token !== 'string') {
+      throw new OperationalError('required token must be a string', 404, { valid: false })
+    }
+
+    // this throws
+    const authUser = await TokenManager.decode(token, type)
+
+    if (!authUser || typeof authUser !== 'object') {
+      throw new OperationalError(`invalid ${type} token/expired`, 404, { valid: false })
+    }
+
+    return true
+  }
+
+  static refreshAccessToken = async (refreshToken: string) => {
+    const authUser = await TokenManager.decode(refreshToken, 'refresh')
+
+    return {
+      accessToken: TokenManager.sign('access', authUser),
+    }
+  }
+
+  static changePassword = async (data: Record<string, any>) => {
+    const { email, pin, password, cpassword } = data
+
+    if (!email || !pin || !password || !cpassword) {
+      throw new OperationalError('all input are required', 400)
+    }
+
+    const pinUser = await UserModel.findOne({
+      email: email,
+      auth_code: Number(pin),
+    })
+
+    if (!pinUser) {
+      throw new OperationalError('invalid credentials supplied', 400)
+    }
+
+    if (password !== cpassword) {
+      throw new OperationalError('paswords does not match', 400)
+    }
+
+    if (Date.now() > Number(pinUser.auth_expiry)) {
+      throw new OperationalError('password reset token has expired', 400)
+    }
+
+    if (!Password.isStrong(password)) {
+      throw new OperationalError(
+        'password is too weak, use capital & small letter, interger and not less than 8 character',
+        400,
+      )
+    }
+
+    await UserModel.findOneAndUpdate(
+      {
+        _id: pinUser._id,
+        email: pinUser.email,
+      },
+      {
+        password: await Password.encrypt(password),
+        auth_code: null,
+        auth_expiry: null,
+      },
+      {
+        upsert: true,
+      },
+    )
+  }
+
+  static getVerificationToken = async (email: string) => {
+    const pin = authCode(6)
+    const pinExpiry = Date.now() + 1000 * 60 * 5
+
+    const user = await UserModel.findOneAndUpdate(
+      {
+        email: email,
+        verified: false,
+      },
+      {
+        auth_code: Number(pin),
+        auth_expiry: pinExpiry,
+      },
+    )
+
+    if (user == null) {
+      throw new OperationalError('either user is already verified or does not exist', 400)
+    }
+
+    const userData = {
+      firstName: user.first_name,
+      lastName: user.last_name,
+      email: user.email,
+    }
+
+    await new Email(userData).sendVerifyEmail(pin)
+  }
+
+  static changePasswordCode = async (email: string) => {
+    const emailUser = await UserRepo.getByEmail(email)
+
+    if (!emailUser) {
+      throw new OperationalError('invalid email , user does not exist', 400)
+    }
+
+    const pin = authCode(6)
+
+    await UserModel.findOneAndUpdate(
+      {
+        _id: emailUser._id,
+        email: emailUser.email,
+      },
+      {
+        auth_expiry: Date.now() + 10 * 60 * 1000, //code expires in 10 minutes
+        auth_code: pin,
+      },
+      {
+        upsert: true,
+      },
+    )
+
+    const userData = {
+      firstName: emailUser.first_name,
+      lastName: emailUser.last_name,
+      email: emailUser.email,
+    }
+
+    await new Email(userData).sendResetPasswordToken(pin)
+  }
+
+  static createPin = async (data: Record<string, string>) => {
+    const { email, pin, cpin } = data
+
+    if (!email || !pin || !cpin) {
+      throw new OperationalError('onboarding user email and pins are needed to continue', 400)
+    }
+
+    if (pin !== cpin) {
+      throw new OperationalError('pins do not match', 404)
+    }
+
+    const userExist = await UserModel.findOneAndUpdate({ email }, { $set: { pin } }, { new: true })
+
+    if (userExist === null) {
+      throw new OperationalError('User does not exist', 404)
+    }
+  }
+
+  static createCustomer = async (data: Record<string, any>) => {
+    const { first_name, last_name, email, password, cpassword, country_code, mobile } = data
+
+    if (
+      !first_name ||
+      !last_name ||
+      !email ||
+      !password ||
+      !cpassword ||
+      !country_code ||
+      !mobile
+    ) {
+      throw new OperationalError(`All inputs are required.`, 400)
+    }
+
+    if (password !== cpassword) {
+      throw new OperationalError('pasword does not match', 400)
+    }
+
+    if (!Password.isStrong(password)) {
+      throw new OperationalError(
+        'password is too weak: use capital, small letter, interger and not less than 8 character',
+        400,
+      )
+    }
+
+    const pin = authCode(6)
+    const pinExpiry = Date.now() + 1000 * 60 * 5 // 5 mins
+
+    const newUser = await UserModel.create({
+      email,
+      mobile,
+      last_name,
+      first_name,
+      country_code,
+      auth_code: pin,
+      role: 'customer',
+      auth_expiry: pinExpiry,
+      password: await Password.encrypt(password),
+    })
+
+    //TODO: send welcome pin to mobile number and or email
+    const userData = {
+      firstName: newUser.first_name,
+      lastName: newUser.last_name,
+      email: newUser.email,
+    }
+
+    await new Email(userData).sendVerifyEmail(pin)
+    return newUser
+  }
+
+  static signIn = async (email: string, password: string) => {
+    const userExist = await UserRepo.getByEmail(email)
+
+    if (!userExist) {
+      throw new OperationalError('user does not exist', 404)
+    }
+
+    if (userExist.suspended) {
+      throw new OperationalError(
+        'you have been suspended from using our services, contact the admin',
+        404,
+      )
+    }
+
+    //create a customer settings DB if it doesn't exist
+    const userSettingDB = await SettingsModel.findOne({
+      user_id: userExist._id,
+    })
+
+    if (!userSettingDB) {
+      await SettingsModel.create({
+        user_id: userExist._id,
+        video_quality: '720p',
+      })
+    }
+
+    const passVerify = await Password.compare(password, userExist.password)
+
+    if (!passVerify) {
+      throw new OperationalError('incorrect password', 404)
+    }
+
+    const pin = authCode(6)
+
+    if (!userExist.verified) {
+      // TODO: Use session to run the update and send email
+
+      await UserModel.findOneAndUpdate(
+        {
+          email: userExist.email,
+        },
+        {
+          auth_code: Number(pin),
+          auth_expiry: Date.now() + 1000 * 60 * 5,
+        },
+      )
+
+      const userData = {
+        firstName: userExist.first_name,
+        lastName: userExist.last_name,
+        email: userExist.email,
+      }
+
+      await new Email(userData).sendVerifyEmail(pin)
+
+      throw new OperationalError(
+        'user account not verified, check your email for verification code',
+        400,
+      )
+    }
+
+    const tokenPayload = {
+      id: userExist.id,
+      email: userExist.email,
+      role: userExist.role,
+    }
+
+    const token = TokenManager.sign('access', tokenPayload)
+    const refToken = TokenManager.sign('refresh', tokenPayload)
+
+    return {
+      _id: userExist._id,
+      email: userExist.email,
+      role: userExist.role,
+      accessToken: token,
+      refreshToken: refToken,
+    }
+  }
+
+  static verifyAccount = async (email: string, token: number) => {
+    const user = await UserRepo.getByEmail(email)
+
+    if (!user) {
+      throw new OperationalError('user does not exist', 400)
+    }
+
+    if (user.suspended) {
+      throw new OperationalError(
+        'you have been suspended from using our services, contact the admin',
+        400,
+      )
+    }
+
+    if (user.verified) {
+      throw new OperationalError('user account is already verified', 400)
+    }
+
+    if (token != user.auth_code) {
+      throw new OperationalError('invalid token', 400)
+    }
+
+    if (user.auth_expiry && Date.now() > user.auth_expiry) {
+      throw new OperationalError('token has expired!', 400)
+    }
+
+    await UserRepo.updateById(user.id, {
+      verified: true,
+      auth_code: null,
+      auth_expiry: null,
+    })
+
+    const tolenPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    }
+
+    const authToken = TokenManager.sign('access', tolenPayload)
+
+    return {
+      ...tolenPayload,
+      _id: user.id,
+      token: authToken,
+    }
+  }
+}

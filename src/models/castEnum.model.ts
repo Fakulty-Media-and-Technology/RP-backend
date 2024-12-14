@@ -20,6 +20,6 @@ const castEnumSchema = new Schema(
   },
 )
 
-export const CastEnumModel = model('CastEnum', castEnumSchema)
+export const CastEnumModel = model('cast_enums', castEnumSchema)
 export type CastEnumSchema = InferSchemaType<typeof castEnumSchema>
 export type CastEnum = HydratedDocumentFromSchema<typeof castEnumSchema>

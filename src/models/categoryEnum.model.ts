@@ -16,6 +16,6 @@ const categoryEnumSchema = new Schema(
   },
 )
 
-export const CategoryEnumModel = model('CategoryEnum', categoryEnumSchema)
+export const CategoryEnumModel = model('category_enums', categoryEnumSchema)
 export type CategoryEnumSchema = InferSchemaType<typeof categoryEnumSchema>
 export type CategoryEnum = HydratedDocumentFromSchema<typeof categoryEnumSchema>

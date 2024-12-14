@@ -28,6 +28,6 @@ const paymentDetailsSchema = new Schema(
   },
 )
 
-export const PaymentDetailModel = model('PaymentDetail', paymentDetailsSchema)
+export const PaymentDetailModel = model('payment_details', paymentDetailsSchema)
 export type PaymentDetailSchema = InferSchemaType<typeof paymentDetailsSchema>
 export type PaymentDetail = HydratedDocumentFromSchema<typeof paymentDetailsSchema>

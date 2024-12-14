@@ -25,6 +25,6 @@ const posterSchema = new Schema(
   },
 )
 
-export const PosterImageModel = model('PosterImage', posterSchema)
+export const PosterImageModel = model('poster_images', posterSchema)
 export type PosterImageSchema = InferSchemaType<typeof posterSchema>
 export type PosterImage = HydratedDocumentFromSchema<typeof posterSchema>

@@ -7,9 +7,11 @@ type UserRoles = Array<UserRole>
 export class UserRepo {
   static getUserById = (userId: string) => UserModel.findById(userId)
 
-  static totalUsersCount = () => UserModel.find({}).countDocuments()
+  static getByEmail = (emailAddr: string) => {
+    return UserModel.findOne({ email: emailAddr.trim().toLowerCase() })
+  }
 
-  static getByEmail = (emailAddr: string) => UserModel.findOne({ email: emailAddr })
+  static totalUsersCount = () => UserModel.find({}).countDocuments()
 
   static getAdminById = (adminId: string) => {
     return UserModel.findOne({ _id: adminId, role: { $in: ['admin', 'superadmin'] } })

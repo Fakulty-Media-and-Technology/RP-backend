@@ -7,7 +7,7 @@ type QueryParamsFeaturesOptions = {
   defaultLimit?: number
 }
 
-export const handleDefaultNumAndUnkown = (val: unknown, defaultNum: number) => {
+export const handleDefaultNumAndUnknown = (val: unknown, defaultNum: number) => {
   if (typeof val !== 'string') {
     return defaultNum
   }
@@ -16,6 +16,7 @@ export const handleDefaultNumAndUnkown = (val: unknown, defaultNum: number) => {
     return defaultNum
   }
 
+  // value is numeric here
   return Number(val)
 }
 
@@ -29,7 +30,7 @@ export class QueryParamsFeatures<T, U> {
   }
 
   private _setNumDefaultNum(val: unknown, defaultNum: number) {
-    return handleDefaultNumAndUnkown(val, defaultNum)
+    return handleDefaultNumAndUnknown(val, defaultNum)
   }
 
   paginate() {

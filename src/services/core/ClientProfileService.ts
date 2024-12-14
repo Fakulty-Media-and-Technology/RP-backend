@@ -28,8 +28,6 @@ export class ClientProfileService {
     }
   
     static fetchClientProfile = async (currentUser: LoggedInUser) => {
-      const user = currentUser
-  
       const profile = await UserModel.aggregate([
         {
           $match: {
@@ -37,7 +35,7 @@ export class ClientProfileService {
               $eq: [
                 '$_id',
                 {
-                  $toObjectId: user._id,
+                  $toObjectId: currentUser._id,
                 },
               ],
             },

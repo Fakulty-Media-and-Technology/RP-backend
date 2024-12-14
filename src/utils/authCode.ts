@@ -1,13 +1,12 @@
-export const authCode = async (digit: string | number) => {
-  try {
-    let pin = ''
-    for (let i = 0; i < Number(digit); i++) {
-      const num = Math.floor(Math.random() * 10)
-      pin += num
-    }
+export const authCode = (digit: number) => {
+  let pin = ''
 
-    return pin.toString().split(',').join('')
-  } catch (error) {
-    console.log(`error occurred authcode: ${error}`)
+  for (let i = 0; i < digit; i++) {
+    const num = Math.floor(Math.random() * 10)
+    pin += num
   }
+
+  return pin
 }
+
+console.log(authCode(4))
