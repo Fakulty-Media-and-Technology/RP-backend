@@ -18,6 +18,9 @@ export const env = getValidEnv({
   MEDIA_SERVER_PORT: process.env.MEDIA_SERVER_PORT,
   EVENT_HOURLY_CHARGES: process.env.EVENT_HOURLY_CHARGES,
 
+  // payments
+  PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
+
   // livestream
   RP_HLSURL: process.env.RP_HLSURL,
   RP_RTMPURL: process.env.RP_RTMPURL,
@@ -29,8 +32,18 @@ export const env = getValidEnv({
 
   //   secrets
   JWT_SECRET: process.env.JWT_SECRET,
+  GUEST_TOKEN: process.env.GUEST_TOKEN,
   JWT_SECRET_REFRESH_TOKEN: process.env.JWT_SECRET_REFRESH_TOKEN,
-  
+
+  // AWS S3
+  S3REGION: process.env.S3REGION,
+  S3SECRET_KEY: process.env.S3SECRET_KEY,
+  S3ACCESS_KEY: process.env.S3ACCESS_KEY,
+
+  // media
+  KEY_PAIR_ID: process.env.KEY_PAIR_ID,
+  CFS_PRIVATE_KEY: process.env.CFS_PRIVATE_KEY,
+
   // *** new
   MIN_WITHDRAWAL_AMOUNT: Number(process.env.MIN_WITHDRAWAL_AMOUNT ?? 50000),
   WITHDRAWAL_PERCENT: Number(process.env.WITHDRAWAL_PERCENT ?? 15),

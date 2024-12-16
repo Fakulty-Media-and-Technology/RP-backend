@@ -25,8 +25,8 @@ const livesSchema = new Schema(
     },
     stream_key: {
       type: String,
-      required: true,
     },
+    
     location: {
       type: String,
       required: true,

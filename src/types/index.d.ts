@@ -1,6 +1,8 @@
 import { User } from '../models/users.model'
 
-export type LoggedInUser = User
+export type LoggedInUser = Omit<User, 'role'> & {
+  role: User['role'] | 'guest'
+}
 
 export {}
 

@@ -3,7 +3,7 @@ import { Catch } from '../../utils/catchAsync'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
-export class PushNotificationController {
+export class CustomerPushNotificationController {
   static registerDeviceToken = Catch.async(async ({ user, body }, res) => {
     await NotificationService.Push.setDeviceToken(GetDefined.loggedInUser(user).id, body)
 

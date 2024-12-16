@@ -28,6 +28,18 @@ const planSchema = new Schema(
   },
   {
     timestamps: true,
+    methods: {
+      getFutureDate(days: number = 30) {
+        const daysInMilliseconds = days * 24 * 60 * 60 * 1000
+        const now = new Date()
+
+        const futureDate = new Date(
+          now.getTime() + Number(this.months_duration) * daysInMilliseconds,
+        )
+
+        return futureDate
+      },
+    },
   },
 )
 

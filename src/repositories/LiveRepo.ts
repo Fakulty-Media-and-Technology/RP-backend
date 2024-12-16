@@ -1,4 +1,5 @@
-import { LiveModel } from '../models/lives.model'
+import { FilterQuery } from 'mongoose'
+import { LiveModel, LiveSchema } from '../models/lives.model'
 
 export class LiveRepo {
   static getChannels = () => LiveModel.find({ type: 'channel' })
@@ -37,5 +38,11 @@ export class LiveRepo {
 
   static getActiveById = (id: string) => {
     return LiveModel.findOne({ _id: id, active: true })
+  }
+
+  static getSelectedLive = (filter: FilterQuery<LiveSchema>) => {
+    return LiveModel.find(filter).select(
+      '-__v -client_id -createdAt -updatedAt -sponsored -popular -likes -stream_key',
+    )
   }
 }

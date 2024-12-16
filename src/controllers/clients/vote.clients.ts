@@ -3,7 +3,7 @@ import { Catch } from '../../utils/catchAsync'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
-export class VoteController {
+export class ClientVoteController {
   static createVoteInfo = Catch.async(async ({ user, body }, res) => {
     await VoteService.createVoteInfo(GetDefined.loggedInUser(user), body)
 

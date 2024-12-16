@@ -3,7 +3,7 @@ import { Catch } from '../../utils/catchAsync'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
-export class LiveStreamController {
+export class ClientLiveStreamController {
   static createLiveClient = Catch.async(async ({ user, body }, res) => {
     await LiveStreamService.createClient(GetDefined.loggedInUser(user), body)
 
@@ -13,7 +13,7 @@ export class LiveStreamController {
     })
   })
 
-  static liveStreamCredentials = Catch.async(async ({ user }, res) => {
+  static getLiveStreamCredentials = Catch.async(async ({ user }, res) => {
     sendResponse({
       res,
       message: 'clients stream instances',

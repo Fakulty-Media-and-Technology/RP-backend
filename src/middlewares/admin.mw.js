@@ -1,6 +1,8 @@
 const UsersModel = require('../models/users.model')
 const { validateToken } = require('../utils/jwt')
 
+
+
 const adminAuth = async (req, res, next) => {
   const token = req.headers['admin-auth']
 

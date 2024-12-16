@@ -3,7 +3,7 @@ import { Catch } from '../../utils/catchAsync'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
-export class WithdrawalController {
+export class ClientWithdrawalController {
   static reqPayout = Catch.async(async (req, res) => {
     await WithdrawalService.requestPayout(GetDefined.loggedInUser(req.user), req.body)
 

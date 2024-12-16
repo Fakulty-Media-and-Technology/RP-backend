@@ -4,7 +4,7 @@ import { GetDefined } from '../../utils/GetDefined'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
-export class NotificationController {
+export class CustomerNotificationController {
   static getNotifications = Catch.async(async ({ user, query }, res) => {
     const data = await NotificationService.getNotifications({
       currentUser: GetDefined.loggedInUser(user),

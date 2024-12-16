@@ -8,5 +8,3 @@ export const authCode = (digit: number) => {
 
   return pin
 }
-
-console.log(authCode(4))

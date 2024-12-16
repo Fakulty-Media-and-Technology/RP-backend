@@ -36,46 +36,57 @@ const usersSchema = new Schema(
       type: String,
       required: true,
     },
+    
     pin: {
       type: String,
       // required: true,
     },
+
     role: {
       type: String,
       enum: ['customer', 'channel', 'tvshow', 'event', 'podcast', 'admin', 'superadmin'],
       default: 'customer',
       required: true,
     },
+
     photo: {
       type: Object,
     },
+
     auth_code: {
       type: Number,
       default: undefined,
     },
+
     auth_expiry: {
       type: Number,
       default: undefined,
     },
+
     verified: {
       type: Boolean,
       default: false,
     },
+
     approved: {
       type: Boolean,
       default: false,
     },
+
     suspended: {
       type: Boolean,
       default: false,
     },
+
     gender: {
       type: String,
       enum: ['male', 'female', 'nil'],
     },
+
     dob: {
       type: Date,
     },
+
     country: {
       type: String,
       trim: true,
