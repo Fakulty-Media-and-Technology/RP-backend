@@ -4,7 +4,7 @@ import { GenreService } from '../../services/core/GenreService'
 import { Catch } from '../../utils/catchAsync'
 import { sendResponse } from '../../utils/responder'
 
-export class EnumController {
+export class AdminEnumController {
   // *************** Genres
   static remGenre = Catch.async(async ({ params: { id } }, res) => {
     await GenreService.deleteGenreByNameOrId('_id', id)

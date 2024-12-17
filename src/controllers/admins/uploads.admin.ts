@@ -1,11 +1,15 @@
-const PosterModel = require('../../models/poster.model')
-const VideosModel = require('../../models/videos.model')
-const { serverError, successResponse, invalidRequest } = require('../../utils/responder.ts')
+import { PosterImageModel } from '../../models/poster.model'
+import { VideoModel } from '../../models/videos.model'
+import { Catch } from '../../utils/catchAsync'
+import { GetDefined } from '../../utils/GetDefined'
+import { OperationalError } from '../../utils/OperationalError'
+import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { sendResponse } from '../../utils/responder'
 
-//MOVIES
-exports.addMovie = async (req, res) => {
-  try {
-    const admin = req.user
+export class AdminUploadController {
+  //MOVIES
+  static addMovie = Catch.async(async (req, res) => {
+    const admin = GetDefined.loggedInUser(req.user)
     const {
       title,
       sub_title,
@@ -37,18 +41,19 @@ exports.addMovie = async (req, res) => {
       !runtime ||
       !default_rating
     ) {
-      return invalidRequest(res, 400, null, 'all required fields are mandatory')
+      throw new OperationalError('all required fields are mandatory', 400)
     }
 
-    if (!poster1_data.key || !poster1_data.dimension) {
-      return invalidRequest(res, 400, null, 'video poster details are required')
+    if (
+      !poster1_data.key ||
+      !poster1_data.dimension ||
+      !poster2_data.key ||
+      !poster2_data.dimension
+    ) {
+      throw new OperationalError('video poster details are required', 400)
     }
 
-    if (!poster2_data.key || !poster2_data.dimension) {
-      return invalidRequest(res, 400, null, 'video poster details are required')
-    }
-
-    const videoData = await new VideosModel({
+    const videoData = await new VideoModel({
       admin_id: admin._id,
       title,
       sub_title,
@@ -67,29 +72,29 @@ exports.addMovie = async (req, res) => {
       is_series: false,
     }).save()
 
-    await new PosterModel({
+    await new PosterImageModel({
       video_id: videoData._id,
       bucket: poster1_data.bucket,
       key: poster1_data.key,
       dimension: poster1_data.dimension,
     }).save()
 
-    await new PosterModel({
+    await new PosterImageModel({
       video_id: videoData._id,
       bucket: poster2_data.bucket,
       key: poster2_data.key,
       dimension: poster2_data.dimension,
     }).save()
 
-    return successResponse(res, 200, null, 'movie added successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'movie added successfully',
+    })
+  })
 
-exports.editMovie = async (req, res) => {
-  try {
+  static editMovie = Catch.async(async (req, res) => {
     const vid_id = req.params.id
+
     const {
       title,
       sub_title,
@@ -106,9 +111,9 @@ exports.editMovie = async (req, res) => {
       default_rating,
     } = req.body
 
-    const initData = await VideosModel.findOne({ _id: vid_id })
+    const initData = await VideoModel.findOne({ _id: vid_id })
 
-    await VideosModel.findOneAndUpdate(
+    await VideoModel.findOneAndUpdate(
       {
         _id: vid_id,
         type: 'movie',
@@ -119,7 +124,7 @@ exports.editMovie = async (req, res) => {
         bucket: bucket ? bucket : initData?.bucket,
         key: key ? key : initData?.key,
         pg: pg ? pg : initData?.pg,
-        vid_class: vid_class ? vid_class : initData?.class,
+        vid_class: vid_class ? vid_class : initData?.vid_class,
         genre: genre ? genre : initData?.genre,
         category: category ? category : initData?.category,
         cast: cast ? cast : initData?.cast,
@@ -133,31 +138,28 @@ exports.editMovie = async (req, res) => {
       },
     )
 
-    return successResponse(res, 200, null, 'movie updated successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'movie updated successfully',
+    })
+  })
 
-exports.deleteMovie = async (req, res) => {
-  try {
+  static deleteMovie = Catch.async(async (req, res) => {
     const vid_id = req.params.id
 
+    sendResponse({
+      res,
+      message: 'TODO',
+    })
+
     //TODO delete S3 objecttsss
+  })
 
-    // await VideosModel.findOneAndDelete({_id: vid_id})
-    return successResponse(res, 200, null, 'TODO: movie deleted successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+  static fetchMovies = Catch.async(async ({ query }, res) => {
+    const limit = handleDefaultNumAndUnknown(query.limit, 10)
+    const page = handleDefaultNumAndUnknown(query.page, 10)
 
-exports.fetchMovies = async (req, res) => {
-  try {
-    const limit = req.query.limit || 10
-    const page = req.query.page || 1
-
-    const videos = await VideosModel.aggregate([
+    const videos = await VideoModel.aggregate([
       {
         $match: {
           $expr: {
@@ -185,16 +187,17 @@ exports.fetchMovies = async (req, res) => {
       },
     ])
 
-    return successResponse(res, 200, videos, 'movies fetched successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      data: videos,
+      message: 'movies fetched successfully',
+    })
+  })
 
-//SKITS
-exports.addSkit = async (req, res) => {
-  try {
-    const admin = req.user
+  //SKITS
+  static addSkit = Catch.async(async (req, res) => {
+    const admin = GetDefined.loggedInUser(req.user)
+
     const {
       title,
       sub_title,
@@ -226,18 +229,18 @@ exports.addSkit = async (req, res) => {
       !runtime ||
       !default_rating
     ) {
-      return invalidRequest(res, 400, null, 'all required fields are mandatory')
+      throw new OperationalError('all required fields are mandatory', 400)
     }
 
     if (!poster1_data.key || !poster1_data.dimension) {
-      return invalidRequest(res, 400, null, 'video poster details are required')
+      throw new OperationalError('video poster details are required', 400)
     }
 
     if (!poster2_data.key || !poster2_data.dimension) {
-      return invalidRequest(res, 400, null, 'video poster details are required')
+      throw new OperationalError('video poster details are required', 400)
     }
 
-    const videoData = await new VideosModel({
+    const videoData = await new VideoModel({
       admin_id: admin._id,
       title,
       sub_title,
@@ -256,29 +259,30 @@ exports.addSkit = async (req, res) => {
       is_series: false,
     }).save()
 
-    await new PosterModel({
+    // TODO: use session
+    await new PosterImageModel({
       video_id: videoData._id,
       bucket: poster1_data.bucket,
       key: poster1_data.key,
       dimension: poster1_data.dimension,
     }).save()
 
-    await new PosterModel({
+    await new PosterImageModel({
       video_id: videoData._id,
       bucket: poster2_data.bucket,
       key: poster2_data.key,
       dimension: poster2_data.dimension,
     }).save()
 
-    return successResponse(res, 200, null, 'skit added successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'Skit added successfully',
+    })
+  })
 
-exports.editSkit = async (req, res) => {
-  try {
+  static editSkit = Catch.async(async (req, res) => {
     const vid_id = req.params.id
+
     const {
       title,
       sub_title,
@@ -295,9 +299,9 @@ exports.editSkit = async (req, res) => {
       default_rating,
     } = req.body
 
-    const initData = await VideosModel.findOne({ _id: vid_id })
+    const initData = await VideoModel.findOne({ _id: vid_id })
 
-    await VideosModel.findOneAndUpdate(
+    await VideoModel.findOneAndUpdate(
       {
         _id: vid_id,
         type: 'skit',
@@ -308,7 +312,7 @@ exports.editSkit = async (req, res) => {
         bucket: bucket ? bucket : initData?.bucket,
         key: key ? key : initData?.key,
         pg: pg ? pg : initData?.pg,
-        vid_class: vid_class ? vid_class : initData?.class,
+        vid_class: vid_class ? vid_class : initData?.vid_class,
         genre: genre ? genre : initData?.genre,
         category: category ? category : initData?.category,
         cast: cast ? cast : initData?.cast,
@@ -322,31 +326,28 @@ exports.editSkit = async (req, res) => {
       },
     )
 
-    return successResponse(res, 200, null, 'skit updated successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'skit updated successfully',
+    })
+  })
 
-exports.deleteSkit = async (req, res) => {
-  try {
+  static deleteSkit = Catch.async(async (req, res) => {
     const vid_id = req.params.id
 
     //TODO delete S3 objecttsss
 
-    // await VideosModel.findOneAndDelete({_id: vid_id})
-    return successResponse(res, 200, null, 'TODO')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'TODO',
+    })
+  })
 
-exports.fetchSkits = async (req, res) => {
-  try {
-    const limit = req.query.limit || 10
-    const page = req.query.page || 1
+  static fetchSkits = Catch.async(async ({ query }, res) => {
+    const limit = handleDefaultNumAndUnknown(query.limit, 10)
+    const page = handleDefaultNumAndUnknown(query.page, 10)
 
-    const videos = await VideosModel.aggregate([
+    const videos = await VideoModel.aggregate([
       {
         $match: {
           $expr: {
@@ -367,23 +368,24 @@ exports.fetchSkits = async (req, res) => {
         },
       },
       {
-        $skip: Number(page - 1) * Number(limit) || 0,
+        $skip: (page - 1) * limit || 0,
       },
       {
-        $limit: Number(limit),
+        $limit: limit,
       },
     ])
 
-    return successResponse(res, 200, videos, 'skits fetched successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'skits fetched successfully',
+      data: videos,
+    })
+  })
 
-//Music Videos
-exports.addMusicVid = async (req, res) => {
-  try {
-    const admin = req.user
+  //Music Videos
+  static addMusicVid = Catch.async(async (req, res) => {
+    const admin = GetDefined.loggedInUser(req.user)
+
     const {
       title,
       sub_title,
@@ -413,18 +415,18 @@ exports.addMusicVid = async (req, res) => {
       !artist_name ||
       !default_rating
     ) {
-      return invalidRequest(res, 400, null, 'all required fields are mandatory')
+      throw new OperationalError('All required feilds are mandatory', 400)
     }
 
     if (!poster1_data.key || !poster1_data.dimension) {
-      return invalidRequest(res, 400, null, 'video poster details are required')
+      throw new OperationalError('video poster details are required', 400)
     }
 
     if (!poster2_data.key || !poster2_data.dimension) {
-      return invalidRequest(res, 400, null, 'video poster details are required')
+      throw new OperationalError('video poster details are required', 400)
     }
 
-    const videoData = await new VideosModel({
+    const videoData = await new VideoModel({
       admin_id: admin._id,
       title,
       sub_title,
@@ -442,29 +444,29 @@ exports.addMusicVid = async (req, res) => {
       is_series: false,
     }).save()
 
-    await new PosterModel({
+    await new PosterImageModel({
       video_id: videoData._id,
       bucket: poster1_data.bucket,
       key: poster1_data.key,
       dimension: poster1_data.dimension,
     }).save()
 
-    await new PosterModel({
+    await new PosterImageModel({
       video_id: videoData._id,
       bucket: poster2_data.bucket,
       key: poster2_data.key,
       dimension: poster2_data.dimension,
     }).save()
 
-    return successResponse(res, 200, null, 'Music Video added successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'Music Video added successfully',
+    })
+  })
 
-exports.editMusicVid = async (req, res) => {
-  try {
+  static editMusicVid = Catch.async(async (req, res) => {
     const vid_id = req.params.id
+
     const {
       title,
       sub_title,
@@ -480,9 +482,9 @@ exports.editMusicVid = async (req, res) => {
       default_rating,
     } = req.body
 
-    const initData = await VideosModel.findOne({ _id: vid_id })
+    const initData = await VideoModel.findOne({ _id: vid_id })
 
-    await VideosModel.findOneAndUpdate(
+    await VideoModel.findOneAndUpdate(
       {
         _id: vid_id,
         type: 'music video',
@@ -493,7 +495,7 @@ exports.editMusicVid = async (req, res) => {
         bucket: bucket ? bucket : initData?.bucket,
         key: key ? key : initData?.key,
         pg: pg ? pg : initData?.pg,
-        vid_class: vid_class ? vid_class : initData?.class,
+        vid_class: vid_class ? vid_class : initData?.vid_class,
         category: category ? category : initData?.category,
         artist_name: artist_name ? artist_name : initData?.artist_name,
         released_date: released_date ? released_date : initData?.released_date,
@@ -506,31 +508,30 @@ exports.editMusicVid = async (req, res) => {
       },
     )
 
-    return successResponse(res, 200, null, 'Music Video updated successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'Music Video updated successfully',
+    })
+  })
 
-exports.deleteMusicVid = async (req, res) => {
-  try {
+  static deleteMusicVid = Catch.async(async (req, res) => {
     const vid_id = req.params.id
 
     //TODO delete S3 objecttsss
 
-    // await VideosModel.findOneAndDelete({_id: vid_id})
-    return successResponse(res, 200, null, 'TODO')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'TODO',
+    })
 
-exports.fetchMusicVid = async (req, res) => {
-  try {
-    const limit = req.query.limit || 10
-    const page = req.query.page || 1
+    // await VideoModel.findOneAndDelete({_id: vid_id})
+  })
 
-    const videos = await VideosModel.aggregate([
+  static fetchMusicVid = Catch.async(async ({ query }, res) => {
+    const limit = handleDefaultNumAndUnknown(query.limit, 10)
+    const page = handleDefaultNumAndUnknown(query.page, 10)
+
+    const videos = await VideoModel.aggregate([
       {
         $match: {
           $expr: {
@@ -551,23 +552,24 @@ exports.fetchMusicVid = async (req, res) => {
         },
       },
       {
-        $skip: Number(page - 1) * Number(limit) || 0,
+        $skip: (page - 1) * limit || 0,
       },
       {
-        $limit: Number(limit),
+        $limit: limit,
       },
     ])
 
-    return successResponse(res, 200, videos, 'Music Video fetched successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      data: videos,
+      message: 'Music Video fetched successfully',
+    })
+  })
 
-//Series
-exports.addSeries = async (req, res) => {
-  try {
-    const admin = req.user
+  //Series
+  static addSeries = Catch.async(async (req, res) => {
+    const admin = GetDefined.loggedInUser(req.user)
+
     const {
       title,
       sub_title,
@@ -597,18 +599,19 @@ exports.addSeries = async (req, res) => {
       !episodes ||
       !default_rating
     ) {
-      return invalidRequest(res, 400, req.body, 'all required fields are mandatory')
+      throw new OperationalError('video poster details are required', 400)
     }
-
     if (!poster1_data.key || !poster1_data.dimension) {
-      return invalidRequest(res, 400, null, 'video poster details are required')
+      throw new OperationalError('video poster details are required', 400)
     }
 
     if (!poster2_data.key || !poster2_data.dimension) {
-      return invalidRequest(res, 400, null, 'video poster details are required')
+      throw new OperationalError('video poster details are required', 400)
     }
 
-    const videoData = await new VideosModel({
+    // TODO: Use Session
+
+    const videoData = await new VideoModel({
       admin_id: admin._id,
       title,
       sub_title,
@@ -624,28 +627,27 @@ exports.addSeries = async (req, res) => {
       episodes,
     }).save()
 
-    await new PosterModel({
+    await new PosterImageModel({
       video_id: videoData._id,
       bucket: poster1_data.bucket,
       key: poster1_data.key,
       dimension: poster1_data.dimension,
     }).save()
 
-    await new PosterModel({
+    await new PosterImageModel({
       video_id: videoData._id,
       bucket: poster2_data.bucket,
       key: poster2_data.key,
       dimension: poster2_data.dimension,
     }).save()
 
-    return successResponse(res, 200, null, 'Series added successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'Series added successfully',
+    })
+  })
 
-exports.editSeries = async (req, res) => {
-  try {
+  static editSeries = Catch.async(async (req, res) => {
     const vid_id = req.params.id
     const {
       title,
@@ -662,9 +664,9 @@ exports.editSeries = async (req, res) => {
       default_rating,
     } = req.body
 
-    const initData = await VideosModel.findOne({ _id: vid_id })
+    const initData = await VideoModel.findOne({ _id: vid_id })
 
-    await VideosModel.findOneAndUpdate(
+    await VideoModel.findOneAndUpdate(
       {
         _id: vid_id,
         type: 'series',
@@ -673,7 +675,7 @@ exports.editSeries = async (req, res) => {
         title: title ? title : initData?.title,
         sub_title: sub_title ? sub_title : initData?.sub_title,
         pg: pg ? pg : initData?.pg,
-        vid_class: vid_class ? vid_class : initData?.class,
+        vid_class: vid_class ? vid_class : initData?.vid_class,
         category: category ? category : initData?.category,
         genre: genre ? genre : initData?.genre,
         cast: cast ? cast : initData?.cast,
@@ -688,31 +690,31 @@ exports.editSeries = async (req, res) => {
       },
     )
 
-    return successResponse(res, 200, null, 'Series updated successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'Series Updated successfully',
+    })
+  })
 
-exports.deleteSeries = async (req, res) => {
-  try {
+  // !this doesnt do anything
+  static deleteSeries = Catch.async(async (req, res) => {
     const vid_id = req.params.id
 
     //TODO delete S3 objecttsss
 
-    // await VideosModel.findOneAndDelete({_id: vid_id})
-    return successResponse(res, 200, null, 'TODO')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
-}
+    sendResponse({
+      res,
+      message: 'TODO',
+    })
 
-exports.fetchSeries = async (req, res) => {
-  try {
-    const limit = req.query.limit || 10
-    const page = req.query.page || 1
+    // await VideoModel.findOneAndDelete({_id: vid_id})
+  })
 
-    const videos = await VideosModel.aggregate([
+  static fetchSeries = Catch.async(async ({ query }, res) => {
+    const limit = handleDefaultNumAndUnknown(query.limit, 10)
+    const page = handleDefaultNumAndUnknown(query.page, 10)
+
+    const videos = await VideoModel.aggregate([
       {
         $match: {
           $expr: {
@@ -733,15 +735,17 @@ exports.fetchSeries = async (req, res) => {
         },
       },
       {
-        $skip: Number(page - 1) * Number(limit) || 0,
+        $skip: (page - 1) * limit || 0,
       },
       {
-        $limit: Number(limit),
+        $limit: limit,
       },
     ])
 
-    return successResponse(res, 200, videos, 'Series fetched successfully')
-  } catch (error) {
-    return serverError(res, 500, null, error.message)
-  }
+    sendResponse({
+      res,
+      data: videos,
+      message: 'Series fetched successfully',
+    })
+  })
 }

@@ -4,7 +4,7 @@ import { GetDefined } from '../../utils/GetDefined'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
-export class GiftCardController {
+export class AdminGiftCardController {
   static createGiftCard = Catch.async(async ({ body: { amount }, user }, res) => {
     sendResponse({
       res,

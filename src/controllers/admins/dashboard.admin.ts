@@ -4,7 +4,7 @@ import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 
-export class DashboardController {
+export class AdminDashboardController {
   static fetchChannels = Catch.async(async ({ query }, res) => {
     sendResponse({
       res,

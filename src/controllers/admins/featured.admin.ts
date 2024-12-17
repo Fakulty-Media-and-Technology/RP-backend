@@ -3,7 +3,7 @@ import { Catch } from '../../utils/catchAsync'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 
-export class FeaturedController {
+export class AdminFeaturedController {
   static searchContents = Catch.async(async ({ query: { text } }, res) => {
     sendResponse({
       res,

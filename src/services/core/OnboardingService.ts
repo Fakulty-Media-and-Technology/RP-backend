@@ -1,7 +1,7 @@
 import { UserModel } from '../../models/users.model'
 import { SettingsModel } from '../../models/userSettings.model'
 import { UserRepo } from '../../repositories/UserRepo'
-import { authCode } from '../../utils/authCode'
+import { authCode } from '../../utils/strGen'
 import Email from '../../utils/emailer'
 import { TokenManager } from '../../utils/jwt'
 import { OperationalError } from '../../utils/OperationalError'

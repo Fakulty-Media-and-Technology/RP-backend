@@ -2,7 +2,7 @@ import { Catch } from '../../utils/catchAsync'
 import { sendResponse } from '../../utils/responder'
 import { ClientService } from '../../services/core/ClientService'
 
-export class ClientsController {
+export class AdminClientsController {
   static getAllClients = Catch.async(async ({ query }, res) => {
     sendResponse({
       res,
