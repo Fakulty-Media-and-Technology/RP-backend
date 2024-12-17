@@ -41,7 +41,6 @@
     "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.3",
     "node-media-server": "^2.7.0",
-    "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.13",
     "paystack-sdk": "^2.5.17",
     "socket.io": "^4.7.5"
@@ -55,6 +54,7 @@
     "@types/joi": "^17.2.3",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/morgan": "^1.9.9",
+    "@types/node-cron": "^3.0.11",
     "chai": "^5.1.1",
     "cross-env": "^7.0.3",
     "jest": "^29.7.0",

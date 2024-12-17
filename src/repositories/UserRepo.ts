@@ -1,11 +1,12 @@
 import { UpdateQuery } from 'mongoose'
 import { UserModel, UserSchema } from '../models/users.model'
+import { StringOrObjectId } from '../types'
 
 type UserRole = UserSchema['role']
 type UserRoles = Array<UserRole>
 
 export class UserRepo {
-  static getUserById = (userId: string) => UserModel.findById(userId)
+  static getUserById = (userId: StringOrObjectId) => UserModel.findById(userId)
 
   static getByEmail = (emailAddr: string) => {
     return UserModel.findOne({ email: emailAddr.trim().toLowerCase() })
@@ -13,7 +14,7 @@ export class UserRepo {
 
   static totalUsersCount = () => UserModel.find({}).countDocuments()
 
-  static getAdminById = (adminId: string) => {
+  static getAdminById = (adminId: StringOrObjectId) => {
     return UserModel.findOne({ _id: adminId, role: { $in: ['admin', 'superadmin'] } })
   }
 
@@ -23,11 +24,11 @@ export class UserRepo {
     })
   }
 
-  static getClientByRolesAndId = (id: string, roles: UserRoles) => {
+  static getClientByRolesAndId = (id: StringOrObjectId, roles: UserRoles) => {
     return UserModel.findOne({ _id: id, role: { $in: roles } })
   }
 
-  static updateById = (userId: string, data: UpdateQuery<UserSchema>) => {
+  static updateById = (userId: StringOrObjectId, data: UpdateQuery<UserSchema>) => {
     return UserModel.findByIdAndUpdate(userId, data, { new: true })
   }
 
