@@ -7,8 +7,9 @@
     "test": "jest",
     "format": "prettier --write .",
     "prest": "nodemon --exec \"npm run format && node\" src/index.js",
-    "dev": "cross-env MONGO_DB_URL=mongodb://localhost:27017/reeplayDB ts-node src/server.ts",
-    "start": "node src/index.js",
+    "dev": "cross-env MONGO_DB_URL=mongodb://localhost:27017/reeplayDB ts-node src/index.ts",
+    "start": "node build/src/index.js",
+    "prestart": "npm run build",
     "build": "rimraf build && tsc"
   },
   "keywords": [],
