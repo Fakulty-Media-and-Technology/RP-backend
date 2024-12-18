@@ -32,6 +32,7 @@ superAdminRouter.get('/clients/allfetch', AdminClientsController.getAllClients)
 superAdminRouter.get('/clients/onefetch/:id', AdminClientsController.getClient)
 superAdminRouter.get('/clients/deposits', AdminClientsController.clientDeposits)
 
+// **** Enums
 superAdminRouter.post('/enums/add-genre', AdminEnumController.addGenre)
 superAdminRouter.get('/enums/get-genres', AdminEnumController.getGenres)
 superAdminRouter.delete('/enums/rem-genre/:id', AdminEnumController.remGenre)
@@ -42,6 +43,7 @@ superAdminRouter.post('/enums/add-cast', AdminEnumController.addCast)
 superAdminRouter.get('/enums/get-cast', AdminEnumController.getCast)
 superAdminRouter.delete('/enums/rem-cast/:id', AdminEnumController.remcast)
 
+// **** managed media
 superAdminRouter.post('/media/upload-vid', AdminManagemediaController.uploadLargeVideoRoute)
 superAdminRouter.post('/media/upload-vid-short', AdminManagemediaController.uploadShortVideoRoute)
 superAdminRouter.post('/media/upload-subtitle', AdminManagemediaController.uploadVidSubtitle)
@@ -54,21 +56,21 @@ superAdminRouter.get('/lives/all/channels', AdminManagemediaController.livesChan
 superAdminRouter.get('/lives/all/events', AdminManagemediaController.livesEvents)
 superAdminRouter.get('/lives/all/tvshows', AdminManagemediaController.livesTvshows)
 
-//upcoming events routes
+// **** upcoming events routes
 superAdminRouter.post('/upcoming/event/create', AdminUpcomingController.createUpcomingEvent)
 superAdminRouter.get('/upcoming/event/getall', AdminUpcomingController.upcomingsAllGet)
 
-//trailer
+// **** trailer
 superAdminRouter.post('/trailer/create', AdminTrailerController.createTrailer)
 
-//plans and sub
+// **** plans and sub
 superAdminRouter.post('/subscription/plans/create', AdminPlanSubController.createPlan)
 superAdminRouter.put('/subscription/plans/update/:id', AdminPlanSubController.updatePlan)
 superAdminRouter.get('/subscription/plans/fetch', AdminPlanSubController.fetchPlans)
 superAdminRouter.delete('/subscription/plans/delete/:id', AdminPlanSubController.deletePlans)
 superAdminRouter.get('/subscription/all/fetch', AdminPlanSubController.fetchSubscriptions)
 
-//gift cards
+// ***** gift cards
 superAdminRouter.post('/giftcard/generate/new', AdminGiftCardController.createGiftCard)
 superAdminRouter.get('/giftcard/generated/fetch', AdminGiftCardController.fetchGiftCards)
 
@@ -78,34 +80,45 @@ superAdminRouter.get('/payouts/request/one/:id', AdminPayoutController.payoutReq
 superAdminRouter.put('/payouts/request/status/:id', AdminPayoutController.payoutStatusUpdate)
 // superAdminRouter.get("/payouts/request/group", AdminPayoutController.payoutReqGroup);
 
-//featured contents
+// **** featured contents
 superAdminRouter.get('/featured/contents/search', AdminFeaturedController.searchContents)
 superAdminRouter.post('/featured/contents/add', AdminFeaturedController.addFeatured)
 superAdminRouter.get('/featured/contents/fetch', AdminFeaturedController.getFeaturedContents)
 
-//uploads
-superAdminRouter.post('/uploads/movie/add', AdminUploadController.addMovie)
-superAdminRouter.put('/uploads/movie/edit/:id', AdminUploadController.editMovie)
-superAdminRouter.delete('/uploads/movie/remove/:id', AdminUploadController.deleteMovie)
-superAdminRouter.get('/uploads/movie/fetch', AdminUploadController.fetchMovies)
-superAdminRouter.post('/uploads/skit/add', AdminUploadController.addSkit)
-superAdminRouter.put('/uploads/skit/edit/:id', AdminUploadController.editSkit)
-superAdminRouter.delete('/uploads/skit/remove/:id', AdminUploadController.deleteSkit)
-superAdminRouter.get('/uploads/skit/fetch', AdminUploadController.fetchSkits)
-superAdminRouter.post('/uploads/music-video/add', AdminUploadController.addMusicVid)
-superAdminRouter.put('/uploads/music-video/edit/:id', AdminUploadController.editMusicVid)
-superAdminRouter.delete('/uploads/music-video/remove/:id', AdminUploadController.deleteMusicVid)
-superAdminRouter.get('/uploads/music-video/fetch', AdminUploadController.fetchMusicVid)
-superAdminRouter.post('/uploads/series/add', AdminUploadController.addSeries)
-superAdminRouter.put('/uploads/series/edit/:id', AdminUploadController.editSeries)
-superAdminRouter.delete('/uploads/series/remove/:id', AdminUploadController.deleteSeries)
-superAdminRouter.get('/uploads/series/fetch', AdminUploadController.fetchSeries)
 
+// ***** Uploads 
+
+//add upload
+superAdminRouter.post('/uploads/movie/add', AdminUploadController.addVideoByType('movie'))
+superAdminRouter.post('/uploads/skit/add', AdminUploadController.addVideoByType('skit'))
+superAdminRouter.post('/uploads/music-video/add', AdminUploadController.addVideoByType('music video'))
+superAdminRouter.post('/uploads/series/add', AdminUploadController.addVideoByType('series'))
+
+// delete upload
+superAdminRouter.delete('/uploads/movie/remove/:id', AdminUploadController.deleteVideoByType('movie'))
+superAdminRouter.delete('/uploads/skit/remove/:id', AdminUploadController.deleteVideoByType('skit'))
+superAdminRouter.delete('/uploads/series/remove/:id', AdminUploadController.deleteVideoByType('series'))
+superAdminRouter.delete('/uploads/music-video/remove/:id', AdminUploadController.deleteVideoByType('music video'))
+
+// fetch upload
+superAdminRouter.get('/uploads/movie/fetch', AdminUploadController.fetchVideosByType('movie'))
+superAdminRouter.get('/uploads/skit/fetch', AdminUploadController.fetchVideosByType('skit'))
+superAdminRouter.get('/uploads/series/fetch', AdminUploadController.fetchVideosByType('series'))
+superAdminRouter.get('/uploads/music-video/fetch', AdminUploadController.fetchVideosByType('music video'))
+
+// edit upload
+superAdminRouter.put('/uploads/movie/edit/:id', AdminUploadController.editVideoByType('movie'))
+superAdminRouter.put('/uploads/skit/edit/:id', AdminUploadController.editVideoByType('skit'))
+superAdminRouter.put('/uploads/series/edit/:id', AdminUploadController.editVideoByType('series'))
+superAdminRouter.put('/uploads/music-video/edit/:id', AdminUploadController.editVideoByType('music video'))
+
+
+// **** suggestions
 superAdminRouter.get('/suggestions/all', AdminSuggestionController.suggestionsAll)
 superAdminRouter.put('/suggestion/markread/:id', AdminSuggestionController.suggestionRead)
 superAdminRouter.delete('/suggestion/del/:id', AdminSuggestionController.suggestionDel)
 
-//DashBoards
+// **** dashBoards
 superAdminRouter.get('/dashboard/profile/fetch', AdminDashboardController.currentAdminProfile)
 superAdminRouter.put('/dashboard/profile/edit', AdminDashboardController.editAdminProfile)
 
@@ -124,7 +137,7 @@ superAdminRouter.get(
   AdminDashboardController.totalContentsAndChunks,
 )
 
-//ADS
+// **** ADS
 superAdminRouter.post('/ads/create', AdminAdsController.addAds)
 superAdminRouter.get('/ads/fetchall', AdminAdsController.getAds)
 superAdminRouter.delete('/ads/remove/:id', AdminAdsController.removeAds)

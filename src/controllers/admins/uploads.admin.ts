@@ -1,15 +1,35 @@
+import { ClientSession } from 'mongoose'
 import { PosterImageModel } from '../../models/poster.model'
-import { VideoModel } from '../../models/videos.model'
+import { type Video, VideoModel } from '../../models/videos.model'
 import { Catch } from '../../utils/catchAsync'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
+import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+
+type AllVideoTypes = Video['type']
+
+type PosterData = {
+  bucket: string
+  key: string
+  dimension: string
+}
+
+type MakePostersInput = {
+  videoId: string
+  posterOne: PosterData
+  posterTwo: PosterData
+}
+
+type AddVideoWithSessionInput = {
+  adminId: string
+  type: AllVideoTypes
+  data: Record<string, any>
+}
 
 export class AdminUploadController {
-  //MOVIES
-  static addMovie = Catch.async(async (req, res) => {
-    const admin = GetDefined.loggedInUser(req.user)
+  private static _validateInput = (type: AllVideoTypes, data: Record<string, any>) => {
     const {
       title,
       sub_title,
@@ -17,8 +37,8 @@ export class AdminUploadController {
       key,
       pg,
       vid_class,
-      genre,
       category,
+      genre,
       cast,
       released_date,
       expiry_date,
@@ -26,17 +46,16 @@ export class AdminUploadController {
       default_rating,
       poster1_data,
       poster2_data,
-    } = req.body
+      artist_name,
+      episodes,
+    } = data
 
     if (
       !title ||
-      !bucket ||
       !key ||
       !pg ||
       !vid_class ||
-      !genre ||
       !category ||
-      !cast ||
       !released_date ||
       !runtime ||
       !default_rating
@@ -53,699 +72,183 @@ export class AdminUploadController {
       throw new OperationalError('video poster details are required', 400)
     }
 
-    const videoData = await new VideoModel({
-      admin_id: admin._id,
-      title,
-      sub_title,
-      type: 'movie',
-      bucket,
-      key,
-      pg,
-      vid_class,
-      genre,
-      category,
-      cast,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-      is_series: false,
-    }).save()
+    switch (type) {
+      case 'series':
+        if (
+          typeof episodes === undefined ||
+          typeof genre === undefined ||
+          typeof cast === undefined
+        ) {
+          throw new OperationalError(
+            'episodes, cast and genres are required when uploading series',
+            400,
+          )
+        }
+        break
+      case 'music video':
+        if (typeof artist_name === undefined || typeof bucket === undefined) {
+          throw new OperationalError(
+            'artist_name and bucket are required when uploading series',
+            400,
+          )
+        }
+        break
+
+      default:
+        if (
+          typeof genre === undefined ||
+          typeof cast === undefined ||
+          typeof bucket === undefined
+        ) {
+          throw new OperationalError(
+            'cast and genre and bucket are required when uploading movies or skits',
+            400,
+          )
+        }
+        break
+    }
+  }
+
+  private static _makePosters = async (data: MakePostersInput, session: ClientSession) => {
+    await new PosterImageModel({
+      video_id: data.videoId,
+      bucket: data.posterOne.bucket,
+      key: data.posterOne.key,
+      dimension: data.posterOne.dimension,
+    }).save({ session })
 
     await new PosterImageModel({
-      video_id: videoData._id,
-      bucket: poster1_data.bucket,
-      key: poster1_data.key,
-      dimension: poster1_data.dimension,
-    }).save()
+      video_id: data.videoId,
+      bucket: data.posterTwo.bucket,
+      key: data.posterTwo.key,
+      dimension: data.posterTwo.dimension,
+    }).save({ session })
+  }
 
-    await new PosterImageModel({
-      video_id: videoData._id,
-      bucket: poster2_data.bucket,
-      key: poster2_data.key,
-      dimension: poster2_data.dimension,
-    }).save()
+  private static _addVideoWithSession = async (
+    input: AddVideoWithSessionInput,
+    session: ClientSession,
+  ) => {
+    this._validateInput(input.type, input.data)
 
-    sendResponse({
-      res,
-      message: 'movie added successfully',
-    })
-  })
-
-  static editMovie = Catch.async(async (req, res) => {
-    const vid_id = req.params.id
-
-    const {
-      title,
-      sub_title,
-      bucket,
-      key,
-      pg,
-      vid_class,
-      genre,
-      category,
-      cast,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-    } = req.body
-
-    const initData = await VideoModel.findOne({ _id: vid_id })
-
-    await VideoModel.findOneAndUpdate(
-      {
-        _id: vid_id,
-        type: 'movie',
-      },
-      {
-        title: title ? title : initData?.title,
-        sub_title: sub_title ? sub_title : initData?.sub_title,
-        bucket: bucket ? bucket : initData?.bucket,
-        key: key ? key : initData?.key,
-        pg: pg ? pg : initData?.pg,
-        vid_class: vid_class ? vid_class : initData?.vid_class,
-        genre: genre ? genre : initData?.genre,
-        category: category ? category : initData?.category,
-        cast: cast ? cast : initData?.cast,
-        released_date: released_date ? released_date : initData?.released_date,
-        expiry_date: expiry_date ? expiry_date : initData?.expiry_date,
-        runtime: runtime ? runtime : initData?.runtime,
-        default_rating: default_rating ? default_rating : initData?.default_rating,
-      },
-      {
-        new: true,
-      },
-    )
-
-    sendResponse({
-      res,
-      message: 'movie updated successfully',
-    })
-  })
-
-  static deleteMovie = Catch.async(async (req, res) => {
-    const vid_id = req.params.id
-
-    sendResponse({
-      res,
-      message: 'TODO',
-    })
-
-    //TODO delete S3 objecttsss
-  })
-
-  static fetchMovies = Catch.async(async ({ query }, res) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 10)
-
-    const videos = await VideoModel.aggregate([
-      {
-        $match: {
-          $expr: {
-            $eq: ['$type', 'movie'],
-          },
-        },
-      },
-      {
-        $project: {
-          __v: 0,
-          createdAt: 0,
-          updatedAt: 0,
-        },
-      },
-      {
-        $sort: {
-          updatedAt: 1,
-        },
-      },
-      {
-        $skip: Number(page - 1) * Number(limit) || 0,
-      },
-      {
-        $limit: Number(limit),
-      },
-    ])
-
-    sendResponse({
-      res,
-      data: videos,
-      message: 'movies fetched successfully',
-    })
-  })
-
-  //SKITS
-  static addSkit = Catch.async(async (req, res) => {
-    const admin = GetDefined.loggedInUser(req.user)
-
-    const {
-      title,
-      sub_title,
-      bucket,
-      key,
-      pg,
-      vid_class,
-      genre,
-      category,
-      cast,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-      poster1_data,
-      poster2_data,
-    } = req.body
-
-    if (
-      !title ||
-      !bucket ||
-      !key ||
-      !pg ||
-      !vid_class ||
-      !genre ||
-      !category ||
-      !cast ||
-      !released_date ||
-      !runtime ||
-      !default_rating
-    ) {
-      throw new OperationalError('all required fields are mandatory', 400)
-    }
-
-    if (!poster1_data.key || !poster1_data.dimension) {
-      throw new OperationalError('video poster details are required', 400)
-    }
-
-    if (!poster2_data.key || !poster2_data.dimension) {
-      throw new OperationalError('video poster details are required', 400)
-    }
+    const { poster1_data, poster2_data } = input.data
 
     const videoData = await new VideoModel({
-      admin_id: admin._id,
-      title,
-      sub_title,
-      type: 'skit',
-      bucket,
-      key,
-      pg,
-      vid_class,
-      genre,
-      category,
-      cast,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-      is_series: false,
-    }).save()
+      admin_id: input.adminId,
+      type: input.type,
+      ...input.data,
+      is_series: input.type === 'series',
+    }).save({ session })
 
-    // TODO: use session
-    await new PosterImageModel({
-      video_id: videoData._id,
-      bucket: poster1_data.bucket,
-      key: poster1_data.key,
-      dimension: poster1_data.dimension,
-    }).save()
-
-    await new PosterImageModel({
-      video_id: videoData._id,
-      bucket: poster2_data.bucket,
-      key: poster2_data.key,
-      dimension: poster2_data.dimension,
-    }).save()
-
-    sendResponse({
-      res,
-      message: 'Skit added successfully',
-    })
-  })
-
-  static editSkit = Catch.async(async (req, res) => {
-    const vid_id = req.params.id
-
-    const {
-      title,
-      sub_title,
-      bucket,
-      key,
-      pg,
-      vid_class,
-      genre,
-      category,
-      cast,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-    } = req.body
-
-    const initData = await VideoModel.findOne({ _id: vid_id })
-
-    await VideoModel.findOneAndUpdate(
-      {
-        _id: vid_id,
-        type: 'skit',
+    const makePostersParams: MakePostersInput = {
+      videoId: videoData.id,
+      posterOne: {
+        bucket: poster1_data.bucket,
+        key: poster1_data.key,
+        dimension: poster1_data.dimension,
       },
-      {
-        title: title ? title : initData?.title,
-        sub_title: sub_title ? sub_title : initData?.sub_title,
-        bucket: bucket ? bucket : initData?.bucket,
-        key: key ? key : initData?.key,
-        pg: pg ? pg : initData?.pg,
-        vid_class: vid_class ? vid_class : initData?.vid_class,
-        genre: genre ? genre : initData?.genre,
-        category: category ? category : initData?.category,
-        cast: cast ? cast : initData?.cast,
-        released_date: released_date ? released_date : initData?.released_date,
-        expiry_date: expiry_date ? expiry_date : initData?.expiry_date,
-        runtime: runtime ? runtime : initData?.runtime,
-        default_rating: default_rating ? default_rating : initData?.default_rating,
+
+      posterTwo: {
+        bucket: poster2_data.bucket,
+        key: poster2_data.key,
+        dimension: poster2_data.dimension,
       },
-      {
-        new: true,
-      },
-    )
-
-    sendResponse({
-      res,
-      message: 'skit updated successfully',
-    })
-  })
-
-  static deleteSkit = Catch.async(async (req, res) => {
-    const vid_id = req.params.id
-
-    //TODO delete S3 objecttsss
-
-    sendResponse({
-      res,
-      message: 'TODO',
-    })
-  })
-
-  static fetchSkits = Catch.async(async ({ query }, res) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 10)
-
-    const videos = await VideoModel.aggregate([
-      {
-        $match: {
-          $expr: {
-            $eq: ['$type', 'skit'],
-          },
-        },
-      },
-      {
-        $project: {
-          __v: 0,
-          createdAt: 0,
-          updatedAt: 0,
-        },
-      },
-      {
-        $sort: {
-          updatedAt: 1,
-        },
-      },
-      {
-        $skip: (page - 1) * limit || 0,
-      },
-      {
-        $limit: limit,
-      },
-    ])
-
-    sendResponse({
-      res,
-      message: 'skits fetched successfully',
-      data: videos,
-    })
-  })
-
-  //Music Videos
-  static addMusicVid = Catch.async(async (req, res) => {
-    const admin = GetDefined.loggedInUser(req.user)
-
-    const {
-      title,
-      sub_title,
-      bucket,
-      key,
-      pg,
-      vid_class,
-      category,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-      artist_name,
-      poster1_data,
-      poster2_data,
-    } = req.body
-
-    if (
-      !title ||
-      !bucket ||
-      !key ||
-      !pg ||
-      !vid_class ||
-      !category ||
-      !released_date ||
-      !runtime ||
-      !artist_name ||
-      !default_rating
-    ) {
-      throw new OperationalError('All required feilds are mandatory', 400)
     }
 
-    if (!poster1_data.key || !poster1_data.dimension) {
-      throw new OperationalError('video poster details are required', 400)
-    }
+    await this._makePosters(makePostersParams, session)
+  }
 
-    if (!poster2_data.key || !poster2_data.dimension) {
-      throw new OperationalError('video poster details are required', 400)
-    }
+  static addVideoByType = (type: AllVideoTypes) =>
+    Catch.async(async (req, res) => {
+      const admin = GetDefined.loggedInUser(req.user)
 
-    const videoData = await new VideoModel({
-      admin_id: admin._id,
-      title,
-      sub_title,
-      type: 'music video',
-      bucket,
-      key,
-      pg,
-      vid_class,
-      category,
-      artist_name,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-      is_series: false,
-    }).save()
+      await withMongoDBSession(this._addVideoWithSession, {
+        type,
+        data: req.body,
+        adminId: admin.id,
+      })
 
-    await new PosterImageModel({
-      video_id: videoData._id,
-      bucket: poster1_data.bucket,
-      key: poster1_data.key,
-      dimension: poster1_data.dimension,
-    }).save()
-
-    await new PosterImageModel({
-      video_id: videoData._id,
-      bucket: poster2_data.bucket,
-      key: poster2_data.key,
-      dimension: poster2_data.dimension,
-    }).save()
-
-    sendResponse({
-      res,
-      message: 'Music Video added successfully',
-    })
-  })
-
-  static editMusicVid = Catch.async(async (req, res) => {
-    const vid_id = req.params.id
-
-    const {
-      title,
-      sub_title,
-      bucket,
-      key,
-      pg,
-      vid_class,
-      artist_name,
-      category,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-    } = req.body
-
-    const initData = await VideoModel.findOne({ _id: vid_id })
-
-    await VideoModel.findOneAndUpdate(
-      {
-        _id: vid_id,
-        type: 'music video',
-      },
-      {
-        title: title ? title : initData?.title,
-        sub_title: sub_title ? sub_title : initData?.sub_title,
-        bucket: bucket ? bucket : initData?.bucket,
-        key: key ? key : initData?.key,
-        pg: pg ? pg : initData?.pg,
-        vid_class: vid_class ? vid_class : initData?.vid_class,
-        category: category ? category : initData?.category,
-        artist_name: artist_name ? artist_name : initData?.artist_name,
-        released_date: released_date ? released_date : initData?.released_date,
-        expiry_date: expiry_date ? expiry_date : initData?.expiry_date,
-        runtime: runtime ? runtime : initData?.runtime,
-        default_rating: default_rating ? default_rating : initData?.default_rating,
-      },
-      {
-        new: true,
-      },
-    )
-
-    sendResponse({
-      res,
-      message: 'Music Video updated successfully',
-    })
-  })
-
-  static deleteMusicVid = Catch.async(async (req, res) => {
-    const vid_id = req.params.id
-
-    //TODO delete S3 objecttsss
-
-    sendResponse({
-      res,
-      message: 'TODO',
+      sendResponse({
+        res,
+        message: `${type} added successfully`,
+      })
     })
 
-    // await VideoModel.findOneAndDelete({_id: vid_id})
-  })
+  static editVideoByType = (type: AllVideoTypes) =>
+    Catch.async(async (req, res) => {
+      const vid_id = req.params.id
 
-  static fetchMusicVid = Catch.async(async ({ query }, res) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 10)
+      const initData = await VideoModel.findOne({ _id: vid_id, type })
 
-    const videos = await VideoModel.aggregate([
-      {
-        $match: {
-          $expr: {
-            $eq: ['$type', 'music_video'],
-          },
+      if (initData == null) {
+        throw new OperationalError('video does not exist or does not exist as this type', 400)
+      }
+
+      const requestData = req.body as Record<string, any>
+      const initDataObject = initData.toObject()
+      const update: Record<string, any> = {}
+
+      Object.entries(initDataObject).forEach(([key, value]) => {
+        if (key === '_id') return
+
+        const requestDataValue = requestData[key]
+        update[key] = typeof requestDataValue !== undefined ? requestDataValue : value
+      })
+
+      const updatedVid = await VideoModel.findOneAndUpdate(
+        {
+          _id: vid_id,
+          type,
         },
-      },
-      {
-        $project: {
-          __v: 0,
-          createdAt: 0,
-          updatedAt: 0,
+        update,
+        {
+          new: true,
         },
-      },
-      {
-        $sort: {
-          updatedAt: 1,
-        },
-      },
-      {
-        $skip: (page - 1) * limit || 0,
-      },
-      {
-        $limit: limit,
-      },
-    ])
+      )
 
-    sendResponse({
-      res,
-      data: videos,
-      message: 'Music Video fetched successfully',
-    })
-  })
-
-  //Series
-  static addSeries = Catch.async(async (req, res) => {
-    const admin = GetDefined.loggedInUser(req.user)
-
-    const {
-      title,
-      sub_title,
-      pg,
-      vid_class,
-      category,
-      genre,
-      cast,
-      released_date,
-      expiry_date,
-      runtime,
-      episodes,
-      default_rating,
-      poster1_data,
-      poster2_data,
-    } = req.body
-
-    if (
-      !title ||
-      !pg ||
-      !vid_class ||
-      !category ||
-      !genre ||
-      !cast ||
-      !released_date ||
-      !runtime ||
-      !episodes ||
-      !default_rating
-    ) {
-      throw new OperationalError('video poster details are required', 400)
-    }
-    if (!poster1_data.key || !poster1_data.dimension) {
-      throw new OperationalError('video poster details are required', 400)
-    }
-
-    if (!poster2_data.key || !poster2_data.dimension) {
-      throw new OperationalError('video poster details are required', 400)
-    }
-
-    // TODO: Use Session
-
-    const videoData = await new VideoModel({
-      admin_id: admin._id,
-      title,
-      sub_title,
-      type: 'series',
-      pg,
-      vid_class,
-      category,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-      is_series: true,
-      episodes,
-    }).save()
-
-    await new PosterImageModel({
-      video_id: videoData._id,
-      bucket: poster1_data.bucket,
-      key: poster1_data.key,
-      dimension: poster1_data.dimension,
-    }).save()
-
-    await new PosterImageModel({
-      video_id: videoData._id,
-      bucket: poster2_data.bucket,
-      key: poster2_data.key,
-      dimension: poster2_data.dimension,
-    }).save()
-
-    sendResponse({
-      res,
-      message: 'Series added successfully',
-    })
-  })
-
-  static editSeries = Catch.async(async (req, res) => {
-    const vid_id = req.params.id
-    const {
-      title,
-      sub_title,
-      pg,
-      vid_class,
-      category,
-      genre,
-      cast,
-      released_date,
-      expiry_date,
-      runtime,
-      episodes,
-      default_rating,
-    } = req.body
-
-    const initData = await VideoModel.findOne({ _id: vid_id })
-
-    await VideoModel.findOneAndUpdate(
-      {
-        _id: vid_id,
-        type: 'series',
-      },
-      {
-        title: title ? title : initData?.title,
-        sub_title: sub_title ? sub_title : initData?.sub_title,
-        pg: pg ? pg : initData?.pg,
-        vid_class: vid_class ? vid_class : initData?.vid_class,
-        category: category ? category : initData?.category,
-        genre: genre ? genre : initData?.genre,
-        cast: cast ? cast : initData?.cast,
-        episodes: episodes ? episodes : initData?.episodes,
-        released_date: released_date ? released_date : initData?.released_date,
-        expiry_date: expiry_date ? expiry_date : initData?.expiry_date,
-        runtime: runtime ? runtime : initData?.runtime,
-        default_rating: default_rating ? default_rating : initData?.default_rating,
-      },
-      {
-        new: true,
-      },
-    )
-
-    sendResponse({
-      res,
-      message: 'Series Updated successfully',
-    })
-  })
-
-  // !this doesnt do anything
-  static deleteSeries = Catch.async(async (req, res) => {
-    const vid_id = req.params.id
-
-    //TODO delete S3 objecttsss
-
-    sendResponse({
-      res,
-      message: 'TODO',
+      sendResponse({
+        res,
+        data: updatedVid,
+        message: `${type} edited successfully`,
+      })
     })
 
-    // await VideoModel.findOneAndDelete({_id: vid_id})
-  })
+  static fetchVideosByType = (type: AllVideoTypes) =>
+    Catch.async(async ({ query }, res) => {
+      const dbQuery = VideoModel.find({ type })
+        .select('-__v -createdAt -updatedAt')
+        .sort({ updatedAt: 1 })
 
-  static fetchSeries = Catch.async(async ({ query }, res) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 10)
+      const features = new QueryParamsFeatures(dbQuery, {
+        defaultLimit: 10,
+        defaultPage: 1,
+        queryParams: query,
+      })
 
-    const videos = await VideoModel.aggregate([
-      {
-        $match: {
-          $expr: {
-            $eq: ['$type', 'series'],
-          },
-        },
-      },
-      {
-        $project: {
-          __v: 0,
-          createdAt: 0,
-          updatedAt: 0,
-        },
-      },
-      {
-        $sort: {
-          updatedAt: 1,
-        },
-      },
-      {
-        $skip: (page - 1) * limit || 0,
-      },
-      {
-        $limit: limit,
-      },
-    ])
+      const videos = await features.paginate().query
 
-    sendResponse({
-      res,
-      data: videos,
-      message: 'Series fetched successfully',
+      sendResponse({
+        res,
+        message: `${type}s fetched successfully`,
+        data: videos,
+      })
     })
-  })
+
+  static deleteVideoByType = (_: AllVideoTypes) =>
+    Catch.async(async (req, res) => {
+      const vid_id = req.params.id
+
+      // const deletedVid = await VideoModel.findOneAndDelete({ _id: vid_id, type })
+
+      // if (deletedVid == null) {
+      //   throw new OperationalError('Not found', 404)
+      // }
+
+      sendResponse({
+        res,
+        message: 'TODO',
+      })
+
+      //TODO delete S3 objecttsss
+    })
 }
