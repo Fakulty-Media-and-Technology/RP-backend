@@ -1,12 +1,9 @@
-const NodeMediaServer = require('node-media-server')
-const LivesModel = require('../models/lives.model')
-const liveStreamAuth = require('../middlewares/ls-auth.mw')
-const UsersModel = require('../models/users.model')
-const { VerifytPass } = require('../utils/Password')
+import NodeMediaServer from 'node-media-server'
+import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg'
+import { LiveModel } from '../models/lives.model'
+import env from '../env'
 
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path
-
-const connect = {
+export const nmsLivestream = {
   name: 'live',
   pkg: require('../../package'),
   async register() {
@@ -20,7 +17,7 @@ const connect = {
         ping_timeout: 60,
       },
       http: {
-        port: process.env.MEDIA_SERVER_PORT || 8888,
+        port: env.MEDIA_SERVER_PORT || 8888,
         mediaroot: './media',
         allow_origin: '*',
       },
@@ -174,13 +171,12 @@ const connect = {
 
     const nms = new NodeMediaServer(config)
 
-    let validStreamKeys = []
+    const validStreamKeys: string[] = []
 
     const fetchStreamKeys = async () => {
       try {
-        const streamKeys = await LivesModel.find({ active: true }) //, 'stream_key'
-        validStreamKeys = streamKeys.map(doc => doc.stream_key)
-        // console.log('Fetched stream keys:', validStreamKeys);
+        const streamKeys = await LiveModel.find({ active: true }) //, 'stream_key'
+        streamKeys.map(doc => doc.stream_key != null &&  validStreamKeys.push(doc.stream_key))
       } catch (error) {
         console.error('Error fetching stream keys:', error)
       }
@@ -264,35 +260,30 @@ const connect = {
     //      }
     // });
 
-    nms.on('prePublish', async (id, StreamPath, args) => {
-      try {
-        const streamKey = StreamPath.toString().split('/').pop()
+    nms.on('prePublish', async (id, StreamPath) => {
 
-        if (!validStreamKeys.includes(streamKey)) {
+      const session = nms.getSession(id)
+      const streamKey = StreamPath.split('/').pop()
+
+        if (!validStreamKeys.includes(streamKey as string)) {
           console.log('Invalid stream key')
-          const session = nms.getSession(id)
-          session.sendStatusMessage(
-            session.publishStreamId,
-            'error',
-            'NetStream.publish.Unauthorized',
-            'Publisehr: Authorization required.',
-          )
-          session.reject()
+
+          // TODO: session is a map
+          // session.sendStatusMessage(
+          //   session.publishStreamId,
+          //   'error',
+          //   'NetStream.publish.Unauthorized',
+          //   'Publisehr: Authorization required.',
+          // )
+          // session.reject()
         } else {
           console.log('Stream key is valid:', validStreamKeys)
         }
-      } catch (error) {
-        console.error('Database query error:', error)
-        const session = nms.getSession(id)
-        session.reject()
-      }
+ 
     })
 
     nms.run()
   },
 }
 
-module.exports = {
-  connect,
-  // fetchStreamKeys,
-}
+

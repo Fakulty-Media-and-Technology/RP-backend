@@ -1,66 +1,36 @@
-require('dotenv').config()
-const express = require('express')
-const fileUpload = require('express-fileupload')
-const mongoose = require('mongoose')
-const cors = require('cors')
-const path = require('path')
+import express, { Request, Response } from 'express'
 
-const routes = require('./routes/index')
-const { connect } = require('./livestream/nms')
-const { sendPushNotification, sendPush } = require('./notifications/notification')
+import cors from 'cors'
+import path from 'node:path'
+import fileUpload, { Options as FileUploadOptions } from 'express-fileupload'
+import { v1Router } from './routes/index'
 
-const app = express()
+// const { sendPushNotification, sendPush } = require('./notifications/notification')
 
-const db_url = process.env.MONGO_URL
-
-const connectDB = async () => {
-  try {
-    await mongoose.connect(db_url, {
-      dbName: 'reeplayDB',
-    })
-
-    console.log('DB connected')
-  } catch (error) {
-    console.log(`Error in Connection: ${error.message}`)
-  }
+const fileUploadOptions: FileUploadOptions = {
+  limits: { fileSize: 10 * 1024 * 1024 * 1024 },
+  useTempFiles: false,
 }
 
-connectDB()
-
-connect.register(app)
-
-app.use(
-  express.json({
-    limit: '10gb',
-  }),
-)
-app.use(
-  express.urlencoded({
-    extended: true,
-  }),
-)
-app.use(
-  cors({
-    origin: '*',
-  }),
-)
-app.use(
-  fileUpload({
-    limits: { fileSize: 10 * 1024 * 1024 * 1024 },
-    useTempFiles: false,
-    // tempFileDir: "/tmp/",
-  }),
-)
-
-app.use('/static/images', express.static(path.join(__dirname, 'public/static')))
-
-app.get('/', (req, res) => {
-  res.json({
+const devTestRoute = (_: Request, res: Response) => {
+  res.status(200).json({
     status: 200,
     message: 'REEPLAY API BASE_URL',
   })
-})
+}
 
-app.use('/api/v1', routes)
+export const reeplayApp = () => {
+  const app = express()
 
-module.exports = app
+  app.use(express.json({ limit: '10gb' }))
+  app.use(express.urlencoded({ extended: true }))
+  app.use(cors({ origin: '*' }))
+  app.use(fileUpload(fileUploadOptions))
+
+  app.use('/static/images', express.static(path.join(__dirname, 'public/static')))
+
+  app.get('/', devTestRoute)
+  app.use('/api/v1', v1Router)
+
+  return app
+}

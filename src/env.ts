@@ -15,7 +15,7 @@ export const env = getValidEnv({
   MONGO_DB_URL: process.env.MONGO_DB_URL,
 
   // ??
-  MEDIA_SERVER_PORT: process.env.MEDIA_SERVER_PORT,
+  MEDIA_SERVER_PORT: Number(process.env.MEDIA_SERVER_PORT || 8888),
   EVENT_HOURLY_CHARGES: process.env.EVENT_HOURLY_CHARGES,
 
   // payments
