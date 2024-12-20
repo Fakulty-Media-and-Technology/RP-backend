@@ -9,7 +9,7 @@ import {  CreateMultipartUploadCommand,
   DeleteObjectCommand,} from '@aws-sdk/client-s3'
 const { createTranscodingJob } = require('./media-access')
 
-function getFileExtension(filename) {
+function getFileExtension(filename: string) {
   const parts = filename.split('.')
   return parts.length > 1 ? parts.pop() : ''
 }

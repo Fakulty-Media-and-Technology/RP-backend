@@ -4,6 +4,7 @@ import cors from 'cors'
 import path from 'node:path'
 import fileUpload, { Options as FileUploadOptions } from 'express-fileupload'
 import { v1Router } from './routes/index'
+import { ErrorMiddleware } from './middlewares/errors'
 
 // const { sendPushNotification, sendPush } = require('./notifications/notification')
 
@@ -31,6 +32,8 @@ export const reeplayApp = () => {
 
   app.get('/', devTestRoute)
   app.use('/api/v1', v1Router)
+  app.use(ErrorMiddleware.wildRoute)
+  app.use(ErrorMiddleware.allErrors)
 
   return app
 }
