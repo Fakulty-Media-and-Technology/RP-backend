@@ -1,110 +1,62 @@
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3')
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner')
-const {
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import {
   MediaConvertClient,
   CreateJobCommand,
-  DescribeEndpointsCommand,
-} = require('@aws-sdk/client-mediaconvert')
+  CreateJobCommandInput,
+} from '@aws-sdk/client-mediaconvert'
 
-exports.readPhotos = async (bucket, key) => {
-  try {
-    const client = new S3Client({
-      region: process.env.S3REGION,
-      credentials: {
-        accessKeyId: process.env.S3ACCESS_KEY,
-        secretAccessKey: process.env.S3SECRET_KEY,
-      },
-    })
+import env from '../env'
 
-    const params = {
-      Bucket: bucket,
-      Expires: 259200, //3*24*60*60
-      Key: key,
-    }
-
-    const command = new GetObjectCommand(params)
-
-    const signed = await getSignedUrl(client, command)
-
-    return signed
-  } catch (error) {
-    return {
-      status: 400,
-      message: error.message,
-    }
-  }
-}
-
-exports.getVideoUrl = async (bucket, key) => {
-  try {
-    const client = new S3Client({
-      region: process.env.S3REGION,
-      credentials: {
-        accessKeyId: process.env.S3ACCESS_KEY,
-        secretAccessKey: process.env.S3SECRET_KEY,
-      },
-    })
-
-    const params = {
-      Bucket: bucket,
-      Expires: 36000,
-      Key: key,
-    }
-
-    const command = new GetObjectCommand(params)
-
-    const signed = await getSignedUrl(client, command)
-
-    return signed
-  } catch (error) {
-    return {
-      status: 400,
-      message: error.message,
-    }
-  }
-}
-
-const client = new MediaConvertClient({
-  region: process.env.S3REGION,
+const s3ClientsConfig = {
+  region: env.S3REGION,
   credentials: {
-    accessKeyId: process.env.S3ACCESS_KEY,
-    secretAccessKey: process.env.S3SECRET_KEY,
+    accessKeyId: env.S3ACCESS_KEY,
+    secretAccessKey: env.S3SECRET_KEY,
   },
-})
-
-async function getAccountEndpoint() {
-  try {
-    const command = new DescribeEndpointsCommand({})
-    const response = await client.send(command)
-    if (response.Endpoints && response.Endpoints.length > 0) {
-      const endpointUrl = response.Endpoints[0].Url
-      console.log('MediaConvert account-specific endpoint:', endpointUrl)
-      return endpointUrl
-    } else {
-      console.error('No endpoints found.')
-    }
-  } catch (error) {
-    console.error('Error retrieving endpoint:', error)
-  }
 }
 
-exports.createTranscodingJob = async (sourcePath, transPath) => {
-  try {
-    const endpoint = await getAccountEndpoint()
-    const emcClient = new MediaConvertClient({
-      endpoint: endpoint,
-      region: process.env.S3REGION,
-      credentials: {
-        accessKeyId: process.env.S3ACCESS_KEY,
-        secretAccessKey: process.env.S3SECRET_KEY,
-      },
-    })
+export const s3Client = new S3Client(s3ClientsConfig)
+export const mediaConvertClient = new MediaConvertClient(s3ClientsConfig)
 
+// exports.readPhotos = async (bucket: string, key: string) => {
+//   const params = {
+//     Bucket: bucket,
+//     Expires: 259200, //3*24*60*60
+//     Key: key,
+//   }
+
+//   const command = new GetObjectCommand(params)
+//   const signed = await getSignedUrl(s3Client, command)
+//   return signed
+// }
+
+// exports.getVideoUrl = async (bucket: string, key: string) => {
+//   const params = {
+//     Bucket: bucket,
+//     Expires: 36000,
+//     Key: key,
+//   }
+
+//   const command = new GetObjectCommand(params)
+//   const signed = await getSignedUrl(s3Client, command)
+
+//   return signed
+// }
+
+export class MediaAccess {
+  static getSignedUrl = async (Bucket: string, Key: string) => {
+    const command = new GetObjectCommand({ Bucket, Key })
+    const signedUrl = await getSignedUrl(s3Client, command)
+    return signedUrl
+  }
+
+  static createTranscodingJob = async (sourcePath: string, transPath: string) => {
     const videoId = Date.now()
     const outputPath = `${transPath}/`
 
-    const params = {
-      Role: process.env.IAM_ROLE_ARN,
+    const params: CreateJobCommandInput = {
+      Role: env.IAM_ROLE_ARN,
       Settings: {
         Inputs: [
           {
@@ -305,11 +257,8 @@ exports.createTranscodingJob = async (sourcePath, transPath) => {
       },
     }
 
-    const data = await emcClient.send(new CreateJobCommand(params))
+    const data = await mediaConvertClient.send(new CreateJobCommand(params))
     console.log('Transcoding Job Created!')
     return data
-  } catch (error) {
-    console.log('Error message', error.message)
-    return error.message
   }
 }

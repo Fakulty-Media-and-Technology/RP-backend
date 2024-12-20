@@ -35,10 +35,11 @@ export const env = getValidEnv({
   GUEST_TOKEN: process.env.GUEST_TOKEN,
   JWT_SECRET_REFRESH_TOKEN: process.env.JWT_SECRET_REFRESH_TOKEN,
 
-  // AWS S3
+  // AWS 
   S3REGION: process.env.S3REGION,
   S3SECRET_KEY: process.env.S3SECRET_KEY,
   S3ACCESS_KEY: process.env.S3ACCESS_KEY,
+  IAM_ROLE_ARN: process.env.IAM_ROLE_ARN,
 
   // media
   KEY_PAIR_ID: process.env.KEY_PAIR_ID,

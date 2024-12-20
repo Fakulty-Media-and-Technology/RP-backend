@@ -1,12 +1,12 @@
-const {
-  CreateMultipartUploadCommand,
+
+
+import {  CreateMultipartUploadCommand,
   UploadPartCommand,
   CompleteMultipartUploadCommand,
   AbortMultipartUploadCommand,
   S3Client,
   PutObjectCommand,
-  DeleteObjectCommand,
-} = require('@aws-sdk/client-s3')
+  DeleteObjectCommand,} from '@aws-sdk/client-s3'
 const { createTranscodingJob } = require('./media-access')
 
 function getFileExtension(filename) {
