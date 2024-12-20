@@ -16,6 +16,7 @@ import { AdminSuggestionController } from '../controllers/admins/suggestions.adm
 import { AdminDashboardController } from '../controllers/admins/dashboard.admin'
 import { AdminAdsController } from '../controllers/admins/ads.admin'
 import { AdminUsersController } from '../controllers/admins/users.admin'
+import { Multer } from '../utils/Multer'
 
 export const superAdminRouter = express.Router()
 
@@ -44,10 +45,30 @@ superAdminRouter.get('/enums/get-cast', AdminEnumController.getCast)
 superAdminRouter.delete('/enums/rem-cast/:id', AdminEnumController.remcast)
 
 // **** managed media
-superAdminRouter.post('/media/upload-vid', AdminManagemediaController.uploadLargeVideoRoute)
-superAdminRouter.post('/media/upload-vid-short', AdminManagemediaController.uploadShortVideoRoute)
-superAdminRouter.post('/media/upload-subtitle', AdminManagemediaController.uploadVidSubtitle)
-superAdminRouter.post('/media/upload-image', AdminManagemediaController.uploadImageRoute)
+superAdminRouter.post(
+  '/media/upload-vid',
+  Multer.uploadSingleVideo,
+  AdminManagemediaController.uploadVideo,
+)
+
+superAdminRouter.post(
+  '/media/upload-vid-short',
+  Multer.uploadSingleVideo,
+  AdminManagemediaController.uploadVideo,
+)
+
+superAdminRouter.post(
+  '/media/upload-subtitle',
+  Multer.uploadSingleSubtitle,
+  AdminManagemediaController.uploadVidSubtitle,
+)
+
+superAdminRouter.post(
+  '/media/upload-image',
+  Multer.uploadSingleImage,
+  AdminManagemediaController.uploadImageRoute,
+)
+
 superAdminRouter.get('/media/read-photo', AdminManagemediaController.adminGetPhotoUrl)
 superAdminRouter.post('/media/add-subtitle', AdminManagemediaController.addSubtitle)
 superAdminRouter.post('/lives/create', AdminManagemediaController.createLive)
@@ -85,33 +106,49 @@ superAdminRouter.get('/featured/contents/search', AdminFeaturedController.search
 superAdminRouter.post('/featured/contents/add', AdminFeaturedController.addFeatured)
 superAdminRouter.get('/featured/contents/fetch', AdminFeaturedController.getFeaturedContents)
 
-
-// ***** Uploads 
+// ***** Uploads
 
 //add upload
 superAdminRouter.post('/uploads/movie/add', AdminUploadController.addVideoByType('movie'))
 superAdminRouter.post('/uploads/skit/add', AdminUploadController.addVideoByType('skit'))
-superAdminRouter.post('/uploads/music-video/add', AdminUploadController.addVideoByType('music video'))
+superAdminRouter.post(
+  '/uploads/music-video/add',
+  AdminUploadController.addVideoByType('music video'),
+)
 superAdminRouter.post('/uploads/series/add', AdminUploadController.addVideoByType('series'))
 
 // delete upload
-superAdminRouter.delete('/uploads/movie/remove/:id', AdminUploadController.deleteVideoByType('movie'))
+superAdminRouter.delete(
+  '/uploads/movie/remove/:id',
+  AdminUploadController.deleteVideoByType('movie'),
+)
 superAdminRouter.delete('/uploads/skit/remove/:id', AdminUploadController.deleteVideoByType('skit'))
-superAdminRouter.delete('/uploads/series/remove/:id', AdminUploadController.deleteVideoByType('series'))
-superAdminRouter.delete('/uploads/music-video/remove/:id', AdminUploadController.deleteVideoByType('music video'))
+superAdminRouter.delete(
+  '/uploads/series/remove/:id',
+  AdminUploadController.deleteVideoByType('series'),
+)
+superAdminRouter.delete(
+  '/uploads/music-video/remove/:id',
+  AdminUploadController.deleteVideoByType('music video'),
+)
 
 // fetch upload
 superAdminRouter.get('/uploads/movie/fetch', AdminUploadController.fetchVideosByType('movie'))
 superAdminRouter.get('/uploads/skit/fetch', AdminUploadController.fetchVideosByType('skit'))
 superAdminRouter.get('/uploads/series/fetch', AdminUploadController.fetchVideosByType('series'))
-superAdminRouter.get('/uploads/music-video/fetch', AdminUploadController.fetchVideosByType('music video'))
+superAdminRouter.get(
+  '/uploads/music-video/fetch',
+  AdminUploadController.fetchVideosByType('music video'),
+)
 
 // edit upload
 superAdminRouter.put('/uploads/movie/edit/:id', AdminUploadController.editVideoByType('movie'))
 superAdminRouter.put('/uploads/skit/edit/:id', AdminUploadController.editVideoByType('skit'))
 superAdminRouter.put('/uploads/series/edit/:id', AdminUploadController.editVideoByType('series'))
-superAdminRouter.put('/uploads/music-video/edit/:id', AdminUploadController.editVideoByType('music video'))
-
+superAdminRouter.put(
+  '/uploads/music-video/edit/:id',
+  AdminUploadController.editVideoByType('music video'),
+)
 
 // **** suggestions
 superAdminRouter.get('/suggestions/all', AdminSuggestionController.suggestionsAll)

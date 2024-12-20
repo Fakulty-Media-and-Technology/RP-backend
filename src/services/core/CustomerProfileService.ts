@@ -1,10 +1,10 @@
+import { MediaAccess } from '../../../src/services/media-access'
+import { MediaManagement } from '../../../src/services/media-management'
 import { SuggestionModel } from '../../models/suggestions.model'
 import { UserModel } from '../../models/users.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { isValidEmail } from '../../utils/validate'
-import { readPhotos } from '../media-access'
-import { deletePhoto } from '../media-management'
 
 interface FetchCustomerProfileInput {
   currentUser: LoggedInUser
@@ -137,15 +137,10 @@ export class CustomerProfileService {
       }
     }
 
-    const signedUrl = await readPhotos(userPhoto.Bucket, userPhoto.Key)
-
     return {
       data: {
         profile: profile[0],
-        photo_url:
-          typeof signedUrl !== 'string' && signedUrl.status === 400
-            ? 'no profile picture'
-            : signedUrl,
+        photo_url: await MediaAccess.getSignedUrl(userPhoto.Bucket, userPhoto.Key),
       },
       message: 'Client profile fetched',
     }
@@ -180,7 +175,7 @@ export class CustomerProfileService {
     }
 
     if (photo) {
-      await deletePhoto(currentUser.photo)
+      await MediaManagement.deletePhoto(currentUser.photo)
       currentUser.photo = {}
     }
 

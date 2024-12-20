@@ -1,7 +1,7 @@
+import { MediaAccess } from "../../../src/services/media-access"
 import { UpcomingModel } from "../../models/upcoming.model"
 import { LoggedInUser } from "../../types"
 import { OperationalError } from "../../utils/OperationalError"
-import { readPhotos } from "../media-access"
 
 export class CustomerUpcomingService {
     static fetchUpcoming = async () => {
@@ -48,9 +48,9 @@ export class CustomerUpcomingService {
   
       return await Promise.all(
         comingSoon.map(async ele => {
-          ele.portrait_photo = await readPhotos(ele?.portrait_photo?.Bucket, ele?.portrait_photo?.Key)
+          ele.portrait_photo = await MediaAccess.getSignedUrl(ele?.portrait_photo?.Bucket, ele?.portrait_photo?.Key)
   
-          ele.landscape_photo = await readPhotos(
+          ele.landscape_photo = await MediaAccess.getSignedUrl(
             ele?.landscape_photo?.Bucket,
             ele?.landscape_photo?.Key,
           )

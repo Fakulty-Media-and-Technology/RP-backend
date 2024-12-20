@@ -10,7 +10,14 @@ const s3ClientsConfig = {
   },
 }
 
-export class AWSClients {
-  static s3 = new S3Client(s3ClientsConfig)
-  static mediaConvert = new MediaConvertClient(s3ClientsConfig)
+export class AwsUtils {
+  static clients = {
+    s3: new S3Client(s3ClientsConfig),
+    mediaConvert: new MediaConvertClient(s3ClientsConfig),
+  }
+
+  static buckets = {
+    s3Input: 's3://reeplay/',
+    transcodeOutput: 's3://reeplay/transcode/',
+  }
 }

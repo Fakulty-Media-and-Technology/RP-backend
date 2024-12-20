@@ -9,58 +9,23 @@ import { VideoModel } from '../../models/videos.model'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { Live, LiveSchema } from '../../models/lives.model'
-import { uploadImage } from '../../services/media-management'
 import { SettingsModel } from '../../models/userSettings.model'
 import { OperationalError } from '../../utils/OperationalError'
-import { createTranscodingJob, readPhotos } from '../../services/media-access'
 
 import env from '../../env'
+import { MediaManagement } from '../../services/media-management'
+import { MediaAccess } from '../../services/media-access'
+import { AwsUtils } from '../../services/aws/utils'
+import { MediaConvert } from '../../services/aws/mediaConvert'
 
 type GetLiveEventsWithPhotoUrlResult = {
   liveEvent: Live
-  photo_url: Awaited<ReturnType<typeof readPhotos>>
+  photo_url: Awaited<ReturnType<typeof MediaAccess.getSignedUrl>>
 }
 
 type GetLiveEventsWithPhotoUrlResults = Array<GetLiveEventsWithPhotoUrlResult>
 
-const s3Client = new S3Client({
-  region: env.S3REGION,
-  credentials: {
-    accessKeyId: env.S3ACCESS_KEY,
-    secretAccessKey: env.S3SECRET_KEY,
-  },
-})
-
 export class CustomerMediaController {
-  private static _getLiveEventsWithPhotoUrl = async (filterQuery: FilterQuery<LiveSchema>) => {
-    const liveEvents = await LiveRepo.getSelectedLive(filterQuery)
-
-    const settledResults = await Promise.allSettled(
-      liveEvents.map(async event => {
-        const signedUrl = await readPhotos(event.cover_photo.Bucket, event.cover_photo.Key)
-        const photo_url =
-          typeof signedUrl !== 'string' && signedUrl.status == 400 ? 'no picture' : signedUrl
-
-        const result: GetLiveEventsWithPhotoUrlResult = {
-          liveEvent: event,
-          photo_url,
-        }
-
-        return result
-      }),
-    )
-
-    const results: GetLiveEventsWithPhotoUrlResults = []
-
-    settledResults.forEach(result => {
-      if (result.status === 'fulfilled') {
-        results.push(result.value)
-      }
-    })
-
-    return results
-  }
-
   private static _mergeEventAndPhotoUrl = (results: GetLiveEventsWithPhotoUrlResults) => {
     return results.map(result => ({ ...result.liveEvent, photo_url: result.photo_url }))
   }
@@ -69,12 +34,15 @@ export class CustomerMediaController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    const { fileName, fileHandle } = req.body
-    const image = await uploadImage(req, fileHandle, fileName)
+    // const { fileName, fileHandle } = req.body
+
+    if (!req.body.file) {
+      throw new OperationalError('Upload an image', 400)
+    }
 
     sendResponse({
       res,
-      data: image,
+      data: await MediaManagement.uploadImage(req.body.file),
       message: 'image uploaded',
     })
   })
@@ -87,7 +55,7 @@ export class CustomerMediaController {
 
     sendResponse({
       res,
-      data: await readPhotos(bucket, key),
+      data: await MediaAccess.getSignedUrl(bucket, key),
       message: 'image uploaded',
     })
   })
@@ -96,17 +64,16 @@ export class CustomerMediaController {
     const { bucket, key } = req.body
     const user = GetDefined.loggedInUser(req.user)
 
-    const transPath = `s3://reeplay/transcode/${key.split('/').slice(1).join('/')}`
+    // const transPath = `s3://reeplay/transcode/${key.split('/').slice(1).join('/')}`
+    const transPath = `${AwsUtils.buckets.transcodeOutput}/${key}`
 
-    const commandInput: ListObjectsV2CommandInput = {
-      Bucket: bucket,
+    const command = new ListObjectsV2Command({
+      Bucket: AwsUtils.buckets.s3Input,
       Prefix: `transcode/${key.split('/').slice(1).join('/')}/`,
       MaxKeys: 1,
-    }
+    })
 
-    const command: ListObjectsV2Command = new ListObjectsV2Command(commandInput)
-
-    const data = await s3Client.send(command)
+    const data = await AwsUtils.clients.s3.send(command)
 
     if (data.Contents == null) {
       console.dir({ errorMessage: '🛑Error fetching S3 data objects', data }, { depth: null })
@@ -116,9 +83,7 @@ export class CustomerMediaController {
     const checkTranscodedFolder = data.Contents.length > 0
 
     if (checkTranscodedFolder != true) {
-      const filePath = `s3://reeplay/${key}`
-
-      await createTranscodingJob(filePath, transPath)
+      await MediaConvert.transcode(key)
 
       throw new OperationalError(
         'Oops, check back in few minutes, wait while the video is being transcoded',
@@ -129,7 +94,7 @@ export class CustomerMediaController {
     const user_resolution = await SettingsModel.findOne({ user_id: user.id })
     const userRes = user_resolution?.video_quality || '480p'
 
-    const url = `${process.env.CFSDISTRIBUTION}/${key
+    const url = `${env.CFSDISTRIBUTION}/${key
       .split('/')
       .slice(1)
       .join('/')}/${key.split('/').slice(1).join('/')}_${userRes}.mp4`
@@ -180,6 +145,8 @@ export class CustomerMediaController {
       message: 'featured contents fetched successful',
     })
   })
+
+  // ***************** likes ************************ //
 
   static likeVideo = Catch.async(async (req, res) => {
     const streamId = req.params.id
@@ -258,6 +225,38 @@ export class CustomerMediaController {
     })
   })
 
+  // ************ GET EVENTS *********************//
+
+  private static _getLiveEventsWithPhotoUrl = async (filterQuery: FilterQuery<LiveSchema>) => {
+    const liveEvents = await LiveRepo.getSelectedLive(filterQuery)
+
+    const settledResults = await Promise.allSettled(
+      liveEvents.map(async event => {
+        const signedUrl = await MediaAccess.getSignedUrl(
+          event.cover_photo.Bucket,
+          event.cover_photo.Key,
+        )
+
+        const result: GetLiveEventsWithPhotoUrlResult = {
+          liveEvent: event,
+          photo_url: signedUrl,
+        }
+
+        return result
+      }),
+    )
+
+    const results: GetLiveEventsWithPhotoUrlResults = []
+
+    settledResults.forEach(result => {
+      if (result.status === 'fulfilled') {
+        results.push(result.value)
+      }
+    })
+
+    return results
+  }
+
   static getLiveEvents = Catch.async(async (_, res) => {
     const liveEvents = await this._getLiveEventsWithPhotoUrl({
       expired: false,
@@ -278,7 +277,7 @@ export class CustomerMediaController {
 
     sendResponse({
       res,
-      data: (liveEvents),
+      data: liveEvents,
       message: 'live featured events fetched',
     })
   })
@@ -318,7 +317,7 @@ export class CustomerMediaController {
 
     sendResponse({
       res,
-      data: (liveEvents),
+      data: liveEvents,
       message: 'live events fetched: popular',
     })
   })

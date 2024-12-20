@@ -1,8 +1,8 @@
+import { MediaAccess } from '../../../src/services/media-access'
 import { ContestantsModel } from '../../models/contestants.model'
 import { VoteInfoModel } from '../../models/voteInfo.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
-import { readPhotos } from '../media-access'
 
 export class VoteService {
   static fetchVoteInfoByLiveId = async (liveId: unknown) => {
@@ -101,18 +101,9 @@ export class VoteService {
     ])
 
     const contestantInfoWithPhotoUrl = contestantInfo.map(async event => {
-      let photo_url: any = 'no picture'
-
-      if (event.photo && event.photo.Bucket && event.photo.Key) {
-        const signedUrl = await readPhotos(event.photo.Bucket, event.photo.Key)
-
-        photo_url =
-          typeof signedUrl !== 'string' && signedUrl.status == 400 ? 'no picture' : signedUrl
-      }
-
       return {
         ...event.toObject(),
-        photo_url,
+        photo_url: await MediaAccess.getSignedUrl(event.photo.Bucket, event.photo.Key),
       }
     })
 

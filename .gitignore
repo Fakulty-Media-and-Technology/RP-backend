@@ -3,3 +3,8 @@
 # .env
 
 /media
+
+
+# local expolratory tests
+test.ts
+*.mp4

@@ -1,14 +1,15 @@
 import NodeMediaServer from 'node-media-server'
 import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg'
-import { LiveModel } from '../models/lives.model'
+import { fetchActiveLiveStreamKeys } from '../utils/fetchActiveLiveStreamKeys'
 import env from '../env'
+import { Assets } from '../utils/Assets'
 
 export const nmsLivestream = {
   name: 'live',
   pkg: require('../../package'),
-  async register() {
+  register() {
     const config = {
-      logType: 0,
+      logType: 3,
       rtmp: {
         port: 1935,
         chunk_size: 60000,
@@ -17,8 +18,8 @@ export const nmsLivestream = {
         ping_timeout: 60,
       },
       http: {
-        port: env.MEDIA_SERVER_PORT || 8888,
-        mediaroot: './media',
+        port: env.MEDIA_SERVER_HTTP_PORT,
+        mediaroot: './' + Assets.rootMediaDirs.nodeMediaServer,
         allow_origin: '*',
       },
       auth: {
@@ -171,19 +172,6 @@ export const nmsLivestream = {
 
     const nms = new NodeMediaServer(config)
 
-    const validStreamKeys: string[] = []
-
-    const fetchStreamKeys = async () => {
-      try {
-        const streamKeys = await LiveModel.find({ active: true }) //, 'stream_key'
-        streamKeys.map(doc => doc.stream_key != null &&  validStreamKeys.push(doc.stream_key))
-      } catch (error) {
-        console.error('Error fetching stream keys:', error)
-      }
-    }
-
-    fetchStreamKeys()
-
     // const authLiveStm = async (email, password) => {
     //      try {
     //           const userExist = await UsersModel.findOne({
@@ -260,30 +248,42 @@ export const nmsLivestream = {
     //      }
     // });
 
-    nms.on('prePublish', async (id, StreamPath) => {
-
-      const session = nms.getSession(id)
+    nms.on('prePublish', async (_, StreamPath) => {
+      // const session = nms.getSession(id)
       const streamKey = StreamPath.split('/').pop()
 
-        if (!validStreamKeys.includes(streamKey as string)) {
-          console.log('Invalid stream key')
+      if (streamKey === undefined) {
+        console.error('DEV ERROR. Filed to retrive stream key on npm Prebublish', StreamPath)
+        return
+      }
 
-          // TODO: session is a map
-          // session.sendStatusMessage(
-          //   session.publishStreamId,
-          //   'error',
-          //   'NetStream.publish.Unauthorized',
-          //   'Publisehr: Authorization required.',
-          // )
-          // session.reject()
-        } else {
-          console.log('Stream key is valid:', validStreamKeys)
-        }
- 
+      const validStreamKeys = await fetchActiveLiveStreamKeys()
+
+      if (validStreamKeys === null) {
+        console.error(
+          'Either stream no active stream keys or there was ana error fetching the stream keys',
+        )
+        return
+      }
+
+      if (!validStreamKeys.includes(streamKey)) {
+        console.log('Invalid stream key')
+
+        // TODO: Deny the session
+        // session.sendStatusMessage(
+        //   session.publishStreamId,
+        //   'error',
+        //   'NetStream.publish.Unauthorized',
+        //   'Publisehr: Authorization required.',
+        // )
+        // session.reject()
+      } else {
+        console.log('Stream key is valid:', validStreamKeys)
+      }
     })
 
     nms.run()
+
+    return nms
   },
 }
-
-

@@ -2,16 +2,8 @@ import express, { Request, Response } from 'express'
 
 import cors from 'cors'
 import path from 'node:path'
-import fileUpload, { Options as FileUploadOptions } from 'express-fileupload'
 import { v1Router } from './routes/index'
 import { ErrorMiddleware } from './middlewares/errors'
-
-// const { sendPushNotification, sendPush } = require('./notifications/notification')
-
-const fileUploadOptions: FileUploadOptions = {
-  limits: { fileSize: 10 * 1024 * 1024 * 1024 },
-  useTempFiles: false,
-}
 
 const devTestRoute = (_: Request, res: Response) => {
   res.status(200).json({
@@ -26,7 +18,6 @@ export const reeplayApp = () => {
   app.use(express.json({ limit: '10gb' }))
   app.use(express.urlencoded({ extended: true }))
   app.use(cors({ origin: '*' }))
-  app.use(fileUpload(fileUploadOptions))
 
   app.use('/static/images', express.static(path.join(__dirname, 'public/static')))
 

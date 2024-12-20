@@ -14,8 +14,9 @@ export const env = getValidEnv({
   PORT: process.env.PORT,
   MONGO_DB_URL: process.env.MONGO_DB_URL,
 
-  // ??
-  MEDIA_SERVER_PORT: Number(process.env.MEDIA_SERVER_PORT || 8888),
+  // nms
+  MEDIA_SERVER_HTTP_PORT: Number(process.env.MEDIA_SERVER_HTTP_PORT || 8888),
+  MEDIA_SERVER_PORT_RMTP_PORT: Number(process.env.MEDIA_SERVER_PORT_RMTP_PORT || 8888),
   EVENT_HOURLY_CHARGES: process.env.EVENT_HOURLY_CHARGES,
 
   // payments
@@ -44,6 +45,7 @@ export const env = getValidEnv({
   // media
   KEY_PAIR_ID: process.env.KEY_PAIR_ID,
   CFS_PRIVATE_KEY: process.env.CFS_PRIVATE_KEY,
+  CFSDISTRIBUTION: process.env.CFSDISTRIBUTION,
 
   // *** new
   MIN_WITHDRAWAL_AMOUNT: Number(process.env.MIN_WITHDRAWAL_AMOUNT ?? 50000),

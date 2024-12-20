@@ -9,8 +9,9 @@ import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
-import { readPhotos } from '../media-access'
-import { deletePhoto } from '../media-management'
+
+import { MediaManagement } from '../media-management'
+import { MediaAccess } from '../media-access'
 
 function isValidEmail(email: string) {
   const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
@@ -46,7 +47,7 @@ export class DashboardService {
     }
 
     if (photo) {
-      await deletePhoto(currentUser.photo)
+      await MediaManagement.deletePhoto(currentUser.photo)
       currentUser.photo = {}
     }
 
@@ -86,7 +87,7 @@ export class DashboardService {
         const vidPoster = await PosterImageRepo.findByVideoId(video.id)
 
         if (vidPoster) {
-          finalVideo.photo = await readPhotos(vidPoster.bucket, vidPoster.key)
+          finalVideo.photo = await MediaAccess.getSignedUrl(vidPoster.bucket, vidPoster.key)
         }
 
         return finalVideo
@@ -97,14 +98,11 @@ export class DashboardService {
   }
 
   static fetchChannels = async (query: Request['query']) => {
-    const features = new QueryParamsFeatures(
-      LiveRepo.getChannels().select('title cover_photo'),
-      {
-        queryParams: query,
-        defaultLimit: 4000,
-        defaultPage: 1,
-      },
-    ).paginate()
+    const features = new QueryParamsFeatures(LiveRepo.getChannels().select('title cover_photo'), {
+      queryParams: query,
+      defaultLimit: 4000,
+      defaultPage: 1,
+    }).paginate()
 
     return await features.query
   }

@@ -2,6 +2,11 @@ import { FilterQuery } from 'mongoose'
 import { LiveModel, LiveSchema } from '../models/lives.model'
 
 export class LiveRepo {
+  static getActiveStreamKeys = async () => {
+    const liveDocs = await LiveModel.find({ active: true })
+    return liveDocs.filter(doc => doc.stream_key != null).map(doc => doc.stream_key) as string[]
+  }
+
   static getChannels = () => LiveModel.find({ type: 'channel' })
 
   static totalActiveVideosQuery = () => LiveModel.find({ active: true })

@@ -6,7 +6,9 @@ import { CronTasks } from './cron'
 import { reeplayApp } from './app'
 
 import env from './env'
-// import { nmsLivestream } from './livestream/nms'
+import { nmsLivestream } from './livestream/nms'
+import { Assets } from './utils/Assets'
+import { FileHandler } from './utils/FileHandler'
 
 const { PORT } = env
 
@@ -18,14 +20,18 @@ const io = new Server(server, {
   cors: { origin: '*' },
 })
 
+const makeMediDirectories = () => {
+  Object.values(Assets.rootMediaDirs).forEach(dir => FileHandler.createDirIfNotExistSync(dir))
+}
 
 ;(async () => {
-  const mongoDBConnectionRes = await connectMongoDB()
-  console.log(mongoDBConnectionRes)
+  makeMediDirectories()
+  console.log(await connectMongoDB())
 
   server.listen(PORT, async () => {
     console.log(`Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`)
 
+    nmsLivestream.register()
     socketChat(io)
     cronJobs.start()
   })

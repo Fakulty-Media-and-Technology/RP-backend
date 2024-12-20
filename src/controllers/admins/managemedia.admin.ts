@@ -2,7 +2,6 @@ import { Catch } from '../../utils/catchAsync'
 import { LiveModel } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { UserModel } from '../../models/users.model'
-import { readPhotos } from '../../services/media-access'
 
 import { genRandUniqId } from '../../utils/strGen'
 import { sendResponse } from '../../utils/responder'
@@ -11,44 +10,62 @@ import { OperationalError } from '../../utils/OperationalError'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
 
-import {
-  uploadLargeVideos,
-  uploadShortVideos,
-  uploadSubtitle,
-  uploadImage,
-} from '../../services/media-management'
+import { MediaAccess } from '../../services/media-access'
+import { MediaManagement } from '../../services/media-management'
 
 export class AdminManagemediaController {
-  static uploadLargeVideoRoute = Catch.async(async (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream')
-    res.setHeader('Cache-Control', 'no-cache')
-    res.setHeader('Connection', 'keep-alive')
-    res.flushHeaders()
+  // static uploadLargeVideoRoute = Catch.async(async (req, res) => {
+  //   res.setHeader('Content-Type', 'text/event-stream')
+  //   res.setHeader('Cache-Control', 'no-cache')
+  //   res.setHeader('Connection', 'keep-alive')
+  //   res.flushHeaders()
 
+  //   const user = GetDefined.loggedInUser(req.user)
+  //   const {
+  //     file,
+  //     body: { expire },
+  //   } = req
+
+  //   if (file == null) {
+  //     throw new OperationalError('upload a video file', 400)
+  //   }
+
+  //   const video = await MediaManagement.uploadVideo(file, expire)
+
+  //   sendResponse({ res, data: video, message: 'large video uploaded' })
+  // })
+
+  static uploadVideo = Catch.async(async (req, res) => {
     const user = GetDefined.loggedInUser(req.user)
-    const { fileName, fileHandle, expire } = req.body
-    const video = await uploadLargeVideos(req, fileHandle, fileName, expire, res)
-    sendResponse({ res, data: video, message: 'large video uploaded' })
+
+    const {
+      file,
+      body: { expire },
+    } = req
+
+    if (file == null) {
+      throw new OperationalError('upload a video file', 400)
+    }
+
+    const video = await MediaManagement.uploadVideo(file, expire)
+    sendResponse({ res, data: video, message: 'video uploaded' })
   })
 
-  static uploadShortVideoRoute = Catch.async(async (req, res) => {
-    // const user = GetDefined.loggedInUser(req.user)
+  static uploadVidSubtitle = Catch.async(async ({ file }, res) => {
+    if (file == null) {
+      throw new OperationalError('upload a subtitle file', 400)
+    }
 
-    const { fileName, fileHandle, expire } = req.body
-    const video = await uploadShortVideos(req, fileHandle, expire, fileName)
-    sendResponse({ res, data: video, message: 'short video uploaded' })
-  })
-
-  static uploadVidSubtitle = Catch.async(async (req, res) => {
-    const { fileName, fileHandle } = req.body
-    console.log(req.body)
-    const video = await uploadSubtitle(req, fileHandle, fileName)
+    const video = await MediaManagement.uploadSubtitle(file)
     sendResponse({ res, data: video, message: 'video subtitle uploaded' })
   })
 
-  static uploadImageRoute = Catch.async(async (req, res) => {
-    const { fileName, fileHandle } = req.body
-    const image = await uploadImage(req, fileHandle, fileName)
+  static uploadImageRoute = Catch.async(async ({ file }, res) => {
+    if (file == null) {
+      throw new OperationalError('upload a subtitle file', 400)
+    }
+
+    const image = await MediaManagement.uploadSubtitle(file)
     sendResponse({ res, data: image, message: 'image uploaded' })
   })
 
@@ -56,7 +73,7 @@ export class AdminManagemediaController {
     // const user = GetDefined.loggedInUser(req.user)
 
     const { bucket, key } = req.body
-    const image = await readPhotos(bucket, key)
+    const image = await MediaAccess.getSignedUrl(bucket, key)
     sendResponse({ res, data: image, message: 'image fetched' })
   })
 
@@ -177,6 +194,8 @@ export class AdminManagemediaController {
       message: 'matched clients fetched',
     })
   })
+
+  // TODO:REFACTOR
 
   static livesChannels = Catch.async(async ({ query }, res) => {
     const limit = handleDefaultNumAndUnknown(query.limit, 10)

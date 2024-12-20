@@ -12,11 +12,7 @@ interface NotificationData {
 
 // ! this is not used anywhere
 export class Notification {
-  static sendPushNotification = async (
-    title: string,
-    body: Record<string, any>,
-    notificationData: NotificationData,
-  ) => {
+  static sendPushNotification = async (title: string, body: string, notificationData: any) => {
     // Get all user devices
     const userDevices = await UserDeviceModel.find({
       user_id: notificationData.user_id,
@@ -26,10 +22,7 @@ export class Notification {
       userDevices.map(device => {
         const message: TokenMessage = {
           token: device.device_token,
-          notification: {
-            title,
-            body: JSON.stringify(body),
-          },
+          notification: { title, body },
           android: {
             priority: 'high',
             notification: {
@@ -63,7 +56,6 @@ export class Notification {
       }
     })
   }
-
 
   static createNotification = async (data: Record<string, any>) => {
     return new Promise(async resolve => {
