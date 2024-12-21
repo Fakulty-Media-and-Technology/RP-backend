@@ -248,38 +248,143 @@ export const nmsLivestream = {
     //      }
     // });
 
-    nms.on('prePublish', async (_, StreamPath) => {
-      // const session = nms.getSession(id)
-      const streamKey = StreamPath.split('/').pop()
+    nms.on('prePlay', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
 
-      if (streamKey === undefined) {
-        console.error('DEV ERROR. Filed to retrive stream key on npm Prebublish', StreamPath)
-        return
-      }
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'prePlay',
+      })
+    })
 
-      const validStreamKeys = await fetchActiveLiveStreamKeys()
+    nms.on('postPlay', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
 
-      if (validStreamKeys === null) {
-        console.error(
-          'Either stream no active stream keys or there was ana error fetching the stream keys',
-        )
-        return
-      }
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'postPlay',
+      })
+    })
 
-      if (!validStreamKeys.includes(streamKey)) {
-        console.log('Invalid stream key')
+    nms.on('donePlay', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
 
-        // TODO: Deny the session
-        // session.sendStatusMessage(
-        //   session.publishStreamId,
-        //   'error',
-        //   'NetStream.publish.Unauthorized',
-        //   'Publisehr: Authorization required.',
-        // )
-        // session.reject()
-      } else {
-        console.log('Stream key is valid:', validStreamKeys)
-      }
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'donePlay',
+      })
+    })
+
+    nms.on('preConnect', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
+
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'preConnect',
+      })
+    })
+
+    nms.on('postConnect', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
+
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'postConnect',
+      })
+    })
+
+    nms.on('doneConnect', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
+
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'doneConnect',
+      })
+    })
+
+    nms.on('prePublish', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
+
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'prePublish',
+      })
+    })
+
+    nms.on('postPublish', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
+
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'postPublish',
+      })
+    })
+
+    nms.on('donePublish', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
+
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'donePublish',
+      })
+    })
+
+    nms.on('prePublish', async (id, StreamPath) => {
+      const session = nms.getSession(id)
+      // const streamKey = StreamPath.split('/').pop()
+
+      // console.dir(session, { depth: null })
+      console.log({
+        StreamPath,
+        event: 'prePublish',
+      })
+
+      // if (streamKey === undefined) {
+      //   console.error('DEV ERROR. Filed to retrive stream key on npm Prebublish', StreamPath)
+      //   return
+      // }
+
+      // const validStreamKeys = await fetchActiveLiveStreamKeys()
+
+      // if (validStreamKeys === null) {
+      //   console.error(
+      //     'Either stream no active stream keys or there was ana error fetching the stream keys',
+      //   )
+      //   return
+      // }
+
+      // if (!validStreamKeys.includes(streamKey)) {
+      //   console.log('Invalid stream key')
+
+      //   // TODO: Deny the session
+      //   // session.sendStatusMessage(
+      //   //   session.publishStreamId,
+      //   //   'error',
+      //   //   'NetStream.publish.Unauthorized',
+      //   //   'Publisehr: Authorization required.',
+      //   // )
+      //   // session.reject()
+      // } else {
+      //   console.log('Stream key is valid:', validStreamKeys)
+      // }
     })
 
     nms.run()
