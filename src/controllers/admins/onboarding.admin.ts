@@ -1,6 +1,6 @@
 import { User, UserModel } from '../../models/users.model'
 import { UserRepo } from '../../repositories/UserRepo'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { TokenManager } from '../../utils/jwt'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'

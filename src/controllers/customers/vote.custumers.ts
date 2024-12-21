@@ -1,5 +1,5 @@
 import { CustomerVoteService } from '../../services/core/CustomerVoteService'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'

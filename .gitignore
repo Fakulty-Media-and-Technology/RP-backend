@@ -3,6 +3,7 @@
 # .env
 
 /media
+/tempMedia
 
 
 # local expolratory tests

@@ -1,5 +1,5 @@
 import { GiftCardService } from '../../services/core/GiftCardService'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'

@@ -1,6 +1,6 @@
 
 import { OnboardingService } from '../../services/core/OnboardingService'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 

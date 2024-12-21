@@ -2,7 +2,7 @@ import { FilterQuery } from 'mongoose'
 import { getSignedUrl as getCFSignedUrl } from '@aws-sdk/cloudfront-signer'
 import { ListObjectsV2Command, ListObjectsV2CommandInput, S3Client } from '@aws-sdk/client-s3'
 
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 import { VideoModel } from '../../models/videos.model'

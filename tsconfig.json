@@ -17,6 +17,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["**/*"],
-  "exclude": ["node_modules", "./tests", "/build/**/*", "**/*.spec.ts", "**/*.test.ts", "jest.config.js"]
+  "include": ["src/**/*"],
+
+  "exclude": ["node_modules", "media", "tests/**/*", "/build/**/*", "jest.config.js"]
 }

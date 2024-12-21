@@ -1,5 +1,5 @@
 import { SuggestionModel } from '../../models/suggestions.model'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 

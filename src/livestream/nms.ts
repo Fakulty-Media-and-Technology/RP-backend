@@ -1,15 +1,15 @@
 import NodeMediaServer from 'node-media-server'
 import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg'
-import { fetchActiveLiveStreamKeys } from '../utils/fetchActiveLiveStreamKeys'
-import env from '../env'
+import { fetchValidStreamKeys } from '../utils/nms'
 import { Assets } from '../utils/Assets'
+import { Catch } from '../utils/Catch'
+import { OperationalError } from '../utils/OperationalError'
+import env from '../env'
 
-export const nmsLivestream = {
-  name: 'live',
-  pkg: require('../../package'),
-  register() {
+export class MediaStream {
+  static launch() {
     const config = {
-      logType: 3,
+      logType: env.IS_PROD ? 1 : 3, // log only errors in prod
       rtmp: {
         port: 1935,
         chunk_size: 60000,
@@ -172,223 +172,40 @@ export const nmsLivestream = {
 
     const nms = new NodeMediaServer(config)
 
-    // const authLiveStm = async (email, password) => {
-    //      try {
-    //           const userExist = await UsersModel.findOne({
-    //                email: email,
-    //           });
+    nms.on(
+      'prePublish',
+      Catch.NMSPrePublishAsync(async (id, streamPath) => {
+        const session = nms.getSession(id)
+        const streamKey = streamPath.split('/').pop() as string
 
-    //           if (!userExist) {
-    //                return false;
-    //           }
+        const validStreamKeys = await fetchValidStreamKeys()
 
-    //           if (
-    //                !["channel", "tvshow", "event", "podcast"].includes(
-    //                     userExist.role
-    //                )
-    //           ) {
-    //                return false;
-    //           }
+        if (validStreamKeys === null) {
+          // @ts-ignore
+          session.reject()
 
-    //           const passVerify = await VerifytPass(
-    //                password,
-    //                userExist.password
-    //           );
+          throw new OperationalError(
+            ' no active stream keys or there was an error fetching the stream keys',
+            404,
+          )
+        }
 
-    //           if (!passVerify) {
-    //                return false;
-    //           }
+        if (!validStreamKeys.includes(streamKey)) {
+          // @ts-ignore
+          session.sendStatusMessage(
+            // @ts-ignore
+            session.publishStreamId,
+            'error',
+            'NetStream.publish.Unauthorized',
+            'Publisehr: Authorization required.',
+          )
 
-    //           if (userExist.suspended) {
-    //                return false;
-    //           }
-
-    //           return true;
-    //      } catch (error) {
-    //           console.error("Error fetching stream keys:", error);
-    //      }
-    // };
-
-    // nms.on("preConnect", async (id, args) => {
-    //      try {
-    //           const extractQueryParams = (url) => {
-    //                const queryParams = {};
-    //                const urlObj = new URL(
-    //                     url,
-    //                     `rtmp://${config.rtmp.port}`
-    //                );
-    //                urlObj.searchParams.forEach((value, key) => {
-    //                     queryParams[key] = value.replace(/"/g, "");
-    //                });
-    //                return queryParams;
-    //           };
-
-    //           const appParams = extractQueryParams(args.app);
-    //           const email = appParams.email;
-    //           const password = appParams.password;
-
-    //           if (!email || !password) {
-    //                const session = nms.getSession(id);
-    //                session.reject();
-    //                return;
-    //           }
-
-    //           const authenticate = await authLiveStm(email, password);
-    //           console.log("auuut", authenticate);
-
-    //           if (!authenticate) {
-    //                console.log("Invalid auth credentials");
-    //                const session = nms.getSession(id);
-    //                session.reject();
-    //           } else {
-    //                console.log("Auth Credentials are valid!");
-    //           }
-    //      } catch (error) {
-    //           console.error("Error in validating credentials:", error);
-    //      }
-    // });
-
-    nms.on('prePlay', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'prePlay',
-      })
-    })
-
-    nms.on('postPlay', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'postPlay',
-      })
-    })
-
-    nms.on('donePlay', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'donePlay',
-      })
-    })
-
-    nms.on('preConnect', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'preConnect',
-      })
-    })
-
-    nms.on('postConnect', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'postConnect',
-      })
-    })
-
-    nms.on('doneConnect', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'doneConnect',
-      })
-    })
-
-    nms.on('prePublish', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'prePublish',
-      })
-    })
-
-    nms.on('postPublish', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'postPublish',
-      })
-    })
-
-    nms.on('donePublish', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'donePublish',
-      })
-    })
-
-    nms.on('prePublish', async (id, StreamPath) => {
-      const session = nms.getSession(id)
-      // const streamKey = StreamPath.split('/').pop()
-
-      // console.dir(session, { depth: null })
-      console.log({
-        StreamPath,
-        event: 'prePublish',
-      })
-
-      // if (streamKey === undefined) {
-      //   console.error('DEV ERROR. Filed to retrive stream key on npm Prebublish', StreamPath)
-      //   return
-      // }
-
-      // const validStreamKeys = await fetchActiveLiveStreamKeys()
-
-      // if (validStreamKeys === null) {
-      //   console.error(
-      //     'Either stream no active stream keys or there was ana error fetching the stream keys',
-      //   )
-      //   return
-      // }
-
-      // if (!validStreamKeys.includes(streamKey)) {
-      //   console.log('Invalid stream key')
-
-      //   // TODO: Deny the session
-      //   // session.sendStatusMessage(
-      //   //   session.publishStreamId,
-      //   //   'error',
-      //   //   'NetStream.publish.Unauthorized',
-      //   //   'Publisehr: Authorization required.',
-      //   // )
-      //   // session.reject()
-      // } else {
-      //   console.log('Stream key is valid:', validStreamKeys)
-      // }
-    })
+          // @ts-ignore
+          session.reject()
+        }
+      }),
+    )
 
     nms.run()
-
-    return nms
-  },
+  }
 }

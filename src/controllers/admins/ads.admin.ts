@@ -1,4 +1,4 @@
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { sendResponse } from '../../utils/responder'
 import { AdManagerService } from '../../services/core/AdmanagerService'
 

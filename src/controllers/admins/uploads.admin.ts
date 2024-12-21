@@ -1,7 +1,7 @@
 import { ClientSession } from 'mongoose'
 import { PosterImageModel } from '../../models/poster.model'
 import { type Video, VideoModel } from '../../models/videos.model'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'

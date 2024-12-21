@@ -1,4 +1,4 @@
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { LiveModel } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { UserModel } from '../../models/users.model'

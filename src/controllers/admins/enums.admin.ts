@@ -1,7 +1,7 @@
 import { CastEnumService } from '../../services/core/CastEnumService'
 import { CategoryEnumService } from '../../services/core/CategoryEnumsService'
 import { GenreService } from '../../services/core/GenreService'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminEnumController {

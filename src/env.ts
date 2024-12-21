@@ -13,6 +13,11 @@ const getValidEnv = <T extends Record<string, any>>(variables: Partial<T>) => {
 export const env = getValidEnv({
   PORT: process.env.PORT,
   MONGO_DB_URL: process.env.MONGO_DB_URL,
+  NODE_ENV: process.env.NODE_ENV ?? 'production',
+
+  get IS_PROD() {
+    return this.NODE_ENV === 'production'
+  },
 
   // nms
   MEDIA_SERVER_HTTP_PORT: Number(process.env.MEDIA_SERVER_HTTP_PORT || 8888),
@@ -36,7 +41,7 @@ export const env = getValidEnv({
   GUEST_TOKEN: process.env.GUEST_TOKEN,
   JWT_SECRET_REFRESH_TOKEN: process.env.JWT_SECRET_REFRESH_TOKEN,
 
-  // AWS 
+  // AWS
   S3REGION: process.env.S3REGION,
   S3SECRET_KEY: process.env.S3SECRET_KEY,
   S3ACCESS_KEY: process.env.S3ACCESS_KEY,

@@ -1,5 +1,5 @@
 import { TrailerModel } from '../../models/trailer.model'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminTrailerController {

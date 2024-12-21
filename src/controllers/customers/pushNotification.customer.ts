@@ -1,5 +1,5 @@
 import { NotificationService } from '../../services/core/NotificationService'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 

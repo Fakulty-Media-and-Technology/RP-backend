@@ -1,5 +1,5 @@
 import { UserModel } from '../../models/users.model'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
 import { sendResponse } from '../../utils/responder'

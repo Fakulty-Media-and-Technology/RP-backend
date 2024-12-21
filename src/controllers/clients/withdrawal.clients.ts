@@ -1,5 +1,5 @@
 import { WithdrawalService } from '../../services/core/WithdrawalService'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 

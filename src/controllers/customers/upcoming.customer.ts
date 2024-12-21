@@ -1,5 +1,5 @@
 import { CustomerUpcomingService } from '../../services/core/CustomerUpcomingService'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 

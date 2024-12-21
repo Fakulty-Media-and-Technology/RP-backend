@@ -1,6 +1,6 @@
 import { PlanModel } from '../../models/plans.model'
 import { SubscriptionModel } from '../../models/subscription.model'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'

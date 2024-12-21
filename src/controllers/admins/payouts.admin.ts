@@ -1,6 +1,6 @@
 import { PayoutModel } from '../../models/payouts.model'
 import { WalletModel } from '../../models/wallet.model'
-import { Catch } from '../../utils/catchAsync'
+import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
