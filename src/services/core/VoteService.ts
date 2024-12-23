@@ -103,7 +103,7 @@ export class VoteService {
     const contestantInfoWithPhotoUrl = contestantInfo.map(async event => {
       return {
         ...event.toObject(),
-        photo_url: await MediaAccess.getSignedUrl(event.photo.Bucket, event.photo.Key),
+        photo_url: await MediaAccess.getSignedUrl(event.photo.Bucket, event.photo.Key, 'photo'),
       }
     })
 

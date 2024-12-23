@@ -140,7 +140,7 @@ export class CustomerProfileService {
     return {
       data: {
         profile: profile[0],
-        photo_url: await MediaAccess.getSignedUrl(userPhoto.Bucket, userPhoto.Key),
+        photo_url: await MediaAccess.getSignedUrl(userPhoto.Bucket, userPhoto.Key, 'photo'),
       },
       message: 'Client profile fetched',
     }

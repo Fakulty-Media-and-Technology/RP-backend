@@ -60,7 +60,7 @@ AdminManagemediaController.uploadImageRoute = Catch_1.Catch.async(async ({ file 
 AdminManagemediaController.adminGetPhotoUrl = Catch_1.Catch.async(async (req, res) => {
     // const user = GetDefined.loggedInUser(req.user)
     const { bucket, key } = req.body;
-    const image = await media_access_1.MediaAccess.getSignedUrl(bucket, key);
+    const image = await media_access_1.MediaAccess.getSignedUrl(bucket, key, 'photo');
     (0, responder_1.sendResponse)({ res, data: image, message: 'image fetched' });
 });
 AdminManagemediaController.createLive = Catch_1.Catch.async(async (req, res) => {

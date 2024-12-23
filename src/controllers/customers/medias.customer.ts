@@ -55,7 +55,7 @@ export class CustomerMediaController {
 
     sendResponse({
       res,
-      data: await MediaAccess.getSignedUrl(bucket, key),
+      data: await MediaAccess.getSignedUrl(bucket, key, 'photo'),
       message: 'image uploaded',
     })
   })
@@ -235,6 +235,7 @@ export class CustomerMediaController {
         const signedUrl = await MediaAccess.getSignedUrl(
           event.cover_photo.Bucket,
           event.cover_photo.Key,
+          'photo',
         )
 
         const result: GetLiveEventsWithPhotoUrlResult = {

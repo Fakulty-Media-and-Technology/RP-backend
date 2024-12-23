@@ -46,7 +46,7 @@ CustomerMediaController.customerGetPhotoUrl = Catch_1.Catch.async(async (req, re
     const { bucket, key } = req.body;
     (0, responder_1.sendResponse)({
         res,
-        data: await media_access_1.MediaAccess.getSignedUrl(bucket, key),
+        data: await media_access_1.MediaAccess.getSignedUrl(bucket, key, 'photo'),
         message: 'image uploaded',
     });
 });
@@ -179,7 +179,7 @@ CustomerMediaController.unLikeVideo = Catch_1.Catch.async(async (req, res) => {
 CustomerMediaController._getLiveEventsWithPhotoUrl = async (filterQuery) => {
     const liveEvents = await LiveRepo_1.LiveRepo.getSelectedLive(filterQuery);
     const settledResults = await Promise.allSettled(liveEvents.map(async (event) => {
-        const signedUrl = await media_access_1.MediaAccess.getSignedUrl(event.cover_photo.Bucket, event.cover_photo.Key);
+        const signedUrl = await media_access_1.MediaAccess.getSignedUrl(event.cover_photo.Bucket, event.cover_photo.Key, 'photo');
         const result = {
             liveEvent: event,
             photo_url: signedUrl,

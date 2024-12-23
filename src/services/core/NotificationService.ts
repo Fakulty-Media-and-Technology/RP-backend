@@ -57,6 +57,7 @@ export class NotificationService {
           thumbnail_url: await MediaAccess.getSignedUrl(
             notification.thumbnail.Bucket,
             notification.thumbnail.Key,
+            'photo',
           ),
         }
       }),

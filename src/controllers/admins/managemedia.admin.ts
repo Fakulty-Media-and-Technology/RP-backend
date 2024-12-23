@@ -73,7 +73,7 @@ export class AdminManagemediaController {
     // const user = GetDefined.loggedInUser(req.user)
 
     const { bucket, key } = req.body
-    const image = await MediaAccess.getSignedUrl(bucket, key)
+    const image = await MediaAccess.getSignedUrl(bucket, key, 'photo')
     sendResponse({ res, data: image, message: 'image fetched' })
   })
 

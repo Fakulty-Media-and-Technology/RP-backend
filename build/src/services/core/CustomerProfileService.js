@@ -132,7 +132,7 @@ CustomerProfileService.fetchCustomerProfile = async ({ currentUser, currentUserR
     return {
         data: {
             profile: profile[0],
-            photo_url: await media_access_1.MediaAccess.getSignedUrl(userPhoto.Bucket, userPhoto.Key),
+            photo_url: await media_access_1.MediaAccess.getSignedUrl(userPhoto.Bucket, userPhoto.Key, 'photo'),
         },
         message: 'Client profile fetched',
     };

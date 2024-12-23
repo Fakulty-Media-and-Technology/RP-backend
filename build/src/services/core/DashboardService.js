@@ -72,7 +72,7 @@ DashboardService.fetchVideosByType = async (type, queryParams) => {
         };
         const vidPoster = await PosterImageRepo_1.PosterImageRepo.findByVideoId(video.id);
         if (vidPoster) {
-            finalVideo.photo = await media_access_1.MediaAccess.getSignedUrl(vidPoster.bucket, vidPoster.key);
+            finalVideo.photo = await media_access_1.MediaAccess.getSignedUrl(vidPoster.bucket, vidPoster.key, 'photo');
         }
         return finalVideo;
     }));

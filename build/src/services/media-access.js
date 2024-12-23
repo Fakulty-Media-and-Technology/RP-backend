@@ -42,8 +42,9 @@ class MediaAccess {
 }
 exports.MediaAccess = MediaAccess;
 _a = MediaAccess;
-MediaAccess.getSignedUrl = async (Bucket, Key) => {
+MediaAccess.getSignedUrl = async (Bucket, Key, type) => {
+    const expiresIn = type === 'video' ? 36000 : 259200;
     const command = new client_s3_1.GetObjectCommand({ Bucket, Key });
-    const signedUrl = await (0, s3_request_presigner_1.getSignedUrl)(exports.s3Client, command);
+    const signedUrl = await (0, s3_request_presigner_1.getSignedUrl)(exports.s3Client, command, { expiresIn });
     return signedUrl;
 };

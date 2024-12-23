@@ -93,7 +93,11 @@ export class ClientProfileService {
 
     return {
       profile: profile[0],
-      photo_url: await MediaAccess.getSignedUrl(profile[0]?.photo?.Bucket, profile[0]?.photo?.Key),
+      photo_url: await MediaAccess.getSignedUrl(
+        profile[0]?.photo?.Bucket,
+        profile[0]?.photo?.Key,
+        'photo',
+      ),
     }
   }
 }

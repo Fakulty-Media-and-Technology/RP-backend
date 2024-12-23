@@ -87,7 +87,11 @@ export class DashboardService {
         const vidPoster = await PosterImageRepo.findByVideoId(video.id)
 
         if (vidPoster) {
-          finalVideo.photo = await MediaAccess.getSignedUrl(vidPoster.bucket, vidPoster.key)
+          finalVideo.photo = await MediaAccess.getSignedUrl(
+            vidPoster.bucket,
+            vidPoster.key,
+            'photo',
+          )
         }
 
         return finalVideo

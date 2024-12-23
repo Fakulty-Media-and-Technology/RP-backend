@@ -51,8 +51,8 @@ CustomerUpcomingService.fetchUpcoming = async () => {
         },
     ]);
     return await Promise.all(comingSoon.map(async (ele) => {
-        ele.portrait_photo = await media_access_1.MediaAccess.getSignedUrl(ele?.portrait_photo?.Bucket, ele?.portrait_photo?.Key);
-        ele.landscape_photo = await media_access_1.MediaAccess.getSignedUrl(ele?.landscape_photo?.Bucket, ele?.landscape_photo?.Key);
+        ele.portrait_photo = await media_access_1.MediaAccess.getSignedUrl(ele?.portrait_photo?.Bucket, ele?.portrait_photo?.Key, 'photo');
+        ele.landscape_photo = await media_access_1.MediaAccess.getSignedUrl(ele?.landscape_photo?.Bucket, ele?.landscape_photo?.Key, 'photo');
         return ele;
     }));
 };

@@ -89,6 +89,6 @@ ClientProfileService.fetchClientProfile = async (currentUser) => {
     ]);
     return {
         profile: profile[0],
-        photo_url: await media_access_1.MediaAccess.getSignedUrl(profile[0]?.photo?.Bucket, profile[0]?.photo?.Key),
+        photo_url: await media_access_1.MediaAccess.getSignedUrl(profile[0]?.photo?.Bucket, profile[0]?.photo?.Key, 'photo'),
     };
 };

@@ -50,7 +50,7 @@ NotificationService.getNotifications = async (params) => {
     const notificationsWithUrls = await Promise.all(notifications.map(async (notification) => {
         return {
             ...notification,
-            thumbnail_url: await media_access_1.MediaAccess.getSignedUrl(notification.thumbnail.Bucket, notification.thumbnail.Key),
+            thumbnail_url: await media_access_1.MediaAccess.getSignedUrl(notification.thumbnail.Bucket, notification.thumbnail.Key, 'photo'),
         };
     }));
     return notificationsWithUrls;
