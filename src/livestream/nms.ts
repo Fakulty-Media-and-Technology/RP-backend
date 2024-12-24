@@ -9,7 +9,7 @@ import env from '../env'
 export class MediaStream {
   static launch() {
     const config = {
-      logType: env.IS_PROD ? 1 : 3, // log only errors in prod
+      logType: env.IS_PROD ? 2 : 4,
       rtmp: {
         port: 1935,
         chunk_size: 60000,

@@ -5,6 +5,9 @@
 /media
 /tempMedia
 
+# build directory
+/build
+
 
 # local expolratory tests
 test.ts
