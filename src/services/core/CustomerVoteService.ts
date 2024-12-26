@@ -1,3 +1,4 @@
+import { ClientSession } from 'mongoose'
 import { MediaAccess } from '../../../src/services/media-access'
 import { ContestantsModel } from '../../models/contestants.model'
 import { DonateModel } from '../../models/donate.model'
@@ -10,26 +11,20 @@ import { WalletModel } from '../../models/wallet.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { VoteService } from './VoteService'
+import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+
+type CreateVoteWithSessionInput = {
+  currentUser: LoggedInUser
+  data: Record<string, any>
+}
+
+type DonateFundWithSessionInput = CreateVoteWithSessionInput
 
 export class CustomerVoteService {
-  static fetchVoteInfoByLiveId = async (liveId: unknown) => {
-    return await VoteService.fetchVoteInfoByLiveId(liveId)
-  }
-
-  static fetchVoteContestantsByLiveId = async (liveId: string) => {
-    const contestants = await VoteService.fetchVoteContestants(undefined, liveId).sort({ names: 1 })
-
-    return await Promise.all(
-      contestants.map(async event => {
-        return {
-          ...event.toObject(),
-          photo_url: await MediaAccess.getSignedUrl(event.photo.Bucket, event.photo.Key, 'photo'),
-        }
-      }),
-    )
-  }
-
-  static createVote = async (currentUser: LoggedInUser, data: Record<string, any>) => {
+  private static _createVoteWithSession = async (
+    { currentUser, data }: CreateVoteWithSessionInput,
+    session: ClientSession,
+  ) => {
     const { live_id, contestant_id, payment_id, pay_ref } = data
 
     const contestant = await ContestantsModel.findOne({
@@ -77,6 +72,7 @@ export class CustomerVoteService {
       },
       {
         upsert: true,
+        session,
       },
     )
 
@@ -85,7 +81,7 @@ export class CustomerVoteService {
       contestant_id: contestant_id,
       voter_id: currentUser._id,
       payment_id: validPay._id,
-    }).save()
+    }).save({ session })
 
     await ContestantsModel.findOneAndUpdate(
       {
@@ -99,6 +95,7 @@ export class CustomerVoteService {
       },
       {
         upsert: true,
+        session,
       },
     )
 
@@ -113,11 +110,15 @@ export class CustomerVoteService {
       },
       {
         upsert: true,
+        session,
       },
     )
   }
 
-  static donateFund = async (currentUser: LoggedInUser, data: Record<string, any>) => {
+  private static _donateFundWithSession = async (
+    { currentUser, data }: DonateFundWithSessionInput,
+    session: ClientSession,
+  ) => {
     const { live_id, payment_id, pay_ref } = data
 
     const validPay = await PaymentModel.findOne({
@@ -160,6 +161,7 @@ export class CustomerVoteService {
       },
       {
         upsert: true,
+        session,
       },
     )
 
@@ -169,7 +171,7 @@ export class CustomerVoteService {
       live_id: live_id,
       customer_id: currentUser._id,
       payment_id: validPay._id,
-    }).save()
+    }).save({ session })
 
     await WalletModel.findOneAndUpdate(
       {
@@ -182,7 +184,41 @@ export class CustomerVoteService {
       },
       {
         upsert: true,
+        session,
       },
     )
+  }
+
+  // ****************** PUBLIC ****************8
+
+  static fetchVoteInfoByLiveId = async (liveId: unknown) => {
+    return await VoteService.fetchVoteInfoByLiveId(liveId)
+  }
+
+  static fetchVoteContestantsByLiveId = async (liveId: string) => {
+    const contestants = await VoteService.fetchVoteContestants(undefined, liveId).sort({ names: 1 })
+
+    return await Promise.all(
+      contestants.map(async event => {
+        return {
+          ...event.toObject(),
+          photo_url: await MediaAccess.getSignedUrl(event.photo.Bucket, event.photo.Key, 'photo'),
+        }
+      }),
+    )
+  }
+
+  static createVote = async (currentUser: LoggedInUser, data: Record<string, any>) => {
+    await withMongoDBSession(this._createVoteWithSession, {
+      currentUser,
+      data,
+    })
+  }
+
+  static donateFund = async (currentUser: LoggedInUser, data: Record<string, any>) => {
+    await withMongoDBSession(this._donateFundWithSession, {
+      currentUser,
+      data,
+    })
   }
 }

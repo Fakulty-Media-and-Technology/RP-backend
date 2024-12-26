@@ -1,6 +1,6 @@
 import { FilterQuery } from 'mongoose'
 import { getSignedUrl as getCFSignedUrl } from '@aws-sdk/cloudfront-signer'
-import { ListObjectsV2Command, ListObjectsV2CommandInput, S3Client } from '@aws-sdk/client-s3'
+import { ListObjectsV2Command } from '@aws-sdk/client-s3'
 
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
@@ -68,7 +68,7 @@ export class CustomerMediaController {
     const transPath = `${AwsUtils.buckets.transcodeOutput}/${key}`
 
     const command = new ListObjectsV2Command({
-      Bucket: AwsUtils.buckets.s3Input,
+      Bucket: bucket,
       Prefix: `transcode/${key.split('/').slice(1).join('/')}/`,
       MaxKeys: 1,
     })
