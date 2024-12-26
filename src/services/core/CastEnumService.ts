@@ -1,5 +1,5 @@
-import { CastEnumRepo } from "../../repositories/CastEnumRepo"
-import { OperationalError } from "../../utils/OperationalError"
+import { CastEnumRepo } from '../../repositories/CastEnumRepo'
+import { OperationalError } from '../../utils/OperationalError'
 
 export class CastEnumService {
   static createCast = async (name: string, title: string) => {

@@ -1,6 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
-
 const suggestionSchema = new Schema(
   {
     user_id: {

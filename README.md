@@ -100,7 +100,6 @@ SMTP_PASS=your_smtp_password
 
 ## 🚀 Running the Application
 
-
 ### Development
 
 ```bash
@@ -119,7 +118,7 @@ npm start
 npm test
 ```
 
-### Please note that this is a typescript project. As such all source code is written in typescript. The tree structure below shows the source code before transpilation and the *npm start*  command internally handles transapilation and running the entry file. The entry file after transpiling will be  <span style="color:yellow">./build/src/index.js</span>
+### Please note that this is a typescript project. As such all source code is written in typescript. The tree structure below shows the source code before transpilation and the _npm start_ command internally handles transapilation and running the entry file. The entry file after transpiling will be <span style="color:yellow">./build/src/index.js</span>
 
 ### Manual transpilation and running of the application
 

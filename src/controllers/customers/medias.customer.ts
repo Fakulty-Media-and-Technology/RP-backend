@@ -34,8 +34,6 @@ export class CustomerMediaController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    // const { fileName, fileHandle } = req.body
-
     if (!req.body.file) {
       throw new OperationalError('Upload an image', 400)
     }
@@ -48,8 +46,6 @@ export class CustomerMediaController {
   })
 
   static customerGetPhotoUrl = Catch.async(async (req, res) => {
-    // const user = GetDefined.loggedInUser(req.user)
-    // denyGuestUser(user)
 
     const { bucket, key } = req.body
 

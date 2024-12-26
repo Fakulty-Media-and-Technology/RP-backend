@@ -1,7 +1,7 @@
-import { Request } from "express"
-import { AdmanagerModel } from "../../models/admanager.model"
-import { AdManagerRepo } from "../../repositories/AddManagerRepo"
-import { QueryParamsFeatures } from "../../utils/QueryParamsFeatures"
+import { Request } from 'express'
+import { AdmanagerModel } from '../../models/admanager.model'
+import { AdManagerRepo } from '../../repositories/AddManagerRepo'
+import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 
 export class AdManagerService {
   // TODO: Get the types for body

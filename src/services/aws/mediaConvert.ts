@@ -2,7 +2,6 @@ import {
   CreateJobCommand,
   CreateJobCommandInput,
   GetJobCommand,
-  GetJobCommandInput,
 } from '@aws-sdk/client-mediaconvert'
 
 import { AwsUtils } from './utils'

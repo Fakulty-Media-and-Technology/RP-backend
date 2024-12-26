@@ -5,7 +5,7 @@ export class VideoService {
   static Live = LiveService
 
   static searceByText = async (text: string) =>
-    await VideoRepo.searchTitleOrDescriptioneByTextReg(new RegExp(text, 'i'))
+    await VideoRepo.searchTitleOrDescriptionByTextReg(new RegExp(text, 'i'))
 
   static addFeatured = async (id: string, expiry: string) => await VideoRepo.addFeatured(id, expiry)
 

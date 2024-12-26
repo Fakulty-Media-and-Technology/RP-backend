@@ -1,4 +1,4 @@
-import { PaymentModel } from "../models/payments.model";
+import { PaymentModel } from '../models/payments.model'
 
 export class PaymentRepo {
   static getDeposits = (page: number, limit: number) =>

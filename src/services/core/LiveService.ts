@@ -6,6 +6,5 @@ export class LiveService {
 
   static getFeatured = async () => await LiveRepo.getFeatured()
 
-  static addFeatured = async (id: string, expiry: string) =>
-    await LiveRepo.addFeatured(id, expiry)
+  static addFeatured = async (id: string, expiry: string) => await LiveRepo.addFeatured(id, expiry)
 }

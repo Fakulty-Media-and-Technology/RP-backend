@@ -1,6 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
-
 const userdeviceSchema = new Schema(
   {
     user_id: {

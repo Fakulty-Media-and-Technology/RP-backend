@@ -3,7 +3,6 @@ import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
-
 export class AdminDashboardController {
   static fetchChannels = Catch.async(async ({ query }, res) => {
     sendResponse({

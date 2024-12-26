@@ -30,7 +30,7 @@ const giftcardVideosSchema = new Schema(
       default: false,
     },
   },
-  
+
   {
     timestamps: true,
   },

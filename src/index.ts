@@ -1,4 +1,5 @@
 import { Server } from 'socket.io'
+import mongoose from 'mongoose'
 import { createServer } from 'node:http'
 
 import { CronTasks } from './cron'
@@ -10,7 +11,6 @@ import { MediaStream } from './livestream/nms'
 import { FileHandler } from './utils/FileHandler'
 import { connectMongoDB } from './utils/connectDB'
 import { socketChat } from './socket/socketEvents'
-import mongoose from 'mongoose'
 
 const { PORT } = env
 
@@ -66,7 +66,6 @@ function shutdown(exception: string) {
     mediaStream.close()
     await mongoose.connection.close(true)
     console.log('Mongoose connection closed')
-
     server.close() // triggers on server.on('close')
   }
 }

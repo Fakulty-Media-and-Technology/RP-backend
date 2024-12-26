@@ -76,8 +76,6 @@ export class Paystack {
     }
 
     return response
-
-
   }
 
   static async verifyPayment(reference: string) {

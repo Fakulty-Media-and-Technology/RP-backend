@@ -1,5 +1,5 @@
-import { CategoryEnumRepo } from "../../repositories/CategoryEnumRepo"
-import { OperationalError } from "../../utils/OperationalError"
+import { CategoryEnumRepo } from '../../repositories/CategoryEnumRepo'
+import { OperationalError } from '../../utils/OperationalError'
 
 export class CategoryEnumService {
   static addCategory = async (name: string) => {

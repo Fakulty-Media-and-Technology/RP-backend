@@ -1,6 +1,5 @@
-import { DeleteType, GenreRepo } from "../../repositories/GenreRepo"
-import { OperationalError } from "../../utils/OperationalError"
-
+import { DeleteType, GenreRepo } from '../../repositories/GenreRepo'
+import { OperationalError } from '../../utils/OperationalError'
 
 export class GenreService {
   static create = async (name: string) => {

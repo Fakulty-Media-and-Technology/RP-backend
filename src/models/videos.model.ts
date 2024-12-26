@@ -96,7 +96,7 @@ const videosSchema = new Schema(
         key: String,
       },
     ],
-    
+
     artist_name: {
       //for music video
       type: String,

@@ -120,7 +120,7 @@ export class AdminPayoutController {
       //debit from client balance
       const payReq = await PayoutModel.findById(id)
 
-      if(payReq === null){
+      if (payReq === null) {
         throw new OperationalError('Payout not found', 40)
       }
 

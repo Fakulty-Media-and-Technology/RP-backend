@@ -1,4 +1,3 @@
-
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
 const categoryEnumSchema = new Schema(

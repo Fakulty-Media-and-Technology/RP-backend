@@ -1,9 +1,9 @@
-import { PaymentDetailModel } from "../../models/paymentDetails.model"
-import { PaymentModel } from "../../models/payments.model"
-import PaymentServices, { convertKoboToNaira } from "../../paymentIntegration"
-import { PaymentDetailRepo } from "../../repositories/PaymentDetailRepo"
-import { LoggedInUser } from "../../types"
-import { OperationalError } from "../../utils/OperationalError"
+import { PaymentDetailModel } from '../../models/paymentDetails.model'
+import { PaymentModel } from '../../models/payments.model'
+import PaymentServices, { convertKoboToNaira } from '../../paymentIntegration'
+import { PaymentDetailRepo } from '../../repositories/PaymentDetailRepo'
+import { LoggedInUser } from '../../types'
+import { OperationalError } from '../../utils/OperationalError'
 
 interface StartPaymentInput {
   email: string

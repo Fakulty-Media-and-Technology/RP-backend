@@ -36,7 +36,7 @@ const usersSchema = new Schema(
       type: String,
       required: true,
     },
-    
+
     pin: {
       type: String,
       // required: true,

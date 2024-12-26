@@ -12,5 +12,3 @@ export class FileHandler {
     console.log(`dir: ${path} created successfully`)
   }
 }
-
-

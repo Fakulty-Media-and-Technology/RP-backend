@@ -14,7 +14,7 @@ export class VideoRepo {
 
   static totalSkitVideosCOuntQuery = () => this.totalVideosCountQuery({ type: 'skit' })
 
-  static searchTitleOrDescriptioneByTextReg = (textReg: RegExp) =>
+  static searchTitleOrDescriptionByTextReg = (textReg: RegExp) =>
     VideoModel.find({
       $or: [{ title: { $regex: textReg } }, { description: { $regex: textReg } }],
     })

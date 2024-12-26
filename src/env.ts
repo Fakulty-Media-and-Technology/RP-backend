@@ -20,16 +20,17 @@ export const env = getValidEnv({
   },
 
   // nms
-  MEDIA_SERVER_HTTP_PORT: Number(process.env.MEDIA_SERVER_HTTP_PORT || 8888),
-  MEDIA_SERVER_PORT_RMTP_PORT: Number(process.env.MEDIA_SERVER_PORT_RMTP_PORT || 8888),
-  EVENT_HOURLY_CHARGES: process.env.EVENT_HOURLY_CHARGES,
-
+  
+  EVENT_HOURLY_CHARGES: Number(process.env.EVENT_HOURLY_CHARGES),
+  
   // payments
   PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
-
+  
   // livestream
   RP_HLSURL: process.env.RP_HLSURL,
   RP_RTMPURL: process.env.RP_RTMPURL,
+  MEDIA_SERVER_HTTP_PORT: Number(process.env.MEDIA_SERVER_HTTP_PORT || 8888),
+  MEDIA_SERVER_RMTP_PORT: Number(process.env.MEDIA_SERVER_RMTP_PORT || 1935),
 
   // emails
   MAIL_SENDER: process.env.MAIL_SENDER,

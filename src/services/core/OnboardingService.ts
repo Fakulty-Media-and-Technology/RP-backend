@@ -6,8 +6,133 @@ import Email from '../../utils/emailer'
 import { TokenManager } from '../../utils/jwt'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
+import { ClientSession } from 'mongoose'
+import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 
 export class OnboardingService {
+  private static _createCustomerWithSession = async (
+    data: Record<string, any>,
+    session: ClientSession,
+  ) => {
+    const { first_name, last_name, email, password, cpassword, country_code, mobile } = data
+
+    if (
+      !first_name ||
+      !last_name ||
+      !email ||
+      !password ||
+      !cpassword ||
+      !country_code ||
+      !mobile
+    ) {
+      throw new OperationalError(`All inputs are required.`, 400)
+    }
+
+    if (password !== cpassword) {
+      throw new OperationalError('pasword does not match', 400)
+    }
+
+    if (!Password.isStrong(password)) {
+      throw new OperationalError(
+        'password is too weak: use capital, small letter, interger and not less than 8 character',
+        400,
+      )
+    }
+
+    const pin = authCode(6)
+    const pinExpiry = Date.now() + 1000 * 60 * 5 // 5 mins
+
+    const newUser = await new UserModel({
+      email,
+      mobile,
+      last_name,
+      first_name,
+      country_code,
+      auth_code: pin,
+      role: 'customer',
+      auth_expiry: pinExpiry,
+      password: await Password.encrypt(password),
+    }).save({ session })
+
+    //TODO: send welcome pin to mobile number and or email
+    const userData = {
+      firstName: newUser.first_name,
+      lastName: newUser.last_name,
+      email: newUser.email,
+    }
+
+    await new Email(userData).sendVerifyEmail(pin)
+    return newUser
+  }
+
+  private static _changePasswordWithSession = async (email: string, session: ClientSession) => {
+    // if the sendResetPasswordToken fails, updated to user will rollback. NEAT TRICK
+    const emailUser = await UserRepo.getByEmail(email)
+
+    if (!emailUser) {
+      throw new OperationalError('invalid email , user does not exist', 400)
+    }
+
+    const pin = authCode(6)
+
+    await UserModel.findOneAndUpdate(
+      {
+        _id: emailUser._id,
+        email: emailUser.email,
+      },
+      {
+        auth_expiry: Date.now() + 10 * 60 * 1000, //code expires in 10 minutes
+        auth_code: pin,
+      },
+      {
+        upsert: true,
+        session,
+      },
+    )
+
+    const userData = {
+      firstName: emailUser.first_name,
+      lastName: emailUser.last_name,
+      email: emailUser.email,
+    }
+
+    await new Email(userData).sendResetPasswordToken(pin)
+  }
+
+  private static _getVerificationTokenWithSession = async (
+    email: string,
+    session: ClientSession,
+  ) => {
+    const pin = authCode(6)
+    const pinExpiry = Date.now() + 1000 * 60 * 5
+
+    const user = await UserModel.findOneAndUpdate(
+      {
+        email: email,
+        verified: false,
+      },
+      {
+        auth_code: Number(pin),
+        auth_expiry: pinExpiry,
+      },
+      { session },
+    )
+
+    if (user == null) {
+      throw new OperationalError('either user is already verified or does not exist', 400)
+    }
+
+    const userData = {
+      firstName: user.first_name,
+      lastName: user.last_name,
+      email: user.email,
+    }
+
+    await new Email(userData).sendVerifyEmail(pin)
+  }
+
+  // ************* Public *************
+
   static validateToken = async (token: unknown, type: 'access' | 'refresh') => {
     if (typeof token !== 'string') {
       throw new OperationalError('required token must be a string', 404, { valid: false })
@@ -79,63 +204,11 @@ export class OnboardingService {
   }
 
   static getVerificationToken = async (email: string) => {
-    const pin = authCode(6)
-    const pinExpiry = Date.now() + 1000 * 60 * 5
-
-    const user = await UserModel.findOneAndUpdate(
-      {
-        email: email,
-        verified: false,
-      },
-      {
-        auth_code: Number(pin),
-        auth_expiry: pinExpiry,
-      },
-    )
-
-    if (user == null) {
-      throw new OperationalError('either user is already verified or does not exist', 400)
-    }
-
-    const userData = {
-      firstName: user.first_name,
-      lastName: user.last_name,
-      email: user.email,
-    }
-
-    await new Email(userData).sendVerifyEmail(pin)
+    await withMongoDBSession(this._getVerificationTokenWithSession, email)
   }
 
   static changePasswordCode = async (email: string) => {
-    const emailUser = await UserRepo.getByEmail(email)
-
-    if (!emailUser) {
-      throw new OperationalError('invalid email , user does not exist', 400)
-    }
-
-    const pin = authCode(6)
-
-    await UserModel.findOneAndUpdate(
-      {
-        _id: emailUser._id,
-        email: emailUser.email,
-      },
-      {
-        auth_expiry: Date.now() + 10 * 60 * 1000, //code expires in 10 minutes
-        auth_code: pin,
-      },
-      {
-        upsert: true,
-      },
-    )
-
-    const userData = {
-      firstName: emailUser.first_name,
-      lastName: emailUser.last_name,
-      email: emailUser.email,
-    }
-
-    await new Email(userData).sendResetPasswordToken(pin)
+    await withMongoDBSession(this._changePasswordWithSession, email)
   }
 
   static createPin = async (data: Record<string, string>) => {
@@ -157,55 +230,7 @@ export class OnboardingService {
   }
 
   static createCustomer = async (data: Record<string, any>) => {
-    const { first_name, last_name, email, password, cpassword, country_code, mobile } = data
-
-    if (
-      !first_name ||
-      !last_name ||
-      !email ||
-      !password ||
-      !cpassword ||
-      !country_code ||
-      !mobile
-    ) {
-      throw new OperationalError(`All inputs are required.`, 400)
-    }
-
-    if (password !== cpassword) {
-      throw new OperationalError('pasword does not match', 400)
-    }
-
-    if (!Password.isStrong(password)) {
-      throw new OperationalError(
-        'password is too weak: use capital, small letter, interger and not less than 8 character',
-        400,
-      )
-    }
-
-    const pin = authCode(6)
-    const pinExpiry = Date.now() + 1000 * 60 * 5 // 5 mins
-
-    const newUser = await UserModel.create({
-      email,
-      mobile,
-      last_name,
-      first_name,
-      country_code,
-      auth_code: pin,
-      role: 'customer',
-      auth_expiry: pinExpiry,
-      password: await Password.encrypt(password),
-    })
-
-    //TODO: send welcome pin to mobile number and or email
-    const userData = {
-      firstName: newUser.first_name,
-      lastName: newUser.last_name,
-      email: newUser.email,
-    }
-
-    await new Email(userData).sendVerifyEmail(pin)
-    return newUser
+    return await withMongoDBSession(this._createCustomerWithSession, data)
   }
 
   static signIn = async (email: string, password: string) => {
@@ -243,17 +268,11 @@ export class OnboardingService {
     const pin = authCode(6)
 
     if (!userExist.verified) {
-      // TODO: Use session to run the update and send email
-
-      await UserModel.findOneAndUpdate(
-        {
-          email: userExist.email,
-        },
-        {
-          auth_code: Number(pin),
-          auth_expiry: Date.now() + 1000 * 60 * 5,
-        },
-      )
+      // do not use session.
+      await UserRepo.updateById(userExist.id, {
+        auth_code: Number(pin),
+        auth_expiry: Date.now() + 1000 * 60 * 5,
+      })
 
       const userData = {
         firstName: userExist.first_name,

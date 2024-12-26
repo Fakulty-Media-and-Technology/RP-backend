@@ -1,9 +1,6 @@
 const UsersModel = require('../models/users.model')
 const { validateToken } = require('../utils/jwt')
 
-
-
-
 const customerAuth = async (req, res, next) => {
   const token = req.headers['customer-auth']
 
@@ -22,11 +19,8 @@ const customerAuth = async (req, res, next) => {
       role: 'guest',
     }
 
-    return next(
-      
-    )
+    return next()
   }
-
 
   return next()
 

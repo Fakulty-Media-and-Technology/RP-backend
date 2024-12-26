@@ -34,6 +34,7 @@ export class AdminManagemediaController {
 
   //   sendResponse({ res, data: video, message: 'large video uploaded' })
   // })
+  
 
   static uploadVideo = Catch.async(async (req, res) => {
     const user = GetDefined.loggedInUser(req.user)

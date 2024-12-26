@@ -1,7 +1,7 @@
-import { FilterQuery, UpdateQuery } from "mongoose"
-import { SettingsModel, SettingsSchema } from "../../models/userSettings.model"
-import { LoggedInUser } from "../../types"
-import { OperationalError } from "../../utils/OperationalError"
+import { FilterQuery, UpdateQuery } from 'mongoose'
+import { SettingsModel, SettingsSchema } from '../../models/userSettings.model'
+import { LoggedInUser } from '../../types'
+import { OperationalError } from '../../utils/OperationalError'
 
 type PushPull = 'pull' | 'push'
 

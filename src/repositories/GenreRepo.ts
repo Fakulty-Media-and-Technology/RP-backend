@@ -1,4 +1,4 @@
-import { GenreEnumModel } from "../models/genreEnum.model"
+import { GenreEnumModel } from '../models/genreEnum.model'
 
 export type DeleteType = '_id' | 'name'
 
