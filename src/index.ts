@@ -17,19 +17,20 @@ const { PORT } = env
 const app = reeplayApp()
 const server = createServer(app)
 const cronJobs = new CronTasks()
+const mediaStream = new MediaStream()
 
 const io = new Server(server, {
   cors: { origin: '*' },
 })
 
-const makeMediDirectories = () => {
+const makeMediaDirectories = () => {
   Object.values(Assets.rootMediaDirs).forEach(dir => FileHandler.createDirIfNotExistSync(dir))
 }
 
 ;(async () => {
   const mongoDBConn = connectMongoDB()
 
-  makeMediDirectories()
+  makeMediaDirectories()
 
   console.log(await mongoDBConn)
 
@@ -38,7 +39,7 @@ const makeMediDirectories = () => {
 
     socketChat(io)
     cronJobs.start()
-    MediaStream.launch()
+    mediaStream.initiate()
   })
 })()
 
@@ -47,21 +48,25 @@ server.on('close', async () => {
   process.exit()
 })
 
-// do not handle SIGKILL and SIGINT
+// do not handle SIGKILL and SIGSTOP
 process
   .on('uncaughtException', shutdown('uncaughtException'))
   .on('unhandledRejection', shutdown('unhandledRejection'))
 
 function shutdown(exception: string) {
   return async (...args: any[]) => {
-    setTimeout(() => process.exit(1), 100).unref()
+    setTimeout(() => process.exit(1), 400).unref()
     console.error('Server shutdown routine initiated for exception >>>> 🛑', exception)
     console.error('Reasons >>>> 🛑:', args.join(' | '))
 
     // clean up
     io.close()
+    console.log('IO Websocket closed')
     cronJobs.stop()
+    mediaStream.close()
     await mongoose.connection.close(true)
+    console.log('Mongoose connection closed')
+
     server.close() // triggers on server.on('close')
   }
 }
