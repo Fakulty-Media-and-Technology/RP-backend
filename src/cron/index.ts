@@ -17,11 +17,11 @@ export class CronTasks {
 
   start() {
     this._nodeCronTasks.forEach(task => task.start())
-    console.log('Cron jobs started succesfully')
+    console.log('Cron jobs started successfully')
   }
 
   stop() {
     this._nodeCronTasks.forEach(task => task.stop())
-    console.log('Cron jobs stoped succesfully')
+    console.log('Cron jobs stopped successfully')
   }
 }

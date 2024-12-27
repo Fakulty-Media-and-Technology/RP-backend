@@ -55,16 +55,16 @@ export const env = getValidEnv({
   },
 
   get RP_RTMP_URL() {
-    const baseURL = this.RP_RTMP_BASE_URL
-    const port = this.RP_RTMP_PORT
-    const app = this.RP_RTMP_APP_NAME
-    return `${baseURL}/${port}/${app}/`
+    const baseURL = this.IS_PROD ? this.RP_RTMP_BASE_URL : `rmtp://localhost`
+    return `${baseURL}/${this.RP_RTMP_APP_NAME}`
   },
 
   get RP_HLS_URL() {
-    const baseURL = this.RP_HLS_BASE_URL
-    const app = this.RP_RTMP_APP_NAME
-    return `${baseURL}/${app}/`
+    const baseURL = this.IS_PROD
+      ? this.RP_HLS_BASE_URL
+      : `http://localhost:${this.RP_HLS_HTTP_PORT}`
+
+    return `${baseURL}/${this.RP_RTMP_APP_NAME}/`
   },
 
   // emails
@@ -135,4 +135,3 @@ export const env = getValidEnv({
 })
 
 export default env
-

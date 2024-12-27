@@ -27,7 +27,7 @@ export class MediaStream {
           session.reject()
 
           throw new OperationalError(
-            ' no active stream keys or there was an error fetching the stream keys',
+            'no active stream keys or there was an error fetching the stream keys',
             404,
           )
         }
@@ -44,6 +44,7 @@ export class MediaStream {
 
           // @ts-ignore
           session.reject()
+          return
         }
       }),
     )

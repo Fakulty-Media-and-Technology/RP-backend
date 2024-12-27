@@ -27,12 +27,10 @@ const makeMediaDirectories = () => {
   Object.values(Assets.rootMediaDirs).forEach(dir => FileHandler.createDirIfNotExistSync(dir))
 }
 
-;(async () => {
-  const mongoDBConn = connectMongoDB()
+makeMediaDirectories()
 
-  makeMediaDirectories()
-
-  console.log(await mongoDBConn)
+connectMongoDB().then(conn => {
+  console.log(conn)
 
   server.listen(PORT, async () => {
     console.log(`Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`)
@@ -41,7 +39,7 @@ const makeMediaDirectories = () => {
     cronJobs.start()
     mediaStream.initiate()
   })
-})()
+})
 
 server.on('close', async () => {
   console.error('reeplay server is closed: ..... 😢😢......')
