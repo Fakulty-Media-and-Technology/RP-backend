@@ -439,7 +439,7 @@ export class CustomerMediaController {
     }
 
     const firstLiveEvent = liveEvents[0].liveEvent
-    const stream_url = `${env.RP_HLSURL}${firstLiveEvent.stream_key}/index.m3u8`
+    const stream_url = `${env.RP_HLS_URL}${firstLiveEvent.stream_key}/index.m3u8`
 
     firstLiveEvent.stream_key = null
     await firstLiveEvent.save()

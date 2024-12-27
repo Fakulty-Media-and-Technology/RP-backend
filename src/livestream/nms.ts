@@ -58,7 +58,7 @@ export class MediaStream {
 
   private _config = {
     rtmp: {
-      port: env.MEDIA_SERVER_RMTP_PORT,
+      port: env.RP_RTMP_PORT,
       chunk_size: 60000,
       gop_cache: true,
       ping: 30,
@@ -66,7 +66,7 @@ export class MediaStream {
     },
 
     http: {
-      port: env.MEDIA_SERVER_HTTP_PORT,
+      port: env.RP_HLS_HTTP_PORT,
       mediaroot: './' + Assets.rootMediaDirs.nodeMediaServer,
       allow_origin: '*',
     },
@@ -81,7 +81,7 @@ export class MediaStream {
       ffmpeg: ffmpegPath,
       tasks: [
         {
-          app: 'live',
+          app: env.RP_RTMP_APP_NAME,
           hls: true,
           raw: [
             '-vf',

@@ -258,7 +258,7 @@ export class LiveStreamService {
   }
 
   static getLiveStreamCredentials = async (currentUser: LoggedInUser) => {
-    const rtmpUrl = `${env.RP_RTMPURL}` //?email=''&&password=''
+    const rtmpUrl = `${env.RP_RTMP_URL}` //?email=''&&password=''
 
     const credentials = await LiveModel.aggregate([
       {
@@ -275,7 +275,7 @@ export class LiveStreamService {
       {
         $addFields: {
           stream_url: {
-            $concat: [env.RP_HLSURL, '$stream_key', '/index.m3u8'],
+            $concat: [env.RP_HLS_URL, '$stream_key', '/index.m3u8'],
           },
         },
       },

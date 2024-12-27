@@ -59,13 +59,14 @@ function shutdown(exception: string) {
     console.error('Server shutdown routine initiated for exception >>>> 🛑', exception)
     console.error('Reasons >>>> 🛑:', args.join(' | '))
 
-    // clean up
+    // *********** clean up
     io.close()
     console.log('IO Websocket closed')
     cronJobs.stop()
     mediaStream.close()
     await mongoose.connection.close(true)
     console.log('Mongoose connection closed')
-    server.close() // triggers on server.on('close')
+
+    server.close()
   }
 }

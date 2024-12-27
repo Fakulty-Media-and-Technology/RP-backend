@@ -1,5 +1,7 @@
 import 'dotenv/config'
 
+const NUMERIC_REG = /^\d+$/
+
 const getValidEnv = <T extends Record<string, any>>(variables: Partial<T>) => {
   Object.entries(variables).forEach(([key, val]) => {
     if (val === undefined) {
@@ -13,24 +15,57 @@ const getValidEnv = <T extends Record<string, any>>(variables: Partial<T>) => {
 export const env = getValidEnv({
   PORT: process.env.PORT,
   MONGO_DB_URL: process.env.MONGO_DB_URL,
-  NODE_ENV: process.env.NODE_ENV ?? 'production',
+  NODE_ENV: process.env.NODE_ENV || 'production',
 
   get IS_PROD() {
     return this.NODE_ENV === 'production'
   },
 
-  // nms
-  
-  EVENT_HOURLY_CHARGES: Number(process.env.EVENT_HOURLY_CHARGES),
-  
-  // payments
-  PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
-  
   // livestream
-  RP_HLSURL: process.env.RP_HLSURL,
-  RP_RTMPURL: process.env.RP_RTMPURL,
-  MEDIA_SERVER_HTTP_PORT: Number(process.env.MEDIA_SERVER_HTTP_PORT || 8888),
-  MEDIA_SERVER_RMTP_PORT: Number(process.env.MEDIA_SERVER_RMTP_PORT || 1935),
+  RP_RTMP_APP_NAME: process.env.RP_RTMP_APP_NAME || 'live',
+  RP_RTMP_BASE_URL: process.env.RP_RTMP_BASE_URL || 'rtmp://rtmp.reeplay.app',
+  RP_HLS_BASE_URL: process.env.RP_HLS_BASE_URL || 'https://live.reeplay.app',
+
+  get RP_HLS_HTTP_PORT() {
+    const envHlsPort = process.env.RP_HLS_HTTP_PORT
+
+    if (envHlsPort == null) {
+      return 8888
+    }
+
+    if (!NUMERIC_REG.test(envHlsPort)) {
+      throw new Error(`optional env variable RP_HLS_HTTP_PORT must be numeric if present`)
+    }
+
+    return Number(envHlsPort)
+  },
+
+  get RP_RTMP_PORT() {
+    const envRtmpPort = process.env.RP_RTMP_PORT
+
+    if (envRtmpPort == null) {
+      return 1935
+    }
+
+    if (!NUMERIC_REG.test(envRtmpPort)) {
+      throw new Error(`optional env variable RP_RTMP_PORT must be numeric if present`)
+    }
+
+    return Number(envRtmpPort)
+  },
+
+  get RP_RTMP_URL() {
+    const baseURL = this.RP_RTMP_BASE_URL
+    const port = this.RP_RTMP_PORT
+    const app = this.RP_RTMP_APP_NAME
+    return `${baseURL}/${port}/${app}/`
+  },
+
+  get RP_HLS_URL() {
+    const baseURL = this.RP_HLS_BASE_URL
+    const app = this.RP_RTMP_APP_NAME
+    return `${baseURL}/${app}/`
+  },
 
   // emails
   MAIL_SENDER: process.env.MAIL_SENDER,
@@ -53,9 +88,50 @@ export const env = getValidEnv({
   CFS_PRIVATE_KEY: process.env.CFS_PRIVATE_KEY,
   CFSDISTRIBUTION: process.env.CFSDISTRIBUTION,
 
-  // *** new
-  MIN_WITHDRAWAL_AMOUNT: Number(process.env.MIN_WITHDRAWAL_AMOUNT ?? 50000),
-  WITHDRAWAL_PERCENT: Number(process.env.WITHDRAWAL_PERCENT ?? 15),
+  // *** payments
+  PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
+
+  get EVENT_HOURLY_CHARGES() {
+    const envCharges = process.env.EVENT_HOURLY_CHARGES
+
+    if (envCharges == null) {
+      return 10000
+    }
+
+    if (!NUMERIC_REG.test(envCharges)) {
+      throw new Error(`optional env variable EVENT_HOURLY_CHARGES must be numeric if present`)
+    }
+
+    return Number(envCharges)
+  },
+
+  get WITHDRAWAL_PERCENT() {
+    const envPercent = process.env.WITHDRAWAL_PERCENT
+
+    if (envPercent == null) {
+      return 15
+    }
+
+    if (!NUMERIC_REG.test(envPercent)) {
+      throw new Error(`optional env variable WITHDRAWAL_PERCENT must be numeric if present`)
+    }
+
+    return Number(envPercent)
+  },
+
+  get MIN_WITHDRAWAL_AMOUNT() {
+    const envMinWithdrawalAmt = process.env.MIN_WITHDRAWAL_AMOUNT
+
+    if (envMinWithdrawalAmt == null) {
+      return 50000
+    }
+
+    if (!NUMERIC_REG.test(envMinWithdrawalAmt)) {
+      throw new Error(`optional env variable MIN_WITHDRAWAL_AMOUNT must be numeric if present`)
+    }
+
+    return Number(envMinWithdrawalAmt)
+  },
 })
 
 export default env
