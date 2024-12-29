@@ -60,22 +60,24 @@ superAdminRouter.post(
 superAdminRouter.post(
   '/media/upload-subtitle',
   Multer.uploadSingleSubtitle,
-  AdminManagemediaController.uploadVidSubtitle,
+  AdminManagemediaController.uploadImageOrSubtitle('subtitle'),
 )
 
 superAdminRouter.post(
   '/media/upload-image',
   Multer.uploadSingleImage,
-  AdminManagemediaController.uploadImageRoute,
+  AdminManagemediaController.uploadImageOrSubtitle('image'),
 )
 
 superAdminRouter.get('/media/read-photo', AdminManagemediaController.adminGetPhotoUrl)
 superAdminRouter.post('/media/add-subtitle', AdminManagemediaController.addSubtitle)
+
+// **** lives
 superAdminRouter.post('/lives/create', AdminManagemediaController.createLive)
 superAdminRouter.get('/lives/search-clients', AdminManagemediaController.searchClient)
-superAdminRouter.get('/lives/all/channels', AdminManagemediaController.livesChannels)
-superAdminRouter.get('/lives/all/events', AdminManagemediaController.livesEvents)
-superAdminRouter.get('/lives/all/tvshows', AdminManagemediaController.livesTvshows)
+superAdminRouter.get('/lives/all/channels', AdminManagemediaController.getLivesByType('channel'))
+superAdminRouter.get('/lives/all/events', AdminManagemediaController.getLivesByType('event'))
+superAdminRouter.get('/lives/all/tvshows', AdminManagemediaController.getLivesByType('tvshow'))
 
 // **** upcoming events routes
 superAdminRouter.post('/upcoming/event/create', AdminUpcomingController.createUpcomingEvent)

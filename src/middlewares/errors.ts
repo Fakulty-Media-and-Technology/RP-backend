@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { OperationalError } from '../utils/OperationalError'
 import { sendResponse } from '../utils/responder'
+import env from '../env'
 
 export class ErrorMiddleware {
   static allErrors = (err: unknown, _: Request, res: Response, __: NextFunction) => {
@@ -15,6 +16,7 @@ export class ErrorMiddleware {
       return
     }
 
+    env.IS_PROD === false && console.dir({ error: err }, { depth: null })
     // this can be made very elaborate
 
     sendResponse({

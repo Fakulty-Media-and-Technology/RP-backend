@@ -7,72 +7,42 @@ import { genRandUniqId } from '../../utils/strGen'
 import { sendResponse } from '../../utils/responder'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
 
 import { MediaAccess } from '../../services/media-access'
 import { MediaManagement } from '../../services/media-management'
+import { MediaConvert } from '../../services/aws/mediaConvert'
 
 export class AdminManagemediaController {
-  // static uploadLargeVideoRoute = Catch.async(async (req, res) => {
-  //   res.setHeader('Content-Type', 'text/event-stream')
-  //   res.setHeader('Cache-Control', 'no-cache')
-  //   res.setHeader('Connection', 'keep-alive')
-  //   res.flushHeaders()
-
-  //   const user = GetDefined.loggedInUser(req.user)
-  //   const {
-  //     file,
-  //     body: { expire },
-  //   } = req
-
-  //   if (file == null) {
-  //     throw new OperationalError('upload a video file', 400)
-  //   }
-
-  //   const video = await MediaManagement.uploadVideo(file, expire)
-
-  //   sendResponse({ res, data: video, message: 'large video uploaded' })
-  // })
-  
-
-  static uploadVideo = Catch.async(async (req, res) => {
-    const user = GetDefined.loggedInUser(req.user)
-
-    const {
-      file,
-      body: { expire },
-    } = req
+  static uploadVideo = Catch.async(async ({ file, body: { expire, fileName }, user }, res) => {
+    GetDefined.loggedInUser(user)
 
     if (file == null) {
       throw new OperationalError('upload a video file', 400)
     }
 
-    const video = await MediaManagement.uploadVideo(file, expire)
+    const expireDate = typeof expire === 'string' ? new Date(expire) : undefined
+    const video = await MediaManagement.uploadVideo(file, expireDate, fileName)
+    await MediaConvert.transcode(`${video.Key.replace('videos/', '')}/`)
+
     sendResponse({ res, data: video, message: 'video uploaded' })
   })
 
-  static uploadVidSubtitle = Catch.async(async ({ file }, res) => {
-    if (file == null) {
-      throw new OperationalError('upload a subtitle file', 400)
-    }
+  static uploadImageOrSubtitle = (type: 'image' | 'subtitle') =>
+    Catch.async(async ({ file, body: { fileName } }, res) => {
+      const isImageUpload = type === 'image'
 
-    const video = await MediaManagement.uploadSubtitle(file)
-    sendResponse({ res, data: video, message: 'video subtitle uploaded' })
-  })
+      if (file == null) {
+        throw new OperationalError(`upload ${isImageUpload ? 'an image' : 'a subtitle'} file`, 400)
+      }
 
-  static uploadImageRoute = Catch.async(async ({ file }, res) => {
-    if (file == null) {
-      throw new OperationalError('upload a subtitle file', 400)
-    }
-
-    const image = await MediaManagement.uploadSubtitle(file)
-    sendResponse({ res, data: image, message: 'image uploaded' })
-  })
+      const uploader = isImageUpload ? MediaManagement.uploadImage : MediaManagement.uploadSubtitle
+      const upload = await uploader(file, fileName)
+      sendResponse({ res, data: upload, message: `video ${type} uploaded` })
+    })
 
   static adminGetPhotoUrl = Catch.async(async (req, res) => {
-    // const user = GetDefined.loggedInUser(req.user)
-
     const { bucket, key } = req.body
     const image = await MediaAccess.getSignedUrl(bucket, key, 'photo')
     sendResponse({ res, data: image, message: 'image fetched' })
@@ -196,61 +166,24 @@ export class AdminManagemediaController {
     })
   })
 
-  // TODO:REFACTOR
+  static getLivesByType = (type: 'event' | 'channel' | 'tvshow') =>
+    Catch.async(async ({ query }, res) => {
+      const DBQuery = LiveModel.find({ type }).select(
+        '_id title pg vid_class active expiry cover_photo views',
+      )
 
-  static livesChannels = Catch.async(async ({ query }, res) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 1)
+      const features = new QueryParamsFeatures(DBQuery, {
+        defaultLimit: 10,
+        defaultPage: 1,
+        queryParams: query,
+      })
 
-    const allDat = await LiveModel.find({
-      type: 'channel',
+      sendResponse({
+        res,
+        data: await features.paginate().query,
+        message: `live ${type}s fecthed`,
+      })
     })
-      .select('_id title pg vid_class active expiry cover_photo views')
-      .skip((page - 1) * limit)
-      .limit(limit)
-
-    sendResponse({
-      res,
-      data: allDat,
-      message: 'live channels fecthed',
-    })
-  })
-
-  static livesEvents = Catch.async(async ({ query }, res) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 1)
-
-    const allDat = await LiveModel.find({
-      type: 'event',
-    })
-      .select('_id title pg vid_class active expiry cover_photo views')
-      .skip((page - 1) * limit)
-      .limit(limit)
-
-    sendResponse({
-      res,
-      data: allDat,
-      message: 'live events fecthed',
-    })
-  })
-
-  static livesTvshows = Catch.async(async ({ query }, res) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 1)
-
-    const allDat = await LiveModel.find({
-      type: 'tvshow',
-    })
-      .select('_id title pg vid_class active expiry cover_photo views')
-      .skip((page - 1) * limit)
-      .limit(limit)
-
-    sendResponse({
-      res,
-      data: allDat,
-      message: 'live tvShows fecthed',
-    })
-  })
 
   //TODO delete and edit channel
   static addSubtitle = Catch.async(async (req, res) => {

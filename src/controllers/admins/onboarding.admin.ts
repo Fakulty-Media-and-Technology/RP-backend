@@ -132,6 +132,7 @@ export class AdminOnboardingController {
     sendResponse({
       res,
       message: 'Admin SignIn successfull',
+      statusCode: 201,
       data: {
         ...tokenPayload,
         _id: tokenPayload.id,

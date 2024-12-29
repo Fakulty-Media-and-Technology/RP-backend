@@ -230,7 +230,7 @@ export class MediaConvert {
             OutputGroupSettings: {
               Type: 'FILE_GROUP_SETTINGS',
               FileGroupSettings: {
-                Destination: `${AwsUtils.buckets.transcodeOutput}/${key}`,
+                Destination: AwsUtils.buckets.transcodeOutput + key,
               },
             },
           },

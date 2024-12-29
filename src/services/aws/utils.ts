@@ -17,7 +17,13 @@ export class AwsUtils {
   }
 
   static buckets = {
-    s3Input: 's3://reeplay/',
-    transcodeOutput: 's3://reeplay/transcode/',
+    reeplay: 'reeplay',
+    get s3Input() {
+      return `s3://${this.reeplay}/`
+    },
+
+    get transcodeOutput() {
+      return `s3://${this.reeplay}/transcode/`
+    },
   }
 }

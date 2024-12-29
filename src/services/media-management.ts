@@ -6,19 +6,32 @@ import { OperationalError } from '../utils/OperationalError'
 import { S3 } from './aws/s3'
 import { AwsUtils } from './aws/utils'
 import { Bytes } from '../utils/Bytes'
-import { MediaConvert } from './aws/mediaConvert'
+
+const replaceSpaces = (val: string, withVal = '-') => val.replace(' ', withVal)
+
+const getFileName = (file: Express.Multer.File, fileName?: string) => {
+  return fileName ? replaceSpaces(fileName) : replaceSpaces(file.filename)
+}
+
+const getUniqueKey = (file: Express.Multer.File, fileName?: string) => {
+  return getFileName(file, fileName) + `-${Date.now()}-${randomUUID()}`
+}
 
 export class MediaManagement {
-  static uploadVideo = async (file: Express.Multer.File, expireAt?: Date) => {
+  static uploadVideo = async (
+    file: Express.Multer.File,
+    expireAt: Date | undefined,
+    fileName?: string,
+  ) => {
     const passThroughStream = new PassThrough()
 
-    createReadStream(file.path, { highWaterMark: Bytes.mb(100) }).pipe(passThroughStream)
+    createReadStream(file.path, { highWaterMark: Bytes.mb(200) }).pipe(passThroughStream)
 
     // https://github.com/aws/aws-sdk-js-v3/blob/main/lib/lib-storage/example-code/upload-unknown-length.ts
     const uploadRes = await S3.upload({
       Body: passThroughStream,
-      Bucket: AwsUtils.buckets.s3Input,
-      Key: `videos/${file.filename}-${new Date().getTime()}-${randomUUID()}`,
+      Bucket: AwsUtils.buckets.reeplay,
+      Key: `videos/${getUniqueKey(file, fileName)}`,
       ContentType: file.mimetype,
       Expires: expireAt,
     })
@@ -27,21 +40,18 @@ export class MediaManagement {
       throw new OperationalError('could not upload video. Please try again', 500)
     }
 
-    const transcodeRes = await MediaConvert.transcode(uploadRes.Key)
-
     return {
       s3_res: uploadRes,
       Bucket: uploadRes.Bucket,
       Key: uploadRes.Key,
-      transcodeRes,
     }
   }
 
-  static uploadSubtitle = async (file: Express.Multer.File) => {
+  static uploadSubtitle = async (file: Express.Multer.File, fileName?: string) => {
     const response = await S3.upload({
-      Bucket: AwsUtils.buckets.s3Input,
+      Bucket: AwsUtils.buckets.reeplay,
       Body: file.buffer,
-      Key: `subtitles/${file.filename}-${new Date().getTime()}-${randomUUID()}`,
+      Key: `subtitles/${getUniqueKey(file, fileName)}`,
       ContentType: file.mimetype,
     })
 
@@ -52,11 +62,11 @@ export class MediaManagement {
     }
   }
 
-  static uploadImage = async (file: Express.Multer.File) => {
+  static uploadImage = async (file: Express.Multer.File, fileName?: string) => {
     const response = await S3.upload({
-      Bucket: AwsUtils.buckets.s3Input,
+      Bucket: AwsUtils.buckets.reeplay,
       Body: file.buffer,
-      Key: `photos/${file.filename}-${new Date().getTime()}-${randomUUID()}`,
+      Key: `photos/${getUniqueKey(file, fileName)}`,
       ContentType: file.mimetype,
     })
 
