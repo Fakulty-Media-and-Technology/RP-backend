@@ -30,23 +30,21 @@ export class CustomerMediaController {
     return results.map(result => ({ ...result.liveEvent, photo_url: result.photo_url }))
   }
 
-  static uploadImageRoute = Catch.async(async (req, res) => {
-    const user = GetDefined.loggedInUser(req.user)
-    denyGuestUser(user)
+  static uploadImageRoute = Catch.async(async ({ file, body: { fileName }, user }, res) => {
+    denyGuestUser(GetDefined.loggedInUser(user))
 
-    if (!req.body.file) {
+    if (!file) {
       throw new OperationalError('Upload an image', 400)
     }
 
     sendResponse({
       res,
-      data: await MediaManagement.uploadImage(req.body.file),
+      data: await MediaManagement.uploadImageOrSubtitle({ file, fileName, type: 'image' }),
       message: 'image uploaded',
     })
   })
 
   static customerGetPhotoUrl = Catch.async(async (req, res) => {
-
     const { bucket, key } = req.body
 
     sendResponse({

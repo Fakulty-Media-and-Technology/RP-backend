@@ -6,6 +6,13 @@ import { OperationalError } from '../utils/OperationalError'
 import { S3 } from './aws/s3'
 import { AwsUtils } from './aws/utils'
 import { Bytes } from '../utils/Bytes'
+import { UploadImageOrSubtitleType } from './core/AdminManagemediaService'
+
+type UploadImageOrSubtitle = {
+  type: UploadImageOrSubtitleType
+  file: Express.Multer.File
+  fileName?: string
+}
 
 const replaceSpaces = (val: string, withVal = '-') => val.replace(' ', withVal)
 
@@ -41,39 +48,27 @@ export class MediaManagement {
     }
 
     return {
-      s3_res: uploadRes,
+      s3_res: { ...uploadRes, mimetype: file.mimetype },
       Bucket: uploadRes.Bucket,
       Key: uploadRes.Key,
+      mimetype: file.mimetype,
     }
   }
 
-  static uploadSubtitle = async (file: Express.Multer.File, fileName?: string) => {
+  static uploadImageOrSubtitle = async ({ type, file, fileName }: UploadImageOrSubtitle) => {
+    const dir = type === 'image' ? 'photos' : 'subtitles'
+
     const response = await S3.upload({
       Bucket: AwsUtils.buckets.reeplay,
       Body: file.buffer,
-      Key: `subtitles/${getUniqueKey(file, fileName)}`,
+      Key: `${dir}/${getUniqueKey(file, fileName)}`,
       ContentType: file.mimetype,
     })
 
     return {
-      uploadRes: response,
       Bucket: response.Bucket,
       Key: response.Key,
-    }
-  }
-
-  static uploadImage = async (file: Express.Multer.File, fileName?: string) => {
-    const response = await S3.upload({
-      Bucket: AwsUtils.buckets.reeplay,
-      Body: file.buffer,
-      Key: `photos/${getUniqueKey(file, fileName)}`,
-      ContentType: file.mimetype,
-    })
-
-    return {
-      uploadRes: response,
-      Bucket: response.Bucket,
-      Key: response.Key,
+      mimetype: file.mimetype,
     }
   }
 

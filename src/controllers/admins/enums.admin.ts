@@ -19,7 +19,7 @@ export class AdminEnumController {
     sendResponse({
       res,
       data: await GenreService.getGenres(),
-      message: 'new unique genre added',
+      message: 'generes fetched',
     })
   })
 

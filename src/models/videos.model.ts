@@ -101,12 +101,6 @@ const videosSchema = new Schema(
       //for music video
       type: String,
     },
-
-    // new
-    mediaUrl: {
-      type: String,
-      required: [true, 'A video must have a media url'],
-    },
   },
   {
     timestamps: true,

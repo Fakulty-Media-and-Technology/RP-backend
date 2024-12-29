@@ -32,6 +32,16 @@ export class UserRepo {
     return UserModel.findByIdAndUpdate(userId, data, { new: true })
   }
 
+  static searchUsersByRegexQuery = (searchReg: RegExp) =>
+    UserModel.find({
+      role: { $in: ['channel', 'tvshow', 'event', 'podcast'] },
+      $or: [
+        { first_name: { $regex: searchReg } },
+        { last_name: { $regex: searchReg } },
+        { email: { $regex: searchReg } },
+      ],
+    }).select('_id first_name last_name role')
+
   static getFreeUsers = async () => {
     return await UserModel.aggregate([
       {

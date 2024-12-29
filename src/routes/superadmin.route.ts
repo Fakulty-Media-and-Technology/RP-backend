@@ -17,6 +17,8 @@ import { AdminDashboardController } from '../controllers/admins/dashboard.admin'
 import { AdminAdsController } from '../controllers/admins/ads.admin'
 import { AdminUsersController } from '../controllers/admins/users.admin'
 import { Multer } from '../utils/Multer'
+import { requestValidator } from '../middlewares/requestValidator'
+import { addMovieSchema } from '../validations/admin'
 
 export const superAdminRouter = express.Router()
 
@@ -111,7 +113,11 @@ superAdminRouter.get('/featured/contents/fetch', AdminFeaturedController.getFeat
 // ***** Uploads
 
 //add upload
-superAdminRouter.post('/uploads/movie/add', AdminUploadController.addVideoByType('movie'))
+superAdminRouter.post(
+  '/uploads/movie/add',
+  requestValidator(addMovieSchema),
+  AdminUploadController.addVideoByType('movie'),
+)
 superAdminRouter.post('/uploads/skit/add', AdminUploadController.addVideoByType('skit'))
 superAdminRouter.post(
   '/uploads/music-video/add',
