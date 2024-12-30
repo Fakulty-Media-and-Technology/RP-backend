@@ -1,6 +1,6 @@
 import NodeMediaServer from 'node-media-server'
 import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg'
-import { fetchValidStreamKeys } from '../utils/nms'
+import { fetchValidStreamKeys } from '../utils/live'
 import { Assets } from '../utils/Assets'
 import { Catch } from '../utils/Catch'
 import { OperationalError } from '../utils/OperationalError'

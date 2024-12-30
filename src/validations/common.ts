@@ -7,3 +7,28 @@ export const FLOATS_REG = /[-+]?[0-9]*\.?[0-9]+/
 export const STRING_SCHEMA = Joi.string()
 export const MONGO_DB_OBJECT_ID_SCHEMA = Joi.string().pattern(MONGO_DB_OBJECT_ID_REG)
 export const MONGO_DB_OBJECT_ID_ARRAY_SCHEMA = Joi.array().items(MONGO_DB_OBJECT_ID_SCHEMA)
+
+
+export const PHOTO_SCHEMA = Joi.object({
+  Bucket: STRING_SCHEMA.required(),
+  Key: STRING_SCHEMA.required(),
+  ContentType: STRING_SCHEMA.required(),
+})
+
+export const POSTER_SCHEMA = Joi.object({
+  bucket: STRING_SCHEMA.required(),
+  key: STRING_SCHEMA.required(),
+  dimension: STRING_SCHEMA.valid('landscape', 'portrait').required(),
+})
+
+export const LIVE_TYPE_SCHEMA = STRING_SCHEMA.valid(
+  'channel',
+  'event',
+  'tvshow',
+  'podcast',
+  'sport',
+)
+
+export const ISO_STRING_SCHEMA = STRING_SCHEMA.isoDate()
+
+export const VIDEO_CLASS_SCHEMA = STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium')

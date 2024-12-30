@@ -1,13 +1,6 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { previewPhotoSchema } from './commonSchema'
 
-export const photoSchema = new Schema(
-  {
-    Bucket: { type: String, required: true },
-    Key: { type: String, required: true },
-    ContentType: { type: String, required: true },
-  },
-  { timestamps: false, _id: false, versionKey: false },
-)
 
 const usersSchema = new Schema(
   {
@@ -58,7 +51,7 @@ const usersSchema = new Schema(
       required: true,
     },
 
-    photo: photoSchema,
+    photo: previewPhotoSchema,
 
     auth_code: {
       type: Number,

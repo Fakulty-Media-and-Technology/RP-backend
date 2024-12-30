@@ -18,7 +18,14 @@ import { AdminAdsController } from '../controllers/admins/ads.admin'
 import { AdminUsersController } from '../controllers/admins/users.admin'
 import { Multer } from '../utils/Multer'
 import { requestValidator } from '../middlewares/requestValidator'
-import { addMovieOrSkitSchema, addMusicVideoSchema, addSeriesSchema } from '../validations/admin'
+import {
+  addMovieOrSkitSchema,
+  addMusicVideoSchema,
+  addSeriesSchema,
+  addSubtitleSchema,
+  createLiveSchema,
+  getPhotoURLSchema,
+} from '../validations/admin'
 
 export const superAdminRouter = express.Router()
 
@@ -71,11 +78,25 @@ superAdminRouter.post(
   AdminManagemediaController.uploadImageOrSubtitle('image'),
 )
 
-superAdminRouter.get('/media/read-photo', AdminManagemediaController.adminGetPhotoUrl)
-superAdminRouter.post('/media/add-subtitle', AdminManagemediaController.addSubtitle)
+superAdminRouter.get(
+  '/media/read-photo',
+  requestValidator(getPhotoURLSchema),
+  AdminManagemediaController.adminGetPhotoUrl,
+)
+
+superAdminRouter.post(
+  '/media/add-subtitle',
+  requestValidator(addSubtitleSchema),
+  AdminManagemediaController.addSubtitle,
+)
 
 // **** lives
-superAdminRouter.post('/lives/create', AdminManagemediaController.createLive)
+superAdminRouter.post(
+  '/lives/create',
+  requestValidator(createLiveSchema),
+  AdminManagemediaController.createLive,
+)
+
 superAdminRouter.get('/lives/search-clients', AdminManagemediaController.searchClient)
 superAdminRouter.get('/lives/all/channels', AdminManagemediaController.getLivesByType('channel'))
 superAdminRouter.get('/lives/all/events', AdminManagemediaController.getLivesByType('event'))
@@ -142,7 +163,9 @@ superAdminRouter.delete(
   '/uploads/movie/remove/:id',
   AdminUploadController.deleteVideoByType('movie'),
 )
+
 superAdminRouter.delete('/uploads/skit/remove/:id', AdminUploadController.deleteVideoByType('skit'))
+
 superAdminRouter.delete(
   '/uploads/series/remove/:id',
   AdminUploadController.deleteVideoByType('series'),

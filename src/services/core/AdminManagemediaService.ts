@@ -2,7 +2,6 @@ import { LiveModel, LiveSchema } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { UserModel } from '../../models/users.model'
 
-import { genRandUniqId } from '../../utils/strGen'
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
@@ -12,6 +11,7 @@ import { MediaManagement } from '../../services/media-management'
 import { MediaConvert } from '../../services/aws/mediaConvert'
 import { Request } from 'express'
 import { UserRepo } from '../../repositories/UserRepo'
+import { getUniqueStreamID } from '../../utils/live'
 
 export type UploadImageOrSubtitleType = 'image' | 'subtitle'
 
@@ -64,7 +64,7 @@ export class AdminManageMediaService {
 
   static getLivesByType = async (type: LivesType, query: Request['query']) => {
     const DBQuery = LiveModel.find({ type }).select(
-      '_id title pg vid_class active expiry cover_photo views',
+      '_id title pg type vid_class active expiry cover_photo views',
     )
 
     const features = new QueryParamsFeatures(DBQuery, {
@@ -86,13 +86,13 @@ export class AdminManageMediaService {
       throw new OperationalError('specified video id not found', 400)
     }
 
-    await new SubtitleModel({
+    await SubtitleModel.create({
       video_id: vid_id,
       bucket,
       key,
       language,
       is_series,
-    }).save()
+    })
   }
 
   static createLive = async (data: Record<string, any>) => {
@@ -114,24 +114,6 @@ export class AdminManageMediaService {
       location,
     } = data
 
-    if (
-      !client_id ||
-      !title ||
-      !sub_title ||
-      !cover_photo ||
-      !vid_class ||
-      !pg ||
-      !category ||
-      !description ||
-      !type ||
-      !sponsored ||
-      !popular ||
-      !start ||
-      !location
-    ) {
-      throw new OperationalError('all important fields are required', 400)
-    }
-
     const vclient_id = await UserModel.findOne({
       _id: client_id,
       role: { $in: ['channel', 'event', 'podcast', 'tvshow'] },
@@ -141,20 +123,10 @@ export class AdminManageMediaService {
       throw new OperationalError('assigned user not found', 404)
     }
 
-    const streamId = genRandUniqId(12)
-
-    const streamIdExist = await LiveModel.findOne({
-      stream_key: streamId,
-    })
-
-    if (streamIdExist) {
-      throw new OperationalError('Oops, please try again', 400)
-    }
-
     const streamOngoing = await LiveModel.find({ client_id, active: true })
 
     if (streamOngoing.length > 0) {
-      throw new OperationalError('client have an ongoing stream', 400)
+      throw new OperationalError('client has an ongoing stream', 400)
     }
 
     const scheduledStream = await LiveModel.findOne({
@@ -167,11 +139,11 @@ export class AdminManageMediaService {
       throw new OperationalError('client alrealdy have pending scheduled stream', 400)
     }
 
-    await new LiveModel({
+    await LiveModel.create({
       client_id: vclient_id._id,
       title: title,
       sub_title: sub_title,
-      stream_key: streamId,
+      stream_key: await getUniqueStreamID(),
       cover_photo: cover_photo,
       vid_class: vid_class,
       pg: pg,
@@ -184,7 +156,7 @@ export class AdminManageMediaService {
       popular,
       location,
       preview_video: video,
-    }).save()
+    })
   }
 
   static searchClient = async (searchText: string, query: Request['query']) => {

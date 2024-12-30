@@ -1,4 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { previewPhotoSchema, previewVideoSchema } from './commonSchema'
 
 const livesSchema = new Schema(
   {
@@ -32,11 +33,11 @@ const livesSchema = new Schema(
       required: true,
     },
     cover_photo: {
-      type: Object,
+      type: previewPhotoSchema,
       required: true,
     },
     preview_video: {
-      type: Object,
+      type: previewVideoSchema,
     },
     vid_class: {
       type: String,
