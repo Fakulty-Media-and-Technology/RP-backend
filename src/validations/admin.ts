@@ -125,3 +125,15 @@ export const createLiveSchema = {
     expiry: ISO_STRING_SCHEMA.required(),
   }),
 }
+
+export const createUpcomingSchema = {
+  body: Joi.object({
+    title: STRING_SCHEMA.required(),
+    type: STRING_SCHEMA.valid('movie', 'series', 'music video', 'documentary', 'skit').required(),
+    details: STRING_SCHEMA.required(),
+    release_date: STRING_SCHEMA.required(),
+    portrait_photo: PHOTO_SCHEMA.required(),
+    landscape_photo: PHOTO_SCHEMA.required(),
+    trailer_id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+  }),
+}

@@ -1,6 +1,7 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { previewPhotoSchema } from './commonSchema'
 
-const upcomingSchema = new Schema(
+const schema = new Schema(
   {
     title: {
       type: String,
@@ -8,7 +9,7 @@ const upcomingSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ['movie', 'series', 'music video', 'ducumentary', 'skit'],
+      enum: ['movie', 'series', 'music video', 'documentary', 'skit'],
       required: true,
     },
     details: {
@@ -23,11 +24,11 @@ const upcomingSchema = new Schema(
       required: true,
     },
     portrait_photo: {
-      type: Object,
+      type: previewPhotoSchema,
       required: true,
     },
     landscape_photo: {
-      type: Object,
+      type: previewPhotoSchema,
       required: true,
     },
     active: {
@@ -36,7 +37,7 @@ const upcomingSchema = new Schema(
     },
     trailer_id: {
       type: Schema.Types.ObjectId,
-      ref: 'Trailer',
+      ref: 'trailers',
       required: true,
     },
   },
@@ -45,6 +46,6 @@ const upcomingSchema = new Schema(
   },
 )
 
-export const UpcomingModel = model('upcomings', upcomingSchema)
-export type UpcomingSchema = InferSchemaType<typeof upcomingSchema>
-export type Upcoming = HydratedDocumentFromSchema<typeof upcomingSchema>
+export const UpcomingModel = model('upcomings', schema)
+export type UpcomingSchema = InferSchemaType<typeof schema>
+export type Upcoming = HydratedDocumentFromSchema<typeof schema>

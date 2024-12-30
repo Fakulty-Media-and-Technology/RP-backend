@@ -24,6 +24,7 @@ import {
   addSeriesSchema,
   addSubtitleSchema,
   createLiveSchema,
+  createUpcomingSchema,
   getPhotoURLSchema,
 } from '../validations/admin'
 
@@ -103,7 +104,12 @@ superAdminRouter.get('/lives/all/events', AdminManagemediaController.getLivesByT
 superAdminRouter.get('/lives/all/tvshows', AdminManagemediaController.getLivesByType('tvshow'))
 
 // **** upcoming events routes
-superAdminRouter.post('/upcoming/event/create', AdminUpcomingController.createUpcomingEvent)
+superAdminRouter.post(
+  '/upcoming/event/create',
+  requestValidator(createUpcomingSchema),
+  AdminUpcomingController.createUpcomingEvent,
+)
+
 superAdminRouter.get('/upcoming/event/getall', AdminUpcomingController.upcomingsAllGet)
 
 // **** trailer

@@ -7,7 +7,11 @@ type NMSPrepublishHandler = (id: string, st: string) => Promise<void>
 export class Catch {
   static async = (fn: AsyncHandler): AsyncHandler => {
     return async (req, res, next) => {
-      fn(req, res, next).catch(next)
+      try {
+        await fn(req, res, next)
+      } catch (e) {
+        next(e)
+      }
     }
   }
 
