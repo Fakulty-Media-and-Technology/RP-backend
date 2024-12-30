@@ -1,7 +1,8 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { previewPhotoSchema, previewVideoSchema } from './commonSchema'
+import { OperationalError } from '../utils/OperationalError'
 
-const livesSchema = new Schema(
+const schema = new Schema(
   {
     client_id: {
       type: Schema.Types.ObjectId,
@@ -107,6 +108,18 @@ const livesSchema = new Schema(
   },
 )
 
-export const LiveModel = model('lives', livesSchema)
-export type LiveSchema = InferSchemaType<typeof livesSchema>
-export type Live = HydratedDocumentFromSchema<typeof livesSchema>
+schema.pre('save', function (next) {
+  if (this.start && new Date() > this.start) {
+    throw new OperationalError('start date of live event can not be backdated', 400)
+  }
+
+  if (this.start && this.expiry && this.start >= this.expiry) {
+    throw new OperationalError('start date must be lesser than expiry date', 400)
+  }
+
+  next()
+})
+
+export const LiveModel = model('lives', schema)
+export type LiveSchema = InferSchemaType<typeof schema>
+export type Live = HydratedDocumentFromSchema<typeof schema>

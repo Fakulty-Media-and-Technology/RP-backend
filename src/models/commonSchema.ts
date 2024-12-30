@@ -11,8 +11,8 @@ export const previewPhotoSchema = new Schema(
 
 export const previewVideoSchema = new Schema(
   {
-    Bucket: { type: String, required: true },
-    Key: { type: String, required: true },
+    bucket: { type: String, required: true },
+    key: { type: String, required: true },
   },
   { timestamps: false, _id: false, versionKey: false },
 )
