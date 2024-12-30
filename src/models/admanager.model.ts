@@ -40,6 +40,6 @@ const admanagerSchema = new Schema(
   },
 )
 
-export const AdmanagerModel = model('Admanager', admanagerSchema)
+export const AdmanagerModel = model('admanagers', admanagerSchema)
 export type AdmanagerSchema = InferSchemaType<typeof admanagerSchema>
 export type Admanager = HydratedDocumentFromSchema<typeof admanagerSchema>

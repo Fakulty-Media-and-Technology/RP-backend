@@ -28,6 +28,6 @@ const voteSchema = new Schema(
   },
 )
 
-export const VoteModel = model('Vote', voteSchema)
+export const VoteModel = model('votes', voteSchema)
 export type VoteSchema = InferSchemaType<typeof voteSchema>
 export type Vote = HydratedDocumentFromSchema<typeof voteSchema>

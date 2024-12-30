@@ -29,6 +29,6 @@ const trailerSchema = new Schema(
   },
 )
 
-export const TrailerModel = model('Trailer', trailerSchema)
+export const TrailerModel = model('trailers', trailerSchema)
 export type TrailerSchema = InferSchemaType<typeof trailerSchema>
 export type Trailer = HydratedDocumentFromSchema<typeof trailerSchema>

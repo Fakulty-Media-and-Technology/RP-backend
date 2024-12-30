@@ -193,13 +193,13 @@ src
  ┃ ┗ superadmin.mw.js
  ┣ models
  ┃ ┣ admanager.model.ts
- ┃ ┣ castEnum.model.ts
- ┃ ┣ categoryEnum.model.ts
+ ┃ ┣ cast_enums.model.ts
+ ┃ ┣ category_enums.model.ts
  ┃ ┣ comments.model.ts
  ┃ ┣ contestants.model.ts
  ┃ ┣ donate.model.ts
  ┃ ┣ featured.model.ts
- ┃ ┣ genreEnum.model.ts
+ ┃ ┣ genre_enums.model.ts
  ┃ ┣ giftcard.model.ts
  ┃ ┣ lives.model.ts
  ┃ ┣ notifications.model.ts
@@ -233,7 +233,7 @@ src
  ┣ repositories
  ┃ ┣ AddManagerRepo.ts
  ┃ ┣ CastEnumRepo.ts
- ┃ ┣ CategoryEnumRepo.ts
+ ┃ ┣ CategoryEnumService.ts
  ┃ ┣ GenreRepo.ts
  ┃ ┣ LiveRepo.ts
  ┃ ┣ PaymentDetailRepo.ts
@@ -257,7 +257,7 @@ src
  ┃ ┣ core
  ┃ ┃ ┣ AdmanagerService.ts
  ┃ ┃ ┣ CastEnumService.ts
- ┃ ┃ ┣ CategoryEnumsService.ts
+ ┃ ┃ ┣ category_enumssService.ts
  ┃ ┃ ┣ ClientProfileService.ts
  ┃ ┃ ┣ ClientService.ts
  ┃ ┃ ┣ CustomenrPaymentService.ts

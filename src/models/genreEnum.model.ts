@@ -1,6 +1,6 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
-const genreEnumSchema = new Schema(
+const schema = new Schema(
   {
     name: {
       type: String,
@@ -15,6 +15,6 @@ const genreEnumSchema = new Schema(
   },
 )
 
-export const GenreEnumModel = model('genre_enums', genreEnumSchema)
-export type GenreEnumSchema = InferSchemaType<typeof genreEnumSchema>
-export type GenreEnum = HydratedDocumentFromSchema<typeof genreEnumSchema>
+export const GenreEnumModel = model('genre_enums', schema)
+export type GenreEnumSchema = InferSchemaType<typeof schema>
+export type GenreEnum = HydratedDocumentFromSchema<typeof schema>

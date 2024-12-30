@@ -17,7 +17,7 @@ const pickObject = (obj: Record<string, any>, keys: string[]) => {
 }
 
 export const requestValidator = (schema: Record<string, Joi.Schema>) =>
-  Catch.async(async (req, _, next) => {
+  Catch.sync((req, _, next) => {
     const validSchema = pickObject(schema, ['body', 'params', 'query'])
     const pickedReq = pickObject(req, Object.keys(validSchema))
 

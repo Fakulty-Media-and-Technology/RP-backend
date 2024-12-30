@@ -47,6 +47,6 @@ const settingsSchema = new Schema(
   },
 )
 
-export const SettingsModel = model('Setting', settingsSchema)
+export const SettingsModel = model('settings', settingsSchema)
 export type SettingsSchema = InferSchemaType<typeof settingsSchema>
 export type Settings = HydratedDocumentFromSchema<typeof settingsSchema>

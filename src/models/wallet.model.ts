@@ -18,6 +18,6 @@ const walletSchema = new Schema(
   },
 )
 
-export const WalletModel = model('Wallet', walletSchema)
+export const WalletModel = model('wallets', walletSchema)
 export type WalletSchema = InferSchemaType<typeof walletSchema>
 export type Wallet = HydratedDocumentFromSchema<typeof walletSchema>

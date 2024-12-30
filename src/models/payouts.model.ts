@@ -41,6 +41,6 @@ const payoutSchema = new Schema(
   },
 )
 
-export const PayoutModel = model('Payout', payoutSchema)
+export const PayoutModel = model('payouts', payoutSchema)
 export type PayoutSchema = InferSchemaType<typeof payoutSchema>
 export type Payout = HydratedDocumentFromSchema<typeof payoutSchema>

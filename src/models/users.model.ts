@@ -1,5 +1,14 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
+export const photoSchema = new Schema(
+  {
+    Bucket: { type: String, required: true },
+    Key: { type: String, required: true },
+    ContentType: { type: String, required: true },
+  },
+  { timestamps: false, _id: false, versionKey: false },
+)
+
 const usersSchema = new Schema(
   {
     first_name: {
@@ -49,9 +58,7 @@ const usersSchema = new Schema(
       required: true,
     },
 
-    photo: {
-      type: Object,
-    },
+    photo: photoSchema,
 
     auth_code: {
       type: Number,
@@ -118,6 +125,6 @@ const usersSchema = new Schema(
 
 // usersSchema.index({ location: "2dsphere" });
 
-export const UserModel = model('User', usersSchema)
+export const UserModel = model('users', usersSchema)
 export type UserSchema = InferSchemaType<typeof usersSchema>
 export type User = HydratedDocumentFromSchema<typeof usersSchema>

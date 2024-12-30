@@ -45,6 +45,6 @@ const upcomingSchema = new Schema(
   },
 )
 
-export const UpcomingModel = model('Upcoming', upcomingSchema)
+export const UpcomingModel = model('upcomings', upcomingSchema)
 export type UpcomingSchema = InferSchemaType<typeof upcomingSchema>
 export type Upcoming = HydratedDocumentFromSchema<typeof upcomingSchema>

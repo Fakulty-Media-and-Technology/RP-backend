@@ -72,13 +72,15 @@ export class MediaManagement {
     }
   }
 
-  static deletePhoto = async (key: string) => {
-    const response = await S3.deleteObject(key)
+  static deleteObject = async (key: string, bucket: string) => {
+    const response = await S3.deleteObject(key, bucket)
 
-    if (!response.$metadata.httpStatusCode || response.$metadata.httpStatusCode > 299) {
-      throw new OperationalError('Error deleting photo', 500)
+    const deleted = response.$metadata.httpStatusCode === 200
+
+    if (!deleted) {
+      console.error(`🛑🛑 S3 Object deletd error. KEY: ${key} | BUCKET: ${bucket}`)
     }
-
-    return true
+    
+    return deleted
   }
 }

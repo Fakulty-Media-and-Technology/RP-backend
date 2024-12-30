@@ -8,12 +8,8 @@ export class S3 {
     return new Upload({ client: AwsUtils.clients.s3, params }).done()
   }
 
-  static deleteObject = async (key: string) => {
-    const command = new DeleteObjectCommand({
-      Key: key,
-      Bucket: AwsUtils.buckets.s3Input,
-    })
-
+  static deleteObject = async (Key: string, Bucket = AwsUtils.buckets.reeplay) => {
+    const command = new DeleteObjectCommand({ Key, Bucket })
     const res = await AwsUtils.clients.s3.send(command)
     return res
   }

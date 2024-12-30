@@ -49,7 +49,7 @@ const livesSchema = new Schema(
     },
     category: {
       type: [String],
-      ref: 'CategoryEnum',
+      ref: 'category_enums',
     },
     description: {
       type: String,
@@ -106,6 +106,6 @@ const livesSchema = new Schema(
   },
 )
 
-export const LiveModel = model('Live', livesSchema)
+export const LiveModel = model('lives', livesSchema)
 export type LiveSchema = InferSchemaType<typeof livesSchema>
 export type Live = HydratedDocumentFromSchema<typeof livesSchema>

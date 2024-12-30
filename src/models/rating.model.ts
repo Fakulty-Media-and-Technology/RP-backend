@@ -26,6 +26,6 @@ const ratingSchema = new Schema(
   },
 )
 
-export const RatingModel = model('Rating', ratingSchema)
+export const RatingModel = model('ratings', ratingSchema)
 export type RatingSchema = InferSchemaType<typeof ratingSchema>
 export type Rating = HydratedDocumentFromSchema<typeof ratingSchema>

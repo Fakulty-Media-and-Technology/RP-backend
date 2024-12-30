@@ -23,6 +23,6 @@ const donateSchema = new Schema(
   },
 )
 
-export const DonateModel = model('Donate', donateSchema)
+export const DonateModel = model('donates', donateSchema)
 export type DonateSchema = InferSchemaType<typeof donateSchema>
 export type Donate = HydratedDocumentFromSchema<typeof donateSchema>

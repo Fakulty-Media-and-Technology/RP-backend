@@ -37,6 +37,6 @@ const contestantSchema = new Schema(
   },
 )
 
-export const ContestantsModel = model('Contestant', contestantSchema)
+export const ContestantsModel = model('contestants', contestantSchema)
 export type ContestantSchema = InferSchemaType<typeof contestantSchema>
 export type Contestant = HydratedDocumentFromSchema<typeof contestantSchema>

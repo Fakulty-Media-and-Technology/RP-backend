@@ -38,6 +38,6 @@ const subscriptionSchema = new Schema(
   },
 )
 
-export const SubscriptionModel = model('Subscription', subscriptionSchema)
+export const SubscriptionModel = model('subscriptions', subscriptionSchema)
 export type SubscriptionSchema = InferSchemaType<typeof subscriptionSchema>
 export type Subscription = HydratedDocumentFromSchema<typeof subscriptionSchema>

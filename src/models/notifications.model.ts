@@ -43,6 +43,6 @@ const notificationSchema = new Schema(
   },
 )
 
-export const NotificationModel = model('Notification', notificationSchema)
+export const NotificationModel = model('notifications', notificationSchema)
 export type NotificationSchema = InferSchemaType<typeof notificationSchema>
 export type Notification = HydratedDocumentFromSchema<typeof notificationSchema>

@@ -36,6 +36,6 @@ const giftcardVideosSchema = new Schema(
   },
 )
 
-export const GiftCardModel = model('Giftcard', giftcardVideosSchema)
+export const GiftCardModel = model('giftcards', giftcardVideosSchema)
 export type GiftCardSchema = InferSchemaType<typeof giftcardVideosSchema>
 export type GiftCard = HydratedDocumentFromSchema<typeof giftcardVideosSchema>

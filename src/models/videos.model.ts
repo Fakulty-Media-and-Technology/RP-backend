@@ -1,6 +1,6 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
-const videosSchema = new Schema(
+const schema = new Schema(
   {
     admin_id: {
       type: Schema.Types.ObjectId,
@@ -28,7 +28,7 @@ const videosSchema = new Schema(
     key: {
       type: String,
       trim: true,
-      unique: true,
+      // unique: true, // series keys are embedded in episodes. This throws. Switching to manual
       // required: true,
     },
     description: {
@@ -45,18 +45,27 @@ const videosSchema = new Schema(
       type: String,
       required: true,
     },
-    genre: {
-      type: [String], //mongoose.SchemaTypes.ObjectId
-      ref: 'GenreEnum',
-    },
-    category: {
-      type: [String],
-      ref: 'CategoryEnum',
-    },
-    cast: {
-      type: [String],
-      ref: 'CastEnum',
-    },
+    genre: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'genre_enums',
+      },
+    ],
+
+    category: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'category_enums',
+      },
+    ],
+
+    cast: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'cast_enums',
+      },
+    ],
+
     released_date: {
       type: Date,
     },
@@ -107,6 +116,6 @@ const videosSchema = new Schema(
   },
 )
 
-export const VideoModel = model('Video', videosSchema)
-export type VideoSchema = InferSchemaType<typeof videosSchema>
-export type Video = HydratedDocumentFromSchema<typeof videosSchema>
+export const VideoModel = model('videos', schema)
+export type VideoSchema = InferSchemaType<typeof schema>
+export type Video = HydratedDocumentFromSchema<typeof schema>

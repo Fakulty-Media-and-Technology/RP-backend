@@ -26,6 +26,6 @@ const userdeviceSchema = new Schema(
   },
 )
 
-export const UserDeviceModel = model('UserDevice', userdeviceSchema)
+export const UserDeviceModel = model('userdevices', userdeviceSchema)
 export type UserDeviceSchema = InferSchemaType<typeof userdeviceSchema>
 export type UserDevice = HydratedDocumentFromSchema<typeof userdeviceSchema>

@@ -46,9 +46,13 @@ export class DashboardService {
       }
     }
 
+    const prevPhoto = currentUser.photo
+
     if (photo) {
-      await MediaManagement.deletePhoto(currentUser.photo)
-      currentUser.photo = {}
+      if (currentUser.photo)
+        await MediaManagement.deleteObject(currentUser.photo.Key, currentUser.photo.Bucket)
+
+      currentUser.photo = photo
     }
 
     await UserRepo.updateById(currentUser.id, {

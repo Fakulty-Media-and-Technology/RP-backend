@@ -43,6 +43,6 @@ const planSchema = new Schema(
   },
 )
 
-export const PlanModel = model('Plan', planSchema)
+export const PlanModel = model('plans', planSchema)
 export type PlanSchema = InferSchemaType<typeof planSchema>
 export type Plan = HydratedDocumentFromSchema<typeof planSchema>

@@ -20,6 +20,6 @@ const commentSchema = new Schema(
   },
 )
 
-export const CommentModel = model('Comment', commentSchema)
+export const CommentModel = model('comments', commentSchema)
 export type CommentSchema = InferSchemaType<typeof commentSchema>
 export type Comment = HydratedDocumentFromSchema<typeof commentSchema>

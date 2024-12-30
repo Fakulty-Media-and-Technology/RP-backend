@@ -7,6 +7,7 @@ import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { MediaManagement } from '../../services/media-management'
 
 type AllVideoTypes = Video['type']
 
@@ -29,86 +30,6 @@ type AddVideoWithSessionInput = {
 }
 
 export class AdminUploadController {
-  private static _validateInput = (type: AllVideoTypes, data: Record<string, any>) => {
-    const {
-      title,
-      sub_title,
-      bucket,
-      key,
-      pg,
-      vid_class,
-      category,
-      genre,
-      cast,
-      released_date,
-      expiry_date,
-      runtime,
-      default_rating,
-      poster1_data,
-      poster2_data,
-      artist_name,
-      episodes,
-    } = data
-
-    if (
-      !title ||
-      !key ||
-      !pg ||
-      !vid_class ||
-      !category ||
-      !released_date ||
-      !runtime ||
-      !default_rating
-    ) {
-      throw new OperationalError('all required fields are mandatory', 400)
-    }
-
-    if (
-      !poster1_data.key ||
-      !poster1_data.dimension ||
-      !poster2_data.key ||
-      !poster2_data.dimension
-    ) {
-      throw new OperationalError('video poster details are required', 400)
-    }
-
-    switch (type) {
-      case 'series':
-        if (
-          typeof episodes === undefined ||
-          typeof genre === undefined ||
-          typeof cast === undefined
-        ) {
-          throw new OperationalError(
-            'episodes, cast and genres are required when uploading series',
-            400,
-          )
-        }
-        break
-      case 'music video':
-        if (typeof artist_name === undefined || typeof bucket === undefined) {
-          throw new OperationalError(
-            'artist_name and bucket are required when uploading series',
-            400,
-          )
-        }
-        break
-
-      default:
-        if (
-          typeof genre === undefined ||
-          typeof cast === undefined ||
-          typeof bucket === undefined
-        ) {
-          throw new OperationalError(
-            'cast and genre and bucket are required when uploading movies or skits',
-            400,
-          )
-        }
-        break
-    }
-  }
-
   private static _makePosters = async (data: MakePostersInput, session: ClientSession) => {
     await new PosterImageModel({
       video_id: data.videoId,
@@ -129,9 +50,11 @@ export class AdminUploadController {
     input: AddVideoWithSessionInput,
     session: ClientSession,
   ) => {
-    this._validateInput(input.type, input.data)
-
     const { poster1_data, poster2_data } = input.data
+
+    if (input.data.key && !!(await VideoModel.findOne({ key: input.data.key }))) {
+      throw new OperationalError('Video with key already exists', 400)
+    }
 
     const videoData = await new VideoModel({
       admin_id: input.adminId,
@@ -140,22 +63,23 @@ export class AdminUploadController {
       is_series: input.type === 'series',
     }).save({ session })
 
-    const makePostersParams: MakePostersInput = {
-      videoId: videoData.id,
-      posterOne: {
-        bucket: poster1_data.bucket,
-        key: poster1_data.key,
-        dimension: poster1_data.dimension,
-      },
+    await this._makePosters(
+      {
+        videoId: videoData.id,
+        posterOne: {
+          bucket: poster1_data.bucket,
+          key: poster1_data.key,
+          dimension: poster1_data.dimension,
+        },
 
-      posterTwo: {
-        bucket: poster2_data.bucket,
-        key: poster2_data.key,
-        dimension: poster2_data.dimension,
+        posterTwo: {
+          bucket: poster2_data.bucket,
+          key: poster2_data.key,
+          dimension: poster2_data.dimension,
+        },
       },
-    }
-
-    await this._makePosters(makePostersParams, session)
+      session,
+    )
   }
 
   static addVideoByType = (type: AllVideoTypes) =>
@@ -178,29 +102,23 @@ export class AdminUploadController {
     Catch.async(async (req, res) => {
       const vid_id = req.params.id
 
-      const initData = await VideoModel.findOne({ _id: vid_id, type })
+      const video = await VideoModel.findOne({ _id: vid_id, type })
 
-      if (initData == null) {
+      if (video == null) {
         throw new OperationalError('video does not exist or does not exist as this type', 400)
       }
 
       const requestData = req.body as Record<string, any>
-      const initDataObject = initData.toObject()
-      const update: Record<string, any> = {}
 
-      Object.entries(initDataObject).forEach(([key, value]) => {
-        if (key === '_id') return
-
-        const requestDataValue = requestData[key]
-        update[key] = typeof requestDataValue !== undefined ? requestDataValue : value
-      })
+      delete requestData['_id']
+      delete requestData['admin_id']
 
       const updatedVid = await VideoModel.findOneAndUpdate(
         {
           _id: vid_id,
           type,
         },
-        update,
+        requestData,
         {
           new: true,
         },
@@ -234,21 +152,29 @@ export class AdminUploadController {
       })
     })
 
-  static deleteVideoByType = (_: AllVideoTypes) =>
+  static deleteVideoByType = (type: AllVideoTypes) =>
     Catch.async(async (req, res) => {
       const vid_id = req.params.id
 
-      // const deletedVid = await VideoModel.findOneAndDelete({ _id: vid_id, type })
+      const deletedVid = await VideoModel.findOneAndDelete({ _id: vid_id, type })
 
-      // if (deletedVid == null) {
-      //   throw new OperationalError('Not found', 404)
-      // }
+      if (deletedVid == null) {
+        throw new OperationalError(`Not found or video is not a ${type} `, 404)
+      }
+
+      if (deletedVid.is_series && deletedVid.episodes.length) {
+        for (const { key, bucket } of deletedVid.episodes) {
+          if (key && bucket) MediaManagement.deleteObject(key, bucket).catch(() => {})
+        }
+      }
+
+      if (deletedVid.key && deletedVid.bucket) {
+        MediaManagement.deleteObject(deletedVid.key, deletedVid.bucket).catch(() => {})
+      }
 
       sendResponse({
         res,
-        message: 'TODO',
+        message: `${type} deleted successfully`,
       })
-
-      //TODO delete S3 objecttsss
     })
 }

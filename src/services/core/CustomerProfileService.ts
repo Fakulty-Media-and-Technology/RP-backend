@@ -2,6 +2,7 @@ import { MediaAccess } from '../../../src/services/media-access'
 import { MediaManagement } from '../../../src/services/media-management'
 import { SuggestionModel } from '../../models/suggestions.model'
 import { UserModel } from '../../models/users.model'
+import { UserRepo } from '../../repositories/UserRepo'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { isValidEmail } from '../../utils/validate'
@@ -164,32 +165,28 @@ export class CustomerProfileService {
 
     if (email) {
       if (!isValidEmail(email)) {
-        console.log('Invalid email format:', email)
         throw new OperationalError('invalid email format', 400)
       }
 
       if (await UserModel.findOne({ email: email })) {
-        console.log('Email already in use:', email)
-        throw new OperationalError('invalid email format', 409)
+        throw new OperationalError('Email already in use', 409)
       }
     }
 
     if (photo) {
-      await MediaManagement.deletePhoto(currentUser.photo)
-      currentUser.photo = {}
+      if (currentUser.photo)
+        await MediaManagement.deleteObject(currentUser.photo.Key, currentUser.photo.Bucket)
+
+      currentUser.photo = photo
     }
 
-    const updatedUser = await UserModel.findByIdAndUpdate(currentUser._id, {
+    await UserRepo.updateById(currentUser._id, {
       email: email ? email : currentUser.email,
       first_name: first_name ? first_name : currentUser.first_name,
       last_name: last_name ? last_name : currentUser.last_name,
       country_code: country_code ? country_code : currentUser.country_code,
       mobile: mobile ? mobile : currentUser.mobile,
-      photo: photo ? photo : currentUser.photo,
+      photo: currentUser.photo,
     })
-
-    if (updatedUser === null) {
-      throw new OperationalError('error updating profile. Please try again', 500)
-    }
   }
 }

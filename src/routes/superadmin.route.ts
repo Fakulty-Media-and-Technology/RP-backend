@@ -18,7 +18,7 @@ import { AdminAdsController } from '../controllers/admins/ads.admin'
 import { AdminUsersController } from '../controllers/admins/users.admin'
 import { Multer } from '../utils/Multer'
 import { requestValidator } from '../middlewares/requestValidator'
-import { addMovieSchema } from '../validations/admin'
+import { addMovieOrSkitSchema, addMusicVideoSchema, addSeriesSchema } from '../validations/admin'
 
 export const superAdminRouter = express.Router()
 
@@ -115,15 +115,27 @@ superAdminRouter.get('/featured/contents/fetch', AdminFeaturedController.getFeat
 //add upload
 superAdminRouter.post(
   '/uploads/movie/add',
-  requestValidator(addMovieSchema),
+  requestValidator(addMovieOrSkitSchema),
   AdminUploadController.addVideoByType('movie'),
 )
-superAdminRouter.post('/uploads/skit/add', AdminUploadController.addVideoByType('skit'))
+
+superAdminRouter.post(
+  '/uploads/skit/add',
+  requestValidator(addMovieOrSkitSchema),
+  AdminUploadController.addVideoByType('skit'),
+)
+
 superAdminRouter.post(
   '/uploads/music-video/add',
+  requestValidator(addMusicVideoSchema),
   AdminUploadController.addVideoByType('music video'),
 )
-superAdminRouter.post('/uploads/series/add', AdminUploadController.addVideoByType('series'))
+
+superAdminRouter.post(
+  '/uploads/series/add',
+  requestValidator(addSeriesSchema),
+  AdminUploadController.addVideoByType('series'),
+)
 
 // delete upload
 superAdminRouter.delete(

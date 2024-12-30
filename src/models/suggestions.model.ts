@@ -21,6 +21,6 @@ const suggestionSchema = new Schema(
   },
 )
 
-export const SuggestionModel = model('Suggestion', suggestionSchema)
+export const SuggestionModel = model('suggestions', suggestionSchema)
 export type SuggestionSchema = InferSchemaType<typeof suggestionSchema>
 export type Suggestion = HydratedDocumentFromSchema<typeof suggestionSchema>

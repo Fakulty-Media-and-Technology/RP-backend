@@ -1,6 +1,6 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
-const categoryEnumSchema = new Schema(
+const schema = new Schema(
   {
     name: {
       type: String,
@@ -15,6 +15,6 @@ const categoryEnumSchema = new Schema(
   },
 )
 
-export const CategoryEnumModel = model('category_enums', categoryEnumSchema)
-export type CategoryEnumSchema = InferSchemaType<typeof categoryEnumSchema>
-export type CategoryEnum = HydratedDocumentFromSchema<typeof categoryEnumSchema>
+export const CategoryEnumModel = model('category_enums', schema)
+export type CategoryEnumSchema = InferSchemaType<typeof schema>
+export type CategoryEnum = HydratedDocumentFromSchema<typeof schema>
