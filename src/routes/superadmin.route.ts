@@ -25,6 +25,7 @@ import {
   addSubtitleSchema,
   createLiveSchema,
   createPlanSchema,
+  createTrailerSchema,
   createUpcomingSchema,
   getPhotoURLSchema,
   updatePlanSchema,
@@ -115,7 +116,11 @@ superAdminRouter.post(
 superAdminRouter.get('/upcoming/event/getall', AdminUpcomingController.upcomingsAllGet)
 
 // **** trailer
-superAdminRouter.post('/trailer/create', AdminTrailerController.createTrailer)
+superAdminRouter.post(
+  '/trailer/create',
+  requestValidator(createTrailerSchema),
+  AdminTrailerController.createTrailer,
+)
 
 // **** plans and sub
 superAdminRouter.post(

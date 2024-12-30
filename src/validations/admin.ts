@@ -155,3 +155,13 @@ export const updatePlanSchema = {
     details: STRING_SCHEMA.optional(),
   }),
 }
+
+export const createTrailerSchema = {
+  body: Joi.object({
+    video_id: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
+    video_title: STRING_SCHEMA.optional(),
+    details: STRING_SCHEMA.optional(),
+    bucket: STRING_SCHEMA.required(),
+    key: STRING_SCHEMA.required(),
+  }),
+}
