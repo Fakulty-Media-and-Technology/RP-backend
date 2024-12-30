@@ -1,26 +1,30 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
-const planSchema = new Schema(
+const schema = new Schema(
   {
     admin_id: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
+
     title: {
       type: String,
       required: true,
     },
+
     months_duration: {
       type: Number,
-      unique: true,
       enum: [1, 3, 6, 12],
+      unique: true,
       required: true,
     },
+
     price: {
       type: Number,
       required: true,
     },
+
     details: {
       type: String,
       required: true,
@@ -43,6 +47,6 @@ const planSchema = new Schema(
   },
 )
 
-export const PlanModel = model('plans', planSchema)
-export type PlanSchema = InferSchemaType<typeof planSchema>
-export type Plan = HydratedDocumentFromSchema<typeof planSchema>
+export const PlanModel = model('plans', schema)
+export type PlanSchema = InferSchemaType<typeof schema>
+export type Plan = HydratedDocumentFromSchema<typeof schema>

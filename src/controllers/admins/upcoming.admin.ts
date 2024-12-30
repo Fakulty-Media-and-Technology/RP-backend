@@ -2,7 +2,7 @@ import { TrailerModel } from '../../models/trailer.model'
 import { UpcomingModel } from '../../models/upcoming.model'
 import { Catch } from '../../utils/Catch'
 import { OperationalError } from '../../utils/OperationalError'
-import { handleDefaultNumAndUnknown, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import {  QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminUpcomingController {

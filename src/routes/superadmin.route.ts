@@ -24,8 +24,10 @@ import {
   addSeriesSchema,
   addSubtitleSchema,
   createLiveSchema,
+  createPlanSchema,
   createUpcomingSchema,
   getPhotoURLSchema,
+  updatePlanSchema,
 } from '../validations/admin'
 
 export const superAdminRouter = express.Router()
@@ -116,8 +118,18 @@ superAdminRouter.get('/upcoming/event/getall', AdminUpcomingController.upcomings
 superAdminRouter.post('/trailer/create', AdminTrailerController.createTrailer)
 
 // **** plans and sub
-superAdminRouter.post('/subscription/plans/create', AdminPlanSubController.createPlan)
-superAdminRouter.put('/subscription/plans/update/:id', AdminPlanSubController.updatePlan)
+superAdminRouter.post(
+  '/subscription/plans/create',
+  requestValidator(createPlanSchema),
+  AdminPlanSubController.createPlan,
+)
+
+superAdminRouter.put(
+  '/subscription/plans/update/:id',
+  requestValidator(updatePlanSchema),
+  AdminPlanSubController.updatePlan,
+)
+
 superAdminRouter.get('/subscription/plans/fetch', AdminPlanSubController.fetchPlans)
 superAdminRouter.delete('/subscription/plans/delete/:id', AdminPlanSubController.deletePlans)
 superAdminRouter.get('/subscription/all/fetch', AdminPlanSubController.fetchSubscriptions)

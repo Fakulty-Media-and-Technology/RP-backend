@@ -137,3 +137,21 @@ export const createUpcomingSchema = {
     trailer_id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
   }),
 }
+
+export const createPlanSchema = {
+  body: Joi.object({
+    title: STRING_SCHEMA.required(),
+    months: Joi.number().min(0).valid(1, 3, 6, 12).required(),
+    price: Joi.number().min(0).required(),
+    details: STRING_SCHEMA.required(),
+  }),
+}
+
+export const updatePlanSchema = {
+  body: Joi.object({
+    title: STRING_SCHEMA.optional(),
+    months: Joi.number().min(0).valid(1, 3, 6, 12).optional(),
+    price: Joi.number().min(0).optional(),
+    details: STRING_SCHEMA.optional(),
+  }),
+}

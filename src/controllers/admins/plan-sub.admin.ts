@@ -20,19 +20,15 @@ export class AdminPlanSubController {
   static createPlan = Catch.async(async (req, res) => {
     const admin = GetDefined.loggedInUser(req.user)
 
-    const { title, months, price, details, userCurrency } = req.body
+    const { title, months: months_duration, price, details } = req.body
 
-    if (!months || !title || !price || !details || userCurrency) {
-      throw new OperationalError('all inputs are required', 400)
-    }
-
-    await new PlanModel({
-      admin_id: admin._id,
+    await PlanModel.create({
       title,
-      months_duration: Number(months),
-      price: Number(price),
-      details: details,
-    }).save()
+      price,
+      details,
+      months_duration,
+      admin_id: admin._id,
+    })
 
     sendResponse({
       res,
@@ -41,32 +37,16 @@ export class AdminPlanSubController {
   })
 
   static updatePlan = Catch.async(async (req, res) => {
-    const admin = GetDefined.loggedInUser(req.user)
-
-    const id = req.params.id
-
-    const { title, months, price, details } = req.body
-
-    const oldValues = await PlanModel.findOne({
-      _id: id,
-    })
-
-    if (!oldValues) {
-      throw new OperationalError('something went wrong, not found', 400)
-    }
-
-    await PlanModel.findOneAndUpdate(
+    const planUpdate = await PlanModel.findOneAndUpdate(
       {
-        _id: id,
+        _id: req.params.id,
       },
-      {
-        admin_id: admin._id ? admin._id : oldValues.admin_id,
-        title,
-        months_duration: months ? Number(months) : oldValues.months_duration,
-        price: price ? Number(price) : oldValues.price,
-        details: details ? details : oldValues.details,
-      },
+      { $set: req.body },
     )
+
+    if (planUpdate == null) {
+      throw new OperationalError('invalid Plan ID', 400)
+    }
 
     sendResponse({
       res,
@@ -75,20 +55,7 @@ export class AdminPlanSubController {
   })
 
   static fetchPlans = Catch.async(async (_, res) => {
-    const plans = await PlanModel.aggregate([
-      {
-        $match: {
-          $expr: {
-            $gt: ['$months_duration', 0],
-          },
-        },
-      },
-      {
-        $project: {
-          __v: 0,
-        },
-      },
-    ])
+    const plans = await PlanModel.find({ months_duration: { $gt: 0 } }).select('-__v')
 
     sendResponse({
       res,
@@ -103,32 +70,13 @@ export class AdminPlanSubController {
 
     const plans = await SubscriptionModel.aggregate([
       {
-        $match: {},
-      },
-      {
-        $project: {
-          __v: 0,
-        },
-      },
-      {
         $lookup: {
           from: 'plans',
-          let: {
-            pid: '$plan_id',
-          },
+          localField: 'plan_id',
+          foreignField: '_id',
+          as: 'planRef',
+
           pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: [
-                    '$_id',
-                    {
-                      $toObjectId: '$$pid',
-                    },
-                  ],
-                },
-              },
-            },
             {
               $project: {
                 title: 1,
@@ -138,13 +86,12 @@ export class AdminPlanSubController {
               },
             },
           ],
-          as: 'plan',
         },
       },
       {
         $set: {
           plan: {
-            $first: '$plan',
+            $first: '$planRef',
           },
         },
       },
@@ -154,10 +101,15 @@ export class AdminPlanSubController {
         },
       },
       {
-        $skip: (page - 1) * limit || 0,
+        $skip: (page - 1) * limit,
       },
       {
         $limit: limit,
+      },
+      {
+        $project: {
+          __v: 0,
+        },
       },
     ])
 
@@ -169,14 +121,11 @@ export class AdminPlanSubController {
   })
 
   static deletePlans = Catch.async(async (req, res) => {
-    const admin = GetDefined.loggedInUser(req.user)._id
-
-    const id = req.params.id
     const deletePlan = await PlanModel.findOneAndDelete({
-      _id: id,
+      _id: req.params.id,
     })
 
-    if (!deletePlan) {
+    if (deletePlan == null) {
       throw new OperationalError('plan can not be deleted or not found', 400)
     }
 

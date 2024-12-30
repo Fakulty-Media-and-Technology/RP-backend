@@ -4,12 +4,12 @@ const subscriptionSchema = new Schema(
   {
     user_id: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'users',
       required: true,
     },
     plan_id: {
       type: Schema.Types.ObjectId,
-      ref: 'Plan',
+      ref: 'plans',
       required: true,
     },
     start_date: {
