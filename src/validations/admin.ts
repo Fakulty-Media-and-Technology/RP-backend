@@ -53,7 +53,7 @@ export const addSeriesSchema = {
   body: Joi.object({
     title: STRING_SCHEMA.required(),
     pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
-    vid_class: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
+    vid_class: VIDEO_CLASS_SCHEMA.required(),
     category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     released_date: ISO_STRING_SCHEMA.required(),
     runtime: STRING_SCHEMA.required(),
