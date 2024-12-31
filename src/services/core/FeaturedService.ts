@@ -1,3 +1,4 @@
+import { OperationalError } from '../../utils/OperationalError'
 import { VideoService } from './VideoService'
 
 type AddFeaturedInput = {
@@ -17,11 +18,14 @@ export class FeaturedService {
   }
 
   static addFeatured = async ({ id, type, expiry }: AddFeaturedInput) => {
-    if (type === 'vod') {
-      await VideoService.addFeatured(id, expiry)
-      return
+    const newFeatured =
+      type === 'vod'
+        ? await VideoService.addFeatured(id, expiry)
+        : await VideoService.Live.addFeatured(id, expiry)
+
+    if (newFeatured === null) {
+      throw new OperationalError('Invalid Id', 404)
     }
-    await VideoService.Live.addFeatured(id, expiry)
   }
 
   static getFeaturedContents = async () => {

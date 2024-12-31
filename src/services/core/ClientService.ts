@@ -11,7 +11,7 @@ export class ClientService {
       defaultLimit: 10,
     })
 
-    const clients = await features.query
+    const clients = await features.paginate().query
     return clients.map(cl => cl.restricted())
   }
 

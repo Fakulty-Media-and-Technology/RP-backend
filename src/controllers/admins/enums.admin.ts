@@ -15,10 +15,10 @@ export class AdminEnumController {
     })
   })
 
-  static getGenres = Catch.async(async (_, res) => {
+  static getGenres = Catch.async(async (req, res) => {
     sendResponse({
       res,
-      data: await GenreService.getGenres(),
+      data: await GenreService.getGenres(req.query),
       message: 'generes fetched',
     })
   })
@@ -43,10 +43,10 @@ export class AdminEnumController {
     })
   })
 
-  static getCategory = Catch.async(async (_, res) => {
+  static getCategory = Catch.async(async (req, res) => {
     sendResponse({
       res,
-      data: await CategoryEnumService.getCategories(),
+      data: await CategoryEnumService.getCategories(req.query),
       message: 'categories fetched',
     })
   })
@@ -71,11 +71,11 @@ export class AdminEnumController {
     })
   })
 
-  static getCast = Catch.async(async (_, res) => {
+  static getCast = Catch.async(async (req, res) => {
     sendResponse({
       res,
       message: 'casts fetched',
-      data: await CastEnumService.getCasts(),
+      data: await CastEnumService.getCasts(req.query),
     })
   })
 

@@ -8,11 +8,15 @@ export const STRING_SCHEMA = Joi.string()
 export const MONGO_DB_OBJECT_ID_SCHEMA = Joi.string().pattern(MONGO_DB_OBJECT_ID_REG)
 export const MONGO_DB_OBJECT_ID_ARRAY_SCHEMA = Joi.array().items(MONGO_DB_OBJECT_ID_SCHEMA)
 
+export const PHOTO_SCHEMA_WITH_CONTENT_TYPE = Joi.object({
+  Bucket: STRING_SCHEMA.required(),
+  Key: STRING_SCHEMA.required(),
+  ContentType: STRING_SCHEMA.required(),
+})
 
 export const PHOTO_SCHEMA = Joi.object({
   Bucket: STRING_SCHEMA.required(),
   Key: STRING_SCHEMA.required(),
-  ContentType: STRING_SCHEMA.required(),
 })
 
 export const POSTER_SCHEMA = Joi.object({

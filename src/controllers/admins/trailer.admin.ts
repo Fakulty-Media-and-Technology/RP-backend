@@ -4,21 +4,11 @@ import { sendResponse } from '../../utils/responder'
 
 export class AdminTrailerController {
   static createTrailer = Catch.async(async (req, res) => {
-    const { bucket, key, video_id, video_title, details } = req.body
-
-    const addTrailer = new TrailerModel({
-      video_id: video_id,
-      video_title: video_title,
-      details: details,
-      bucket: bucket,
-      key: key,
-    })
-
-    await addTrailer.save()
+    await TrailerModel.create(req.body)
 
     sendResponse({
       res,
-      message: 'trailer ended',
+      message: 'trailer created',
     })
   })
 }

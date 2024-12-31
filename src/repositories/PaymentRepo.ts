@@ -1,35 +1,19 @@
 import { PaymentModel } from '../models/payments.model'
+import { skip } from '../utils/QueryParamsFeatures'
 
 export class PaymentRepo {
   static getDeposits = (page: number, limit: number) =>
     PaymentModel.aggregate([
       {
-        $match: {},
-      },
-      {
         $lookup: {
           from: 'users',
-          let: {
-            uid: '$user_id',
-          },
+          localField: 'user_id',
+          foreignField: '_id',
+          as: 'client',
           pipeline: [
             {
               $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $eq: [
-                        '$_id',
-                        {
-                          $toObjectId: '$$uid',
-                        },
-                      ],
-                    },
-                    {
-                      $in: ['$role', ['tvshow', 'channel', 'podcast', 'event']],
-                    },
-                  ],
-                },
+                role: { $in: ['tvshow', 'channel', 'podcast', 'event'] },
               },
             },
             {
@@ -38,18 +22,15 @@ export class PaymentRepo {
               },
             },
           ],
-          as: 'client',
         },
       },
       {
         $match: {
-          $expr: {
-            $ne: ['$client', []],
-          },
+          client: { $ne: [] },
         },
       },
       {
-        $skip: (page - 1) * limit,
+        $skip: skip(page, limit),
       },
       {
         $limit: limit,

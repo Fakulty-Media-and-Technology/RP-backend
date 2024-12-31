@@ -21,7 +21,7 @@ export class AdminAdsController {
 
     sendResponse({
       res,
-      statusCode: 204,
+      statusCode: 201,
       message: `${ad.title} added`,
       data: ad,
     })

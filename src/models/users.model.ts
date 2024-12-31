@@ -1,8 +1,7 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { previewPhotoSchema } from './commonSchema'
 
-
-const usersSchema = new Schema(
+const schema = new Schema(
   {
     first_name: {
       type: String,
@@ -116,8 +115,10 @@ const usersSchema = new Schema(
   },
 )
 
+schema.index({ country_code: 1, mobile: 1 }, { unique: true })
+
 // usersSchema.index({ location: "2dsphere" });
 
-export const UserModel = model('users', usersSchema)
-export type UserSchema = InferSchemaType<typeof usersSchema>
-export type User = HydratedDocumentFromSchema<typeof usersSchema>
+export const UserModel = model('users', schema)
+export type UserSchema = InferSchemaType<typeof schema>
+export type User = HydratedDocumentFromSchema<typeof schema>

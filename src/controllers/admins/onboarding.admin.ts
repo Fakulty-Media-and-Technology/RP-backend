@@ -6,8 +6,10 @@ import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
 import { sendResponse } from '../../utils/responder'
 
+type Role = User['role']
+
 export class AdminOnboardingController {
-  private static _createUser = async (data: Record<string, any>, role: User['role']) => {
+  private static _createUser = async (data: Record<string, any>, role: Role) => {
     const { first_name, last_name, email, password, cpassword, country_code, mobile } = data
 
     if (
@@ -62,23 +64,15 @@ export class AdminOnboardingController {
     return newUser
   }
 
-  static superAdminSignup = Catch.async(async (req, res) => {
-    await this._createUser(req.body, 'superadmin')
+  static createAdminORSuperAdmin = (role: Extract<Role, 'superadmin' | 'admin'>) =>
+    Catch.async(async (req, res) => {
+      await this._createUser(req.body, role)
 
-    sendResponse({
-      res,
-      message: 'New SuperAdmin Account Created successfully',
+      sendResponse({
+        res,
+        message: `New ${role} Account Created successfully`,
+      })
     })
-  })
-
-  static adminSignup = Catch.async(async (req, res) => {
-    await this._createUser(req.body, 'admin')
-
-    sendResponse({
-      res,
-      message: 'New admin Account Created successfully',
-    })
-  })
 
   static clientsSignup = Catch.async(async (req, res) => {
     await this._createUser(req.body, req.body.client_type)

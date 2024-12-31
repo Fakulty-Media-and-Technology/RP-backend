@@ -106,32 +106,21 @@ export class UserRepo {
           },
         },
       },
+
       {
         $lookup: {
           from: 'payments',
-          let: {
-            uid: '$_id',
-          },
+          localField: '_id',
+          foreignField: 'user_id',
+          as: 'payment history',
+
           pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: [
-                    '$user_id',
-                    {
-                      $toObjectId: '$$uid',
-                    },
-                  ],
-                },
-              },
-            },
             {
               $sort: {
                 createdAt: -1,
               },
             },
           ],
-          as: 'payment history',
         },
       },
       {

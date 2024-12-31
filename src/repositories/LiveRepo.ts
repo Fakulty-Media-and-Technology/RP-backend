@@ -29,16 +29,10 @@ export class LiveRepo {
   }
 
   static addFeatured = (id: string, expiry: string) => {
-    return LiveModel.findByIdAndUpdate(
-      id,
-      {
-        featured: true,
-        feat_expiry: new Date(expiry),
-      },
-      {
-        upsert: true,
-      },
-    )
+    return LiveModel.findByIdAndUpdate(id, {
+      featured: true,
+      feat_expiry: new Date(expiry),
+    })
   }
 
   static getActiveById = (id: string) => {

@@ -19,17 +19,11 @@ export class VideoRepo {
       $or: [{ title: { $regex: textReg } }, { description: { $regex: textReg } }],
     })
 
-  static geFeatured = () => VideoModel.find({ featured: true })
+  static getFeatured = () => VideoModel.find({ featured: true })
 
   static addFeatured = (id: string, expiry: string) =>
-    VideoModel.findByIdAndUpdate(
-      id,
-      {
-        featured: true,
-        feat_expiry: new Date(expiry),
-      },
-      {
-        upsert: true,
-      },
-    )
+    VideoModel.findByIdAndUpdate(id, {
+      featured: true,
+      feat_expiry: new Date(expiry),
+    })
 }

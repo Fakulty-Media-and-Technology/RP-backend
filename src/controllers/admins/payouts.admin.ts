@@ -1,3 +1,4 @@
+import { ClientSession } from 'mongoose'
 import { PayoutModel } from '../../models/payouts.model'
 import { WalletModel } from '../../models/wallet.model'
 import { Catch } from '../../utils/Catch'
@@ -5,10 +6,22 @@ import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
+import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+
+type UpdatePayoutStatusWithSessionInput = {
+  payStatus: string
+  payId: string
+  adminId: string
+}
 
 export class AdminPayoutController {
   static payoutReqAll = Catch.async(async ({ query }, res) => {
-    const payoutsFeatures = new QueryParamsFeatures(PayoutModel.find({}).sort({ updatedAt: -1 }), {
+    const dbQuery = PayoutModel.find({}).sort({ updatedAt: -1 }).populate({
+      path: 'processed_by',
+      select: 'first_name last_name email',
+    })
+
+    const payoutsFeatures = new QueryParamsFeatures(dbQuery, {
       defaultLimit: 10,
       defaultPage: 1,
       queryParams: query,
@@ -21,8 +34,6 @@ export class AdminPayoutController {
   })
 
   static payoutReqOne = Catch.async(async (req, res) => {
-    const id = req.params.id
-
     const payout = await PayoutModel.aggregate([
       {
         $match: {
@@ -30,7 +41,7 @@ export class AdminPayoutController {
             $eq: [
               '$_id',
               {
-                $toObjectId: id,
+                $toObjectId: req.params.id,
               },
             ],
           },
@@ -39,24 +50,10 @@ export class AdminPayoutController {
       {
         $lookup: {
           from: 'users',
-          let: {
-            uid: '$client_id',
-          },
+          localField: 'client_id',
+          foreignField: '_id',
+          as: 'user',
           pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: [
-                    {
-                      $toObjectId: '$_id',
-                    },
-                    {
-                      $toObjectId: '$$uid',
-                    },
-                  ],
-                },
-              },
-            },
             {
               $project: {
                 first_name: 1,
@@ -68,7 +65,6 @@ export class AdminPayoutController {
               },
             },
           ],
-          as: 'user',
         },
       },
       {
@@ -76,6 +72,16 @@ export class AdminPayoutController {
           user: {
             $first: '$user',
           },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'processed_by',
+          foreignField: '_id',
+          as: 'processed_by',
+
+          pipeline: [{ $project: { first_name: 1, last_name: 1, email: 1 } }],
         },
       },
     ])
@@ -111,22 +117,19 @@ export class AdminPayoutController {
     })
   })
 
-  static payoutStatusUpdate = Catch.async(async (req, res) => {
-    const id = req.params.id
-    const admin = GetDefined.loggedInUser(req.user)
-    const { status } = req.body
-
-    if (status === 'completed') {
+  private static _updatePayoutStatusWithSession = async (
+    { payStatus, payId, adminId }: UpdatePayoutStatusWithSessionInput,
+    session: ClientSession,
+  ) => {
+    if (payStatus === 'completed') {
       //debit from client balance
-      const payReq = await PayoutModel.findById(id)
+      const payReq = await PayoutModel.findById(payId)
 
       if (payReq === null) {
         throw new OperationalError('Payout not found', 40)
       }
 
       const charges = payReq.charges != null ? payReq.charges : 0
-
-      // TODO: Use session
 
       await WalletModel.findOneAndUpdate(
         {
@@ -137,20 +140,28 @@ export class AdminPayoutController {
             balance: -Number(payReq.amount + charges),
           },
         },
-        { upsert: true },
+        { upsert: true, session },
       )
     }
 
-    await PayoutModel.findOneAndUpdate(
-      { _id: id },
+    await PayoutModel.findByIdAndUpdate(
+      payId,
       {
-        status: status,
+        status: payStatus,
         $push: {
-          processed_by: admin._id,
+          processed_by: adminId,
         },
       },
-      { upsert: true },
+      { upsert: true, session },
     )
+  }
+
+  static payoutStatusUpdate = Catch.async(async (req, res) => {
+    await withMongoDBSession(this._updatePayoutStatusWithSession, {
+      payId: req.params.id,
+      adminId: GetDefined.loggedInUser(req.user).id,
+      payStatus: req.body.status,
+    })
 
     sendResponse({
       res,

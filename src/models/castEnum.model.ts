@@ -20,6 +20,8 @@ const schema = new Schema(
   },
 )
 
+schema.index({ title: 1, name: 1 }, { unique: true })
+
 export const CastEnumModel = model('cast_enums', schema)
 export type CastEnumSchema = InferSchemaType<typeof schema>
 export type CastEnum = HydratedDocumentFromSchema<typeof schema>

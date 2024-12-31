@@ -1,6 +1,7 @@
 import { SuggestionModel } from '../../models/suggestions.model'
 import { Catch } from '../../utils/Catch'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { OperationalError } from '../../utils/OperationalError'
+import { handleDefaultNumAndUnknown, skip } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminSuggestionController {
@@ -10,29 +11,13 @@ export class AdminSuggestionController {
 
     const suggestions = await SuggestionModel.aggregate([
       {
-        $match: {
-          $expr: {},
-        },
-      },
-      {
         $lookup: {
           from: 'users',
-          let: {
-            uid: '$user_id',
-          },
+          localField: 'user_id',
+          foreignField: '_id',
+          as: 'user',
+
           pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: [
-                    '$_id',
-                    {
-                      $toObjectId: '$$uid',
-                    },
-                  ],
-                },
-              },
-            },
             {
               $project: {
                 first_name: 1,
@@ -44,16 +29,16 @@ export class AdminSuggestionController {
               },
             },
           ],
-          as: 'user',
         },
       },
+
       {
         $sort: {
           createdAt: -1,
         },
       },
       {
-        $skip: (page - 1) * limit || 0,
+        $skip: skip(page, limit),
       },
       {
         $limit: limit,
@@ -68,11 +53,13 @@ export class AdminSuggestionController {
   })
 
   static suggestionRead = Catch.async(async (req, res) => {
-    const id = req.params.id
-
-    await SuggestionModel.findByIdAndUpdate(id, {
+    const updated = await SuggestionModel.findByIdAndUpdate(req.params.id, {
       seen: true,
     })
+
+    if (updated == null) {
+      throw new OperationalError('invalid ID', 404)
+    }
 
     sendResponse({
       res,
@@ -81,11 +68,11 @@ export class AdminSuggestionController {
   })
 
   static suggestionDel = Catch.async(async (req, res) => {
-    const id = req.params.id
+    const deleted = await SuggestionModel.findByIdAndDelete(req.params.id)
 
-    await SuggestionModel.findOneAndDelete({
-      _id: id,
-    })
+    if (deleted == null) {
+      throw new OperationalError('invalid ID', 404)
+    }
 
     sendResponse({
       res,

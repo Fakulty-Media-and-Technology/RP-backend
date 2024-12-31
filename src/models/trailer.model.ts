@@ -22,6 +22,7 @@ const trailerSchema = new Schema(
     key: {
       type: String,
       required: true,
+      unique: true
     },
   },
   {

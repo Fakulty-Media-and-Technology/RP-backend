@@ -20,6 +20,8 @@ export const handleDefaultNumAndUnknown = (val: unknown, defaultNum: number) => 
   return Number(val)
 }
 
+export const skip = (page: number, limit: number) => (page - 1) * limit
+
 export class QueryParamsFeatures<T, U> {
   query: Query<T, U>
   private _options: QueryParamsFeaturesOptions
@@ -38,8 +40,7 @@ export class QueryParamsFeatures<T, U> {
 
     const page = this._setNumDefaultNum(queryParams.page, defaultPage)
     const limit = this._setNumDefaultNum(queryParams.limit, defaultLimit)
-    const skip = (page - 1) * limit
-    this.query.skip(skip).limit(limit)
+    this.query.skip(skip(page, limit)).limit(limit)
     return this
   }
 }

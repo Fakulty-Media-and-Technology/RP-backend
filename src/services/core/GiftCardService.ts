@@ -1,21 +1,30 @@
 import { GiftCardModel } from '../../models/giftcard.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
-import { uniqueRef } from '../unique-ref'
+import { skip } from '../../utils/QueryParamsFeatures'
+import { genRandUniqId } from '../../utils/strGen'
+
+const getUniqueGiftCode = async (triesCount = 1) => {
+  if (triesCount >= 5) {
+    throw new OperationalError('Cannot generate giftCode, please try again', 500)
+  }
+
+  const uniq_code = genRandUniqId(12).toUpperCase()
+
+  // TODO: this can be optimized
+  const giftCard = await GiftCardModel.findOne({
+    code: uniq_code,
+  })
+
+  if (giftCard) {
+    return await getUniqueGiftCode(++triesCount)
+  }
+
+  return uniq_code
+}
 
 export class GiftCardService {
   static createGiftCard = async (currentAdmin: LoggedInUser, amount: number) => {
-    const uniq_code = uniqueRef()
-
-    // TODO: this can be optimized
-    const checkExist = await GiftCardModel.findOne({
-      code: uniq_code,
-    })
-
-    if (checkExist) {
-      throw new OperationalError('something went wrong, please try again', 400)
-    }
-
     const giftCards = await GiftCardModel.find({}).sort({
       createdAt: -1,
       serial_number: -1,
@@ -26,7 +35,7 @@ export class GiftCardService {
     const newGiftCard = await GiftCardModel.create({
       admin_id: currentAdmin._id,
       serial_number: serialN + 1,
-      code: uniq_code,
+      code: await getUniqueGiftCode(),
       amount,
     })
 
@@ -35,13 +44,6 @@ export class GiftCardService {
 
   static fetchGiftCards = async (page: number, limit: number) => {
     const cards = await GiftCardModel.aggregate([
-      {
-        $match: {
-          $expr: {
-            $ne: ['$_id', null],
-          },
-        },
-      },
       {
         $sort: {
           createdAt: -1,
@@ -61,7 +63,7 @@ export class GiftCardService {
         },
       },
       {
-        $skip: page - 1 * limit,
+        $skip: skip(page, limit),
       },
       {
         $limit: limit,

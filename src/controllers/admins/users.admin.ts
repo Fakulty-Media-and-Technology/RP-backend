@@ -2,11 +2,15 @@ import { UserModel } from '../../models/users.model'
 import { Catch } from '../../utils/Catch'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
+import { handleDefaultNumAndUnknown, skip } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 import { isValidEmail } from '../../utils/validate'
 
 export class AdminUsersController {
-  static adminFetchUser = Catch.async(async (_, res) => {
+  static adminFetchUsers = Catch.async(async ({ query }, res) => {
+    const page = handleDefaultNumAndUnknown(query.page, 1)
+    const limit = handleDefaultNumAndUnknown(query.limit, 50)
+
     const result = await UserModel.aggregate([
       {
         $project: {
@@ -26,6 +30,8 @@ export class AdminUsersController {
           verified: 1,
         },
       },
+      { $skip: skip(page, limit) },
+      { $limit: limit },
     ])
 
     sendResponse({
@@ -73,7 +79,7 @@ export class AdminUsersController {
       },
     ])
 
-    if (!user) {
+    if (!user.length) {
       throw new OperationalError('User not found', 404)
     }
 
@@ -92,23 +98,16 @@ export class AdminUsersController {
       throw new OperationalError('Invalid email format', 400)
     }
 
-    const updatedUser = await UserModel.findOneAndUpdate(
-      {
-        _id: userId,
-      },
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
       {
         email: email,
         password: await Password.encrypt(password),
-
         first_name: first_name,
         last_name: last_name,
-
         mobile: mobile,
-
         gender: gender,
         dob: dob,
-        verified: true,
-        approved: true,
       },
       { new: true },
     )

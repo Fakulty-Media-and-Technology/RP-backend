@@ -7,6 +7,7 @@ import {
   MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
   MONGO_DB_OBJECT_ID_SCHEMA,
   NUMERIC_REG,
+  PHOTO_SCHEMA_WITH_CONTENT_TYPE,
   PHOTO_SCHEMA,
   POSTER_SCHEMA,
   STRING_SCHEMA,
@@ -111,7 +112,7 @@ export const createLiveSchema = {
     client_id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
     title: STRING_SCHEMA.required(),
     sub_title: STRING_SCHEMA.optional(),
-    cover_photo: PHOTO_SCHEMA.required(),
+    cover_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
     location: STRING_SCHEMA.required(),
     video: VIDEO_SCHEMA.optional(),
     vid_class: VIDEO_CLASS_SCHEMA.required(),
@@ -132,8 +133,8 @@ export const createUpcomingSchema = {
     type: STRING_SCHEMA.valid('movie', 'series', 'music video', 'documentary', 'skit').required(),
     details: STRING_SCHEMA.required(),
     release_date: STRING_SCHEMA.required(),
-    portrait_photo: PHOTO_SCHEMA.required(),
-    landscape_photo: PHOTO_SCHEMA.required(),
+    portrait_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
+    landscape_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
     trailer_id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
   }),
 }
@@ -163,5 +164,86 @@ export const createTrailerSchema = {
     details: STRING_SCHEMA.optional(),
     bucket: STRING_SCHEMA.required(),
     key: STRING_SCHEMA.required(),
+  }),
+}
+
+export const createGiftCardSchema = {
+  body: Joi.object({
+    amount: Joi.number().min(0).required(),
+  }),
+}
+
+export const updatePayOutReqStstusSchema = {
+  body: Joi.object({
+    status: STRING_SCHEMA.valid('processing', 'reversed', 'rejected', 'completed').required(),
+  }),
+}
+
+export const addFeaturedContentSchema = {
+  body: Joi.object({
+    id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    expiry: STRING_SCHEMA.isoDate().required(),
+    type: STRING_SCHEMA.valid('event', 'vod').required(),
+  }),
+}
+
+export const addGenreSchema = {
+  body: Joi.object({
+    name: STRING_SCHEMA.required(),
+  }),
+}
+
+export const addCastSchema = {
+  body: Joi.object({
+    name: STRING_SCHEMA.required(),
+    title: STRING_SCHEMA.required(),
+  }),
+}
+
+export const addCategorySchema = addGenreSchema
+
+export const createAdminORSuperAdminSchema = {
+  body: Joi.object({
+    first_name: STRING_SCHEMA.required(),
+    last_name: STRING_SCHEMA.required(),
+    email: STRING_SCHEMA.email().required(),
+    password: STRING_SCHEMA.required(),
+    cpassword: STRING_SCHEMA.required(),
+    country_code: STRING_SCHEMA.required(),
+    mobile: STRING_SCHEMA.required(),
+  }),
+}
+
+export const createClientSchema = {
+  body: Joi.object({
+    first_name: STRING_SCHEMA.required(),
+    last_name: STRING_SCHEMA.required(),
+    email: STRING_SCHEMA.email().required(),
+    password: STRING_SCHEMA.required(),
+    cpassword: STRING_SCHEMA.required(),
+    country_code: STRING_SCHEMA.required(),
+    mobile: STRING_SCHEMA.required(),
+    verified: Joi.boolean().required(),
+    client_type: STRING_SCHEMA.valid('channel', 'tvshow', 'event', 'podcast').required(),
+
+    photo: Joi.object({
+      Bucket: STRING_SCHEMA.required(),
+      Key: STRING_SCHEMA.required(),
+    }).optional(),
+  }),
+}
+
+export const createAdSchema = {
+  body: Joi.object({
+    title: STRING_SCHEMA.required(),
+    sub_title: STRING_SCHEMA,
+    type: STRING_SCHEMA.valid('general', 'movie_ad', 'web', 'mobile'),
+    brand: STRING_SCHEMA.required(),
+    photo: PHOTO_SCHEMA.optional(),
+    link: STRING_SCHEMA,
+    duration: Joi.number(),
+    start: STRING_SCHEMA.isoDate(),
+    expiry: STRING_SCHEMA.isoDate(),
+    active: Joi.boolean(),
   }),
 }

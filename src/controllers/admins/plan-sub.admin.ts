@@ -3,7 +3,7 @@ import { SubscriptionModel } from '../../models/subscription.model'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { handleDefaultNumAndUnknown, skip } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
 // async function convertToLocalCurrency(usdAmount, userCurrency) {
@@ -101,13 +101,14 @@ export class AdminPlanSubController {
         },
       },
       {
-        $skip: (page - 1) * limit,
+        $skip: skip(page, limit),
       },
       {
         $limit: limit,
       },
       {
         $project: {
+          planRef: 0,
           __v: 0,
         },
       },

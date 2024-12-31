@@ -4,12 +4,12 @@ const payoutSchema = new Schema(
   {
     client_id: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'users',
       required: true,
     },
     processed_by: {
       type: [Schema.Types.ObjectId],
-      ref: 'User',
+      ref: 'users',
     },
     amount: {
       type: Number,

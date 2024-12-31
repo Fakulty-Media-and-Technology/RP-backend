@@ -19,15 +19,24 @@ import { AdminUsersController } from '../controllers/admins/users.admin'
 import { Multer } from '../utils/Multer'
 import { requestValidator } from '../middlewares/requestValidator'
 import {
+  addCastSchema,
+  addCategorySchema,
+  addFeaturedContentSchema,
+  addGenreSchema,
   addMovieOrSkitSchema,
   addMusicVideoSchema,
   addSeriesSchema,
   addSubtitleSchema,
+  createAdminORSuperAdminSchema,
+  createAdSchema,
+  createClientSchema,
+  createGiftCardSchema,
   createLiveSchema,
   createPlanSchema,
   createTrailerSchema,
   createUpcomingSchema,
   getPhotoURLSchema,
+  updatePayOutReqStstusSchema,
   updatePlanSchema,
 } from '../validations/admin'
 
@@ -38,22 +47,52 @@ superAdminRouter.post('/admins-signin', AdminOnboardingController.adminSignIn)
 //apply super-admin auth middleware
 superAdminRouter.use(AuthMiddleware.authenticateRequest('superadmin-auth'))
 
-superAdminRouter.post('/create-super-admin', AdminOnboardingController.superAdminSignup)
-superAdminRouter.post('/create-admin', AdminOnboardingController.adminSignup)
-superAdminRouter.post('/create-clients', AdminOnboardingController.clientsSignup)
+superAdminRouter.post(
+  '/create-super-admin',
+  requestValidator(createAdminORSuperAdminSchema),
+  AdminOnboardingController.createAdminORSuperAdmin('superadmin'),
+)
+
+superAdminRouter.post(
+  '/create-admin',
+  requestValidator(createAdminORSuperAdminSchema),
+  AdminOnboardingController.createAdminORSuperAdmin('admin'),
+)
+
+superAdminRouter.post(
+  '/create-clients',
+  requestValidator(createClientSchema),
+  AdminOnboardingController.clientsSignup,
+)
 
 superAdminRouter.get('/clients/allfetch', AdminClientsController.getAllClients)
 superAdminRouter.get('/clients/onefetch/:id', AdminClientsController.getClient)
 superAdminRouter.get('/clients/deposits', AdminClientsController.clientDeposits)
 
 // **** Enums
-superAdminRouter.post('/enums/add-genre', AdminEnumController.addGenre)
+superAdminRouter.post(
+  '/enums/add-genre',
+  requestValidator(addGenreSchema),
+  AdminEnumController.addGenre,
+)
+
 superAdminRouter.get('/enums/get-genres', AdminEnumController.getGenres)
 superAdminRouter.delete('/enums/rem-genre/:id', AdminEnumController.remGenre)
-superAdminRouter.post('/enums/add-category', AdminEnumController.addCategory)
+
+superAdminRouter.post(
+  '/enums/add-category',
+  requestValidator(addCategorySchema),
+  AdminEnumController.addCategory,
+)
+
 superAdminRouter.get('/enums/get-categories', AdminEnumController.getCategory)
 superAdminRouter.delete('/enums/rem-category/:id', AdminEnumController.remCategory)
-superAdminRouter.post('/enums/add-cast', AdminEnumController.addCast)
+
+superAdminRouter.post(
+  '/enums/add-cast',
+  requestValidator(addCastSchema),
+  AdminEnumController.addCast,
+)
 superAdminRouter.get('/enums/get-cast', AdminEnumController.getCast)
 superAdminRouter.delete('/enums/rem-cast/:id', AdminEnumController.remcast)
 
@@ -140,23 +179,36 @@ superAdminRouter.delete('/subscription/plans/delete/:id', AdminPlanSubController
 superAdminRouter.get('/subscription/all/fetch', AdminPlanSubController.fetchSubscriptions)
 
 // ***** gift cards
-superAdminRouter.post('/giftcard/generate/new', AdminGiftCardController.createGiftCard)
+superAdminRouter.post(
+  '/giftcard/generate/new',
+  requestValidator(createGiftCardSchema),
+  AdminGiftCardController.createGiftCard,
+)
+
 superAdminRouter.get('/giftcard/generated/fetch', AdminGiftCardController.fetchGiftCards)
 
 //payout processing
 superAdminRouter.get('/payouts/request/all', AdminPayoutController.payoutReqAll)
 superAdminRouter.get('/payouts/request/one/:id', AdminPayoutController.payoutReqOne)
-superAdminRouter.put('/payouts/request/status/:id', AdminPayoutController.payoutStatusUpdate)
+
+superAdminRouter.put(
+  '/payouts/request/status/:id',
+  requestValidator(updatePayOutReqStstusSchema),
+  AdminPayoutController.payoutStatusUpdate,
+)
 // superAdminRouter.get("/payouts/request/group", AdminPayoutController.payoutReqGroup);
 
 // **** featured contents
 superAdminRouter.get('/featured/contents/search', AdminFeaturedController.searchContents)
-superAdminRouter.post('/featured/contents/add', AdminFeaturedController.addFeatured)
+
+superAdminRouter.post(
+  '/featured/contents/add',
+  requestValidator(addFeaturedContentSchema),
+  AdminFeaturedController.addFeatured,
+)
 superAdminRouter.get('/featured/contents/fetch', AdminFeaturedController.getFeaturedContents)
 
 // ***** Uploads
-
-//add upload
 superAdminRouter.post(
   '/uploads/movie/add',
   requestValidator(addMovieOrSkitSchema),
@@ -225,7 +277,7 @@ superAdminRouter.delete('/suggestion/del/:id', AdminSuggestionController.suggest
 superAdminRouter.get('/dashboard/profile/fetch', AdminDashboardController.currentAdminProfile)
 superAdminRouter.put('/dashboard/profile/edit', AdminDashboardController.editAdminProfile)
 
-superAdminRouter.get('/user/fetch', AdminUsersController.adminFetchUser)
+superAdminRouter.get('/user/fetch', AdminUsersController.adminFetchUsers)
 superAdminRouter.get('/user/fetch/:userId', AdminUsersController.adminFetchSingleUser)
 superAdminRouter.patch('/user/update/:userId', AdminUsersController.editUserProfile)
 superAdminRouter.delete('/user/deleteUser/:userId', AdminUsersController.adminDeleteUser)
@@ -241,7 +293,7 @@ superAdminRouter.get(
 )
 
 // **** ADS
-superAdminRouter.post('/ads/create', AdminAdsController.addAds)
+superAdminRouter.post('/ads/create', requestValidator(createAdSchema), AdminAdsController.addAds)
 superAdminRouter.get('/ads/fetchall', AdminAdsController.getAds)
 superAdminRouter.delete('/ads/remove/:id', AdminAdsController.removeAds)
 

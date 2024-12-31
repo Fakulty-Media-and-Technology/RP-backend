@@ -2,6 +2,7 @@ import { Request } from 'express'
 import { AdmanagerModel } from '../../models/admanager.model'
 import { AdManagerRepo } from '../../repositories/AddManagerRepo'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { OperationalError } from '../../utils/OperationalError'
 
 export class AdManagerService {
   // TODO: Get the types for body
@@ -25,16 +26,21 @@ export class AdManagerService {
   }
 
   static getAds = async (query: Request['query']) => {
-    const queryFeatures = new QueryParamsFeatures(AdManagerRepo.getAdds(), {
+    const queryFeatures = new QueryParamsFeatures(AdManagerRepo.getAdds().sort({ createdAt: -1 }), {
       queryParams: query,
       defaultLimit: 10,
       defaultPage: 1,
     })
 
-    const ads = await queryFeatures.query.sort({ createdAt: -1 })
 
-    return ads
+    return await queryFeatures.paginate().query
   }
 
-  static deleteAd = async (addId: string) => await AdmanagerModel.findByIdAndDelete(addId)
+  static deleteAd = async (addId: string) => {
+    const deleted = await AdmanagerModel.findByIdAndDelete(addId)
+
+    if (deleted == null) {
+      throw new OperationalError('invalid add Id', 404)
+    }
+  }
 }

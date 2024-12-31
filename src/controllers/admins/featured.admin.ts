@@ -13,16 +13,6 @@ export class AdminFeaturedController {
   })
 
   static addFeatured = Catch.async(async ({ body: { type, id, expiry } }, res) => {
-    // TODO: Use Joi or Yup
-
-    if (!['vod', 'event'].includes(type)) {
-      throw new OperationalError("type of content must be specified 'vod or event'", 400)
-    }
-
-    if (!type || !id || !expiry) {
-      throw new OperationalError('all inputs are required', 400)
-    }
-
     await FeaturedService.addFeatured({ id, type, expiry })
 
     sendResponse({
