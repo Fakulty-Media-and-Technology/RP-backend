@@ -1,8 +1,10 @@
+import os from 'node:os'
 import NodeMediaServer from 'node-media-server'
 import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg'
-import { fetchValidStreamKeys } from '../utils/live'
-import { Assets } from '../utils/Assets'
+
 import { Catch } from '../utils/Catch'
+import { Assets } from '../utils/Assets'
+import { fetchValidStreamKeys } from '../utils/live'
 import { OperationalError } from '../utils/OperationalError'
 import env from '../env'
 
@@ -75,7 +77,11 @@ export class MediaStream {
     auth: {
       play: true,
       publish: true,
-      secret: 'nodemedia2017privatekey',
+      secret: env.RP_RMTP_AUTH_SECRET,
+    },
+
+    cluster: {
+      num: os.cpus().length,
     },
 
     trans: {

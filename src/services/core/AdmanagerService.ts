@@ -5,7 +5,7 @@ import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { OperationalError } from '../../utils/OperationalError'
 
 export class AdManagerService {
-  // TODO: Get the types for body
+  
   static addAd = async (body: any) => {
     const { title, sub_title, type, brand, photo, link, duration, start, expiry, active } = body
 

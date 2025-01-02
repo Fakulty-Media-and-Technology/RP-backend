@@ -25,6 +25,7 @@ export const env = getValidEnv({
   RP_RTMP_APP_NAME: process.env.RP_RTMP_APP_NAME || 'live',
   RP_RTMP_BASE_URL: process.env.RP_RTMP_BASE_URL || 'rtmp://rtmp.reeplay.app',
   RP_HLS_BASE_URL: process.env.RP_HLS_BASE_URL || 'https://live.reeplay.app',
+  RP_RMTP_AUTH_SECRET: process.env.RP_RMTP_AUTH_SECRET,
 
   get RP_HLS_HTTP_PORT() {
     const envHlsPort = process.env.RP_HLS_HTTP_PORT
