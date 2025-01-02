@@ -1,5 +1,5 @@
-import crypto from 'node:crypto'
 import env from '../../env'
+
 import { LiveModel } from '../../models/lives.model'
 import { PaymentModel } from '../../models/payments.model'
 import { LiveRepo } from '../../repositories/LiveRepo'
@@ -8,6 +8,7 @@ import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { ClientSession } from 'mongoose'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { calcLiveCharges, getUniqueStreamKey } from '../../utils/live'
 
 type CreateClientWithSessionInput = {
   currentUser: LoggedInUser
@@ -16,26 +17,7 @@ type CreateClientWithSessionInput = {
 
 type ExtendLiveEventWithSessionInput = CreateClientWithSessionInput
 
-const calcLiveCharges = (start: string, expiry: string) => {
-  const startDate = new Date(start).getTime()
-  const expiryDate = new Date(expiry).getTime()
-  const hoursDifference = (expiryDate - startDate) / (60 * 60000)
-  return hoursDifference * env.EVENT_HOURLY_CHARGES
-}
 
-const genRandUniqId = (length: number) => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  const charsLength = chars.length
-
-  const randomBytes = crypto.randomBytes(length)
-  let result = ''
-
-  for (let i = 0; i < length; i++) {
-    result += chars[randomBytes[i] % charsLength]
-  }
-
-  return result
-}
 
 export class LiveStreamService {
   private static _createClientWithSession = async (
@@ -106,19 +88,9 @@ export class LiveStreamService {
       throw new OperationalError('payment made does not match charges', 400)
     }
 
-    const streamId = genRandUniqId(12)
-
-    const streamIdExist = await LiveModel.findOne({
-      stream_key: streamId,
-    })
-
-    if (streamIdExist) {
-      throw new OperationalError('Please try again', 400)
-    }
-
     const streamOngoing = await LiveRepo.getActiveById(client_id)
 
-    if (streamOngoing !== null) {
+    if (streamOngoing) {
       throw new OperationalError('client have an ongoing stream', 400)
     }
 
@@ -129,16 +101,14 @@ export class LiveStreamService {
     })
 
     if (scheduledStream.length > 0) {
-      throw new OperationalError('client alrealdy have pending scheduled stream', 400)
+      throw new OperationalError('client alrealy has a pending scheduled stream', 400)
     }
-
-    // TODO: Use Session
 
     await new LiveModel({
       client_id: vclient_id._id,
       title: title,
       sub_title: sub_title,
-      stream_key: streamId,
+      stream_key: await getUniqueStreamKey(),
       cover_photo: cover_photo,
       vid_class: vid_class,
       pg: pg,
@@ -154,7 +124,6 @@ export class LiveStreamService {
       payment_id: confirmPayment._id,
     }).save({ session })
 
-    // TODO: error handling
     const updatedPayment = await PaymentModel.findByIdAndUpdate(
       confirmPayment._id,
       {
@@ -209,16 +178,6 @@ export class LiveStreamService {
       throw new OperationalError('payment made does not match charges', 400)
     }
 
-    const streamId = genRandUniqId(12)
-
-    const streamIdExist = await LiveModel.findOne({
-      stream_key: streamId,
-    })
-
-    if (streamIdExist) {
-      throw new OperationalError('Oops, please try again', 400)
-    }
-
     await LiveModel.findOneAndUpdate(
       {
         _id: live_id,
@@ -258,7 +217,7 @@ export class LiveStreamService {
   }
 
   static getLiveStreamCredentials = async (currentUser: LoggedInUser) => {
-    const rtmpUrl = `${env.RP_RTMP_URL}` //?email=''&&password=''
+    // const rtmpUrl = `${env.RP_RTMP_URL}` //?email=''&&password=''
 
     const credentials = await LiveModel.aggregate([
       {
@@ -269,7 +228,7 @@ export class LiveStreamService {
       },
       {
         $addFields: {
-          stream_server: rtmpUrl,
+          stream_server: env.RP_RTMP_URL,
         },
       },
       {

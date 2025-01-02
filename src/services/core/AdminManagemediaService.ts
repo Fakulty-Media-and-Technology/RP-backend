@@ -11,7 +11,7 @@ import { MediaManagement } from '../../services/media-management'
 import { MediaConvert } from '../../services/aws/mediaConvert'
 import { Request } from 'express'
 import { UserRepo } from '../../repositories/UserRepo'
-import { getUniqueStreamID } from '../../utils/live'
+import { getUniqueStreamKey } from '../../utils/live'
 
 export type UploadImageOrSubtitleType = 'image' | 'subtitle'
 
@@ -143,7 +143,7 @@ export class AdminManageMediaService {
       client_id: vclient_id._id,
       title: title,
       sub_title: sub_title,
-      stream_key: await getUniqueStreamID(),
+      stream_key: await getUniqueStreamKey(),
       cover_photo: cover_photo,
       vid_class: vid_class,
       pg: pg,

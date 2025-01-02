@@ -1,12 +1,10 @@
-import os from 'node:os'
 import NodeMediaServer from 'node-media-server'
 import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg'
 
+import env from '../env'
 import { Catch } from '../utils/Catch'
 import { Assets } from '../utils/Assets'
-import { fetchValidStreamKeys } from '../utils/live'
-import { OperationalError } from '../utils/OperationalError'
-import env from '../env'
+import { LiveRepo } from '../repositories/LiveRepo'
 
 export class MediaStream {
   nms: NodeMediaServer
@@ -21,20 +19,9 @@ export class MediaStream {
       Catch.NMSPrePublishAsync(async (id, streamPath) => {
         const session = this.nms.getSession(id)
         const streamKey = streamPath.split('/').pop() as string
+        const live = await LiveRepo.getByStreamKey(streamKey)
 
-        const validStreamKeys = await fetchValidStreamKeys()
-
-        if (validStreamKeys === null) {
-          // @ts-ignore
-          session.reject()
-
-          throw new OperationalError(
-            'no active stream keys or there was an error fetching the stream keys',
-            404,
-          )
-        }
-
-        if (!validStreamKeys.includes(streamKey)) {
+        if (live === null || live.active === false) {
           // @ts-ignore
           session.sendStatusMessage(
             // @ts-ignore
@@ -78,10 +65,6 @@ export class MediaStream {
       play: true,
       publish: true,
       secret: env.RP_RMTP_AUTH_SECRET,
-    },
-
-    cluster: {
-      num: os.cpus().length,
     },
 
     trans: {
