@@ -60,11 +60,11 @@ export class MediaStream {
       allow_origin: '*',
     },
 
-    auth: {
-      play: true,
-      publish: true,
-      secret: env.RP_RMTP_AUTH_SECRET,
-    },
+    // auth: {
+    //   play: true,
+    //   publish: true,
+    //   secret: env.RP_RMTP_AUTH_SECRET,
+    // },
 
     trans: {
       ffmpeg: ffmpegPath,
