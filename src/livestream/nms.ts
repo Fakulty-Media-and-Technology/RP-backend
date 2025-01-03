@@ -16,24 +16,24 @@ export class MediaStream {
   initiate() {
     this.nms.on(
       'prePublish',
-      Catch.NMSPrePublishAsync(async () => {
-        // Catch.NMSPrePublishAsync(async (id, streamPath) => {
-        // const session = this.nms.getSession(id)
-        // const streamKey = streamPath.split('/').pop() as string
-        // const live = await LiveRepo.getByStreamKey(streamKey)
-        // if (live === null || live.active === false) {
-        //   // @ts-ignore
-        //   session.sendStatusMessage(
-        //     // @ts-ignore
-        //     session.publishStreamId,
-        //     'error',
-        //     'NetStream.publish.Unauthorized',
-        //     'Publisehr: Authorization required.',
-        //   )
-        //   // @ts-ignore
-        //   session.reject()
-        //   return
-        // }
+      Catch.NMSPrePublishAsync(async (id, streamPath) => {
+        const session = this.nms.getSession(id)
+        const streamKey = streamPath.split('/').pop() as string
+        const live = await LiveRepo.getByStreamKey(streamKey)
+
+        if (live === null || live.active === false ) {
+          // @ts-ignore
+          session.sendStatusMessage(
+            // @ts-ignore
+            session.publishStreamId,
+            'error',
+            'NetStream.publish.Unauthorized',
+            'Publisehr: Authorization required.',
+          )
+          // @ts-ignore
+          session.reject()
+          return
+        }
       }),
     )
 
