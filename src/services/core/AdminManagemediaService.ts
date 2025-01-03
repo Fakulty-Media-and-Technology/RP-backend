@@ -12,6 +12,7 @@ import { MediaConvert } from '../../services/aws/mediaConvert'
 import { Request } from 'express'
 import { UserRepo } from '../../repositories/UserRepo'
 import { getUniqueStreamKey } from '../../utils/live'
+import { rimraf } from 'rimraf'
 
 export type UploadImageOrSubtitleType = 'image' | 'subtitle'
 
@@ -35,6 +36,11 @@ export class AdminManageMediaService {
 
     const expireDate = typeof expire === 'string' ? new Date(expire) : undefined
     const video = await MediaManagement.uploadVideo(file, expireDate, fileName)
+
+    rimraf(file.path).catch(_ =>
+      console.error('🛑 error deleting ', +file.filename + ' from tempMedia folder'),
+    )
+
     await MediaConvert.transcode(`${video.Key.replace('videos/', '')}/`)
 
     return {

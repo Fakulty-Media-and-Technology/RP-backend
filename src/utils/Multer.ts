@@ -3,6 +3,7 @@ import multer from 'multer'
 import { Bytes } from './Bytes'
 import { OperationalError } from './OperationalError'
 import { Assets } from './Assets'
+import { genRandUniqId } from './strGen'
 
 export class Multer {
   private static _configs = {
@@ -11,7 +12,7 @@ export class Multer {
         destination: Assets.rootMediaDirs.multer,
 
         filename: (_, file, cb) => {
-          cb(null, file.originalname)
+          cb(null, genRandUniqId(5) + '_' + file.originalname)
         },
       }),
 
