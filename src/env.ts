@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import e from 'express'
 
 const NUMERIC_REG = /^\d+$/
 
@@ -26,7 +27,7 @@ const getValidEnv = <T extends Record<string, any>>(variables: Partial<T>) => {
 export const env = getValidEnv({
   PORT: process.env.PORT,
   MONGO_DB_URL: process.env.MONGO_DB_URL,
-  NODE_ENV: process.env.NODE_ENV || 'production',
+  NODE_ENV: process.env.NODE_ENV,
 
   // emails
   MAIL_SENDER: process.env.MAIL_SENDER,
@@ -55,15 +56,13 @@ export const env = getValidEnv({
   WITHDRAWAL_PERCENT: setWithDefault('WITHDRAWAL_PERCENT', 15),
   MIN_WITHDRAWAL_AMOUNT: setWithDefault('MIN_WITHDRAWAL_AMOUNT', 50000),
 
-
   // livestream
-  RP_RTMP_APP_NAME: process.env.RP_RTMP_APP_NAME || 'live',
-  RP_RTMP_BASE_URL: process.env.RP_RTMP_BASE_URL || 'rtmp://rtmp.reeplay.app',
-  RP_HLS_BASE_URL: process.env.RP_HLS_BASE_URL || 'https://live.reeplay.app',
+  RP_RTMP_APP_NAME: process.env.RP_RTMP_APP_NAME,
+  RP_RTMP_BASE_URL: process.env.RP_RTMP_BASE_URL,
+  RP_HLS_BASE_URL: process.env.RP_HLS_BASE_URL,
   RP_RMTP_AUTH_SECRET: process.env.RP_RMTP_AUTH_SECRET,
   RP_HLS_HTTP_PORT: setWithDefault('RP_HLS_HTTP_PORT', 8888),
   RP_RTMP_PORT: setWithDefault('RP_RTMP_PORT', 1935),
-
 
   get RP_RTMP_URL() {
     const baseURL = this.IS_PROD ? this.RP_RTMP_BASE_URL : `rmtp://localhost`
@@ -86,3 +85,4 @@ export const env = getValidEnv({
 
 export default env
 
+console.log({ ...env })
