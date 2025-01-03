@@ -17,8 +17,6 @@ type CreateClientWithSessionInput = {
 
 type ExtendLiveEventWithSessionInput = CreateClientWithSessionInput
 
-
-
 export class LiveStreamService {
   private static _createClientWithSession = async (
     { data, currentUser }: CreateClientWithSessionInput,
@@ -243,6 +241,7 @@ export class LiveStreamService {
           createdAt: -1,
         },
       },
+      { $project: { __v: false } },
     ])
 
     return credentials

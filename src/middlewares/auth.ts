@@ -39,7 +39,8 @@ export class AuthMiddleware {
         console.error(
           '🛑AuthController._checkRolePermission should never log this line. Investigate',
         )
-        break
+
+        throw new OperationalError('invalid auth', 401)
     }
   }
 

@@ -1,5 +1,6 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { previewPhotoSchema } from './commonSchema'
+import { MediaAccess } from '../services/media-access'
 
 const schema = new Schema(
   {
@@ -94,6 +95,8 @@ const schema = new Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
 
     methods: {
       restricted() {
@@ -116,8 +119,6 @@ const schema = new Schema(
 )
 
 schema.index({ country_code: 1, mobile: 1 }, { unique: true })
-
-// usersSchema.index({ location: "2dsphere" });
 
 export const UserModel = model('users', schema)
 export type UserSchema = InferSchemaType<typeof schema>

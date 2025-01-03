@@ -7,13 +7,21 @@ import { ClientWithdrawalController } from '../controllers/clients/withdrawal.cl
 import { CustomerPaymentController } from '../controllers/customers/payment.customer'
 import { AuthMiddleware } from '../middlewares/auth'
 
+import { requestValidator } from '../middlewares/requestValidator'
+import { updateProfileSchema } from '../validations/client'
+
 export const clientsRouter = express.Router()
 
 clientsRouter.use(AuthMiddleware.authenticateRequest('clients-auth'))
 
 clientsRouter.get('/profile/fetch', ClientProfileController.clientProfileFetch)
 clientsRouter.get('/history/payment/fetch', ClientProfileController.clientsPaymentHis)
-clientsRouter.put('/profile/edit', ClientProfileController.clientEditProfile)
+
+clientsRouter.put(
+  '/profile/edit',
+  requestValidator(updateProfileSchema),
+  ClientProfileController.clientEditProfile,
+)
 
 clientsRouter.get('/livestream/streamkey', ClientLiveStreamController.getLiveStreamCredentials)
 // clientsRouter.put("/livestream/preview-vid/:live_id", postPreviewVid);

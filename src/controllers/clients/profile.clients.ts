@@ -9,6 +9,7 @@ export class ClientProfileController {
 
     sendResponse({
       res,
+      data: await ClientProfileService.editProfile(GetDefined.loggedInUser(user), body),
       message: 'Profile Updated',
     })
   })
