@@ -157,7 +157,7 @@ const schema = new Schema(
         episode_description: String,
         bucket: String,
         key: String,
-        transcodes: transcodeSchema,
+        transcodes: [transcodeSchema],
       },
     ],
 

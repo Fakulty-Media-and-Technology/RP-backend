@@ -84,7 +84,7 @@ export class MediaManagement {
     const deleted = response.$metadata.httpStatusCode === 200
 
     if (!deleted) {
-      console.error(`🛑🛑 S3 Object deletd error. KEY: ${key} | BUCKET: ${bucket}`)
+      console.error(`🛑🛑 S3 Object delete error. KEY: ${key} | BUCKET: ${bucket}`)
     }
 
     return deleted

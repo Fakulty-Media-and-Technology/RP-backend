@@ -1,93 +1,14 @@
-import { ClientSession, FilterQuery } from 'mongoose'
-import { PosterImageModel } from '../../models/poster.model'
-import { type Video, VideoModel, VideoSchema } from '../../models/videos.model'
+import { AdminUploadService, AllVideoTypes } from '../../services/core/AdminUploadService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
-import { OperationalError } from '../../utils/OperationalError'
-import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
-import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
-import { MediaManagement } from '../../services/media-management'
-import { MediaAccess } from '../../services/media-access'
-
-type AllVideoTypes = Video['type']
-
-type PosterData = {
-  bucket: string
-  key: string
-  dimension: string
-}
-
-type MakePostersInput = {
-  videoId: string
-  posterOne: PosterData
-  posterTwo: PosterData
-}
-
-type AddVideoWithSessionInput = {
-  adminId: string
-  type: AllVideoTypes
-  data: Record<string, any>
-}
 
 export class AdminUploadController {
-  private static _makePosters = async (data: MakePostersInput, session: ClientSession) => {
-    await new PosterImageModel({
-      video_id: data.videoId,
-      bucket: data.posterOne.bucket,
-      key: data.posterOne.key,
-      dimension: data.posterOne.dimension,
-    }).save({ session })
-
-    await new PosterImageModel({
-      video_id: data.videoId,
-      bucket: data.posterTwo.bucket,
-      key: data.posterTwo.key,
-      dimension: data.posterTwo.dimension,
-    }).save({ session })
-  }
-
-  private static _addVideoWithSession = async (
-    input: AddVideoWithSessionInput,
-    session: ClientSession,
-  ) => {
-    const { poster1_data, poster2_data } = input.data
-
-    if (input.data.key && !!(await VideoModel.findOne({ key: input.data.key }))) {
-      throw new OperationalError('Video with key already exists', 400)
-    }
-
-    const videoData = await new VideoModel({
-      admin_id: input.adminId,
-      type: input.type,
-      ...input.data,
-      is_series: input.type === 'series',
-    }).save({ session })
-
-    await this._makePosters(
-      {
-        videoId: videoData.id,
-        posterOne: {
-          bucket: poster1_data.bucket,
-          key: poster1_data.key,
-          dimension: poster1_data.dimension,
-        },
-
-        posterTwo: {
-          bucket: poster2_data.bucket,
-          key: poster2_data.key,
-          dimension: poster2_data.dimension,
-        },
-      },
-      session,
-    )
-  }
-
   static addVideoByType = (type: AllVideoTypes) =>
     Catch.async(async (req, res) => {
       const admin = GetDefined.loggedInUser(req.user)
 
-      await withMongoDBSession(this._addVideoWithSession, {
+      await AdminUploadService.addVideo({
         type,
         data: req.body,
         adminId: admin.id,
@@ -101,29 +22,11 @@ export class AdminUploadController {
 
   static editVideoByType = (type: AllVideoTypes) =>
     Catch.async(async (req, res) => {
-      const vid_id = req.params.id
-
-      const video = await VideoModel.findOne({ _id: vid_id, type })
-
-      if (video == null) {
-        throw new OperationalError('video does not exist or does not exist as this type', 400)
-      }
-
-      const requestData = req.body as Record<string, any>
-
-      delete requestData['_id']
-      delete requestData['admin_id']
-
-      const updatedVid = await VideoModel.findOneAndUpdate(
-        {
-          _id: vid_id,
-          type,
-        },
-        requestData,
-        {
-          new: true,
-        },
-      )
+      const updatedVid = await AdminUploadService.editVideo({
+        vidId: req.params.id,
+        changes: req.body,
+        type,
+      })
 
       sendResponse({
         res,
@@ -134,77 +37,16 @@ export class AdminUploadController {
 
   static fetchVideosByType = (type: AllVideoTypes) =>
     Catch.async(async ({ query }, res) => {
-      const dbQuery = VideoModel.find({ type, is_transcodedKey: true })
-        .sort({ updatedAt: 1 })
-        .select('-__v -createdAt -updatedAt')
-
-      const features = new QueryParamsFeatures(dbQuery, {
-        defaultLimit: 10,
-        defaultPage: 1,
-        queryParams: query,
-      })
-
-      const videos = await features.paginate().query
-
-      const settledResults = await Promise.allSettled(
-        videos.map(async vid => {
-          const video = vid.toObject()
-
-          if (video.is_series) {
-            for (const episode of video.episodes) {
-              if (!episode.bucket) continue
-
-              episode.transcodes = (await MediaAccess.getTranscodedSignedUrls(
-                episode.bucket,
-                episode.transcodes as any,
-              )) as any
-            }
-          }
-
-          if (video.bucket)
-            video.transcodes = (await MediaAccess.getTranscodedSignedUrls(
-              video.bucket,
-              video.transcodes,
-            )) as any
-
-          return video
-        }),
-      )
-
-      const vids: any[] = []
-
-      settledResults.forEach(result => {
-        if (result.status === 'fulfilled') {
-          vids.push(result.value)
-        }
-      })
-
       sendResponse({
         res,
         message: `${type}s fetched successfully`,
-        data: vids,
+        data: await AdminUploadService.getVideos(type, query),
       })
     })
 
   static deleteVideoByType = (type: AllVideoTypes) =>
     Catch.async(async (req, res) => {
-      const vid_id = req.params.id
-
-      const deletedVid = await VideoModel.findOneAndDelete({ _id: vid_id, type })
-
-      if (deletedVid == null) {
-        throw new OperationalError(`Not found or video is not a ${type} `, 404)
-      }
-
-      if (deletedVid.is_series && deletedVid.episodes.length) {
-        for (const { key, bucket } of deletedVid.episodes) {
-          if (key && bucket) MediaManagement.deleteObject(key, bucket).catch(() => {})
-        }
-      }
-
-      if (deletedVid.key && deletedVid.bucket) {
-        MediaManagement.deleteObject(deletedVid.key, deletedVid.bucket).catch(() => {})
-      }
+      await AdminUploadService.deleteVideo(req.params.id, type)
 
       sendResponse({
         res,

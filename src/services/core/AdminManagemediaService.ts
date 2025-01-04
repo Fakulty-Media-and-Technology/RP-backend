@@ -42,7 +42,6 @@ export class AdminManageMediaService {
     )
 
     const { Job, Key: mediaConvertKey } = await MediaConvert.transcode(video.Key)
-    console.log({ mediaConvertKey })
 
     if (Job && Job.Id && (await MediaConvert.waitForJobCompletion(Job.Id, 20))) {
       video.Key = mediaConvertKey
