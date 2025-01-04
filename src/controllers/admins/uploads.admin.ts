@@ -1,6 +1,6 @@
-import { ClientSession } from 'mongoose'
+import { ClientSession, FilterQuery } from 'mongoose'
 import { PosterImageModel } from '../../models/poster.model'
-import { type Video, VideoModel } from '../../models/videos.model'
+import { type Video, VideoModel, VideoSchema } from '../../models/videos.model'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
@@ -8,6 +8,7 @@ import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { MediaManagement } from '../../services/media-management'
+import { MediaAccess } from '../../services/media-access'
 
 type AllVideoTypes = Video['type']
 
@@ -133,9 +134,9 @@ export class AdminUploadController {
 
   static fetchVideosByType = (type: AllVideoTypes) =>
     Catch.async(async ({ query }, res) => {
-      const dbQuery = VideoModel.find({ type })
-        .select('-__v -createdAt -updatedAt')
+      const dbQuery = VideoModel.find({ type, is_transcodedKey: true })
         .sort({ updatedAt: 1 })
+        .select('-__v -createdAt -updatedAt')
 
       const features = new QueryParamsFeatures(dbQuery, {
         defaultLimit: 10,
@@ -145,10 +146,43 @@ export class AdminUploadController {
 
       const videos = await features.paginate().query
 
+      const settledResults = await Promise.allSettled(
+        videos.map(async vid => {
+          const video = vid.toObject()
+
+          if (video.is_series) {
+            for (const episode of video.episodes) {
+              if (!episode.bucket) continue
+
+              episode.transcodes = (await MediaAccess.getTranscodedSignedUrls(
+                episode.bucket,
+                episode.transcodes as any,
+              )) as any
+            }
+          }
+
+          if (video.bucket)
+            video.transcodes = (await MediaAccess.getTranscodedSignedUrls(
+              video.bucket,
+              video.transcodes,
+            )) as any
+
+          return video
+        }),
+      )
+
+      const vids: any[] = []
+
+      settledResults.forEach(result => {
+        if (result.status === 'fulfilled') {
+          vids.push(result.value)
+        }
+      })
+
       sendResponse({
         res,
         message: `${type}s fetched successfully`,
-        data: videos,
+        data: vids,
       })
     })
 

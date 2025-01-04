@@ -85,4 +85,6 @@ export const env = getValidEnv({
 
 export default env
 
-console.log({ ...env })
+// console.log({ ...env })
+
+

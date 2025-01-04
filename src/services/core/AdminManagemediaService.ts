@@ -41,12 +41,14 @@ export class AdminManageMediaService {
       console.error('🛑 error deleting ', +file.filename + ' from tempMedia folder'),
     )
 
-    await MediaConvert.transcode(`${video.Key.replace('videos/', '')}/`)
+    const { Job, Key: mediaConvertKey } = await MediaConvert.transcode(video.Key)
+    console.log({ mediaConvertKey })
 
-    return {
-      ...video,
-      s3_res: undefined,
+    if (Job && Job.Id && (await MediaConvert.waitForJobCompletion(Job.Id, 20))) {
+      video.Key = mediaConvertKey
     }
+
+    return video
   }
 
   static uploadPhotoOrSubtitle = async ({ file, fileName, type }: UploadImageOrSubtitleInput) => {

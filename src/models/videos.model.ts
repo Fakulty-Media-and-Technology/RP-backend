@@ -1,4 +1,50 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { S3 } from '../services/aws/s3'
+
+const transcodeResolutionsEnums = ['1080', '720', '480'] as const
+
+const parseToTransodedSchema = async (s3Key: string) => {
+  const keys = await S3.getTranscodedKeys(s3Key)
+
+  return keys.map(key => {
+    const _data = {
+      resolution: '',
+      key,
+    }
+
+    switch (true) {
+      case key.includes('_1080p'):
+        _data.resolution = '1080'
+        break
+      case key.includes('_480p'):
+        _data.resolution = '480'
+        break
+      default:
+        _data.resolution = '720'
+        break
+    }
+
+    return _data
+  })
+}
+
+const isTranscodedKey = (key: string) => key.startsWith('transcode/')
+
+const transcodeSchema = new Schema(
+  {
+    resolution: {
+      type: String,
+      enum: transcodeResolutionsEnums,
+      required: true,
+    },
+
+    key: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false, timestamps: false, versionKey: false },
+)
 
 const schema = new Schema(
   {
@@ -31,6 +77,9 @@ const schema = new Schema(
       // unique: true, // series keys are embedded in episodes. This throws. Switching to manual
       // required: true,
     },
+
+    transcodes: [transcodeSchema],
+
     description: {
       type: String,
       trim: true,
@@ -92,6 +141,11 @@ const schema = new Schema(
       type: Boolean,
       required: true,
     },
+
+    is_transcodedKey: {
+      type: Boolean,
+      default: false,
+    },
     // seasons: {
     //      type: Number,
     // },
@@ -103,6 +157,7 @@ const schema = new Schema(
         episode_description: String,
         bucket: String,
         key: String,
+        transcodes: transcodeSchema,
       },
     ],
 
@@ -115,6 +170,26 @@ const schema = new Schema(
     timestamps: true,
   },
 )
+
+schema.pre('validate', async function (next) {
+  if (!this.isNew) return next()
+
+  if (this.key && isTranscodedKey(this.key)) {
+    this.transcodes = (await parseToTransodedSchema(this.key)) as any
+    this.is_transcodedKey = true
+  }
+
+  if (!this.is_series || !this.episodes.length) return next()
+
+  for (const episode of this.episodes) {
+    if (episode.key && isTranscodedKey(episode.key)) {
+      episode.transcodes = (await parseToTransodedSchema(episode.key)) as any
+    }
+  }
+
+  this.is_transcodedKey = true
+  next()
+})
 
 export const VideoModel = model('videos', schema)
 export type VideoSchema = InferSchemaType<typeof schema>

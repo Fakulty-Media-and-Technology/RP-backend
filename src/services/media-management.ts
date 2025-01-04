@@ -1,6 +1,5 @@
 import { createReadStream } from 'fs'
 import { PassThrough } from 'stream'
-import { randomUUID } from 'crypto'
 
 import { OperationalError } from '../utils/OperationalError'
 import { S3 } from './aws/s3'
@@ -14,14 +13,23 @@ type UploadImageOrSubtitle = {
   fileName?: string
 }
 
-const replaceSpaces = (val: string, withVal = '-') => val.replace(' ', withVal)
+const fileExtensionReg = /.[a-zA-Z0-9]+$/
+
+const slugify = (val: string, slug = '-') =>
+  val
+    .trim()
+    .toLowerCase()
+    .replace(fileExtensionReg, '')
+    .replace(' ', slug)
+    .replace('_', slug)
+    .replace('.', slug)
 
 const getFileName = (file: Express.Multer.File, fileName?: string) => {
-  return fileName ? replaceSpaces(fileName) : replaceSpaces(file.filename)
+  return fileName ? slugify(fileName) : slugify(file.filename)
 }
 
 const getUniqueKey = (file: Express.Multer.File, fileName?: string) => {
-  return getFileName(file, fileName) + `-${Date.now()}-${randomUUID()}`
+  return Date.now() + '-' + getFileName(file, fileName)
 }
 
 export class MediaManagement {
@@ -48,7 +56,6 @@ export class MediaManagement {
     }
 
     return {
-      s3_res: { ...uploadRes, mimetype: file.mimetype },
       Bucket: uploadRes.Bucket,
       Key: uploadRes.Key,
       mimetype: file.mimetype,
@@ -74,13 +81,12 @@ export class MediaManagement {
 
   static deleteObject = async (key: string, bucket: string) => {
     const response = await S3.deleteObject(key, bucket)
-
     const deleted = response.$metadata.httpStatusCode === 200
 
     if (!deleted) {
       console.error(`🛑🛑 S3 Object deletd error. KEY: ${key} | BUCKET: ${bucket}`)
     }
-    
+
     return deleted
   }
 }
