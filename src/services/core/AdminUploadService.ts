@@ -1,6 +1,11 @@
-import { ClientSession } from 'mongoose'
+import { ClientSession, FilterQuery } from 'mongoose'
 import { PosterImageModel } from '../../models/poster.model'
-import { type Video, VideoModel } from '../../models/videos.model'
+import {
+  populateTranscodesWithSignedUrl,
+  type Video,
+  VideoModel,
+  VideoSchema,
+} from '../../models/videos.model'
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
@@ -145,9 +150,12 @@ export class AdminUploadService {
   }
 
   static getVideos = async (type: AllVideoTypes, queryParams: Request['query']) => {
-    const dbQuery = VideoModel.find({ type, is_transcodedKey: true })
-      .sort({ updatedAt: 1 })
-      .select('-__v -createdAt -updatedAt')
+    const filter: FilterQuery<VideoSchema> = {
+      type,
+      [type === 'series' ? 'episodes.key' : 'key']: { $regex: /^transcode/ },
+    }
+
+    const dbQuery = VideoModel.find(filter).sort('updatedAt').select('-__v -createdAt -updatedAt')
 
     const features = new QueryParamsFeatures(dbQuery, {
       defaultLimit: 10,
@@ -156,32 +164,7 @@ export class AdminUploadService {
     })
 
     const videos = await features.paginate().query
-
-    const settledResults = await Promise.allSettled(
-      videos.map(async vid => {
-        const video = vid.toObject()
-
-        if (video.is_series) {
-          for (const episode of video.episodes) {
-            if (!episode.bucket) continue
-
-            episode.transcodes = (await MediaAccess.getTranscodedSignedUrls(
-              episode.bucket,
-              episode.transcodes as any,
-            )) as any
-          }
-        }
-
-        if (video.bucket)
-          video.transcodes = (await MediaAccess.getTranscodedSignedUrls(
-            video.bucket,
-            video.transcodes,
-          )) as any
-
-        return video
-      }),
-    )
-
+    const settledResults = await Promise.allSettled(videos.map(populateTranscodesWithSignedUrl))
     const vids: any[] = []
 
     settledResults.forEach(result => {

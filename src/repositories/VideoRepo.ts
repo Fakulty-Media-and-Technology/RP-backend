@@ -26,4 +26,17 @@ export class VideoRepo {
       featured: true,
       feat_expiry: new Date(expiry),
     })
+
+  static replaceKey = (prevKey: string, newKey: string) =>
+    VideoModel.findOneAndUpdate({ key: prevKey }, { $set: { key: newKey } }, { new: true })
+
+  static replaceSeriesKey = (prevKey: string, newKey: string) =>
+    VideoModel.findOneAndUpdate(
+      {
+        is_series: true,
+        'episodes.key': prevKey,
+      },
+      { $set: { 'episodes.$.key': newKey } },
+      { new: true },
+    )
 }

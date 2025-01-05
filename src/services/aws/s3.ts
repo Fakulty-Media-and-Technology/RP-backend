@@ -32,4 +32,29 @@ export class S3 {
 
     return transacodedKeys
   }
+
+  static getResolutionAndSignedUrls = async (s3Key: string) => {
+    const keys = await this.getTranscodedKeys(s3Key)
+
+    return keys.map(key => {
+      const _data = {
+        resolution: '',
+        key,
+      }
+
+      switch (true) {
+        case key.includes('_1080p'):
+          _data.resolution = '1080'
+          break
+        case key.includes('_480p'):
+          _data.resolution = '480'
+          break
+        default:
+          _data.resolution = '720'
+          break
+      }
+
+      return _data
+    })
+  }
 }

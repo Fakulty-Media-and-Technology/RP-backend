@@ -6,6 +6,7 @@ export class CronTasks {
     nodeCron.schedule('*/5 * * * *', this._handleLiveStream),
     nodeCron.schedule('0 0 * * *', CronTaskHandlers.autoRenewSubscriptions),
     nodeCron.schedule('*/10 * * * *', CronTaskHandlers.expireFeaturedContents),
+    nodeCron.schedule('*/2 * * * *', CronTaskHandlers.updateVideoS3Keys),
   ]
 
   private async _handleLiveStream() {

@@ -1,34 +1,10 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { S3 } from '../services/aws/s3'
+import { MediaAccess } from '../services/media-access'
 
 const transcodeResolutionsEnums = ['1080', '720', '480'] as const
 
-const parseToTransodedSchema = async (s3Key: string) => {
-  const keys = await S3.getTranscodedKeys(s3Key)
-
-  return keys.map(key => {
-    const _data = {
-      resolution: '',
-      key,
-    }
-
-    switch (true) {
-      case key.includes('_1080p'):
-        _data.resolution = '1080'
-        break
-      case key.includes('_480p'):
-        _data.resolution = '480'
-        break
-      default:
-        _data.resolution = '720'
-        break
-    }
-
-    return _data
-  })
-}
-
-const isTranscodedKey = (key: string) => key.startsWith('transcode/')
+const isTranscodedKey = (key: string) => key.startsWith('transcode')
 
 const transcodeSchema = new Schema(
   {
@@ -42,6 +18,19 @@ const transcodeSchema = new Schema(
       type: String,
       required: true,
     },
+  },
+  { _id: false, timestamps: false, versionKey: false },
+)
+
+const episodeSchema = new Schema(
+  {
+    season: Number,
+    episode_number: Number,
+    episode_title: String,
+    episode_description: String,
+    bucket: String,
+    key: String,
+    transcodes: [transcodeSchema],
   },
   { _id: false, timestamps: false, versionKey: false },
 )
@@ -142,24 +131,10 @@ const schema = new Schema(
       required: true,
     },
 
-    is_transcodedKey: {
-      type: Boolean,
-      default: false,
-    },
     // seasons: {
     //      type: Number,
     // },
-    episodes: [
-      {
-        season: Number,
-        episode_number: Number,
-        episode_title: String,
-        episode_description: String,
-        bucket: String,
-        key: String,
-        transcodes: [transcodeSchema],
-      },
-    ],
+    episodes: [episodeSchema],
 
     artist_name: {
       //for music video
@@ -172,25 +147,47 @@ const schema = new Schema(
 )
 
 schema.pre('validate', async function (next) {
-  if (!this.isNew) return next()
-
-  if (this.key && isTranscodedKey(this.key)) {
-    this.transcodes = (await parseToTransodedSchema(this.key)) as any
-    this.is_transcodedKey = true
-  }
-
-  if (!this.is_series || !this.episodes.length) return next()
-
-  for (const episode of this.episodes) {
-    if (episode.key && isTranscodedKey(episode.key)) {
-      episode.transcodes = (await parseToTransodedSchema(episode.key)) as any
-    }
-  }
-
-  this.is_transcodedKey = true
+  if (this.isNew) await setTranscodes(this, false)
   next()
 })
 
 export const VideoModel = model('videos', schema)
 export type VideoSchema = InferSchemaType<typeof schema>
 export type Video = HydratedDocumentFromSchema<typeof schema>
+
+// do not make an arrow function.
+export async function setTranscodes(video: Video, save: boolean) {
+  if (video.is_series && video.episodes.length) {
+    for (const episode of video.episodes) {
+      if (!episode.key || !isTranscodedKey(episode.key)) continue
+      episode.transcodes = (await S3.getResolutionAndSignedUrls(episode.key)) as any
+    }
+  } else if (video.key && isTranscodedKey(video.key)) {
+    video.transcodes = (await S3.getResolutionAndSignedUrls(video.key)) as any
+  }
+
+  if (save) {
+    await video.save()
+  }
+}
+
+export async function populateTranscodesWithSignedUrl(video: Video) {
+  if (video.is_series) {
+    for (const episode of video.episodes) {
+      if (!episode.bucket) continue
+
+      episode.transcodes = (await MediaAccess.getTranscodedSignedUrls(
+        episode.bucket,
+        episode.transcodes as any,
+      )) as any
+    }
+  }
+
+  if (video.bucket)
+    video.transcodes = (await MediaAccess.getTranscodedSignedUrls(
+      video.bucket,
+      video.transcodes,
+    )) as any
+
+  return video.toObject()
+}

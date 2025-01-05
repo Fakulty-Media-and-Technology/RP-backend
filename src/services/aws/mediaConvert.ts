@@ -14,10 +14,9 @@ export const delay = (timeMS: number) => new Promise(res => setTimeout(res, time
 export class MediaConvert {
   private static _extractKey = (pathLike: string) => pathLike.replace('s3://reeplay/', '')
 
-  static listJobsLocs = async () => {
+  static recentCompletedJobsKeyPairs = async () => {
     const command = new ListJobsCommand({
       Order: 'DESCENDING',
-      MaxResults: 20,
       Status: 'COMPLETE',
     })
 
@@ -27,15 +26,9 @@ export class MediaConvert {
       return []
     }
 
-    // aws will return these jobs for 90 days even though the objects have been deleted
-    // Authored_At:1/4/2025
-    const excludedJobs = ['1735484351683-otuk1u', '1735483585630-grzpv2']
-
     const keys: Array<{ inputKey: string; outputKey: string }> = []
 
     for (const { Settings, Id } of response.Jobs) {
-      if (Id && excludedJobs.includes(Id)) continue
-
       if (!Settings || !Settings.Inputs || !Settings.OutputGroups) continue
 
       const fileInput = Settings.Inputs[0].FileInput
@@ -71,7 +64,7 @@ export class MediaConvert {
       }
 
       if (response.Job.Status === 'ERROR') {
-        console.dir({ '🛑error': response.Job }, { depth: null })
+        console.dir({ '🛑MediaConver.waitForJobCompletion_error': response.Job }, { depth: null })
         break
       }
 

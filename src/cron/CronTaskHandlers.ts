@@ -3,15 +3,56 @@ import { PaymentDetailModel } from '../models/paymentDetails.model'
 import { PaymentModel } from '../models/payments.model'
 import { PlanModel } from '../models/plans.model'
 import { SubscriptionModel } from '../models/subscription.model'
-import { VideoModel } from '../models/videos.model'
+import { setTranscodes, Video, VideoModel } from '../models/videos.model'
 import { WalletModel } from '../models/wallet.model'
 import PaymentServices, { convertKoboToNaira } from '../paymentIntegration'
 import { UserRepo } from '../repositories/UserRepo'
+import { VideoRepo } from '../repositories/VideoRepo'
+import { MediaConvert } from '../services/aws/mediaConvert'
 import Email from '../utils/emailer'
+
+type TranscodedKeyPairs = Awaited<
+  ReturnType<typeof MediaConvert.recentCompletedJobsKeyPairs>
+>[number]
 
 const stringify = (data: Object) => JSON.stringify(data, null, 2)
 
 export class CronTaskHandlers {
+  private static _replaceInputKey = async ({ inputKey, outputKey }: TranscodedKeyPairs) => {
+    let updatedVid: Video | null = null
+
+    updatedVid = await VideoRepo.replaceKey(inputKey, outputKey)
+
+    // series
+    if (updatedVid === null) {
+      updatedVid = await VideoRepo.replaceSeriesKey(inputKey, outputKey)
+    }
+
+    return updatedVid
+  }
+
+  static updateVideoS3Keys = async () => {
+    const pairs = await MediaConvert.recentCompletedJobsKeyPairs()
+    const funcLoc = 'CronTaskHandlers.updateVideoS3Keys'
+
+    pairs.forEach(async pair => {
+      try {
+        // set the key from input bucket key to transcode bucket key
+        const vid = await this._replaceInputKey(pair)
+
+        if (vid) {
+          // use the transcode key to set transcodes array in root or episodes
+          await setTranscodes(vid, true)
+          const typeDesc = vid.is_series ? 'series' : ''
+          console.log(`Updated video ${typeDesc} with ID: ${vid.id} in ${funcLoc}`)
+        }
+      } catch (e) {
+        console.error(`🛑Error updating video with inputKey: ${pair.inputKey} in ${funcLoc}`)
+        console.error('Error details', e)
+      }
+    })
+  }
+
   static autoRenewSubscriptions = async () => {
     try {
       const now = new Date()
