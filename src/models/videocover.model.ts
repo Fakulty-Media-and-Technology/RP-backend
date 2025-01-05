@@ -1,6 +1,6 @@
 import { HydratedDocumentFromSchema, Schema, model } from 'mongoose'
 import { MediaAccess } from '../services/media-access'
-import { setResolutionUrls } from '../utils'
+import { S3 } from '../services/aws/s3'
 
 const transcodeSchema = new Schema(
   {
@@ -77,7 +77,10 @@ const schema = new Schema(
 )
 
 schema.pre('save', async function (next) {
-  if (this.isNew) await setResolutionUrls(this)
+  if (this.key.startsWith('transcode')) {
+    this.resolutionUrls = await S3.getTranscodedUrlsWithResolution(this.key) as any
+    this.isTranscoded = true
+  }
   next()
 })
 
