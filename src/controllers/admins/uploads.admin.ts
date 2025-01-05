@@ -4,6 +4,15 @@ import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminUploadController {
+  static addEpisode = Catch.async(async (req, res) => {
+    await AdminUploadService.addEpisode(req.params.vidId, req.body)
+
+    sendResponse({
+      res,
+      message: `episode added successfully`,
+    })
+  })
+
   static addVideoByType = (type: AllVideoTypes) =>
     Catch.async(async (req, res) => {
       const admin = GetDefined.loggedInUser(req.user)

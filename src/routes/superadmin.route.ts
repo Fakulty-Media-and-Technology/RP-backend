@@ -35,6 +35,7 @@ import {
   createPlanSchema,
   createTrailerSchema,
   createUpcomingSchema,
+  addEpisodeSchema,
   getPhotoURLSchema,
   updatePayOutReqStstusSchema,
   updatePlanSchema,
@@ -231,6 +232,12 @@ superAdminRouter.post(
   '/uploads/series/add',
   requestValidator(addSeriesSchema),
   AdminUploadController.addVideoByType('series'),
+)
+
+superAdminRouter.post(
+  '/uploads/series/add/episode/:vidId',
+  requestValidator(addEpisodeSchema),
+  AdminUploadController.addEpisode,
 )
 
 // delete upload

@@ -28,6 +28,10 @@ const episodeSchema = Joi.object({
   key: STRING_SCHEMA.required(),
 })
 
+export const addEpisodeSchema = {
+  body: episodeSchema,
+}
+
 export const addMovieOrSkitSchema = {
   body: Joi.object({
     title: STRING_SCHEMA.required(),

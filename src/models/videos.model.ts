@@ -154,6 +154,7 @@ schema.pre('validate', async function (next) {
 export const VideoModel = model('videos', schema)
 export type VideoSchema = InferSchemaType<typeof schema>
 export type Video = HydratedDocumentFromSchema<typeof schema>
+export type EpisodeSchema = InferSchemaType<typeof episodeSchema>
 
 // do not make an arrow function.
 export async function setTranscodes(video: Video, save: boolean) {

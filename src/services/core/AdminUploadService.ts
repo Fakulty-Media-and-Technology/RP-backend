@@ -2,19 +2,23 @@ import { ClientSession, FilterQuery } from 'mongoose'
 import { PosterImageModel } from '../../models/poster.model'
 import {
   populateTranscodesWithSignedUrl,
-  type Video,
+  Video,
   VideoModel,
   VideoSchema,
+  EpisodeSchema,
+  setTranscodes,
 } from '../../models/videos.model'
+
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { MediaManagement } from '../../services/media-management'
-import { MediaAccess } from '../../services/media-access'
 
 import { Request } from 'express'
 
 export type AllVideoTypes = Video['type']
+
+type Episode = Required<Omit<EpisodeSchema, 'transcodes'>>
 
 type PosterData = {
   bucket: string
@@ -85,6 +89,32 @@ export class AdminUploadService {
       },
       session,
     )
+  }
+
+  static addEpisode = async (vidId: string, episode: Episode) => {
+    const vid = await VideoModel.findOneAndUpdate(
+      {
+        _id: vidId,
+        is_series: true,
+        'episodes.episode_title': { $ne: episode.episode_title },
+        'episodes.episode_number': { $ne: episode.episode_number },
+        'episodes.key': { $ne: episode.key },
+      },
+      { $push: { episodes: episode } },
+    )
+
+    if (vid === null) {
+      throw new OperationalError(
+        'Invalid ID or new episode has duplicate properties with previous episodes episode_title | key | episode_number',
+        404,
+      )
+    }
+
+    // do not await so it doesn't delay response
+    setTranscodes(vid, true).catch(e => {
+      console.error('Error setting transcodes for video', vid.id, 'after new episode push')
+      console.error('Error Details', e)
+    })
   }
 
   static addVideo = async (params: {
