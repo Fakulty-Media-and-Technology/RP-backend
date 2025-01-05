@@ -154,7 +154,7 @@ export class CustomerMediaController {
       throw new OperationalError('Could not find video by streamId', 404)
     }
 
-    if (resLikes.likes.includes(user._id.toString())) {
+    if (resLikes.likes.includes(user._id)) {
       throw new OperationalError('user already liked', 400)
     }
 

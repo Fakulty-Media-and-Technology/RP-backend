@@ -25,14 +25,9 @@ const schema = new Schema(
       required: true,
     },
 
-    sub_title: {
-      type: String,
-      required: true,
-    },
-
     stream_key: {
       type: String,
-      unique: true
+      unique: true,
     },
 
     location: {
@@ -60,11 +55,6 @@ const schema = new Schema(
       required: true,
     },
 
-    category: {
-      type: [String],
-      ref: 'category_enums',
-    },
-
     description: {
       type: String,
     },
@@ -84,10 +74,10 @@ const schema = new Schema(
       enum: ['channel', 'event', 'tvshow', 'podcast', 'sport'],
     },
 
-    participants: {
-      type: Number,
-      default: 0,
-    },
+    // participants: {
+    //   type: Number,
+    //   default: 0,
+    // },
 
     start: {
       type: Date,
@@ -97,27 +87,35 @@ const schema = new Schema(
       type: Date,
     },
 
-    views: {
-      type: Number,
-    },
+
+    // TODO: Implement in webSocket
+    views: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'users',
+      },
+    ],
 
     active_views: {
       type: Number,
     },
 
-    likes: {
-      type: [String],
-    },
+    // likes: [
+    //   {
+    //     type: Schema.Types.ObjectId,
+    //     ref: 'users',
+    //   },
+    // ],
 
-    sponsored: {
-      type: Boolean,
-      required: true,
-    },
+    // sponsored: {
+    //   type: Boolean,
+    //   required: true,
+    // },
 
-    popular: {
-      type: Boolean,
-      required: true,
-    },
+    // popular: {
+    //   type: Boolean,
+    //   required: true,
+    // },
 
     featured: {
       type: Boolean,

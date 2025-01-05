@@ -115,13 +115,11 @@ export const createLiveSchema = {
   body: Joi.object({
     client_id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
     title: STRING_SCHEMA.required(),
-    sub_title: STRING_SCHEMA.optional(),
     cover_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
     location: STRING_SCHEMA.required(),
     video: VIDEO_SCHEMA.optional(),
     vid_class: VIDEO_CLASS_SCHEMA.required(),
     pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
-    category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.optional(),
     description: STRING_SCHEMA.optional(),
     type: LIVE_TYPE_SCHEMA.required(),
     sponsored: Joi.boolean().required(),
