@@ -31,6 +31,14 @@ const schema = new Schema(
       unique: true,
     },
 
+    mimetype: {
+      type: String,
+    },
+
+    sizeInMB: {
+      type: Number,
+    },
+
     isTranscoded: {
       type: Boolean,
       default: false,

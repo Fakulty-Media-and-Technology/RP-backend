@@ -59,6 +59,7 @@ export class MediaManagement {
       Bucket: uploadRes.Bucket,
       Key: uploadRes.Key,
       mimetype: file.mimetype,
+      size: file.size,
     }
   }
 

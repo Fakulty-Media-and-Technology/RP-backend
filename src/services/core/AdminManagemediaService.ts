@@ -13,6 +13,7 @@ import { Request } from 'express'
 import { UserRepo } from '../../repositories/UserRepo'
 import { getUniqueStreamKey } from '../../utils/live'
 import { rimraf } from 'rimraf'
+import { VideoCoverModel } from '../../models/videocover.model'
 
 export type UploadImageOrSubtitleType = 'image' | 'subtitle'
 
@@ -42,12 +43,16 @@ export class AdminManageMediaService {
     )
 
     const { Job, Key: mediaConvertKey } = await MediaConvert.transcode(video.Key)
+    const isTranscoded = await MediaConvert.waitForJobCompletion(Job?.Id, 20)
 
-    if (Job && Job.Id && (await MediaConvert.waitForJobCompletion(Job.Id, 20))) {
-      video.Key = mediaConvertKey
-    }
+    const vc = await VideoCoverModel.create({
+      bucket: video.Bucket,
+      key: isTranscoded ? mediaConvertKey : video.Key,
+      mimetype: video.mimetype,
+      sizeInMB: video.size,
+    })
 
-    return video
+    return vc
   }
 
   static uploadPhotoOrSubtitle = async ({ file, fileName, type }: UploadImageOrSubtitleInput) => {

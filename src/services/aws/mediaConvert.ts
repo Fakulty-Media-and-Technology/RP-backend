@@ -47,10 +47,12 @@ export class MediaConvert {
     return keys
   }
 
-  static waitForJobCompletion = async (jobId: string, maxWaitTimeMins = 1) => {
-    const later = moment(new Date()).add(maxWaitTimeMins, 'm').toDate()
-
+  static waitForJobCompletion = async (jobId: string | undefined, maxWaitTimeMins = 1) => {
     let isCompleted = false
+
+    if (typeof jobId !== 'string') return isCompleted
+
+    const later = moment(new Date()).add(maxWaitTimeMins, 'm').toDate()
 
     while (later > new Date()) {
       const command = new GetJobCommand({
@@ -64,7 +66,15 @@ export class MediaConvert {
       }
 
       if (response.Job.Status === 'ERROR') {
-        console.dir({ '🛑MediaConver.waitForJobCompletion_error': response.Job }, { depth: null })
+        console.error({
+          '🛑MediaConver.waitForJobCompletion_error': {
+            Arn: response.Job.Arn,
+            CreatedAt: response.Job.CreatedAt,
+            ErrorCode: response.Job.ErrorCode,
+            ErrorMessage: response.Job.ErrorMessage,
+            inputKey: response.Job.Settings?.Inputs && response.Job.Settings.Inputs[0].FileInput,
+          },
+        })
         break
       }
 
@@ -89,12 +99,20 @@ export class MediaConvert {
         Inputs: [
           {
             FileInput,
+            // allows videos without audio to be converted
             AudioSelectors: {
               'Audio Selector 1': {
-                SelectorType: 'TRACK',
-                Tracks: [1],
+                DefaultSelection: 'DEFAULT',
               },
             },
+
+            // this does not allow videos without audio to be converted
+            // AudioSelectors: {
+            //   'Audio Selector 1': {
+            //     SelectorType: 'TRACK',
+            //     Tracks: [1],
+            //   },
+            // },
             // TimecodeSource: "ZEROBASED",
             // InputClippings: [
             //     {
