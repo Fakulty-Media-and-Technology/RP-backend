@@ -33,7 +33,7 @@ export class S3 {
     return transacodedKeys
   }
 
-  static getResolutionAndSignedUrls = async (s3Key: string) => {
+  static getTranscodedUrlsWithResolution = async (s3Key: string) => {
     const keys = await this.getTranscodedKeys(s3Key)
 
     return keys.map(key => {

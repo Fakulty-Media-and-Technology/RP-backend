@@ -168,10 +168,10 @@ export async function setTranscodes(video: Video, save: boolean) {
   if (video.is_series && video.episodes.length) {
     for (const episode of video.episodes) {
       if (!episode.key || !isTranscodedKey(episode.key)) continue
-      episode.transcodes = (await S3.getResolutionAndSignedUrls(episode.key)) as any
+      episode.transcodes = (await S3.getTranscodedUrlsWithResolution(episode.key)) as any
     }
   } else if (video.key && isTranscodedKey(video.key)) {
-    video.transcodes = (await S3.getResolutionAndSignedUrls(video.key)) as any
+    video.transcodes = (await S3.getTranscodedUrlsWithResolution(video.key)) as any
   }
 
   if (save) {
@@ -184,7 +184,7 @@ export async function populateTranscodesWithSignedUrl(video: Video) {
     for (const episode of video.episodes) {
       if (!episode.bucket) continue
 
-      episode.transcodes = (await MediaAccess.getTranscodedSignedUrls(
+      episode.transcodes = (await MediaAccess.getTranscodedLocationURLS(
         episode.bucket,
         episode.transcodes as any,
       )) as any
@@ -192,7 +192,7 @@ export async function populateTranscodesWithSignedUrl(video: Video) {
   }
 
   if (video.bucket)
-    video.transcodes = (await MediaAccess.getTranscodedSignedUrls(
+    video.transcodes = (await MediaAccess.getTranscodedLocationURLS(
       video.bucket,
       video.transcodes,
     )) as any
