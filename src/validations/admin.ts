@@ -24,8 +24,7 @@ const episodeSchema = Joi.object({
   episode_number: Joi.number().min(1).required(),
   episode_title: STRING_SCHEMA.required(),
   episode_description: STRING_SCHEMA.required(),
-  bucket: STRING_SCHEMA.required(),
-  key: STRING_SCHEMA.required(),
+  video_upload: MONGO_DB_OBJECT_ID_SCHEMA.required()
 })
 
 export const addEpisodeSchema = {
@@ -35,7 +34,7 @@ export const addEpisodeSchema = {
 export const addMovieOrSkitSchema = {
   body: Joi.object({
     title: STRING_SCHEMA.required(),
-    key: STRING_SCHEMA.required(),
+    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.required(),
     pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
     vid_class: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
     category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
@@ -46,7 +45,6 @@ export const addMovieOrSkitSchema = {
     poster2_data: POSTER_SCHEMA.required(),
 
     //
-    bucket: STRING_SCHEMA.required(),
     genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     expiry_date: ISO_STRING_SCHEMA,
@@ -80,6 +78,7 @@ export const addMusicVideoSchema = {
     title: STRING_SCHEMA.required(),
     pg: STRING_SCHEMA.required(),
     vid_class: VIDEO_CLASS_SCHEMA.required(),
+    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.required(),
     category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     released_date: ISO_STRING_SCHEMA.required(),
     runtime: STRING_SCHEMA.required(),
@@ -87,8 +86,6 @@ export const addMusicVideoSchema = {
     poster1_data: POSTER_SCHEMA.required(),
     poster2_data: POSTER_SCHEMA.required(),
     artist_name: STRING_SCHEMA.required(),
-    bucket: STRING_SCHEMA.required(),
-    key: STRING_SCHEMA.required(),
     expiry_date: ISO_STRING_SCHEMA,
     sub_title: STRING_SCHEMA,
   }),

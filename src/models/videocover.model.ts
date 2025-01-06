@@ -78,11 +78,11 @@ const schema = new Schema(
 
 schema.pre('save', async function (next) {
   if (this.key.startsWith('transcode')) {
-    this.resolutionUrls = await S3.getTranscodedUrlsWithResolution(this.key) as any
+    this.resolutionUrls = await S3.getTranscodedUrlsWithResolutions(this.key) as any
     this.isTranscoded = true
   }
   next()
 })
 
-export const VideoCoverModel = model('VideoCover', schema)
+export const VideoCoverModel = model('video_uploads', schema)
 export type VideoCover = HydratedDocumentFromSchema<typeof schema>

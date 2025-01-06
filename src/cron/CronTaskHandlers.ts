@@ -26,7 +26,7 @@ export class CronTaskHandlers {
         $set: {
           key: input.outputKey,
           isTranscoded: true,
-          resolutionUrls: await S3.getTranscodedUrlsWithResolution(input.outputKey),
+          resolutionUrls: await S3.getTranscodedUrlsWithResolutions(input.outputKey),
         },
       },
     )

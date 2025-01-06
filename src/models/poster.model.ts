@@ -7,14 +7,17 @@ const posterSchema = new Schema(
       ref: 'Video',
       required: true,
     },
+
     bucket: {
       type: String,
       required: true,
     },
+
     key: {
       type: String,
       required: true,
     },
+    
     dimension: {
       type: String,
       enum: ['landscape', 'portrait'],
