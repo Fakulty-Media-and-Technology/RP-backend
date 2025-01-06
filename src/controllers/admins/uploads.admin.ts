@@ -4,8 +4,23 @@ import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminUploadController {
+  static addSeason = Catch.async(async (req, res) => {
+    sendResponse({
+      res,
+      message: `season added successfully`,
+      data: await AdminUploadService.addSeason(
+        req.params.videoId,
+        GetDefined.loggedInUser(req.user).id,
+      ),
+    })
+  })
+
   static addEpisode = Catch.async(async (req, res) => {
-    await AdminUploadService.addEpisode(req.params.vidId, req.body)
+    await AdminUploadService.addEpisode({
+      seasonId: req.params.seasonId,
+      adminId: GetDefined.loggedInUser(req.user).id,
+      data: req.body,
+    })
 
     sendResponse({
       res,

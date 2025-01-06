@@ -1,6 +1,6 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
-const subscriptionSchema = new Schema(
+const schema = new Schema(
   {
     user_id: {
       type: Schema.Types.ObjectId,
@@ -38,6 +38,6 @@ const subscriptionSchema = new Schema(
   },
 )
 
-export const SubscriptionModel = model('subscriptions', subscriptionSchema)
-export type SubscriptionSchema = InferSchemaType<typeof subscriptionSchema>
-export type Subscription = HydratedDocumentFromSchema<typeof subscriptionSchema>
+export const SubscriptionModel = model('subscriptions', schema)
+export type SubscriptionSchema = InferSchemaType<typeof schema>
+export type Subscription = HydratedDocumentFromSchema<typeof schema>

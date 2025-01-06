@@ -19,16 +19,13 @@ const VIDEO_SCHEMA = Joi.object({
   key: STRING_SCHEMA.required(),
 })
 
-const episodeSchema = Joi.object({
-  season: Joi.number().min(1).required(),
-  episode_number: Joi.number().min(1).required(),
-  episode_title: STRING_SCHEMA.required(),
-  episode_description: STRING_SCHEMA.required(),
-  video_upload: MONGO_DB_OBJECT_ID_SCHEMA.required()
-})
-
 export const addEpisodeSchema = {
-  body: episodeSchema,
+  body: Joi.object({
+    episode_number: Joi.number().min(1).optional(),
+    episode_title: STRING_SCHEMA.required(),
+    episode_description: STRING_SCHEMA.optional(),
+    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+  }),
 }
 
 export const addMovieOrSkitSchema = {
@@ -65,7 +62,6 @@ export const addSeriesSchema = {
     poster2_data: POSTER_SCHEMA.required(),
 
     //
-    episodes: Joi.array().items(episodeSchema).required(),
     genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     expiry_date: ISO_STRING_SCHEMA,

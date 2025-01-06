@@ -6,20 +6,6 @@ const videoUploadSchemaRef = {
   ref: 'video_uploads',
 }
 
-const episodeSchema = new Schema(
-  {
-    season: Number,
-    episode_number: Number,
-    episode_title: String,
-    episode_description: String,
-    video_upload: {
-      ...videoUploadSchemaRef,
-      required: [true, 'an episode must have a video upload'],
-    },
-  },
-  { _id: false, timestamps: false, versionKey: false },
-)
-
 const schema = new Schema(
   {
     admin_id: {
@@ -121,13 +107,14 @@ const schema = new Schema(
       required: true,
     },
 
-    // seasons: {
-    //      type: Number,
-    // },
-    episodes: [episodeSchema],
+    seasons: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'seasons',
+      },
+    ],
 
     artist_name: {
-      //for music video
       type: String,
     },
   },
@@ -148,25 +135,3 @@ schema.pre('validate', function (next) {
 export const VideoModel = model('videos', schema)
 export type VideoSchema = InferSchemaType<typeof schema>
 export type Video = HydratedDocumentFromSchema<typeof schema>
-export type EpisodeSchema = InferSchemaType<typeof episodeSchema>
-
-export async function populateTranscodesWithSignedUrl(video: Video) {
-  // if (video.is_series) {
-  //   for (const episode of video.episodes) {
-  //     if (!episode.bucket) continue
-
-  //     episode.transcodes = (await MediaAccess.getTranscodedLocationURLS(
-  //       episode.bucket,
-  //       episode.transcodes as any,
-  //     )) as any
-  //   }
-  // }
-
-  // if (video.bucket)
-  //   video.transcodes = (await MediaAccess.getTranscodedLocationURLS(
-  //     video.bucket,
-  //     video.transcodes,
-  //   )) as any
-
-  return video.toObject()
-}

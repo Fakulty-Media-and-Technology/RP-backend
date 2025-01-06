@@ -210,6 +210,7 @@ superAdminRouter.post(
 superAdminRouter.get('/featured/contents/fetch', AdminFeaturedController.getFeaturedContents)
 
 // ***** Uploads
+
 superAdminRouter.post(
   '/uploads/movie/add',
   requestValidator(addMovieOrSkitSchema),
@@ -234,8 +235,10 @@ superAdminRouter.post(
   AdminUploadController.addVideoByType('series'),
 )
 
+superAdminRouter.post('/uploads/seasons/add/:videoId', AdminUploadController.addSeason)
+
 superAdminRouter.post(
-  '/uploads/series/add/episode/:vidId',
+  '/uploads/episodes/add/:seasonId',
   requestValidator(addEpisodeSchema),
   AdminUploadController.addEpisode,
 )

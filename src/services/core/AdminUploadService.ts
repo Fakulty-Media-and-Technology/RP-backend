@@ -1,20 +1,28 @@
 import { Request } from 'express'
-import { ClientSession, FilterQuery } from 'mongoose'
+import { ClientSession } from 'mongoose'
 import { PosterImageModel } from '../../models/poster.model'
 
-import {
-  populateTranscodesWithSignedUrl,
-  Video,
-  VideoModel,
-  VideoSchema,
-  EpisodeSchema,
-} from '../../models/videos.model'
+import { Video, VideoModel } from '../../models/videos.model'
 
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { SeasonModel } from '../../models/seasons.model'
+import { EpisodeModel } from '../../models/episodes.model'
+import { VideoParser } from '../../utils/VideoParser'
 
 export type AllVideoTypes = Video['type']
+
+type AddEpisodeInput = {
+  seasonId: string
+  data: Record<string, any>
+  adminId: string
+}
+
+type AddSeasonWithSessionInput = {
+  videoId: string
+  adminId: string
+}
 
 type PosterData = {
   bucket: string
@@ -71,7 +79,7 @@ export class AdminUploadService {
     const posters = await this._makePosters(
       {
         videoId: video.id,
-        
+
         posterOne: {
           bucket: poster1_data.bucket,
           key: poster1_data.key,
@@ -93,31 +101,12 @@ export class AdminUploadService {
     }
   }
 
-  static addEpisode = async (vidId: string, episode: EpisodeSchema) => {
-    const vid = await VideoModel.findOneAndUpdate(
-      {
-        _id: vidId,
-        is_series: true,
-        'episodes.episode_title': { $ne: episode.episode_title },
-        'episodes.episode_number': { $ne: episode.episode_number },
-      },
-      { $push: { episodes: episode } },
-    )
-
-    if (vid === null) {
-      throw new OperationalError(
-        'Invalid ID or new episode has duplicate properties with previous episodes episode_title | key | episode_number',
-        404,
-      )
-    }
-  }
-
   static addVideo = async (params: {
     type: AllVideoTypes
     data: Record<string, any>
     adminId: string
   }) => {
-    await withMongoDBSession(this._addVideoWithSession, params)
+    return await withMongoDBSession(this._addVideoWithSession, params)
   }
 
   static editVideo = async ({
@@ -167,29 +156,93 @@ export class AdminUploadService {
   }
 
   static getVideos = async (type: AllVideoTypes, queryParams: Request['query']) => {
-    const filter: FilterQuery<VideoSchema> = {
-      type,
-      [type === 'series' ? 'episodes.key' : 'key']: { $regex: /^transcode/ },
-    }
+    const dbQuery = VideoModel.find({ type }).sort('-createdAt').populate('seasons').populate({
+      path: 'video_upload',
+      select: 'resolutionUrls key bucket',
+    })
 
-    const dbQuery = VideoModel.find(filter).sort('updatedAt').select('-__v -createdAt -updatedAt')
-
-    const features = new QueryParamsFeatures(dbQuery, {
-      defaultLimit: 10,
+    const queryFeatures = new QueryParamsFeatures(dbQuery, {
+      defaultLimit: 50,
       defaultPage: 1,
       queryParams,
     })
 
-    const videos = await features.paginate().query
-    const settledResults = await Promise.allSettled(videos.map(populateTranscodesWithSignedUrl))
-    const vids: any[] = []
-
-    settledResults.forEach(result => {
-      if (result.status === 'fulfilled') {
-        vids.push(result.value)
-      }
-    })
-
+    const vids = await queryFeatures.paginate().query
+    await VideoParser.populateVidsWithResolutionUrls(vids, type)
     return vids
   }
+
+  // ********* seasons
+
+  private static _addSeasonWithSesson = async (
+    { videoId, adminId }: AddSeasonWithSessionInput,
+    session: ClientSession,
+  ) => {
+    const prevSeasons = await SeasonModel.find({ video: videoId })
+
+    const season = await new SeasonModel({
+      admin: adminId,
+      video: videoId,
+      serial_number: prevSeasons.length + 1,
+    }).save({ session })
+
+    const parentVideo = await VideoModel.findOneAndUpdate(
+      { _id: videoId, is_series: true },
+      { $push: { seasons: season._id } },
+      { session },
+    )
+
+    if (parentVideo === null) {
+      throw new OperationalError('video Id is invalid or the video is not a series', 400)
+    }
+
+    return season
+  }
+
+  static addSeason = async (videoId: string, adminId: string) => {
+    return await withMongoDBSession(this._addSeasonWithSesson, {
+      videoId,
+      adminId,
+    })
+  }
+
+  // ********* episodes
+  private static _addEpisodesWithSession = async (
+    { seasonId, data, adminId }: AddEpisodeInput,
+    session: ClientSession,
+  ) => {
+    let episodeNumber: number
+
+    if (data.episode_number) {
+      episodeNumber = data.episode_number
+    } else {
+      const prevEpisodes = await EpisodeModel.find({ season: seasonId })
+      episodeNumber = prevEpisodes.length + 1
+    }
+
+    const episode = await new EpisodeModel({
+      ...data,
+      episode_number: episodeNumber,
+      season: seasonId,
+      admin: adminId,
+    }).save({ session })
+
+    const parentSeason = await SeasonModel.findByIdAndUpdate(
+      seasonId,
+      { $push: { episodes: episode._id } },
+      { session },
+    )
+
+    if (parentSeason == null) {
+      throw new OperationalError('invalid season Id', 404)
+    }
+
+    return episode
+  }
+
+  static addEpisode = async (input: AddEpisodeInput) => {
+    return await withMongoDBSession(this._addEpisodesWithSession, input)
+  }
+
+  // static
 }

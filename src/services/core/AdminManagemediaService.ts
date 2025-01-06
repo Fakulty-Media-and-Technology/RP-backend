@@ -13,7 +13,7 @@ import { Request } from 'express'
 import { UserRepo } from '../../repositories/UserRepo'
 import { getUniqueStreamKey } from '../../utils/live'
 import { rimraf } from 'rimraf'
-import { VideoCoverModel } from '../../models/videocover.model'
+import { VideoCoverModel } from '../../models/videoupload.model'
 
 export type UploadImageOrSubtitleType = 'image' | 'subtitle'
 

@@ -1,0 +1,56 @@
+import { query } from 'express'
+import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+
+const schema = new Schema(
+  {
+    admin: {
+      type: Schema.Types.ObjectId,
+      ref: 'users',
+      required: true,
+    },
+
+    season: {
+      type: Schema.Types.ObjectId,
+      ref: 'seasons',
+      required: true,
+    },
+
+    episode_number: {
+      type: Number,
+      required: true,
+    },
+
+    episode_title: {
+      type: String,
+      required: true,
+    },
+
+    episode_description: String,
+
+    // can add more stuff here as needed
+
+    video_upload: {
+      type: Schema.Types.ObjectId,
+      ref: 'video_uploads',
+      required: [true, 'an episode must have a video upload'],
+    },
+  },
+  { timestamps: true },
+)
+
+schema.index({ season: 1, episode_title: 1 }, { unique: true })
+schema.index({ season: 1, episode_number: 1 }, { unique: true })
+
+schema.pre('find', function (next) {
+  this.populate('video_upload')
+  next()
+})
+
+schema.pre('findOne', function (next) {
+  this.populate('video_upload')
+  next()
+})
+
+export const EpisodeModel = model('episodes', schema)
+export type EpisodeSchema = InferSchemaType<typeof schema>
+export type Episode = HydratedDocumentFromSchema<typeof schema>
