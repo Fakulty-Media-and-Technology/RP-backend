@@ -39,6 +39,13 @@ const schema = new Schema(
       type: Number,
     },
 
+    parentType: {
+      type: String,
+      enum: ['vod', 'episode', 'event'], // add more as needed
+    },
+
+    parentId: String,
+
     isTranscoded: {
       type: Boolean,
       default: false,
@@ -52,37 +59,16 @@ const schema = new Schema(
   {
     timestamps: true,
     versionKey: false,
-    methods: {
-      async getSignedLocationURLS() {
-        if (this.isTranscoded) {
-          const resUrls = await MediaAccess.getTranscodedLocationURLS(
-            this.bucket,
-            this.resolutionUrls,
-          )
-
-          this.resolutionUrls = resUrls as any
-        } else {
-          this.resolutionUrls = [
-            {
-              resolution: 'raw',
-              key: await MediaAccess.getSignedUrl(this.bucket, this.key, 'video'),
-            },
-          ] as any
-        }
-
-        return this.toObject()
-      },
-    },
   },
 )
 
 schema.pre('save', async function (next) {
   if (this.key.startsWith('transcode')) {
-    this.resolutionUrls = await S3.getTranscodedUrlsWithResolutions(this.key) as any
+    this.resolutionUrls = (await S3.getTranscodedUrlsWithResolutions(this.key)) as any
     this.isTranscoded = true
   }
   next()
 })
 
-export const VideoCoverModel = model('video_uploads', schema)
-export type VideoCover = HydratedDocumentFromSchema<typeof schema>
+export const VideoUploadModel = model('video_uploads', schema)
+export type VideoUpload = HydratedDocumentFromSchema<typeof schema>

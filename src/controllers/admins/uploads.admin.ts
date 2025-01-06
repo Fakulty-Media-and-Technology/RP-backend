@@ -32,7 +32,7 @@ export class AdminUploadController {
     Catch.async(async (req, res) => {
       const admin = GetDefined.loggedInUser(req.user)
 
-      await AdminUploadService.addVideo({
+      const video = await AdminUploadService.addVideo({
         type,
         data: req.body,
         adminId: admin.id,
@@ -41,6 +41,7 @@ export class AdminUploadController {
       sendResponse({
         res,
         message: `${type} added successfully`,
+        data: video
       })
     })
 

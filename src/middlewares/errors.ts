@@ -5,9 +5,6 @@ import { sendResponse } from '../utils/responder'
 
 export class ErrorMiddleware {
   static allErrors = (err: unknown, _: Request, res: Response, __: NextFunction) => {
-    // TODO: REMOVE AFTER MVP
-    console.dir({ '🛑🛑error': err }, { depth: null })
-
     if (err instanceof OperationalError) {
       sendResponse({
         res,
@@ -18,6 +15,9 @@ export class ErrorMiddleware {
 
       return
     }
+
+    // TODO: REMOVE AFTER MVP
+    console.dir({ '🛑🛑error': err }, { depth: null })
 
     // this can be made very elaborate
 

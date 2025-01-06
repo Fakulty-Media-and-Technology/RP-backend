@@ -28,17 +28,17 @@ type ResolutionUrl = {
 }
 
 export class VideoParser {
-  static resolutionUrlsToSignedOrRaw = async (obj: ResolutionURLSParserInput) => {
-    if (obj.key.startsWith('transcode/') && obj.resolutionUrls.length) {
-      obj.resolutionUrls = await MediaAccess.getTranscodedLocationURLS(
-        obj.bucket,
-        obj.resolutionUrls,
+  static resolutionUrlsToSignedOrRaw = async (videoUpload: ResolutionURLSParserInput) => {
+    if (videoUpload.key.startsWith('transcode/') && videoUpload.resolutionUrls.length) {
+      videoUpload.resolutionUrls = await MediaAccess.getTranscodedLocationURLS(
+        videoUpload.bucket,
+        videoUpload.resolutionUrls,
       )
     } else {
-      obj.resolutionUrls = [
+      videoUpload.resolutionUrls = [
         {
           resolution: 'raw',
-          key: await MediaAccess.getSignedUrl(obj.bucket, obj.key, 'video'),
+          key: await MediaAccess.getSignedUrl(videoUpload.bucket, videoUpload.key, 'video'),
         },
       ]
     }

@@ -3,7 +3,7 @@ import { PaymentDetailModel } from '../models/paymentDetails.model'
 import { PaymentModel } from '../models/payments.model'
 import { PlanModel } from '../models/plans.model'
 import { SubscriptionModel } from '../models/subscription.model'
-import { VideoCoverModel } from '../models/videoupload.model'
+import { VideoUploadModel } from '../models/videoupload.model'
 import { VideoModel } from '../models/videos.model'
 import { WalletModel } from '../models/wallet.model'
 import PaymentServices, { convertKoboToNaira } from '../paymentIntegration'
@@ -20,7 +20,7 @@ const stringify = (data: Object) => JSON.stringify(data, null, 2)
 
 export class CronTaskHandlers {
   private static _updateVCToTranscodedShape = async (input: TranscodedKeyPairs) => {
-    const vcUpdate = await VideoCoverModel.findOneAndUpdate(
+    const vcUpdate = await VideoUploadModel.findOneAndUpdate(
       { key: input.inputKey },
       {
         $set: {
@@ -34,9 +34,9 @@ export class CronTaskHandlers {
     return vcUpdate
   }
 
-  static updateVidoeCoversToTranscodedShape = async () => {
+  static updateVidoeUploadsKey = async () => {
     const pairs = await MediaConvert.recentCompletedJobsKeyPairs()
-    const funcLoc = 'CronTaskHandlers.updateVidoeCoversToTranscodedShape'
+    const funcLoc = 'CronTaskHandlers.updateVidoeUploadsKey'
 
     pairs.forEach(async pair => {
       try {

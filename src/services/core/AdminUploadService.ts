@@ -3,13 +3,14 @@ import { ClientSession } from 'mongoose'
 import { PosterImageModel } from '../../models/poster.model'
 
 import { Video, VideoModel } from '../../models/videos.model'
-
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { SeasonModel } from '../../models/seasons.model'
 import { EpisodeModel } from '../../models/episodes.model'
 import { VideoParser } from '../../utils/VideoParser'
+import { VideoUploadModel } from '../../models/videoupload.model'
+import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
 
 export type AllVideoTypes = Video['type']
 
@@ -19,51 +20,26 @@ type AddEpisodeInput = {
   adminId: string
 }
 
+type AddVideoInput = {
+  type: AllVideoTypes
+  data: Record<string, any>
+  adminId: string
+}
+
 type AddSeasonWithSessionInput = {
   videoId: string
   adminId: string
 }
 
-type PosterData = {
-  bucket: string
-  key: string
-  dimension: string
-}
-
-type MakePostersInput = {
-  videoId: string
-  posterOne: PosterData
-  posterTwo: PosterData
-}
-
-type AddVideoWithSessionInput = {
-  adminId: string
+type EditVideoInput = {
+  vidId: string
   type: AllVideoTypes
-  data: Record<string, any>
+  changes: Record<string, any>
 }
+
+type AddVideoWithSessionInput = AddVideoInput
 
 export class AdminUploadService {
-  private static _makePosters = async (data: MakePostersInput, session: ClientSession) => {
-    const posterOne = await new PosterImageModel({
-      video_id: data.videoId,
-      bucket: data.posterOne.bucket,
-      key: data.posterOne.key,
-      dimension: data.posterOne.dimension,
-    }).save({ session })
-
-    const posterTwo = await new PosterImageModel({
-      video_id: data.videoId,
-      bucket: data.posterTwo.bucket,
-      key: data.posterTwo.key,
-      dimension: data.posterTwo.dimension,
-    }).save({ session })
-
-    return {
-      posterOne,
-      posterTwo,
-    }
-  }
-
   private static _addVideoWithSession = async (
     input: AddVideoWithSessionInput,
     session: ClientSession,
@@ -76,48 +52,45 @@ export class AdminUploadService {
       ...input.data,
     }).save({ session })
 
-    const posters = await this._makePosters(
-      {
-        videoId: video.id,
+    if (video.type !== 'series') {
+      if (video.video_upload == null) {
+        throw new OperationalError(`video_upload is required for ${video.type} videos`, 400)
+      }
 
-        posterOne: {
-          bucket: poster1_data.bucket,
-          key: poster1_data.key,
-          dimension: poster1_data.dimension,
-        },
+      await VideoUploadRepo.updateWithParent({
+        id: video.video_upload.toString(),
+        parentId: video._id.toString(),
+        parentType: 'vod',
+        session,
+      })
+    }
 
-        posterTwo: {
-          bucket: poster2_data.bucket,
-          key: poster2_data.key,
-          dimension: poster2_data.dimension,
-        },
-      },
-      session,
-    )
+    const posterOne = await new PosterImageModel({
+      video_id: video.id,
+      bucket: poster1_data.bucket,
+      key: poster1_data.key,
+      dimension: poster1_data.dimension,
+    }).save({ session })
+
+    const posterTwo = await new PosterImageModel({
+      video_id: video.id,
+      bucket: poster2_data.bucket,
+      key: poster2_data.key,
+      dimension: poster2_data.dimension,
+    }).save({ session })
 
     return {
       video,
-      ...posters,
+      posterOne,
+      posterTwo,
     }
   }
 
-  static addVideo = async (params: {
-    type: AllVideoTypes
-    data: Record<string, any>
-    adminId: string
-  }) => {
-    return await withMongoDBSession(this._addVideoWithSession, params)
+  static addVideo = async (input: AddVideoInput) => {
+    return await withMongoDBSession(this._addVideoWithSession, input)
   }
 
-  static editVideo = async ({
-    vidId,
-    type,
-    changes,
-  }: {
-    vidId: string
-    type: AllVideoTypes
-    changes: Record<string, any>
-  }) => {
+  static editVideo = async ({ vidId, type, changes }: EditVideoInput) => {
     const video = await VideoModel.findOne({ _id: vidId, type })
 
     if (video == null) {
@@ -125,7 +98,6 @@ export class AdminUploadService {
     }
 
     delete changes['_id']
-    delete changes['admin_id']
 
     const updatedVid = await VideoModel.findOneAndUpdate(
       {
@@ -236,6 +208,13 @@ export class AdminUploadService {
     if (parentSeason == null) {
       throw new OperationalError('invalid season Id', 404)
     }
+
+    await VideoUploadRepo.updateWithParent({
+      id: episode.video_upload.toString(),
+      parentId: episode._id.toString(),
+      parentType: 'episode',
+      session,
+    })
 
     return episode
   }
