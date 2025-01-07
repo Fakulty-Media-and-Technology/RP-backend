@@ -8,8 +8,7 @@ import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { SeasonModel } from '../../models/seasons.model'
 import { EpisodeModel } from '../../models/episodes.model'
-import { VideoParser } from '../../utils/VideoParser'
-import { VideoUploadModel } from '../../models/videoupload.model'
+import { VideoUploadParser } from '../../utils/VideoUploadParser'
 import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
 
 export type AllVideoTypes = Video['type']
@@ -130,7 +129,7 @@ export class AdminUploadService {
   static getVideos = async (type: AllVideoTypes, queryParams: Request['query']) => {
     const dbQuery = VideoModel.find({ type }).sort('-createdAt').populate('seasons').populate({
       path: 'video_upload',
-      select: 'resolutionUrls key bucket isTranscoded',
+      select: 'resolutions key bucket isTranscoded',
     })
 
     const queryFeatures = new QueryParamsFeatures(dbQuery, {
@@ -140,7 +139,7 @@ export class AdminUploadService {
     })
 
     const vids = await queryFeatures.paginate().query
-    await VideoParser.populateVidsWithResolutionUrls(vids, type)
+    await VideoUploadParser.populateVidUploadResolutions(vids, type)
     return vids
   }
 

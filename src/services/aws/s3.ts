@@ -32,7 +32,7 @@ export class S3 {
     return outputKeys
   }
 
-  static resolutionUrlsPairsFromInputKey = async (inputKey: string) => {
+  static setResolutionsPairs = async (inputKey: string) => {
     const keys = await this.getTranscodedKeysFromInputKey(inputKey)
 
     const pairs = keys.map(key => {

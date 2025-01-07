@@ -17,9 +17,9 @@ type KeyPair = Awaited<ReturnType<typeof MediaConvert.recentCompletedJobsKeyPair
 const stringify = (data: Object) => JSON.stringify(data, null, 2)
 
 export class CronTaskHandlers {
-  static updateVidoeUploadsResolutionURLs = async () => {
+  static updateVidUploadsResolutions = async () => {
     const pairs = await MediaConvert.recentCompletedJobsKeyPairs()
-    const funcLoc = 'CronTaskHandlers.updateVidoeUploadsResolutionURLs'
+    const funcLoc = 'CronTaskHandlers.updateVidUploadsResolutions'
 
     // 
     pairs.forEach(async pair => {
@@ -29,7 +29,7 @@ export class CronTaskHandlers {
           {
             $set: {
               isTranscoded: true,
-              resolutionUrls: await S3.resolutionUrlsPairsFromInputKey(pair.inputKey),
+              resolutions: await S3.setResolutionsPairs(pair.inputKey),
             },
           },
         )

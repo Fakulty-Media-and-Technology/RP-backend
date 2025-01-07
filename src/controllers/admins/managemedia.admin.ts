@@ -6,6 +6,8 @@ import {
   LivesType,
   UploadImageOrSubtitleType,
 } from '../../services/core/AdminManagemediaService'
+import { GetDefined } from '../../utils/GetDefined'
+import { OperationalError } from '../../utils/OperationalError'
 
 export class AdminManagemediaController {
   static uploadVideo = Catch.async(async ({ file, body: { expire, fileName } }, res) => {
@@ -35,14 +37,22 @@ export class AdminManagemediaController {
     sendResponse({ res, data: image, message: 'image fetched' })
   })
 
-  static createLive = Catch.async(async (req, res) => {
-    await AdminManageMediaService.createLive(req.body)
+  static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
+    Catch.async(async (req, res) => {
+      if (isAdmin && typeof req.body.client_id !== 'string') {
+        throw new OperationalError('/body.client_id is required/', 400)
+      }
 
-    sendResponse({
-      res,
-      message: 'live stream event scheduled, credentials are on attached user dashboard',
+      if (!isAdmin) {
+        req.body.client_id = GetDefined.loggedInUser(req.user).id
+      }
+
+      sendResponse({
+        res,
+        data: await AdminManageMediaService.createLive(req.body),
+        message: 'live stream event scheduled, credentials are on attached user dashboard',
+      })
     })
-  })
 
   static searchClient = Catch.async(async (req, res) => {
     const clients = await AdminManageMediaService.searchClient(

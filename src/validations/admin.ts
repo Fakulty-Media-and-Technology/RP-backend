@@ -106,7 +106,7 @@ export const getPhotoURLSchema = {
 
 export const createLiveSchema = {
   body: Joi.object({
-    client_id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    client_id: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
     title: STRING_SCHEMA.required(),
     cover_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
     location: STRING_SCHEMA.required(),

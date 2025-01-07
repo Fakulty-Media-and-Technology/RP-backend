@@ -14,7 +14,7 @@ type Videoupload = {
   bucket: string
   key: string
   isTranscoded: boolean
-  resolutionUrls: ResolutionUrl[]
+  resolutions: ResolutionUrl[]
 }
 
 type ResolutionUrl = {
@@ -22,12 +22,12 @@ type ResolutionUrl = {
   key: string
 }
 
-export class VideoParser {
-  static signResolutionURLs = async (videoUpload: Videoupload) => {
-    const { bucket, key, resolutionUrls, isTranscoded } = videoUpload
+export class VideoUploadParser {
+  static signResolutions = async (videoUpload: Videoupload) => {
+    const { bucket, key, resolutions, isTranscoded } = videoUpload
 
-    videoUpload.resolutionUrls = isTranscoded
-      ? await MediaAccess.getTranscodedLocationURLS(bucket, resolutionUrls)
+    videoUpload.resolutions = isTranscoded
+      ? await MediaAccess.getTranscodedLocationURLS(bucket, resolutions)
       : [
           {
             resolution: 'raw',
@@ -36,14 +36,14 @@ export class VideoParser {
         ]
   }
 
-  static populateVidsWithResolutionUrls = async (vids: Video[], type: Video['type']) => {
+  static populateVidUploadResolutions = async (vids: Video[], type: Video['type']) => {
     if (type === 'series') {
       const promises = vids.map(async vid => {
         for (const season of vid.seasons) {
           const populatedSeason = season as unknown as Season
           //
           for (const episode of populatedSeason.episodes) {
-            await this.signResolutionURLs(episode.video_upload)
+            await this.signResolutions(episode.video_upload)
           }
         }
         return vid
@@ -53,7 +53,7 @@ export class VideoParser {
     } else {
       const settled = await Promise.allSettled(
         vids.map(async vid => {
-          await this.signResolutionURLs(vid.video_upload as any)
+          await this.signResolutions(vid.video_upload as any)
           return vid
         }),
       )

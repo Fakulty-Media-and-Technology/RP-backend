@@ -46,9 +46,8 @@ clientsRouter.get('/event/payment/estimate', ClientLiveStreamController.calculat
 clientsRouter.post('/event/live/schedule', ClientLiveStreamController.createLiveClient)
 clientsRouter.post('/event/live/extend', ClientLiveStreamController.extendLiveEvent)
 
-
 clientsRouter.post(
   '/lives/create',
   requestValidator(createLiveSchema),
-  AdminManagemediaController.createLive,
+  AdminManagemediaController.createLive({ isAdmin: false }),
 )

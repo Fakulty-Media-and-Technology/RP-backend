@@ -1,7 +1,7 @@
 import { HydratedDocumentFromSchema, Schema, model } from 'mongoose'
 import { S3 } from '../services/aws/s3'
 
-const transcodeSchema = new Schema(
+const resolutionsSchema = new Schema(
   {
     resolution: {
       type: String,
@@ -50,8 +50,8 @@ const schema = new Schema(
       default: false,
     },
 
-    resolutionUrls: {
-      type: [transcodeSchema],
+    resolutions: {
+      type: [resolutionsSchema],
       default: [],
     },
   },
@@ -63,7 +63,7 @@ const schema = new Schema(
 
 schema.pre('save', async function (next) {
   if (this.isTranscoded) {
-    this.resolutionUrls = (await S3.resolutionUrlsPairsFromInputKey(this.key)) as any
+    this.resolutions = (await S3.setResolutionsPairs(this.key)) as any
   }
   next()
 })

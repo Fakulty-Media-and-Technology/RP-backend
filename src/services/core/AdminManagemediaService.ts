@@ -136,23 +136,20 @@ export class AdminManageMediaService {
     })
 
     if (!vclient_id) {
-      throw new OperationalError('assigned user not found', 404)
+      throw new OperationalError('Client not found', 404)
     }
 
-    const streamOngoing = await LiveModel.find({ client_id, active: true })
+    const [streamOngoing, scheduledStream] = await Promise.all([
+      LiveModel.findOne({ client_id, active: true }),
+      LiveModel.findOne({ client_id, active: false, expired: false }),
+    ])
 
-    if (streamOngoing.length > 0) {
+    if (streamOngoing) {
       throw new OperationalError('client has an ongoing stream', 400)
     }
 
-    const scheduledStream = await LiveModel.findOne({
-      client_id,
-      active: true,
-      expired: false,
-    })
-
     if (scheduledStream) {
-      throw new OperationalError('client alrealdy have pending scheduled stream', 400)
+      throw new OperationalError('client alrealdy has a scheduled stream', 400)
     }
 
     const live = await new LiveModel({

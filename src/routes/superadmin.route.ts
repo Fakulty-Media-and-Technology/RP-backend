@@ -138,7 +138,7 @@ superAdminRouter.post(
 superAdminRouter.post(
   '/lives/create',
   requestValidator(createLiveSchema),
-  AdminManagemediaController.createLive,
+  AdminManagemediaController.createLive({ isAdmin: true }),
 )
 
 superAdminRouter.get('/lives/search-clients', AdminManagemediaController.searchClient)
