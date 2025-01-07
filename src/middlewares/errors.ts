@@ -3,29 +3,59 @@ import { OperationalError } from '../utils/OperationalError'
 import { sendResponse } from '../utils/responder'
 // import env from '../env'
 
-export class ErrorMiddleware {
-  static allErrors = (err: unknown, _: Request, res: Response, __: NextFunction) => {
-    if (err instanceof OperationalError) {
-      sendResponse({
-        res,
-        data: err,
-        message: err.message,
-        statusCode: err.statusCode,
-      })
+// const isObjectLike = (obj: unknown) => Object.prototype.toString.call(obj) === '[object Object]'
 
-      return
+export class ErrorMiddleware {
+  static allErrors = (error: any, _: Request, res: Response, __: NextFunction) => {
+    /**
+     * Current patch implementation.
+     * Considerate planning should be considered for error handling and this should be greatly improved
+     */
+    const isOperationalError = error instanceof OperationalError
+
+    switch (error.name) {
+      case 'TokenExpiredError':
+        error = new OperationalError('Expired session. Please login', 401)
+        break
+
+      case 'JsonWebTokenError':
+        error = new OperationalError('Invalid credentials. Please login', 401)
+        break
+
+      case 'MongooseError':
+        error = new OperationalError('Network Error', 502)
+        break
+
+      case 'MongoServerError':
+        if (error.code === 11000) {
+          const message = `${Object.values(error.keyValue)[0]} is associated with another document in the table.`
+          error = new OperationalError(message, 400)
+          break
+        }
+
+        error = new OperationalError('Unkonwn database error', 502)
+        break
+      default:
+        error = isOperationalError
+          ? error
+          : new OperationalError(
+              error.message || 'Unkown application error',
+              error.statusCode || 500,
+            )
+
+        break
     }
 
-    // TODO: REMOVE AFTER MVP
-    console.dir({ '🛑🛑error': err }, { depth: null })
-
-    // this can be made very elaborate
+    const message = isOperationalError ? error.message : 'something went wrong please try again'
+    const statusCode = isOperationalError ? error.statusCode : 500
 
     sendResponse({
       res,
-      message: 'something went wrong. Please try again',
-      statusCode: 500,
+      message,
+      statusCode,
     })
+
+    !isOperationalError && console.log('Express Error middleware Middleware🛑', error)
   }
 
   static wildRoute = ({ method, originalUrl }: Request, _: Response, next: NextFunction) => {
