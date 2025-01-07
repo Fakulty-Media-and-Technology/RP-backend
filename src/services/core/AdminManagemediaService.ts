@@ -14,6 +14,9 @@ import { UserRepo } from '../../repositories/UserRepo'
 import { getUniqueStreamKey } from '../../utils/live'
 import { rimraf } from 'rimraf'
 import { VideoUploadModel } from '../../models/videoupload.model'
+import { ClientSession } from 'mongoose'
+import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
 
 export type UploadImageOrSubtitleType = 'image' | 'subtitle'
 
@@ -108,7 +111,7 @@ export class AdminManageMediaService {
     })
   }
 
-  static createLive = async (data: Record<string, any>) => {
+  private static _createLiveWithSession = async (data: any, session: ClientSession) => {
     const {
       client_id,
       title,
@@ -121,8 +124,8 @@ export class AdminManageMediaService {
       type,
       start,
       expiry,
-      sponsored,
-      popular,
+      // sponsored,
+      // popular,
       video,
       location,
     } = data
@@ -152,7 +155,7 @@ export class AdminManageMediaService {
       throw new OperationalError('client alrealdy have pending scheduled stream', 400)
     }
 
-    await LiveModel.create({
+    const live = await new LiveModel({
       client_id: vclient_id._id,
       title: title,
       sub_title: sub_title,
@@ -165,11 +168,24 @@ export class AdminManageMediaService {
       type: type,
       start: new Date(start),
       expiry: new Date(expiry),
-      sponsored,
-      popular,
+      // sponsored,
+      // popular,
       location,
       preview_video: video,
-    })
+    }).save({ session })
+
+    if (live.preview_video) {
+      await VideoUploadRepo.updateWithParent({
+        session,
+        id: live.preview_video.toString(),
+        parentId: live._id.toString(),
+        parentType: 'live',
+      })
+    }
+  }
+
+  static createLive = async (data: Record<string, any>) => {
+    return await withMongoDBSession(this._createLiveWithSession, data)
   }
 
   static searchClient = async (searchText: string, query: Request['query']) => {

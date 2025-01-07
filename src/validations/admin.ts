@@ -110,19 +110,19 @@ export const createLiveSchema = {
     title: STRING_SCHEMA.required(),
     cover_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
     location: STRING_SCHEMA.required(),
-    video: VIDEO_SCHEMA.optional(),
+    video: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
     vid_class: VIDEO_CLASS_SCHEMA.required(),
     pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
     description: STRING_SCHEMA.optional(),
     type: LIVE_TYPE_SCHEMA.required(),
-    sponsored: Joi.boolean().required(),
-    popular: Joi.boolean().required(),
+    // sponsored: Joi.boolean().required(),
+    // popular: Joi.boolean().required(),
     start: ISO_STRING_SCHEMA.required(),
     expiry: ISO_STRING_SCHEMA.required(),
   }),
 }
 
-export const createUpcomingSchema = {
+export const createUpcomingEventSchema = {
   body: Joi.object({
     title: STRING_SCHEMA.required(),
     type: STRING_SCHEMA.valid('movie', 'series', 'music video', 'documentary', 'skit').required(),

@@ -9,6 +9,8 @@ import { AuthMiddleware } from '../middlewares/auth'
 
 import { requestValidator } from '../middlewares/requestValidator'
 import { updateProfileSchema } from '../validations/client'
+import { AdminManagemediaController } from '../controllers/admins/managemedia.admin'
+import { createLiveSchema } from '../validations/admin'
 
 export const clientsRouter = express.Router()
 
@@ -43,3 +45,10 @@ clientsRouter.post('/event/create/payment', CustomerPaymentController.createPaym
 clientsRouter.get('/event/payment/estimate', ClientLiveStreamController.calculateEventCharges)
 clientsRouter.post('/event/live/schedule', ClientLiveStreamController.createLiveClient)
 clientsRouter.post('/event/live/extend', ClientLiveStreamController.extendLiveEvent)
+
+
+clientsRouter.post(
+  '/lives/create',
+  requestValidator(createLiveSchema),
+  AdminManagemediaController.createLive,
+)

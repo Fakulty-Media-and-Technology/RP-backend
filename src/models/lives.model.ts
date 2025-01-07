@@ -41,7 +41,8 @@ const schema = new Schema(
     },
 
     preview_video: {
-      type: previewVideoSchema,
+      type: Schema.Types.ObjectId,
+      ref: 'video_uploads'
     },
 
     vid_class: {

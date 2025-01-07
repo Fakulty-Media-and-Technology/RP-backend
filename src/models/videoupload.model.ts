@@ -40,7 +40,7 @@ const schema = new Schema(
 
     parentType: {
       type: String,
-      enum: ['vod', 'episode', 'event'], // add more as needed
+      enum: ['vod', 'episode', 'live'], // add more as needed
     },
 
     parentId: Schema.Types.ObjectId,

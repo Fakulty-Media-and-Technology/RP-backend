@@ -7,13 +7,17 @@ const commentSchema = new Schema(
       ref: 'User',
       required: true,
     },
+
     message: {
       type: String,
     },
+
     type: {
       type: String,
       enum: ['live', 'vod'],
     },
+    
+    parentId: Schema.Types.ObjectId
   },
   {
     timestamps: true,

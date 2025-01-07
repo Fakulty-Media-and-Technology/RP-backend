@@ -34,7 +34,7 @@ import {
   createLiveSchema,
   createPlanSchema,
   createTrailerSchema,
-  createUpcomingSchema,
+  createUpcomingEventSchema,
   addEpisodeSchema,
   getPhotoURLSchema,
   updatePayOutReqStstusSchema,
@@ -149,7 +149,7 @@ superAdminRouter.get('/lives/all/tvshows', AdminManagemediaController.getLivesBy
 // **** upcoming events routes
 superAdminRouter.post(
   '/upcoming/event/create',
-  requestValidator(createUpcomingSchema),
+  requestValidator(createUpcomingEventSchema),
   AdminUpcomingController.createUpcomingEvent,
 )
 
