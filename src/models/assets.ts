@@ -1,0 +1,1 @@
+export const assets = ['vod', 'episode', 'live'] as const

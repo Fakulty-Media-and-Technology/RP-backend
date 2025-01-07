@@ -1,10 +1,11 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { assets } from './assets'
 
 const commentSchema = new Schema(
   {
     customer_id: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'users',
       required: true,
     },
 
@@ -14,7 +15,7 @@ const commentSchema = new Schema(
 
     type: {
       type: String,
-      enum: ['live', 'vod'],
+      enum: assets,
     },
     
     parentId: Schema.Types.ObjectId

@@ -8,7 +8,6 @@ const getUserFromAuth = async (token: string) => {
   try {
     return await liveStreamAuth(token)
   } catch (e: any) {
-    // do somthing with the error
     return null
   }
 }
@@ -17,125 +16,81 @@ export const socketChat = async (io: Server) => {
   console.log('Sockets initited successfully')
 
   io.on('connection', async socket => {
-    let rooms = [...socket.rooms]
+    // let rooms = [...socket.rooms]
 
-    socket.on('livestream join', async data => {
+    socket.on('joinLivestream', async data => {
       const { token, liveId } = data
 
       const user = await getUserFromAuth(token)
 
-      if (user == null) {
-        // do something
-        return
-      }
+      if (user == null) return
 
       const liveEvent = await LiveModel.findOne({
         _id: liveId,
         active: true,
       })
 
-      if (!liveEvent) {
-        console.log('live event not exist or not active')
-        return null
-      }
+      if (!liveEvent) return null
 
-      const live_id = liveEvent.id
+      // if (!rooms.includes(liveId)) {
+      //   socket.join(live_id)
+      // }
 
-      if (!rooms.includes(live_id)) {
-        socket.join(live_id)
-      }
+      socket.join(liveId)
 
-      await LiveModel.findOneAndUpdate(
-        {
-          _id: live_id,
+      await LiveModel.findByIdAndUpdate(liveId, {
+        $inc: {
+          active_views: 1,
         },
-        {
-          $inc: {
-            views: 1,
-            active_views: 1,
-          },
-        },
-        {
-          upsert: true,
-        },
-      )
 
-      io.to(live_id).emit('user joins', {
+        $addToSet: { views: user },
+      })
+
+      io.to(liveId).emit('joinedRoom', {
         user_id: user.id,
         message: 'new user joined',
       })
+
+      socket.on('disconnect', async () => {
+        await LiveModel.findByIdAndUpdate(liveId, {
+          $inc: {
+            active_views: -1,
+          },
+        })
+
+        io.to(liveId).emit('leftRoom', {
+          user_id: user.id,
+          message: 'user left',
+        })
+      })
     })
 
-    socket.on('livestream comment', async data => {
+    socket.on('livestreamComment', async data => {
       const { token, liveId, message } = data
 
       const user = await getUserFromAuth(token)
 
-      if (user == null) {
-        // do something
-        return
-      }
+      if (user == null) return
 
       const liveEvent = await LiveModel.findOne({
         _id: liveId,
         active: true,
       })
 
-      if (!liveEvent) {
-        return null
-      }
+      if (!liveEvent || message.toString().length < 2) return null
 
-      if (message.toString().length < 2) {
-        return null
-      }
+      socket.join(liveId)
 
-      const live_id = liveEvent.id
-
-      if (!rooms.includes(live_id)) {
-        socket.join(live_id)
-      }
-
-      const nComment = new CommentModel({
+      const newComment = await CommentModel.create({
         customer_id: user._id,
         message: message,
         type: 'live',
       })
 
-      const newComment = await nComment.save()
-
-      io.to(live_id).emit('livestream comment', {
+      io.to(liveId).emit('livestreamComment', {
         message: newComment,
-        room: live_id,
+        room: liveId,
       })
-    })
-
-    socket.on('disconnect', async () => {
-      // console.log(
-      //   `user ${socket.userId} disconnected: ${reason}`,
-      //   socket.id,
-      //   socket.client.conn.server.clientsCount,
-      // )
-      // ! Find  a pay to associate liveId and userid to a socket
-      // ! todo: user map
-      // const userId = socket.userId as any
-      // const live_id = socket.liveId
-      // await LiveModel.findOneAndUpdate(
-      //   {
-      //     _id: live_id,
-      //   },
-      //   {
-      //     $inc: {
-      //       active_views: -1,
-      //     },
-      //   },
-      //   {
-      //     upsert: true,
-      //   },
-      // )
-      // io.emit('disconnect', {
-      //   user_id: userId,
-      //   message: 'user left',
-      // })
     })
   })
 }
