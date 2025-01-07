@@ -303,11 +303,7 @@ export class MediaConvert {
       },
     }
 
-    const result = await AwsUtils.clients.mediaConvert.send(new CreateJobCommand(params))
-
-    return {
-      ...result,
-      Key: this._extractKey(Destination),
-    }
+    const job = await AwsUtils.clients.mediaConvert.send(new CreateJobCommand(params))
+    return job
   }
 }

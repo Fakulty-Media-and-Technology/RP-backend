@@ -33,7 +33,7 @@ export class VideoUploadRepo {
         400,
       )
     }
-    
+
     return update
   }
 }

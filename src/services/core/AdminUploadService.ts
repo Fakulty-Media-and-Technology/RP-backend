@@ -130,7 +130,7 @@ export class AdminUploadService {
   static getVideos = async (type: AllVideoTypes, queryParams: Request['query']) => {
     const dbQuery = VideoModel.find({ type }).sort('-createdAt').populate('seasons').populate({
       path: 'video_upload',
-      select: 'resolutionUrls key bucket',
+      select: 'resolutionUrls key bucket isTranscoded',
     })
 
     const queryFeatures = new QueryParamsFeatures(dbQuery, {

@@ -14,47 +14,46 @@ export class S3 {
     return res
   }
 
-  static getTranscodedKeys = async (key: string) => {
+  static getTranscodedKeysFromInputKey = async (inputKey: string) => {
     const command = new ListObjectsCommand({
       Bucket: AwsUtils.buckets.reeplay,
-      Prefix: key,
+      Prefix: inputKey.replace('videos', 'transcode'),
     })
 
     const res = await AwsUtils.clients.s3.send(command)
 
     if (!res.Contents) return []
 
-    const transacodedKeys: string[] = []
+    const outputKeys = res.Contents.reduce<string[]>((acc, content) => {
+      content.Key ? acc.push(content.Key) : acc
+      return acc
+    }, [])
 
-    for (const content of res.Contents) {
-      if (content.Key) transacodedKeys.push(content.Key)
-    }
-
-    return transacodedKeys
+    return outputKeys
   }
 
-  static getTranscodedUrlsWithResolutions = async (s3Key: string) => {
-    const keys = await this.getTranscodedKeys(s3Key)
+  static resolutionUrlsPairsFromInputKey = async (inputKey: string) => {
+    const keys = await this.getTranscodedKeysFromInputKey(inputKey)
 
-    return keys.map(key => {
-      const _data = {
-        resolution: '',
-        key,
-      }
+    const pairs = keys.map(key => {
+      let resolution = ''
 
       switch (true) {
         case key.includes('_1080p'):
-          _data.resolution = '1080'
+          resolution = '1080'
           break
         case key.includes('_480p'):
-          _data.resolution = '480'
+          resolution = '480'
           break
         default:
-          _data.resolution = '720'
+          resolution = '720'
           break
       }
 
-      return _data
+      return { key, resolution }
     })
+
+    return pairs
   }
 }
+

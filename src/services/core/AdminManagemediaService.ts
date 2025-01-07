@@ -42,14 +42,15 @@ export class AdminManageMediaService {
       console.error('🛑 error deleting ', +file.filename + ' from tempMedia folder'),
     )
 
-    const { Job, Key: mediaConvertKey } = await MediaConvert.transcode(video.Key)
+    const { Job } = await MediaConvert.transcode(video.Key)
     const isTranscoded = await MediaConvert.waitForJobCompletion(Job?.Id, 20)
 
     const videoUpload = await VideoUploadModel.create({
       bucket: video.Bucket,
-      key: isTranscoded ? mediaConvertKey : video.Key,
+      key: video.Key,
       mimetype: video.mimetype,
       sizeInMB: video.size,
+      isTranscoded,
     })
 
     return { vidoeUploadId: videoUpload._id }

@@ -12,35 +12,28 @@ import { MediaConvert } from '../services/aws/mediaConvert'
 import { S3 } from '../services/aws/s3'
 import Email from '../utils/emailer'
 
-type TranscodedKeyPairs = Awaited<
-  ReturnType<typeof MediaConvert.recentCompletedJobsKeyPairs>
->[number]
+type KeyPair = Awaited<ReturnType<typeof MediaConvert.recentCompletedJobsKeyPairs>>[number]
 
 const stringify = (data: Object) => JSON.stringify(data, null, 2)
 
 export class CronTaskHandlers {
-  private static _updateVCToTranscodedShape = async (input: TranscodedKeyPairs) => {
-    const vcUpdate = await VideoUploadModel.findOneAndUpdate(
-      { key: input.inputKey },
-      {
-        $set: {
-          key: input.outputKey,
-          isTranscoded: true,
-          resolutionUrls: await S3.getTranscodedUrlsWithResolutions(input.outputKey),
-        },
-      },
-    )
-
-    return vcUpdate
-  }
-
-  static updateVidoeUploadsKey = async () => {
+  static updateVidoeUploadsResolutionURLs = async () => {
     const pairs = await MediaConvert.recentCompletedJobsKeyPairs()
-    const funcLoc = 'CronTaskHandlers.updateVidoeUploadsKey'
+    const funcLoc = 'CronTaskHandlers.updateVidoeUploadsResolutionURLs'
 
+    // 
     pairs.forEach(async pair => {
       try {
-        const vid = await this._updateVCToTranscodedShape(pair)
+        const vid = await VideoUploadModel.findOneAndUpdate(
+          { key: pair.inputKey },
+          {
+            $set: {
+              isTranscoded: true,
+              resolutionUrls: await S3.resolutionUrlsPairsFromInputKey(pair.inputKey),
+            },
+          },
+        )
+
         vid && console.log(`✔VideoCover with ID: ${vid.id} updated in ${funcLoc}`)
       } catch (e) {
         console.error(`🛑Error updating video with inputKey: ${pair.inputKey} in ${funcLoc}`)

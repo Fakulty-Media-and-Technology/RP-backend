@@ -1,5 +1,4 @@
 import { HydratedDocumentFromSchema, Schema, model } from 'mongoose'
-import { MediaAccess } from '../services/media-access'
 import { S3 } from '../services/aws/s3'
 
 const transcodeSchema = new Schema(
@@ -44,7 +43,7 @@ const schema = new Schema(
       enum: ['vod', 'episode', 'event'], // add more as needed
     },
 
-    parentId: String,
+    parentId: Schema.Types.ObjectId,
 
     isTranscoded: {
       type: Boolean,
@@ -63,9 +62,8 @@ const schema = new Schema(
 )
 
 schema.pre('save', async function (next) {
-  if (this.key.startsWith('transcode')) {
-    this.resolutionUrls = (await S3.getTranscodedUrlsWithResolutions(this.key)) as any
-    this.isTranscoded = true
+  if (this.isTranscoded) {
+    this.resolutionUrls = (await S3.resolutionUrlsPairsFromInputKey(this.key)) as any
   }
   next()
 })
