@@ -21,7 +21,7 @@ export class MediaStream {
         const streamKey = streamPath.split('/').pop() as string
         const live = await LiveRepo.getByStreamKey(streamKey)
 
-        if (live === null || live.active === false ) {
+        if (live === null || !live.active || live.expired) {
           // @ts-ignore
           session.sendStatusMessage(
             // @ts-ignore
@@ -60,11 +60,11 @@ export class MediaStream {
       allow_origin: '*',
     },
 
-    // auth: {
-    //   play: true,
-    //   publish: true,
-    //   secret: env.RP_RMTP_AUTH_SECRET,
-    // },
+    auth: {
+      play: true,
+      publish: true,
+      secret: env.RP_RMTP_AUTH_SECRET,
+    },
 
     trans: {
       ffmpeg: ffmpegPath,

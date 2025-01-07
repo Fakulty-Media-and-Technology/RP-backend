@@ -149,7 +149,7 @@ export class AdminManageMediaService {
     }
 
     if (scheduledStream) {
-      throw new OperationalError('client alrealdy has a scheduled stream', 400)
+      throw new OperationalError('client has a scheduled stream', 400)
     }
 
     const live = await new LiveModel({

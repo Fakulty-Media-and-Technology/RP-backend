@@ -1,6 +1,6 @@
 import env from '../../env'
 
-import { LiveModel } from '../../models/lives.model'
+import { Live, LiveModel } from '../../models/lives.model'
 import { PaymentModel } from '../../models/payments.model'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { UserRepo } from '../../repositories/UserRepo'
@@ -8,7 +8,7 @@ import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { ClientSession } from 'mongoose'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
-import { calcLiveCharges, getUniqueStreamKey } from '../../utils/live'
+import { calcLiveCharges, signCred, getUniqueStreamKey } from '../../utils/live'
 
 type CreateClientWithSessionInput = {
   currentUser: LoggedInUser
@@ -215,7 +215,11 @@ export class LiveStreamService {
   }
 
   static getLiveStreamCredentials = async (currentUser: LoggedInUser) => {
-    // const rtmpUrl = `${env.RP_RTMP_URL}` //?email=''&&password=''
+
+    type StreamCredential = Live & {
+      stream_server: string
+      stream_url: string
+    }
 
     const credentials = await LiveModel.aggregate([
       {
@@ -227,10 +231,6 @@ export class LiveStreamService {
       {
         $addFields: {
           stream_server: env.RP_RTMP_URL,
-        },
-      },
-      {
-        $addFields: {
           stream_url: {
             $concat: [env.RP_HLS_URL, '$stream_key', '/index.m3u8'],
           },
@@ -244,7 +244,14 @@ export class LiveStreamService {
       { $project: { __v: false } },
     ])
 
-    return credentials
+    const modifiedCredentials = (credentials as StreamCredential[]).map(cred => {
+      const signed = `?sign=${signCred(cred.stream_key || '', cred.expiry)}`
+      cred.stream_key = cred.stream_key + signed
+      cred.stream_url = cred.stream_url + signed
+      return cred
+    })
+
+    return modifiedCredentials
   }
 
   static createClient = async (currentUser: LoggedInUser, data: Record<string, any>) => {

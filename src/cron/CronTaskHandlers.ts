@@ -11,21 +11,25 @@ import { UserRepo } from '../repositories/UserRepo'
 import { MediaConvert } from '../services/aws/mediaConvert'
 import { S3 } from '../services/aws/s3'
 import Email from '../utils/emailer'
-
-type KeyPair = Awaited<ReturnType<typeof MediaConvert.recentCompletedJobsKeyPairs>>[number]
+import moment from 'moment'
 
 const stringify = (data: Object) => JSON.stringify(data, null, 2)
+
+const laterInMins = (mins: number) => moment().add(mins, 'minutes').toDate()
 
 export class CronTaskHandlers {
   static updateVidUploadsResolutions = async () => {
     const pairs = await MediaConvert.recentCompletedJobsKeyPairs()
     const funcLoc = 'CronTaskHandlers.updateVidUploadsResolutions'
 
-    // 
+    //
     pairs.forEach(async pair => {
       try {
         const vid = await VideoUploadModel.findOneAndUpdate(
-          { key: pair.inputKey },
+          {
+            key: pair.inputKey,
+            isTranscoded: false,
+          },
           {
             $set: {
               isTranscoded: true,
@@ -273,11 +277,9 @@ export class CronTaskHandlers {
 
   static activateLiveStream = async () => {
     try {
-      const dateN = Date.now() + 60000 * 30
-
-      const openClientConnect = await LiveModel.updateMany(
+      const { modifiedCount } = await LiveModel.updateMany(
         {
-          start: { $lte: new Date(dateN) },
+          start: { $gte: laterInMins(30) },
           active: false,
           expired: false,
         },
@@ -286,12 +288,12 @@ export class CronTaskHandlers {
         },
       )
 
-      if (openClientConnect.modifiedCount === 0) {
+      if (modifiedCount === 0) {
         console.log('No Livestream Time Elapse')
         return
       }
 
-      console.log('Next Livestream Permission Activated')
+      console.log(modifiedCount, 'live documents made active')
     } catch (error: any) {
       console.log('Cron Error: activate livestream', error.message ?? error)
     }
@@ -299,11 +301,9 @@ export class CronTaskHandlers {
 
   static deActivateLiveStream = async () => {
     try {
-      const dateN = Date.now()
-
-      const openClientConnect = await LiveModel.updateMany(
+      const { modifiedCount } = await LiveModel.updateMany(
         {
-          $and: [{ expiry: { $exists: true } }, { expiry: { $lte: new Date(dateN) } }],
+          expiry: { $lte: new Date() },
           active: true,
           expired: false,
         },
@@ -315,12 +315,12 @@ export class CronTaskHandlers {
         },
       )
 
-      if (openClientConnect.modifiedCount === 0) {
+      if (modifiedCount === 0) {
         console.log('No Expired Livestream')
         return
       }
 
-      console.log('Expired Live Event Deactivated')
+      console.log(modifiedCount, 'live documents Expired')
     } catch (error: any) {
       console.log('Cron Error: deactivate livestream', error.message ?? error)
     }
@@ -330,28 +330,28 @@ export class CronTaskHandlers {
     try {
       const dateNow = new Date()
 
-      const expiredFeatured = await LiveModel.updateMany(
-        {
-          feat_expiry: { $lte: dateNow },
-          $and: [{ featured: { $exists: true } }, { featured: true }],
-        },
-        {
-          $set: { featured: false },
-        },
-      )
+      const filter = {
+        featured: true,
+        $and: [
+          {
+            feat_expiry: { $exists: true },
+          },
+          {
+            feat_expiry: { $gte: dateNow },
+          },
+        ],
+      }
+
+      const expiredFeatured = await LiveModel.updateMany(filter, {
+        $set: { featured: false },
+      })
 
       if (expiredFeatured.matchedCount === 0) {
         console.log('No Expired Featured Content')
         return
       }
 
-      const expiredFeaturedVod = await VideoModel.updateMany(
-        {
-          feat_expiry: { $lte: dateNow },
-          $and: [{ featured: { $exists: true } }, { featured: true }],
-        },
-        { $set: { featured: false } },
-      )
+      const expiredFeaturedVod = await VideoModel.updateMany(filter, { $set: { featured: false } })
 
       if (expiredFeaturedVod.matchedCount === 0) {
         console.log('No Expired Featured Content')

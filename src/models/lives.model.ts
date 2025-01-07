@@ -27,6 +27,7 @@ const schema = new Schema(
 
     stream_key: {
       type: String,
+      required: true,
       unique: true,
     },
 
@@ -42,7 +43,7 @@ const schema = new Schema(
 
     preview_video: {
       type: Schema.Types.ObjectId,
-      ref: 'video_uploads'
+      ref: 'video_uploads',
     },
 
     vid_class: {
@@ -82,12 +83,13 @@ const schema = new Schema(
 
     start: {
       type: Date,
+      required: true,
     },
 
     expiry: {
       type: Date,
+      required: true,
     },
-
 
     // TODO: Implement in webSocket
     views: [

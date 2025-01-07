@@ -8,7 +8,7 @@ import { sendResponse } from '../../utils/responder'
 import { VideoModel } from '../../models/videos.model'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { denyGuestUser } from '../../utils/denyGuestUser'
-import { Live, LiveSchema } from '../../models/lives.model'
+import { Live, LiveModel, LiveSchema } from '../../models/lives.model'
 import { SettingsModel } from '../../models/userSettings.model'
 import { OperationalError } from '../../utils/OperationalError'
 
@@ -17,6 +17,7 @@ import { MediaManagement } from '../../services/media-management'
 import { MediaAccess } from '../../services/media-access'
 import { AwsUtils } from '../../services/aws/utils'
 import { MediaConvert } from '../../services/aws/mediaConvert'
+import { signCred } from '../../utils/live'
 
 type GetLiveEventsWithPhotoUrlResult = {
   liveEvent: Live
@@ -426,31 +427,28 @@ export class CustomerMediaController {
 
   static streamLiveEvent = Catch.async(async (req, res) => {
     const streamId = req.params.id
+    const event = await LiveModel.findById(streamId)
 
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      _id: streamId,
-      expired: false,
-    })
-
-    if (liveEvents.length === 0) {
-      throw new OperationalError('there are no live events', 404)
+    if (event == null) {
+      throw new OperationalError('invalid stream ID', 404)
     }
 
-    const firstLiveEvent = liveEvents[0].liveEvent
-    const stream_url = `${env.RP_HLS_URL}${firstLiveEvent.stream_key}/index.m3u8`
+    if (event.expired) {
+      throw new OperationalError('stream event has expired', 400)
+    }
 
-    firstLiveEvent.stream_key = null
-    await firstLiveEvent.save()
+    const signed = `?sign=${signCred(event.stream_key, event.expiry)}`
+    const stream_url = `${env.RP_HLS_URL}${event.stream_key}/index.m3u8` + signed
 
     const data = {
-      live_data: firstLiveEvent,
+      live_data: event,
       url: stream_url,
     }
 
     sendResponse({
       res,
       data,
-      message: 'live events fetched',
+      message: 'live event fetched',
     })
   })
 }
