@@ -52,25 +52,56 @@ customerRouter.get('/media/vod/userliked/:id', CustomerMediaController.userLiked
 customerRouter.post('/media/vod/unlike/:id', CustomerMediaController.unLikeVideo)
 
 //live events
-customerRouter.get('/live/events/fetch/all', CustomerMediaController.getLiveEvents)
-customerRouter.get('/live/events/fetch/featured', CustomerMediaController.getLiveEventsFeatured)
-customerRouter.get('/live/events/fetch/sponsored', CustomerMediaController.getLiveEventsSponsored)
-customerRouter.get('/live/events/fetch/channels', CustomerMediaController.getLiveEventsChannels)
+customerRouter.get('/live/events/fetch/all', CustomerMediaController.getLiveEventsByType('all'))
+
+customerRouter.get(
+  '/live/events/fetch/featured',
+  CustomerMediaController.getLiveEventsByType('featured'),
+)
+customerRouter.get(
+  '/live/events/fetch/sponsored',
+  CustomerMediaController.getLiveEventsByType('sponsored'),
+)
+customerRouter.get(
+  '/live/events/fetch/channels',
+  CustomerMediaController.getLiveEventsByType('channels'),
+)
 customerRouter.get(
   '/live/events/fetch/pop/channels',
-  CustomerMediaController.getLiveEventsChannelsPop,
+  CustomerMediaController.getLiveEventsByType('channels popular'),
 )
 
-customerRouter.get('/live/events/fetch/events', CustomerMediaController.getLiveEventsEven)
-customerRouter.get('/live/events/fetch/pop/events', CustomerMediaController.getLiveEventsEvenPop)
-customerRouter.get('/live/events/fetch/tvshows', CustomerMediaController.getLiveEventsTvshow)
-customerRouter.get('/live/events/fetch/pop/tvshows', CustomerMediaController.getLiveEventsTvshowPop)
-customerRouter.get('/live/events/fetch/sports', CustomerMediaController.getLiveEventsSports)
-customerRouter.get('/live/events/fetch/pop/sports', CustomerMediaController.getLiveEventsSportsPop)
-customerRouter.get('/live/events/fetch/podcasts', CustomerMediaController.getLiveEventsPodcast)
+customerRouter.get(
+  '/live/events/fetch/events',
+  CustomerMediaController.getLiveEventsByType('events'),
+)
+customerRouter.get(
+  '/live/events/fetch/pop/events',
+  CustomerMediaController.getLiveEventsByType('events popular'),
+)
+customerRouter.get(
+  '/live/events/fetch/tvshows',
+  CustomerMediaController.getLiveEventsByType('tvshows'),
+)
+customerRouter.get(
+  '/live/events/fetch/pop/tvshows',
+  CustomerMediaController.getLiveEventsByType('tvshows popular'),
+)
+customerRouter.get(
+  '/live/events/fetch/sports',
+  CustomerMediaController.getLiveEventsByType('sports'),
+)
+customerRouter.get(
+  '/live/events/fetch/pop/sports',
+  CustomerMediaController.getLiveEventsByType('sports popular'),
+)
+customerRouter.get(
+  '/live/events/fetch/podcasts',
+  CustomerMediaController.getLiveEventsByType('podcasts'),
+)
 customerRouter.get(
   '/live/events/fetch/pop/podcasts',
-  CustomerMediaController.getLiveEventsPodcastPop,
+  CustomerMediaController.getLiveEventsByType('podcasts popular'),
 )
 customerRouter.get('/live/event/stream/:id', CustomerMediaController.streamLiveEvent)
 

@@ -27,10 +27,6 @@ type GetLiveEventsWithPhotoUrlResult = {
 type GetLiveEventsWithPhotoUrlResults = Array<GetLiveEventsWithPhotoUrlResult>
 
 export class CustomerMediaController {
-  private static _mergeEventAndPhotoUrl = (results: GetLiveEventsWithPhotoUrlResults) => {
-    return results.map(result => ({ ...result.liveEvent, photo_url: result.photo_url }))
-  }
-
   static uploadImageRoute = Catch.async(async ({ file, body: { fileName }, user }, res) => {
     denyGuestUser(GetDefined.loggedInUser(user))
 
@@ -60,11 +56,13 @@ export class CustomerMediaController {
     const user = GetDefined.loggedInUser(req.user)
 
     // const transPath = `s3://reeplay/transcode/${key.split('/').slice(1).join('/')}`
-    const transPath = `${AwsUtils.buckets.transcodeOutput}/${key}`
+    const transPath = `${AwsUtils.buckets.transcodeOutput}${key.split('/').slice(1).join('/')}/`
+
+    console.log({ transPath })
 
     const command = new ListObjectsV2Command({
       Bucket: bucket,
-      Prefix: `transcode/${key.split('/').slice(1).join('/')}/`,
+      Prefix: `${AwsUtils.buckets.transcodeOutput}/${key.split('/').slice(1).join('/')}/`,
       MaxKeys: 1,
     })
 
@@ -93,6 +91,8 @@ export class CustomerMediaController {
       .split('/')
       .slice(1)
       .join('/')}/${key.split('/').slice(1).join('/')}_${userRes}.mp4`
+
+    console.log({ url })
 
     const privateKey = env.CFS_PRIVATE_KEY.replace(/\\n/g, '\n')
     const expirationDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
@@ -222,6 +222,10 @@ export class CustomerMediaController {
 
   // ************ GET EVENTS *********************//
 
+  private static _mergeEventAndPhotoUrl = (results: GetLiveEventsWithPhotoUrlResults) => {
+    return results.map(result => ({ ...result.liveEvent, photo_url: result.photo_url }))
+  }
+
   private static _getLiveEventsWithPhotoUrl = async (filterQuery: FilterQuery<LiveSchema>) => {
     const liveEvents = await LiveRepo.getSelectedLive(filterQuery)
 
@@ -253,177 +257,81 @@ export class CustomerMediaController {
     return results
   }
 
-  static getLiveEvents = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-    })
+  static getLiveEventsByType = (
+    type:
+      | 'all'
+      | 'featured'
+      | 'sponsored'
+      | 'channels'
+      | 'channels popular'
+      | 'events'
+      | 'events popular'
+      | 'tvshows popular'
+      | 'tvshows'
+      | 'sports'
+      | 'sports popular'
+      | 'podcasts'
+      | 'podcasts popular',
+  ) =>
+    Catch.async(async (_, res) => {
+      let filter: FilterQuery<LiveSchema> = { expired: false }
 
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched',
-    })
-  })
+      switch (type) {
+        case 'featured':
+          filter.featured = true
+          break
+        case 'sponsored':
+          filter.sponsored = true
+          break
+        case 'channels':
+          filter.type = 'channel'
+          break
+        case 'channels popular':
+          filter.type = 'channel'
+          filter.popular = true
+          break
+        case 'events':
+          filter.type = 'events'
+          break
+        case 'events popular':
+          filter.type = 'events'
+          filter.popular = true
+          break
+        case 'tvshows':
+          filter.type = 'tvshow'
+          break
+        case 'tvshows popular':
+          filter.type = 'tvshow'
+          filter.popular = true
+          break
+        case 'sports popular':
+          filter.type = 'sports'
+          filter.popular = true
+          break
+        case 'sports':
+          filter.type = 'sports'
+          break
+        case 'podcasts':
+          filter.type = 'podcast'
+          break
+        case 'podcasts popular':
+          filter.type = 'podcast'
+          filter.popular = true
+          break
 
-  static getLiveEventsFeatured = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      featured: true,
-    })
+        default:
+          filter = filter
+          break
+      }
 
-    sendResponse({
-      res,
-      data: liveEvents,
-      message: 'live featured events fetched',
-    })
-  })
+      const liveEvents = await this._getLiveEventsWithPhotoUrl(filter)
 
-  static getLiveEventsSponsored = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      sponsored: true,
+      sendResponse({
+        res,
+        data: this._mergeEventAndPhotoUrl(liveEvents),
+        message: 'Events fetched',
+      })
     })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'sponsored live events fetched',
-    })
-  })
-
-  static getLiveEventsChannels = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'channel',
-    })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched: channels',
-    })
-  })
-
-  static getLiveEventsChannelsPop = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'channel',
-      popular: true,
-    })
-
-    sendResponse({
-      res,
-      data: liveEvents,
-      message: 'live events fetched: popular',
-    })
-  })
-
-  static getLiveEventsEven = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'events',
-    })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched: events',
-    })
-  })
-
-  static getLiveEventsEvenPop = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'events',
-      popular: true,
-    })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched: popular events',
-    })
-  })
-
-  static getLiveEventsTvshow = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'tvshow',
-    })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched: tvshow',
-    })
-  })
-
-  static getLiveEventsTvshowPop = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'tvshow',
-    })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched: tvshow popular',
-    })
-  })
-
-  static getLiveEventsSports = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'sports',
-    })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched: sports',
-    })
-  })
-
-  static getLiveEventsSportsPop = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'sports',
-      popular: true,
-    })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched: sports popular',
-    })
-  })
-
-  static getLiveEventsPodcast = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'podcast',
-    })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched: podcast',
-    })
-  })
-
-  static getLiveEventsPodcastPop = Catch.async(async (_, res) => {
-    const liveEvents = await this._getLiveEventsWithPhotoUrl({
-      expired: false,
-      type: 'podcast',
-      popular: true,
-    })
-
-    sendResponse({
-      res,
-      data: this._mergeEventAndPhotoUrl(liveEvents),
-      message: 'live events fetched: podcast popular',
-    })
-  })
 
   static streamLiveEvent = Catch.async(async (req, res) => {
     const streamId = req.params.id

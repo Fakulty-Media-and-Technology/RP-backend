@@ -110,15 +110,15 @@ const schema = new Schema(
     //   },
     // ],
 
-    // sponsored: {
-    //   type: Boolean,
-    //   required: true,
-    // },
+    sponsored: {
+      type: Boolean,
+      default: false,
+    },
 
-    // popular: {
-    //   type: Boolean,
-    //   required: true,
-    // },
+    popular: {
+      type: Boolean,
+      default: false,
+    },
 
     featured: {
       type: Boolean,

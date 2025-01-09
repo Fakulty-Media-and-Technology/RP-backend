@@ -68,7 +68,6 @@ export class MediaConvert {
       if (response.Job.Status === 'ERROR') {
         console.error({
           '🛑MediaConver.waitForJobCompletion_error': {
-            Arn: response.Job.Arn,
             CreatedAt: response.Job.CreatedAt,
             ErrorCode: response.Job.ErrorCode,
             ErrorMessage: response.Job.ErrorMessage,
