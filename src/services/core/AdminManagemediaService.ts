@@ -18,6 +18,7 @@ import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
 import { assets } from '../../models/assets'
 import { EpisodeModel } from '../../models/episodes.model'
+import { VideoUploadParser } from '../../utils/VideoUploadParser'
 
 export type UploadImageOrSubtitleType = 'image' | 'subtitle'
 export type LivesType = Extract<LiveSchema['type'], 'event' | 'channel' | 'tvshow'>
@@ -156,10 +157,26 @@ export class AdminManageMediaService {
     return imageURL
   }
 
-  static getLivesByType = async (type: LivesType, query: Request['query']) => {
-    const DBQuery = LiveModel.find({ type }).select(
-      '_id title pg type vid_class active expiry cover_photo views',
+  static searchClient = async (searchText: string, query: Request['query']) => {
+    const searchReg = new RegExp(searchText, 'i')
+
+    const features = new QueryParamsFeatures(
+      UserRepo.searchUsersByRegexQuery(searchReg),
+      {
+        defaultLimit: 200,
+        defaultPage: 1,
+        queryParams: query,
+      },
     )
+
+    const clients = await features.paginate().query
+    return clients
+  }
+
+  static getLivesByType = async (type: LivesType, query: Request['query']) => {
+    const DBQuery = LiveModel.find({ type })
+      .select('_id title pg type vid_class active expiry cover_photo views')
+      .populate('preview_video')
 
     const features = new QueryParamsFeatures(DBQuery, {
       defaultLimit: 10,
@@ -168,6 +185,8 @@ export class AdminManageMediaService {
     })
 
     const lives = await features.paginate().query
+
+    await VideoUploadParser.populateVidUploadResolutionsOnLives(lives)
     return lives
   }
 
@@ -261,18 +280,5 @@ export class AdminManageMediaService {
 
   static createLive = async (data: Record<string, any>) => {
     return await withMongoDBSession(this._createLiveWithSession, data)
-  }
-
-  static searchClient = async (searchText: string, query: Request['query']) => {
-    const searchReg = new RegExp(searchText, 'i')
-
-    const features = new QueryParamsFeatures(UserRepo.searchUsersByRegexQuery(searchReg), {
-      defaultLimit: 200,
-      defaultPage: 1,
-      queryParams: query,
-    })
-
-    const clients = await features.paginate().query
-    return clients
   }
 }
