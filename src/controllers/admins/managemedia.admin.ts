@@ -10,15 +10,20 @@ import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 
 export class AdminManagemediaController {
-  static uploadVideo = Catch.async(async ({ file, body: { expire, fileName } }, res) => {
-    const video = await AdminManageMediaService.uploadVideo({
-      file,
-      expire,
-      fileName,
-    })
+  static uploadVideo = Catch.async(
+    async ({ file, body: { expire, fileName, parentId, parentType } }, res) => {
+      // 
+      const video = await AdminManageMediaService.uploadVideo({
+        file,
+        expire,
+        fileName,
+        parentId,
+        parentType,
+      })
 
-    sendResponse({ res, data: video, message: 'video uploaded' })
-  })
+      sendResponse({ res, data: video, message: 'video uploaded' })
+    },
+  )
 
   static uploadImageOrSubtitle = (type: UploadImageOrSubtitleType) =>
     Catch.async(async ({ file, body: { fileName } }, res) => {

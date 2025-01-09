@@ -32,7 +32,6 @@ const schema = new Schema(
     video_upload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
-      required: [true, 'an episode must have a video upload'],
     },
   },
   { timestamps: true },
@@ -54,3 +53,5 @@ schema.pre('findOne', function (next) {
 export const EpisodeModel = model('episodes', schema)
 export type EpisodeSchema = InferSchemaType<typeof schema>
 export type Episode = HydratedDocumentFromSchema<typeof schema>
+
+const x = {} as Episode

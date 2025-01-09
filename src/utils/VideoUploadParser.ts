@@ -1,3 +1,4 @@
+import { Live } from '../models/lives.model'
 import { Video } from '../models/videos.model'
 import { VideoUpload } from '../models/videoupload.model'
 import { MediaAccess } from '../services/media-access'
@@ -27,14 +28,25 @@ export class VideoUploadParser {
     videoUpload.resolutions = signedResolutions as VideoUpload['resolutions']
   }
 
-  static populateVidUploadResolutions = async (vids: Video[], type: Video['type']) => {
+  static populateVidUploadResolutionsOnLives = async (lives: Live[]) => {
+    const settled = await Promise.allSettled(
+      lives.map(async live => {
+        live.preview_video && (await this.signVideoUploadResolutions(live.preview_video as any))
+        return live
+      }),
+    )
+
+    lives = getFulfilledValues(settled)
+  }
+
+  static populateVidUploadResolutionsOnVideos = async (vids: Video[], type: Video['type']) => {
     if (type === 'series') {
       const promises = vids.map(async vid => {
         for (const season of vid.seasons) {
           const populatedSeason = season as unknown as Season
           //
           for (const episode of populatedSeason.episodes) {
-            await this.signVideoUploadResolutions(episode.video_upload)
+            episode.video_upload && (await this.signVideoUploadResolutions(episode.video_upload))
           }
         }
         return vid
@@ -44,7 +56,7 @@ export class VideoUploadParser {
     } else {
       const settled = await Promise.allSettled(
         vids.map(async vid => {
-          await this.signVideoUploadResolutions(vid.video_upload as any)
+          vid.video_upload && (await this.signVideoUploadResolutions(vid.video_upload as any))
           return vid
         }),
       )

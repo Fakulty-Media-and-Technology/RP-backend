@@ -139,7 +139,7 @@ export class AdminUploadService {
     })
 
     const vids = await queryFeatures.paginate().query
-    await VideoUploadParser.populateVidUploadResolutions(vids, type)
+    await VideoUploadParser.populateVidUploadResolutionsOnVideos(vids, type)
     return vids
   }
 
@@ -208,13 +208,14 @@ export class AdminUploadService {
       throw new OperationalError('invalid season Id', 404)
     }
 
-    await VideoUploadRepo.updateWithParent({
-      id: episode.video_upload.toString(),
-      parentId: episode._id.toString(),
-      parentType: 'episode',
-      session,
-    })
-
+    if (episode.video_upload) {
+      await VideoUploadRepo.updateWithParent({
+        id: episode.video_upload.toString(),
+        parentId: episode._id.toString(),
+        parentType: 'episode',
+        session,
+      })
+    }
     return episode
   }
 

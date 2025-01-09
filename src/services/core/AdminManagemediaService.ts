@@ -1,31 +1,43 @@
+import { rimraf } from 'rimraf'
+import { Request } from 'express'
+import { ClientSession } from 'mongoose'
+
 import { LiveModel, LiveSchema } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { UserModel } from '../../models/users.model'
-
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
-
 import { MediaAccess } from '../../services/media-access'
 import { MediaManagement } from '../../services/media-management'
 import { MediaConvert } from '../../services/aws/mediaConvert'
-import { Request } from 'express'
 import { UserRepo } from '../../repositories/UserRepo'
 import { getUniqueStreamKey } from '../../utils/live'
-import { rimraf } from 'rimraf'
 import { VideoUploadModel } from '../../models/videoupload.model'
-import { ClientSession } from 'mongoose'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
+import { assets } from '../../models/assets'
+import { EpisodeModel } from '../../models/episodes.model'
 
 export type UploadImageOrSubtitleType = 'image' | 'subtitle'
-
 export type LivesType = Extract<LiveSchema['type'], 'event' | 'channel' | 'tvshow'>
 
 type UploadVideoInput = {
   file: Express.Multer.File | undefined
   expire: string | undefined
   fileName?: string
+  parentType?: (typeof assets)[number]
+  parentId?: string
+}
+
+type CreateVideoUploadWithSession = {
+  Bucket: string | undefined
+  Key: string
+  mimetype: string
+  size: number
+  isTranscoded: boolean
+  parentType: UploadVideoInput['parentType']
+  parentId: UploadVideoInput['parentId']
 }
 
 type UploadImageOrSubtitleInput = Pick<UploadVideoInput, 'file' | 'fileName'> & {
@@ -33,7 +45,75 @@ type UploadImageOrSubtitleInput = Pick<UploadVideoInput, 'file' | 'fileName'> & 
 }
 
 export class AdminManageMediaService {
-  static uploadVideo = async ({ file, expire, fileName }: UploadVideoInput) => {
+  private static _createVideoUploadAndParent = async (
+    params: CreateVideoUploadWithSession,
+    session: ClientSession,
+  ) => {
+    const videoUpload = await new VideoUploadModel({
+      bucket: params.Bucket,
+      key: params.Key,
+      mimetype: params.mimetype,
+      sizeInMB: params.size,
+      parentId: params.parentId,
+      parentType: params.parentType,
+      isTranscoded: params.isTranscoded,
+    }).save({ session })
+
+    if (params.parentId && params.parentType) {
+      switch (params.parentType) {
+        case 'episode':
+          const episode = await EpisodeModel.findByIdAndUpdate(
+            params.parentId,
+            { video_upload: videoUpload._id },
+            { session },
+          )
+
+          if (episode == null) {
+            throw new OperationalError('invalid Episode Id', 404)
+          }
+
+          break
+        case 'live':
+          const live = await LiveModel.findByIdAndUpdate(
+            params.parentId,
+            { preview_video: videoUpload._id },
+            { session },
+          )
+
+          if (live == null) {
+            throw new OperationalError('invalid live Id', 404)
+          }
+
+          break
+        case 'vod':
+          const video = await VideoModel.findByIdAndUpdate(
+            params.parentId,
+            { video_upload: videoUpload._id },
+            { session },
+          )
+
+          if (video == null) {
+            throw new OperationalError('invalid video Id', 404)
+          }
+
+        default:
+          throw new OperationalError(
+            `invalid ParentType. Allowed types are ${assets.join(' | ')}`,
+            400,
+          )
+      }
+    }
+
+    return videoUpload
+  }
+
+  static uploadVideo = async ({
+    file,
+    expire,
+    fileName,
+    parentId,
+    parentType,
+  }: UploadVideoInput) => {
     if (file == null) {
       throw new OperationalError('upload a video file', 400)
     }
@@ -47,13 +127,11 @@ export class AdminManageMediaService {
 
     const { Job } = await MediaConvert.transcode(video.Key)
     const isTranscoded = await MediaConvert.waitForJobCompletion(Job?.Id, 20)
-
-    const videoUpload = await VideoUploadModel.create({
-      bucket: video.Bucket,
-      key: video.Key,
-      mimetype: video.mimetype,
-      sizeInMB: video.size,
+    const videoUpload = await withMongoDBSession(this._createVideoUploadAndParent, {
+      ...video,
       isTranscoded,
+      parentId,
+      parentType,
     })
 
     return { vidoeUploadId: videoUpload._id }

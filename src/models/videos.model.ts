@@ -124,10 +124,6 @@ const schema = new Schema(
 )
 
 schema.pre('validate', function (next) {
-  if (this.type !== 'series' && this.video_upload == null) {
-    throw new OperationalError('video.video_upload is required for videos that are not series', 400)
-  }
-
   this.is_series = this.type === 'series'
   next()
 })
