@@ -85,6 +85,7 @@ export const socketChat = async (io: Server) => {
         customer_id: user._id,
         message: message,
         type: 'live',
+        parentId: liveId
       })
 
       io.to(liveId).emit('livestreamComment', {

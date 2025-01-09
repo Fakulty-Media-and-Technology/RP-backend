@@ -58,8 +58,6 @@ export class CustomerMediaController {
     // const transPath = `s3://reeplay/transcode/${key.split('/').slice(1).join('/')}`
     const transPath = `${AwsUtils.buckets.transcodeOutput}${key.split('/').slice(1).join('/')}/`
 
-    console.log({ transPath })
-
     const command = new ListObjectsV2Command({
       Bucket: bucket,
       Prefix: `${AwsUtils.buckets.transcodeOutput}/${key.split('/').slice(1).join('/')}/`,
