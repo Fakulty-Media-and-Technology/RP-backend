@@ -1,22 +1,31 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { ratingsParent } from './assets'
 
 const ratingSchema = new Schema(
   {
-    video_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Video',
+    parentType: {
+      type: String,
+      enum: ratingsParent,
       required: true,
     },
-    user_id: {
+
+    parentId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
       required: true,
     },
+
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'users',
+      required: true,
+    },
+
     rate: {
       type: Number,
       enum: [1, 2, 3, 4, 5],
       required: true,
     },
+
     comment: {
       type: String,
     },

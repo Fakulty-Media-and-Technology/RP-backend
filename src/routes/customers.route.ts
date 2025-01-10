@@ -11,6 +11,14 @@ import { CustomerPushNotificationController } from '../controllers/customers/pus
 import { CustomerNotificationController } from '../controllers/customers/notifications.customer'
 
 import { AuthMiddleware } from '../middlewares/auth'
+import { CustomerCommentsRatingsController } from '../controllers/customers/comments.ratings.customer'
+import { requestValidator } from '../middlewares/requestValidator'
+import {
+  createCommentSchema,
+  createRatingSchema,
+  updateCommentSchema,
+  updateRatingSchema,
+} from '../validations/customers'
 
 export const customerRouter = express.Router()
 
@@ -30,7 +38,6 @@ customerRouter.use(AuthMiddleware.authenticateRequest('customer-auth'))
 
 // ***onboarding
 customerRouter.post('/signup/createpin', OnboardingController.createPin)
-
 customerRouter.get('/profile/fetch', CustomerProfileController.customerProfileFetch)
 customerRouter.put('/profile/edit', CustomerProfileController.editProfile)
 
@@ -42,6 +49,32 @@ customerRouter.put(
 customerRouter.post('/settings/watchlist/add', CustomerSettingsController.addToWatchList)
 customerRouter.post('/settings/watchlist/rem', CustomerSettingsController.remFromWatchList)
 customerRouter.post('/settings/interest/add', CustomerSettingsController.addToInterest)
+
+// ***Comments
+customerRouter.post(
+  '/comment/create',
+  requestValidator(createCommentSchema),
+  CustomerCommentsRatingsController.addComment,
+)
+customerRouter.get('/comments/fetch/:parentId', CustomerCommentsRatingsController.getComments)
+
+customerRouter
+  .route('/comment/:commentId')
+  .put(requestValidator(updateCommentSchema), CustomerCommentsRatingsController.updateComment)
+  .delete(CustomerCommentsRatingsController.deleteComment)
+
+// *** Ratings
+customerRouter.post(
+  '/ratings/create',
+  requestValidator(createRatingSchema),
+  CustomerCommentsRatingsController.addRating,
+)
+customerRouter.get('/ratings/fetch/:parentId', CustomerCommentsRatingsController.getRatings)
+
+customerRouter
+  .route('/rating/:ratingId')
+  .put(requestValidator(updateRatingSchema), CustomerCommentsRatingsController.updateRating)
+  .delete(CustomerCommentsRatingsController.deleteRating)
 
 // *** Media
 customerRouter.post('/media/upload-photo', CustomerMediaController.uploadImageRoute)

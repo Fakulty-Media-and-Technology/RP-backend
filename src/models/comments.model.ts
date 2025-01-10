@@ -3,7 +3,7 @@ import { assets } from './assets'
 
 const commentSchema = new Schema(
   {
-    customer_id: {
+    userId: {
       type: Schema.Types.ObjectId,
       ref: 'users',
       required: true,
@@ -16,13 +16,13 @@ const commentSchema = new Schema(
     parentType: {
       type: String,
       enum: assets,
-      required: [true, 'A comment must have a type']
+      required: [true, 'A comment must have a type'],
     },
-    
+
     parentId: {
       type: Schema.Types.ObjectId,
-      required: [true, 'A comment must have a parent Id']
-    }
+      required: [true, 'A comment must have a parent Id'],
+    },
   },
   {
     timestamps: true,

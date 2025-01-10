@@ -32,7 +32,9 @@ export class AuthMiddleware {
         break
 
       case 'customer-auth':
-        // Prevents the defualt block from being executed
+        if (user.role !== 'customer') {
+          throw new OperationalError('Access Denied, customer Route', 403)
+        }
         break
 
       default:
@@ -58,8 +60,6 @@ export class AuthMiddleware {
           last_name: 'user',
           role: 'guest',
         } as unknown as LoggedInUser
-
-        return next()
       }
 
       // this throws and is handled at the app layer
