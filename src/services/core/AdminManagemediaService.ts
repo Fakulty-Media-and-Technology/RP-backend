@@ -16,9 +16,10 @@ import { getUniqueStreamKey } from '../../utils/live'
 import { VideoUploadModel } from '../../models/videoupload.model'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
-import { assets } from '../../models/assets'
+import { videoUploadParents } from '../../models/assets'
 import { EpisodeModel } from '../../models/episodes.model'
 import { VideoUploadParser } from '../../utils/VideoUploadParser'
+import { TrailerModel } from '../../models/trailer.model'
 
 export type UploadImageOrSubtitleType = 'image' | 'subtitle'
 export type LivesType = Extract<LiveSchema['type'], 'event' | 'channel' | 'tvshow'>
@@ -27,7 +28,7 @@ type UploadVideoInput = {
   file: Express.Multer.File | undefined
   expire: string | undefined
   fileName?: string
-  parentType?: (typeof assets)[number]
+  parentType?: (typeof videoUploadParents)[number]
   parentId?: string
 }
 
@@ -60,49 +61,64 @@ export class AdminManageMediaService {
       isTranscoded: params.isTranscoded,
     }).save({ session })
 
-    if (params.parentId && params.parentType) {
-      switch (params.parentType) {
-        case 'episode':
-          const episode = await EpisodeModel.findByIdAndUpdate(
-            params.parentId,
-            { video_upload: videoUpload._id },
-            { session },
-          )
+    if (!params.parentId || !params.parentType) return videoUpload
 
-          if (episode == null) {
-            throw new OperationalError('invalid Episode Id', 404)
-          }
+    const { _id: videoUploadId } = videoUpload
 
-          break
-        case 'live':
-          const live = await LiveModel.findByIdAndUpdate(
-            params.parentId,
-            { preview_video: videoUpload._id },
-            { session },
-          )
+    switch (params.parentType) {
+      case 'episode':
+        const episode = await EpisodeModel.findByIdAndUpdate(
+          params.parentId,
+          { video_upload: videoUploadId },
+          { session },
+        )
 
-          if (live == null) {
-            throw new OperationalError('invalid live Id', 404)
-          }
+        if (episode == null) {
+          throw new OperationalError('invalid Episode Id', 404)
+        }
 
-          break
-        case 'vod':
-          const video = await VideoModel.findByIdAndUpdate(
-            params.parentId,
-            { video_upload: videoUpload._id },
-            { session },
-          )
+        break
+      case 'live':
+        const live = await LiveModel.findByIdAndUpdate(
+          params.parentId,
+          { preview_video: videoUploadId },
+          { session },
+        )
 
-          if (video == null) {
-            throw new OperationalError('invalid video Id', 404)
-          }
+        if (live == null) {
+          throw new OperationalError('invalid live Id', 404)
+        }
 
-        default:
-          throw new OperationalError(
-            `invalid ParentType. Allowed types are ${assets.join(' | ')}`,
-            400,
-          )
-      }
+        break
+      case 'vod':
+        const video = await VideoModel.findByIdAndUpdate(
+          params.parentId,
+          { video_upload: videoUploadId },
+          { session },
+        )
+
+        if (video == null) {
+          throw new OperationalError('invalid video Id', 404)
+        }
+
+      case 'trailer':
+        const trailer = await TrailerModel.findByIdAndUpdate(
+          params.parentId,
+          {
+            video_upload: videoUploadId,
+          },
+          { session },
+        )
+
+        if (trailer == null) {
+          throw new OperationalError('invalid video Id', 404)
+        }
+
+      default:
+        throw new OperationalError(
+          `invalid ParentType. Allowed types are ${videoUploadParents.join(' | ')}`,
+          400,
+        )
     }
 
     return videoUpload
@@ -160,14 +176,11 @@ export class AdminManageMediaService {
   static searchClient = async (searchText: string, query: Request['query']) => {
     const searchReg = new RegExp(searchText, 'i')
 
-    const features = new QueryParamsFeatures(
-      UserRepo.searchUsersByRegexQuery(searchReg),
-      {
-        defaultLimit: 200,
-        defaultPage: 1,
-        queryParams: query,
-      },
-    )
+    const features = new QueryParamsFeatures(UserRepo.searchUsersByRegexQuery(searchReg), {
+      defaultLimit: 200,
+      defaultPage: 1,
+      queryParams: query,
+    })
 
     const clients = await features.paginate().query
     return clients

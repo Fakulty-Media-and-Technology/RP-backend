@@ -84,7 +84,7 @@ export const socketChat = async (io: Server) => {
       const newComment = await CommentModel.create({
         customer_id: user._id,
         message: message,
-        type: 'live',
+        parentType: 'live',
         parentId: liveId
       })
 

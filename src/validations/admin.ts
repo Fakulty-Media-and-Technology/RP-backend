@@ -14,24 +14,19 @@ import {
   VIDEO_CLASS_SCHEMA,
 } from './common'
 
-const VIDEO_SCHEMA = Joi.object({
-  bucket: STRING_SCHEMA.required(),
-  key: STRING_SCHEMA.required(),
-})
-
 export const addEpisodeSchema = {
   body: Joi.object({
     episode_number: Joi.number().min(1).optional(),
     episode_title: STRING_SCHEMA.required(),
     episode_description: STRING_SCHEMA.optional(),
-    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
   }),
 }
 
 export const addMovieOrSkitSchema = {
   body: Joi.object({
     title: STRING_SCHEMA.required(),
-    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
     pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
     vid_class: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
     category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
@@ -74,7 +69,7 @@ export const addMusicVideoSchema = {
     title: STRING_SCHEMA.required(),
     pg: STRING_SCHEMA.required(),
     vid_class: VIDEO_CLASS_SCHEMA.required(),
-    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
     category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     released_date: ISO_STRING_SCHEMA.required(),
     runtime: STRING_SCHEMA.required(),
@@ -157,8 +152,7 @@ export const createTrailerSchema = {
     video_id: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
     video_title: STRING_SCHEMA.optional(),
     details: STRING_SCHEMA.optional(),
-    bucket: STRING_SCHEMA.required(),
-    key: STRING_SCHEMA.required(),
+    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional()
   }),
 }
 

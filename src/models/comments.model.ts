@@ -13,12 +13,16 @@ const commentSchema = new Schema(
       type: String,
     },
 
-    type: {
+    parentType: {
       type: String,
       enum: assets,
+      required: [true, 'A comment must have a type']
     },
     
-    parentId: Schema.Types.ObjectId
+    parentId: {
+      type: Schema.Types.ObjectId,
+      required: [true, 'A comment must have a parent Id']
+    }
   },
   {
     timestamps: true,

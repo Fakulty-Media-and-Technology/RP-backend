@@ -1,4 +1,4 @@
-import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { HydratedDocumentFromSchema, InferSchemaType, Mongoose, Schema, model } from 'mongoose'
 
 const trailerSchema = new Schema(
   {
@@ -15,14 +15,10 @@ const trailerSchema = new Schema(
       type: String,
       // required: true,
     },
-    bucket: {
-      type: String,
-      required: true,
-    },
-    key: {
-      type: String,
-      required: true,
-      unique: true
+
+    video_upload: {
+      type: Schema.Types.ObjectId,
+      ref: 'video_uploads',
     },
   },
   {

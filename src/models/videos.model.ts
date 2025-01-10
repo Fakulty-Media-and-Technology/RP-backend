@@ -1,10 +1,4 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
-import { OperationalError } from '../utils/OperationalError'
-
-const videoUploadSchemaRef = {
-  type: Schema.Types.ObjectId,
-  ref: 'video_uploads',
-}
 
 const schema = new Schema(
   {
@@ -31,7 +25,10 @@ const schema = new Schema(
     },
 
     // required when type !== series
-    video_upload: videoUploadSchemaRef,
+    video_upload: {
+      type: Schema.Types.ObjectId,
+      ref: 'video_uploads',
+    },
 
     description: {
       type: String,
