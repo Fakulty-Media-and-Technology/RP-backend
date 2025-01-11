@@ -18,6 +18,7 @@ import { AdminAdsController } from '../controllers/admins/ads.admin'
 import { AdminUsersController } from '../controllers/admins/users.admin'
 import { Multer } from '../utils/Multer'
 import { requestValidator } from '../middlewares/requestValidator'
+
 import {
   addCastSchema,
   addCategorySchema,
@@ -94,6 +95,7 @@ superAdminRouter.post(
   requestValidator(addCastSchema),
   AdminEnumController.addCast,
 )
+
 superAdminRouter.get('/enums/get-cast', AdminEnumController.getCast)
 superAdminRouter.delete('/enums/rem-cast/:id', AdminEnumController.remcast)
 

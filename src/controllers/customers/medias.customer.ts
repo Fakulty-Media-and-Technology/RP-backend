@@ -24,6 +24,21 @@ type GetLiveEventsWithPhotoUrlResult = {
   photo_url: Awaited<ReturnType<typeof MediaAccess.getSignedUrl>>
 }
 
+type LiveEventsType =
+  | 'all'
+  | 'featured'
+  | 'sponsored'
+  | 'channels'
+  | 'channels popular'
+  | 'events'
+  | 'events popular'
+  | 'tvshows popular'
+  | 'tvshows'
+  | 'sports'
+  | 'sports popular'
+  | 'podcasts'
+  | 'podcasts popular'
+
 type GetLiveEventsWithPhotoUrlResults = Array<GetLiveEventsWithPhotoUrlResult>
 
 export class CustomerMediaController {
@@ -255,22 +270,7 @@ export class CustomerMediaController {
     return results
   }
 
-  static getLiveEventsByType = (
-    type:
-      | 'all'
-      | 'featured'
-      | 'sponsored'
-      | 'channels'
-      | 'channels popular'
-      | 'events'
-      | 'events popular'
-      | 'tvshows popular'
-      | 'tvshows'
-      | 'sports'
-      | 'sports popular'
-      | 'podcasts'
-      | 'podcasts popular',
-  ) =>
+  static getLiveEventsByType = (type: LiveEventsType) =>
     Catch.async(async (_, res) => {
       let filter: FilterQuery<LiveSchema> = { expired: false }
 

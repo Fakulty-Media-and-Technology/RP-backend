@@ -1,5 +1,6 @@
 import { query } from 'express'
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { OperationalError } from '../utils/OperationalError'
 
 const schema = new Schema(
   {
@@ -25,6 +26,13 @@ const schema = new Schema(
       required: true,
     },
 
+    trailerLink: String,
+
+    trailerUpload: {
+      type: Schema.Types.ObjectId,
+      ref: 'trailer',
+    },
+
     episode_description: String,
 
     // can add more stuff here as needed
@@ -39,6 +47,13 @@ const schema = new Schema(
 
 schema.index({ season: 1, episode_title: 1 }, { unique: true })
 schema.index({ season: 1, episode_number: 1 }, { unique: true })
+
+schema.pre('validate', function (next) {
+  if (!!this.trailerLink === !!this.trailerUpload) {
+    throw new OperationalError('provide either trailer link or trailer upload Id', 400)
+  }
+  next()
+})
 
 schema.pre('find', function (next) {
   this.populate('video_upload')

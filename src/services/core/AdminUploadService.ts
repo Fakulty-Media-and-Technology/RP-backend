@@ -145,7 +145,7 @@ export class AdminUploadService {
 
   // ********* seasons
 
-  private static _addSeasonWithSesson = async (
+  private static _addSeasonWithSession = async (
     { videoId, adminId }: AddSeasonWithSessionInput,
     session: ClientSession,
   ) => {
@@ -171,7 +171,7 @@ export class AdminUploadService {
   }
 
   static addSeason = async (videoId: string, adminId: string) => {
-    return await withMongoDBSession(this._addSeasonWithSesson, {
+    return await withMongoDBSession(this._addSeasonWithSession, {
       videoId,
       adminId,
     })

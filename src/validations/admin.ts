@@ -20,7 +20,9 @@ export const addEpisodeSchema = {
     episode_title: STRING_SCHEMA.required(),
     episode_description: STRING_SCHEMA.optional(),
     video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-  }),
+    trailerLink: STRING_SCHEMA.optional(),
+    trailerUpload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
+  }).xor('trailerLink', 'trailerUpload'),
 }
 
 export const addMovieOrSkitSchema = {
@@ -36,12 +38,15 @@ export const addMovieOrSkitSchema = {
     poster1_data: POSTER_SCHEMA.required(),
     poster2_data: POSTER_SCHEMA.required(),
 
+    trailerLink: STRING_SCHEMA.optional(),
+    trailerUpload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
+
     //
     genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     expiry_date: ISO_STRING_SCHEMA,
     sub_title: STRING_SCHEMA,
-  }),
+  }).xor('trailerLink', 'trailerUpload'),
 }
 
 export const addSeriesSchema = {
@@ -79,7 +84,11 @@ export const addMusicVideoSchema = {
     artist_name: STRING_SCHEMA.required(),
     expiry_date: ISO_STRING_SCHEMA,
     sub_title: STRING_SCHEMA,
-  }),
+
+    
+    trailerLink: STRING_SCHEMA.optional(),
+    trailerUpload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
+  }).xor('trailerLink', 'trailerUpload'),
 }
 
 export const addSubtitleSchema = {

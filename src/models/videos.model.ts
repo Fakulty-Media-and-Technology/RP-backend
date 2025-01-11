@@ -1,4 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { OperationalError } from '../utils/OperationalError'
 
 const schema = new Schema(
   {
@@ -24,7 +25,6 @@ const schema = new Schema(
       required: true,
     },
 
-    // required when type !== series
     video_upload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
@@ -104,6 +104,13 @@ const schema = new Schema(
       required: true,
     },
 
+    trailerLink: String,
+
+    trailerUpload: {
+      type: Schema.Types.ObjectId,
+      ref: 'trailers',
+    },
+
     seasons: [
       {
         type: Schema.Types.ObjectId,
@@ -122,6 +129,13 @@ const schema = new Schema(
 
 schema.pre('validate', function (next) {
   this.is_series = this.type === 'series'
+  next()
+})
+
+schema.pre('validate', function (next) {
+  if (!this.is_series && !!this.trailerLink === !!this.trailerUpload) {
+    throw new OperationalError('provide either trailer link or trailer upload', 400)
+  }
   next()
 })
 
