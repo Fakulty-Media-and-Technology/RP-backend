@@ -25,6 +25,8 @@ const schema = new Schema(
       required: true,
     },
 
+    video_link: String,
+
     video_upload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
@@ -135,6 +137,10 @@ schema.pre('validate', function (next) {
 schema.pre('validate', function (next) {
   if (!this.is_series && !!this.trailerLink === !!this.trailerUpload) {
     throw new OperationalError('provide either trailer link or trailer upload', 400)
+  }
+
+  if (!this.is_series && !!this.video_link === !!this.video_upload) {
+    throw new OperationalError('provide either a video_link or a video_uoload', 400)
   }
   next()
 })

@@ -41,6 +41,8 @@ const schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
     },
+
+    video_link: String,
   },
   { timestamps: true },
 )
@@ -51,6 +53,10 @@ schema.index({ season: 1, episode_number: 1 }, { unique: true })
 schema.pre('validate', function (next) {
   if (!!this.trailerLink === !!this.trailerUpload) {
     throw new OperationalError('provide either trailer link or trailer upload Id', 400)
+  }
+
+  if (!!this.video_link === !!this.video_upload) {
+    throw new OperationalError('provide either a video_link or a video_uoload', 400)
   }
   next()
 })
