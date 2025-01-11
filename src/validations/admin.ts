@@ -152,7 +152,7 @@ export const createTrailerSchema = {
     video_id: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
     video_title: STRING_SCHEMA.optional(),
     details: STRING_SCHEMA.optional(),
-    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional()
+    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
   }),
 }
 

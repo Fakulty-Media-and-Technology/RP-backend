@@ -34,11 +34,9 @@ export class MediaAccess {
     return getCFSignedUrl({
       url: env.CFSDISTRIBUTION + key,
       keyPairId: env.KEY_PAIR_ID,
-      dateLessThan:  new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      dateLessThan: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
       // dateLessThan: moment().add(3, 'days').toISOString(),
       privateKey: privateKey,
     })
   }
 }
-
-

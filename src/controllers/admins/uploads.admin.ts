@@ -41,7 +41,7 @@ export class AdminUploadController {
       sendResponse({
         res,
         message: `${type} added successfully`,
-        data: video
+        data: video,
       })
     })
 

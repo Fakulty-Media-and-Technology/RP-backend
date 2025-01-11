@@ -22,7 +22,8 @@ const ratingSchema = new Schema(
 
     rate: {
       type: Number,
-      enum: [1, 2, 3, 4, 5],
+      min: 1,
+      max: 5,
       required: true,
     },
 
@@ -34,6 +35,8 @@ const ratingSchema = new Schema(
     timestamps: true,
   },
 )
+
+ratingSchema.index({ parentType: 1, parentId: 1, userId: 1 }, { unique: true })
 
 export const RatingModel = model('ratings', ratingSchema)
 export type RatingSchema = InferSchemaType<typeof ratingSchema>

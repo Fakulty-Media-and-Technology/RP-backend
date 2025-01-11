@@ -69,6 +69,7 @@ customerRouter.post(
   requestValidator(createRatingSchema),
   CustomerCommentsRatingsController.addRating,
 )
+
 customerRouter.get('/ratings/fetch/:parentId', CustomerCommentsRatingsController.getRatings)
 
 customerRouter

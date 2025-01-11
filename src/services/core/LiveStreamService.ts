@@ -215,7 +215,6 @@ export class LiveStreamService {
   }
 
   static getLiveStreamCredentials = async (currentUser: LoggedInUser) => {
-
     type StreamCredential = Live & {
       stream_server: string
       stream_url: string

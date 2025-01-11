@@ -56,7 +56,7 @@ export class CustomerCommentsRatingsController {
   static addRating = Catch.async(async (req, res) => {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
-    
+
     const rating = await CustomerCommentsRatingsService.addRating({
       ...req.body,
       userId: user.id,

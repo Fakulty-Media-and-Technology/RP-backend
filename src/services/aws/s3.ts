@@ -56,4 +56,3 @@ export class S3 {
     return pairs
   }
 }
-

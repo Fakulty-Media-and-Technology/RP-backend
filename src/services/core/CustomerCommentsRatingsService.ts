@@ -33,7 +33,29 @@ export class CustomerCommentsRatingsService {
   }
 
   static getComments = async (parentId: string) => {
-    const comments = await CommentModel.find({ parentId })
+    const comments = await CommentModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $eq: [
+              '$parentId',
+              {
+                $toObjectId: parentId,
+              },
+            ],
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id: null,
+          totalComments: { $sum: 1 },
+          comments: { $push: '$$ROOT' },
+        },
+      },
+    ])
+
     return comments
   }
 
@@ -63,7 +85,7 @@ export class CustomerCommentsRatingsService {
           _id: null,
           totalRatings: { $sum: 1 },
           averageRatings: { $avg: '$rate' },
-          ratingsDocuments: { $push: '$$ROOT' },
+          ratings: { $push: '$$ROOT' },
         },
       },
     ])
