@@ -20,9 +20,12 @@ export const addEpisodeSchema = {
     episode_title: STRING_SCHEMA.required(),
     episode_description: STRING_SCHEMA.optional(),
     video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
+    video_link: STRING_SCHEMA.optional(),
     trailerLink: STRING_SCHEMA.optional(),
     trailerUpload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-  }).xor('trailerLink', 'trailerUpload'),
+  })
+    .xor('trailerLink', 'trailerUpload')
+    .xor('video_upload', 'video_link'),
 }
 
 export const addMovieOrSkitSchema = {
@@ -41,12 +44,16 @@ export const addMovieOrSkitSchema = {
     trailerLink: STRING_SCHEMA.optional(),
     trailerUpload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
 
+    video_link: STRING_SCHEMA.optional(),
+
     //
     genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     expiry_date: ISO_STRING_SCHEMA,
     sub_title: STRING_SCHEMA,
-  }).xor('trailerLink', 'trailerUpload'),
+  })
+    .xor('trailerLink', 'trailerUpload')
+    .xor('video_upload', 'video_link'),
 }
 
 export const addSeriesSchema = {
@@ -69,6 +76,15 @@ export const addSeriesSchema = {
   }),
 }
 
+/**
+ *     video_link: String,
+
+    video_upload: {
+      type: Schema.Types.ObjectId,
+      ref: 'video_uploads',
+    },
+ */
+
 export const addMusicVideoSchema = {
   body: Joi.object({
     title: STRING_SCHEMA.required(),
@@ -85,10 +101,13 @@ export const addMusicVideoSchema = {
     expiry_date: ISO_STRING_SCHEMA,
     sub_title: STRING_SCHEMA,
 
-    
+    video_link: STRING_SCHEMA.optional(),
+
     trailerLink: STRING_SCHEMA.optional(),
     trailerUpload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-  }).xor('trailerLink', 'trailerUpload'),
+  })
+    .xor('trailerLink', 'trailerUpload')
+    .xor('video_upload', 'video_link'),
 }
 
 export const addSubtitleSchema = {
@@ -198,7 +217,21 @@ export const addCastSchema = {
   }),
 }
 
-export const addCategorySchema = addGenreSchema
+//
+
+export const addCategorySchema = {
+  body: Joi.object({
+    name: STRING_SCHEMA.required(),
+    position: Joi.number().required(),
+  }),
+}
+
+export const updateCategorySchema = {
+  body: Joi.object({
+    name: STRING_SCHEMA,
+    position: Joi.number(),
+  }).or('name', 'position'),
+}
 
 export const createAdminORSuperAdminSchema = {
   body: Joi.object({

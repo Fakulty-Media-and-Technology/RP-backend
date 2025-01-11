@@ -34,8 +34,8 @@ export class AdminEnumController {
 
   // ********** Category *******
 
-  static addCategory = Catch.async(async ({ body: { name } }, res) => {
-    await CategoryEnumService.addCategory(name)
+  static addCategory = Catch.async(async ({ body: { name, position } }, res) => {
+    await CategoryEnumService.addCategory(name, position)
 
     sendResponse({
       res,
@@ -48,6 +48,14 @@ export class AdminEnumController {
       res,
       data: await CategoryEnumService.getCategories(req.query),
       message: 'categories fetched',
+    })
+  })
+
+  static updateCategory = Catch.async(async (req, res) => {
+    sendResponse({
+      res,
+      data: await CategoryEnumService.updateCategory(req.params.catId, req.body),
+      message: 'category updated',
     })
   })
 

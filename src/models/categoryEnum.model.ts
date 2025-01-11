@@ -9,7 +9,14 @@ const schema = new Schema(
       unique: true,
       required: true,
     },
+
+    position: {
+      type: Number,
+      required: true,
+      unique: true
+    },
   },
+
   {
     timestamps: true,
   },

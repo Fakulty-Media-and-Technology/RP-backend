@@ -40,6 +40,7 @@ import {
   getPhotoURLSchema,
   updatePayOutReqStstusSchema,
   updatePlanSchema,
+  updateCategorySchema,
 } from '../validations/admin'
 
 export const superAdminRouter = express.Router()
@@ -89,6 +90,12 @@ superAdminRouter.post(
 
 superAdminRouter.get('/enums/get-categories', AdminEnumController.getCategory)
 superAdminRouter.delete('/enums/rem-category/:id', AdminEnumController.remCategory)
+
+superAdminRouter.put(
+  '/enums/update-category/:catId',
+  requestValidator(updateCategorySchema),
+  AdminEnumController.updateCategory,
+)
 
 superAdminRouter.post(
   '/enums/add-cast',
