@@ -8,6 +8,7 @@ export class AdminTrailerController {
 
     sendResponse({
       res,
+      data: await TrailerModel.create(req.body),
       message: 'trailer created',
     })
   })

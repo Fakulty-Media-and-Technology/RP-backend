@@ -55,7 +55,7 @@ export class AdminManageMediaService {
       bucket: params.Bucket,
       key: params.Key,
       mimetype: params.mimetype,
-      sizeInMB: params.size,
+      size: params.size,
       parentId: params.parentId,
       parentType: params.parentType,
       isTranscoded: params.isTranscoded,
@@ -100,7 +100,7 @@ export class AdminManageMediaService {
         if (video == null) {
           throw new OperationalError('invalid video Id', 404)
         }
-
+      break
       case 'trailer':
         const trailer = await TrailerModel.findByIdAndUpdate(
           params.parentId,
@@ -111,9 +111,9 @@ export class AdminManageMediaService {
         )
 
         if (trailer == null) {
-          throw new OperationalError('invalid video Id', 404)
+          throw new OperationalError('invalid trailer Id', 404)
         }
-
+        break
       default:
         throw new OperationalError(
           `invalid ParentType. Allowed types are ${videoUploadParents.join(' | ')}`,

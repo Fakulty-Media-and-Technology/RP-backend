@@ -76,15 +76,6 @@ export const addSeriesSchema = {
   }),
 }
 
-/**
- *     video_link: String,
-
-    video_upload: {
-      type: Schema.Types.ObjectId,
-      ref: 'video_uploads',
-    },
- */
-
 export const addMusicVideoSchema = {
   body: Joi.object({
     title: STRING_SCHEMA.required(),

@@ -1,6 +1,6 @@
 import { HydratedDocumentFromSchema, Schema, model } from 'mongoose'
 import { S3 } from '../services/aws/s3'
-import { assets } from './assets'
+import { videoUploadParents } from './assets'
 
 const resolutionsSchema = new Schema(
   {
@@ -35,13 +35,13 @@ const schema = new Schema(
       type: String,
     },
 
-    sizeInMB: {
+    size: {
       type: Number,
     },
 
     parentType: {
       type: String,
-      enum: assets, // add more as needed
+      enum: videoUploadParents, // add more as needed
     },
 
     parentId: Schema.Types.ObjectId,
