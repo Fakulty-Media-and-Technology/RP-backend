@@ -38,9 +38,10 @@ import {
   createUpcomingEventSchema,
   addEpisodeSchema,
   getPhotoURLSchema,
-  updatePayOutReqStstusSchema,
+  updatePayOutReqStatusSchema,
   updatePlanSchema,
   updateCategorySchema,
+  updateTrailerSchema,
 } from '../validations/admin'
 
 export const superAdminRouter = express.Router()
@@ -114,12 +115,6 @@ superAdminRouter.post(
 )
 
 superAdminRouter.post(
-  '/media/upload-vid-short',
-  Multer.uploadSingleVideo,
-  AdminManagemediaController.uploadVideo,
-)
-
-superAdminRouter.post(
   '/media/upload-subtitle',
   Multer.uploadSingleSubtitle,
   AdminManagemediaController.uploadImageOrSubtitle('subtitle'),
@@ -171,6 +166,12 @@ superAdminRouter.post(
   AdminTrailerController.createTrailer,
 )
 
+superAdminRouter.put(
+  '/trailer/update/:trailerId',
+  requestValidator(updateTrailerSchema),
+  AdminTrailerController.updateTrailer,
+)
+
 // **** plans and sub
 superAdminRouter.post(
   '/subscription/plans/create',
@@ -203,7 +204,7 @@ superAdminRouter.get('/payouts/request/one/:id', AdminPayoutController.payoutReq
 
 superAdminRouter.put(
   '/payouts/request/status/:id',
-  requestValidator(updatePayOutReqStstusSchema),
+  requestValidator(updatePayOutReqStatusSchema),
   AdminPayoutController.payoutStatusUpdate,
 )
 // superAdminRouter.get("/payouts/request/group", AdminPayoutController.payoutReqGroup);

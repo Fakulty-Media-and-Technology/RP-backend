@@ -175,13 +175,22 @@ export const createTrailerSchema = {
   }),
 }
 
+export const updateTrailerSchema = {
+  body: Joi.object({
+    video_id: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
+    video_title: STRING_SCHEMA.optional(),
+    details: STRING_SCHEMA.optional(),
+    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
+  }).or('video_id', 'video_title', 'details', 'video_upload'),
+}
+
 export const createGiftCardSchema = {
   body: Joi.object({
     amount: Joi.number().min(0).required(),
   }),
 }
 
-export const updatePayOutReqStstusSchema = {
+export const updatePayOutReqStatusSchema = {
   body: Joi.object({
     status: STRING_SCHEMA.valid('processing', 'reversed', 'rejected', 'completed').required(),
   }),
