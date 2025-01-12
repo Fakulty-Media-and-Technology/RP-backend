@@ -19,7 +19,16 @@ export class ErrorMiddleware {
 
       case 'MongoServerError':
         if (error.code === 11000) {
-          const message = `${Object.values(error.keyValue)[0]} is associated with another document in the table.`
+          const entries = Object.entries(error.keyValue)
+
+          let keyValues = ''
+
+          entries.forEach(([key, value], index) => {
+            const keyValueStr = `${key} : ${value}`
+            keyValues += index === entries.length - 1 ? keyValueStr : keyValueStr + ' AND '
+          })
+
+          const message = `${keyValues} ${entries.length === 1 ? 'is' : 'are'} associated with another document in the table.`
           error = new OperationalError(message, 400)
           break
         }

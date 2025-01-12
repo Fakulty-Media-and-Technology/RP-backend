@@ -1,4 +1,4 @@
-import { HydratedDocumentFromSchema, InferSchemaType,  Schema, model } from 'mongoose'
+import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
 const trailerSchema = new Schema(
   {
@@ -13,7 +13,7 @@ const trailerSchema = new Schema(
       type: String,
       // required: true,
     },
-    
+
     details: {
       type: String,
       // required: true,

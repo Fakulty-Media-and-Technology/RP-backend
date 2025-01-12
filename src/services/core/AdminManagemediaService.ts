@@ -100,7 +100,7 @@ export class AdminManageMediaService {
         if (video == null) {
           throw new OperationalError('invalid video Id', 404)
         }
-      break
+        break
       case 'trailer':
         const trailer = await TrailerModel.findByIdAndUpdate(
           params.parentId,

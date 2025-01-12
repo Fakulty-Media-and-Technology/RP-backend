@@ -13,7 +13,7 @@ const schema = new Schema(
     position: {
       type: Number,
       required: true,
-      unique: true
+      unique: true,
     },
   },
 
