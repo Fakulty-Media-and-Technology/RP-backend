@@ -6,35 +6,49 @@ const schema = new Schema(
     title: {
       type: String,
       required: true,
+      unique: true
     },
+
     type: {
       type: String,
       enum: ['movie', 'series', 'music video', 'documentary', 'skit'],
       required: true,
     },
+
     details: {
       type: String,
       required: true,
     },
+
     reminder: {
-      type: [String], //user ids that subscribe
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'users',
+        },
+      ],
     },
+
     release_date: {
       type: Date,
       required: true,
     },
+
     portrait_photo: {
       type: previewPhotoSchema,
       required: true,
     },
+
     landscape_photo: {
       type: previewPhotoSchema,
       required: true,
     },
+
     active: {
       type: Boolean,
       default: true,
     },
+
     trailer_id: {
       type: Schema.Types.ObjectId,
       ref: 'trailers',

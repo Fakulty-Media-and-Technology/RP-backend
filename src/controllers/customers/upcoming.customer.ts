@@ -1,28 +1,35 @@
-import { CustomerUpcomingService } from '../../services/core/CustomerUpcomingService'
+import {
+  UpcomingService,
+  CustomerSubScriptionActionType,
+} from '../../services/core/UpcomingService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
+import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
 export class CustomerUpcomingController {
-  static upComingFetch = Catch.async(async (_, res) => {
-    // TODO: This should be paginated
-    sendResponse({
-      res,
-      data: await CustomerUpcomingService.fetchUpcoming(),
-    })
-  })
-
-  static upComingSubscribe = Catch.async(async ({ user, params: { id } }, res) => {
-    await CustomerUpcomingService.subscribeToUpComing(GetDefined.loggedInUser(user), id)
+  static fetch = Catch.async(async ({ query }, res) => {
+    const page = handleDefaultNumAndUnknown(query.page, 1)
+    const limit = handleDefaultNumAndUnknown(query.limit, 50)
 
     sendResponse({
       res,
-      message: 'user subscribed to event',
+      data: await UpcomingService.customerFetch(page, limit),
     })
   })
 
-  static upComingIsUserSubscribed = Catch.async(async ({ user, params: { id } }, res) => {
-    const user_subscribed = await CustomerUpcomingService.isSubscribedToUpcoming(
+  static subscription = (type: CustomerSubScriptionActionType) =>
+    Catch.async(async ({ user, params: { id } }, res) => {
+      await UpcomingService.customerSubscription(GetDefined.loggedInUser(user), id, type)
+
+      sendResponse({
+        res,
+        message: 'subscription updated successfully',
+      })
+    })
+
+  static isSubscribed = Catch.async(async ({ user, params: { id } }, res) => {
+    const user_subscribed = await UpcomingService.customerIsSubscribed(
       GetDefined.loggedInUser(user),
       id,
     )
@@ -31,15 +38,6 @@ export class CustomerUpcomingController {
       res,
       data: { user_subscribed },
       message: 'User subsciption status',
-    })
-  })
-
-  static upComingUnsubscribe = Catch.async(async ({ user, params: { id } }, res) => {
-    await CustomerUpcomingService.unsubscribeFromUpcoming(GetDefined.loggedInUser(user), id)
-
-    sendResponse({
-      res,
-      message: 'user unsubscribed',
     })
   })
 }

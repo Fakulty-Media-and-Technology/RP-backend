@@ -13,7 +13,7 @@ type Episode = {
 }
 
 export class VideoUploadParser {
-  static signVideoUploadResolutions = async (videoUpload: VideoUpload) => {
+  static signResolutionsOrRaw = async (videoUpload: VideoUpload) => {
     const { bucket, key, resolutions, isTranscoded } = videoUpload
 
     const signedResolutions = isTranscoded
@@ -31,7 +31,7 @@ export class VideoUploadParser {
   static populateVidUploadResolutionsOnLives = async (lives: Live[]) => {
     const settled = await Promise.allSettled(
       lives.map(async live => {
-        live.preview_video && (await this.signVideoUploadResolutions(live.preview_video as any))
+        live.preview_video && (await this.signResolutionsOrRaw(live.preview_video as any))
         return live
       }),
     )
@@ -46,7 +46,7 @@ export class VideoUploadParser {
           const populatedSeason = season as unknown as Season
           //
           for (const episode of populatedSeason.episodes) {
-            episode.video_upload && (await this.signVideoUploadResolutions(episode.video_upload))
+            episode.video_upload && (await this.signResolutionsOrRaw(episode.video_upload))
           }
         }
         return vid
@@ -56,7 +56,7 @@ export class VideoUploadParser {
     } else {
       const settled = await Promise.allSettled(
         vids.map(async vid => {
-          vid.video_upload && (await this.signVideoUploadResolutions(vid.video_upload as any))
+          vid.video_upload && (await this.signResolutionsOrRaw(vid.video_upload as any))
           return vid
         }),
       )

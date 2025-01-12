@@ -92,14 +92,17 @@ customerRouter.get(
   '/live/events/fetch/featured',
   CustomerMediaController.getLiveEventsByType('featured'),
 )
+
 customerRouter.get(
   '/live/events/fetch/sponsored',
   CustomerMediaController.getLiveEventsByType('sponsored'),
 )
+
 customerRouter.get(
   '/live/events/fetch/channels',
   CustomerMediaController.getLiveEventsByType('channels'),
 )
+
 customerRouter.get(
   '/live/events/fetch/pop/channels',
   CustomerMediaController.getLiveEventsByType('channels popular'),
@@ -109,48 +112,56 @@ customerRouter.get(
   '/live/events/fetch/events',
   CustomerMediaController.getLiveEventsByType('events'),
 )
+
 customerRouter.get(
   '/live/events/fetch/pop/events',
   CustomerMediaController.getLiveEventsByType('events popular'),
 )
+
 customerRouter.get(
   '/live/events/fetch/tvshows',
   CustomerMediaController.getLiveEventsByType('tvshows'),
 )
+
 customerRouter.get(
   '/live/events/fetch/pop/tvshows',
   CustomerMediaController.getLiveEventsByType('tvshows popular'),
 )
+
 customerRouter.get(
   '/live/events/fetch/sports',
   CustomerMediaController.getLiveEventsByType('sports'),
 )
+
 customerRouter.get(
   '/live/events/fetch/pop/sports',
   CustomerMediaController.getLiveEventsByType('sports popular'),
 )
+
 customerRouter.get(
   '/live/events/fetch/podcasts',
   CustomerMediaController.getLiveEventsByType('podcasts'),
 )
+
 customerRouter.get(
   '/live/events/fetch/pop/podcasts',
   CustomerMediaController.getLiveEventsByType('podcasts popular'),
 )
+
 customerRouter.get('/live/event/stream/:id', CustomerMediaController.streamLiveEvent)
 
 // *** Upcoming Events
-customerRouter.get('/upcoming/events/fetch', CustomerUpcomingController.upComingFetch)
-customerRouter.put('/upcoming/events/subscribe/:id', CustomerUpcomingController.upComingSubscribe)
+customerRouter.get('/upcoming/events/fetch', CustomerUpcomingController.fetch)
+customerRouter.get('/upcoming/events/is-subscribed/:id', CustomerUpcomingController.isSubscribed)
 
-customerRouter.get(
-  '/upcoming/events/is-subscribed/:id',
-  CustomerUpcomingController.upComingIsUserSubscribed,
+customerRouter.put(
+  '/upcoming/events/subscribe/:id',
+  CustomerUpcomingController.subscription('subscribe'),
 )
 
 customerRouter.put(
   '/upcoming/events/unsubscribe/:id',
-  CustomerUpcomingController.upComingUnsubscribe,
+  CustomerUpcomingController.subscription('unsubscribe'),
 )
 
 // ***payments and wallets
@@ -180,6 +191,7 @@ customerRouter.post(
   '/notification/device/register',
   CustomerPushNotificationController.registerDeviceToken,
 )
+
 customerRouter.post(
   '/notification/device/update',
   CustomerPushNotificationController.updateDeviceToken,
@@ -189,14 +201,16 @@ customerRouter.post(
 customerRouter.post('/suggestion/create', CustomerProfileController.createSuggestion)
 
 // **tvshow livestream voting
+customerRouter.post('/livestream/vote/create-vote', CustomerVoteController.createVote)
+customerRouter.post('/livestream/donate/dash-fund', CustomerVoteController.donateFund)
 customerRouter.get('/livestream/vote/fetch-info', CustomerVoteController.fetchVoteInfo)
+
 customerRouter.get(
   '/livestream/vote/fetch-contestants',
   CustomerVoteController.fetchVoteContestants,
 )
-customerRouter.post('/livestream/vote/create-vote', CustomerVoteController.createVote)
-customerRouter.post('/livestream/donate/dash-fund', CustomerVoteController.donateFund)
 
+// ******** notifications
 customerRouter.get('/notifications', CustomerNotificationController.getNotifications)
 customerRouter.post(
   '/notifications/:notification_id/click',

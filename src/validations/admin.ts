@@ -217,8 +217,6 @@ export const addCastSchema = {
   }),
 }
 
-//
-
 export const addCategorySchema = {
   body: Joi.object({
     name: STRING_SCHEMA.required(),

@@ -28,7 +28,7 @@ export class ErrorMiddleware {
             keyValues += index === entries.length - 1 ? keyValueStr : keyValueStr + ' AND '
           })
 
-          const message = `${keyValues} ${entries.length === 1 ? 'is' : 'are'} associated with another document in the table.`
+          const message = `<${keyValues}> ${entries.length === 1 ? 'is' : 'are'} associated with another document in the table.`
           error = new OperationalError(message, 400)
           break
         }
