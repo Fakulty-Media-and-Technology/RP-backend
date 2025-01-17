@@ -1,4 +1,4 @@
-// import moment from 'moment'
+import moment from 'moment'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { getSignedUrl as getCFSignedUrl } from '@aws-sdk/cloudfront-signer'
@@ -15,28 +15,14 @@ export class MediaAccess {
     return await getSignedUrl(AwsUtils.clients.s3, command, options)
   }
 
-  static getVideoUploadResolutionsSignedUrls = async (
-    bucket: string,
-    resolutions: VideoUpload['resolutions'],
-  ) => {
-    const promises = resolutions.map(async ({ resolution, key }) => ({
-      resolution,
-      key: await this.getSignedUrl(bucket, key, 'video'),
-    }))
-
-    const signedResolutions = await Promise.all(promises)
-    return signedResolutions as VideoUpload['resolutions']
-  }
-
   static getCloudFrontSignedUrl = (key: string) => {
     const privateKey = env.CFS_PRIVATE_KEY.replace(/\\n/g, '\n')
 
     return getCFSignedUrl({
-      url: env.CFSDISTRIBUTION + key,
+      url: env.CFSDISTRIBUTION + '/' + key,
       keyPairId: env.KEY_PAIR_ID,
-      dateLessThan: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-      // dateLessThan: moment().add(3, 'days').toISOString(),
-      privateKey: privateKey,
+      dateLessThan: moment().add(3, 'days').toISOString(),
+      privateKey,
     })
   }
 }

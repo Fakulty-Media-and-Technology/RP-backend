@@ -198,9 +198,7 @@ export class AdminManageMediaService {
     })
 
     const lives = await features.paginate().query
-
-    await VideoUploadParser.populateVidUploadResolutionsOnLives(lives)
-    return lives
+    return VideoUploadParser.populateLivesVidUploadResolutions(lives)
   }
 
   static addSubtitle = async (data: Record<string, any>) => {

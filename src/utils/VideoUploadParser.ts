@@ -2,7 +2,6 @@ import { Live } from '../models/lives.model'
 import { Video } from '../models/videos.model'
 import { VideoUpload } from '../models/videoupload.model'
 import { MediaAccess } from '../services/media-access'
-import { getFulfilledValues } from './promise'
 
 type Season = {
   episodes: Episode[]
@@ -13,56 +12,52 @@ type Episode = {
 }
 
 export class VideoUploadParser {
-  static signResolutionsOrRaw = async (videoUpload: VideoUpload) => {
-    const { bucket, key, resolutions, isTranscoded } = videoUpload
+  static signResolutionsOrRaw = (videoUpload: VideoUpload | undefined | null) => {
+    if (videoUpload == null || !Array.isArray(videoUpload.resolutions)) return
 
-    const signedResolutions = isTranscoded
-      ? await MediaAccess.getVideoUploadResolutionsSignedUrls(bucket, resolutions)
-      : [
-          {
-            resolution: 'raw',
-            key: await MediaAccess.getSignedUrl(bucket, key, 'video'),
-          },
-        ]
+    if (!videoUpload.isTranscoded) {
+      videoUpload.resolutions = [
+        {
+          resolution: 'raw',
+          key: MediaAccess.getCloudFrontSignedUrl(videoUpload.key),
+        },
+      ] as any
 
-    videoUpload.resolutions = signedResolutions as VideoUpload['resolutions']
-  }
-
-  static populateVidUploadResolutionsOnLives = async (lives: Live[]) => {
-    const settled = await Promise.allSettled(
-      lives.map(async live => {
-        live.preview_video && (await this.signResolutionsOrRaw(live.preview_video as any))
-        return live
-      }),
-    )
-
-    lives = getFulfilledValues(settled)
-  }
-
-  static populateVidUploadResolutionsOnVideos = async (vids: Video[], type: Video['type']) => {
-    if (type === 'series') {
-      const promises = vids.map(async vid => {
-        for (const season of vid.seasons) {
-          const populatedSeason = season as unknown as Season
-          //
-          for (const episode of populatedSeason.episodes) {
-            episode.video_upload && (await this.signResolutionsOrRaw(episode.video_upload))
-          }
-        }
-        return vid
-      })
-
-      vids = getFulfilledValues(await Promise.allSettled(promises))
-    } else {
-      const settled = await Promise.allSettled(
-        vids.map(async vid => {
-          vid.video_upload && (await this.signResolutionsOrRaw(vid.video_upload as any))
-          return vid
-        }),
-      )
-
-      vids = getFulfilledValues(settled)
+      return
     }
+
+    videoUpload.resolutions = videoUpload.resolutions.map(({ resolution, key }) => ({
+      resolution,
+      key: MediaAccess.getCloudFrontSignedUrl(key),
+    })) as any
+  }
+
+  static populateLivesVidUploadResolutions = (lives: Live[]) => {
+    lives.forEach(live => {
+      this.signResolutionsOrRaw(live.preview_video as any)
+    })
+
+    return lives
+  }
+
+  static populateVideoVidUploadResolutions = (vids: Video[]) => {
+    vids.forEach(video => {
+      if (!video.is_series) {
+        this.signResolutionsOrRaw(video.video_upload as any)
+        return
+      }
+
+      // series here
+
+      if (!video.seasons.length) return
+
+      for (const season of video.seasons as unknown as Season[]) {
+        //
+        for (const episode of season.episodes) {
+          this.signResolutionsOrRaw(episode.video_upload)
+        }
+      }
+    })
 
     return vids
   }

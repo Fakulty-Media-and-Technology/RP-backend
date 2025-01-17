@@ -139,8 +139,7 @@ export class AdminUploadService {
     })
 
     const vids = await queryFeatures.paginate().query
-    await VideoUploadParser.populateVidUploadResolutionsOnVideos(vids, type)
-    return vids
+    return VideoUploadParser.populateVideoVidUploadResolutions(vids)
   }
 
   // ********* seasons
