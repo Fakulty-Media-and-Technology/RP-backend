@@ -79,7 +79,7 @@ customerRouter
 
 // *** Media
 customerRouter.post('/media/upload-photo', CustomerMediaController.uploadImageRoute)
-customerRouter.post('/media/vod-streaming', CustomerMediaController.vodStream)
+customerRouter.post('/media/vod-streaming/:vid', CustomerMediaController.vodStream)
 customerRouter.get('/media/vod/fetch/featured', CustomerMediaController.getFeaturedVods)
 customerRouter.post('/media/vod/like/:id', CustomerMediaController.likeVideo)
 customerRouter.get('/media/vod/userliked/:id', CustomerMediaController.userLikedVideo)

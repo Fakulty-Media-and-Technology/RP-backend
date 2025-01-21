@@ -14,7 +14,7 @@ type Episode = {
 export class VideoUploadParser {
   static signResolutionsOrRaw = (videoUpload: VideoUpload | undefined | null) => {
     if (videoUpload == null || !Array.isArray(videoUpload.resolutions)) return
-
+    
     if (!videoUpload.isTranscoded) {
       videoUpload.resolutions = [
         {

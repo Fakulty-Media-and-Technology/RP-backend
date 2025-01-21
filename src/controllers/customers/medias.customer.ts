@@ -19,6 +19,8 @@ import { AwsUtils } from '../../services/aws/utils'
 import { MediaConvert } from '../../services/aws/mediaConvert'
 import { signCred } from '../../utils/live'
 import { VideoRepo } from '../../repositories/VideoRepo'
+import { VideoUploadModel } from '../../models/videoupload.model'
+import { VideoUploadParser } from '../../utils/VideoUploadParser'
 
 type GetLiveEventsWithPhotoUrlResult = {
   liveEvent: Live
@@ -68,62 +70,28 @@ export class CustomerMediaController {
   })
 
   static vodStream = Catch.async(async (req, res) => {
-    const { bucket, key } = req.body
-    const user = GetDefined.loggedInUser(req.user)
+    const videoUploadId = req.params.vid
+    const vidUpload = await VideoUploadModel.findById(videoUploadId)
 
-    // const transPath = `s3://reeplay/transcode/${key.split('/').slice(1).join('/')}`
-    const transPath = `${AwsUtils.buckets.transcodeOutput}${key.split('/').slice(1).join('/')}/`
-
-    const command = new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: `${AwsUtils.buckets.transcodeOutput}/${key.split('/').slice(1).join('/')}/`,
-      MaxKeys: 1,
-    })
-
-    const data = await AwsUtils.clients.s3.send(command)
-
-    if (data.Contents == null) {
-      console.dir({ errorMessage: '🛑Error fetching S3 data objects', data }, { depth: null })
-      throw new OperationalError('Could not list data contents', 500)
+    if (vidUpload == null) {
+      throw new OperationalError('Invalid Video upload Id', 404)
     }
 
-    const checkTranscodedFolder = data.Contents.length > 0
-
-    if (checkTranscodedFolder != true) {
-      await MediaConvert.transcode(key)
-
-      throw new OperationalError(
-        'Oops, check back in few minutes, wait while the video is being transcoded',
-        500,
-      )
+    if (!vidUpload.isTranscoded) {
+      throw new OperationalError('Video upload has not been transcoded', 400)
     }
 
-    const user_resolution = await SettingsModel.findOne({ user_id: user.id })
-    const userRes = user_resolution?.video_quality || '480p'
+    // const user = GetDefined.loggedInUser(req.user)
+    // const user_resolution = await SettingsModel.findOne({ user_id: user.id })
+    // const userRes = user_resolution?.video_quality || '480p'
 
-    const url = `${env.CFSDISTRIBUTION}/${key
-      .split('/')
-      .slice(1)
-      .join('/')}/${key.split('/').slice(1).join('/')}_${userRes}.mp4`
-
-    console.log({ url })
-
-    const privateKey = env.CFS_PRIVATE_KEY.replace(/\\n/g, '\n')
-    const expirationDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-
-    // access transcoded files with cloudfront
-    const signedUrl = getCFSignedUrl({
-      url: url,
-      keyPairId: env.KEY_PAIR_ID,
-      dateLessThan: expirationDate.toISOString(),
-      privateKey: privateKey,
-    })
+    VideoUploadParser.signResolutionsOrRaw(vidUpload)
 
     sendResponse({
       res,
       message: 'video streaming',
       data: {
-        video_content: signedUrl,
+        video_content: vidUpload,
       },
     })
   })
