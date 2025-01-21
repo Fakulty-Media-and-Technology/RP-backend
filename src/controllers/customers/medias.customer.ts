@@ -18,6 +18,7 @@ import { MediaAccess } from '../../services/media-access'
 import { AwsUtils } from '../../services/aws/utils'
 import { MediaConvert } from '../../services/aws/mediaConvert'
 import { signCred } from '../../utils/live'
+import { VideoRepo } from '../../repositories/VideoRepo'
 
 type GetLiveEventsWithPhotoUrlResult = {
   liveEvent: Live
@@ -330,6 +331,27 @@ export class CustomerMediaController {
         message: 'Events fetched',
       })
     })
+
+  static bannerContents = Catch.async(async (_, res) => {
+    const [featuredLives, featuredVods, engagedLives, engagedVods] = await Promise.all([
+      // featured
+      LiveRepo.getFeatured().sort({ $natural: -1 }).limit(10),
+      VideoRepo.getFeatured().sort({ $natural: -1 }).limit(10),
+
+      // engagements
+      LiveRepo.getMostEngaged(),
+      VideoRepo.getMostEngaged(),
+    ])
+
+    sendResponse({
+      res,
+      message: 'contents fetched',
+      data: {
+        featured: { lives: featuredLives, vods: featuredVods },
+        mostEnagaged: { lives: engagedLives, vods: engagedVods },
+      },
+    })
+  })
 
   static streamLiveEvent = Catch.async(async (req, res) => {
     const streamId = req.params.id

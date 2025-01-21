@@ -216,3 +216,6 @@ customerRouter.post(
   '/notifications/:notification_id/click',
   CustomerNotificationController.handleNotificationClick,
 )
+
+// banner
+customerRouter.get('/banner/contents', CustomerMediaController.bannerContents)
