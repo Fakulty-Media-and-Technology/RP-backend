@@ -41,4 +41,74 @@ export class LiveRepo {
       '-__v -client_id -createdAt -updatedAt -sponsored -popular -likes -stream_key',
     )
   }
+
+  static getMostEngaged = () => {
+    return LiveModel.aggregate([
+      {
+        $lookup: {
+          from: 'comments',
+          foreignField: 'parentId',
+          localField: '_id',
+          as: 'comments',
+
+          pipeline: [{ $match: { parentType: 'live' } }],
+        },
+      },
+      {
+        $lookup: {
+          from: 'ratings',
+          foreignField: 'parentId',
+          localField: '_id',
+          as: 'ratings',
+
+          pipeline: [
+            { $match: { parentType: 'live' } },
+            { $group: { _id: null, totalRatings: { $sum: '$rate' } } },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: 'votes',
+          foreignField: 'live_id',
+          localField: '_id',
+          as: 'votes',
+        },
+      },
+      {
+        $lookup: {
+          from: 'donates',
+          foreignField: 'live_id',
+          localField: '_id',
+          as: 'donations',
+        },
+      },
+
+      {
+        $addFields: {
+          engagements: {
+            $sum: [
+              { $size: '$views' },
+              { $size: '$donations' },
+              { $size: '$votes' },
+              { $size: '$comments' },
+              { $ifNull: [{ $first: '$ratings.totalRatings' }, 0] },
+            ],
+          },
+        },
+      },
+
+      { $sort: { engagements: -1 } },
+      { $limit: 10 },
+      {
+        $project: {
+          donations: false,
+          comments: false,
+          ratings: false,
+          votes: false,
+          __v: false,
+        },
+      },
+    ])
+  }
 }

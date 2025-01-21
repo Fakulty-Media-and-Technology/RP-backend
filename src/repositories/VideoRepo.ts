@@ -27,16 +27,46 @@ export class VideoRepo {
       feat_expiry: new Date(expiry),
     })
 
-  // static replaceKey = (prevKey: string, newKey: string) =>
-  //   VideoModel.findOneAndUpdate({ key: prevKey }, { $set: { key: newKey } }, { new: true })
+  static getMostEngaged = async () => {
+    return VideoModel.aggregate([
+      {
+        $lookup: {
+          from: 'comments',
+          foreignField: 'parentId',
+          localField: '_id',
+          as: 'comments',
 
-  // static replaceSeriesKey = (prevKey: string, newKey: string) =>
-  //   VideoModel.findOneAndUpdate(
-  //     {
-  //       is_series: true,
-  //       'episodes.key': prevKey,
-  //     },
-  //     { $set: { 'episodes.$.key': newKey } },
-  //     { new: true },
-  //   )
+          pipeline: [{ $match: { parentType: 'vod' } }],
+        },
+      },
+      {
+        $lookup: {
+          from: 'ratings',
+          foreignField: 'parentId',
+          localField: '_id',
+          as: 'ratings',
+
+          pipeline: [
+            { $match: { parentType: 'vod' } },
+            { $group: { _id: null, totalRatings: { $sum: '$rate' } } },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          enagements: {
+            $sum: [
+              { $size: '$likes' },
+              { $size: '$comments' },
+              { $ifNull: [{ $first: '$ratings.totalRatings' }, 0] },
+            ],
+          },
+        },
+      },
+      { $sort: { enagements: -1 } },
+      { $limit: 10 },
+      { $project: { ratings: false, comments: false, __v: false } },
+    ])
+  }
 }
+

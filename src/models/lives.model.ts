@@ -1,5 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
-import { previewPhotoSchema, previewVideoSchema } from './commonSchema'
+import { previewPhotoSchema } from './commonSchema'
 import { OperationalError } from '../utils/OperationalError'
 
 const schema = new Schema(
@@ -91,7 +91,7 @@ const schema = new Schema(
       required: true,
     },
 
-    // TODO: Implement in webSocket
+
     views: [
       {
         type: Schema.Types.ObjectId,
