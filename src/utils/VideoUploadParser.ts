@@ -14,7 +14,7 @@ type Episode = {
 export class VideoUploadParser {
   static signResolutionsOrRaw = (videoUpload: VideoUpload | undefined | null) => {
     if (videoUpload == null || !Array.isArray(videoUpload.resolutions)) return
-    
+
     if (!videoUpload.isTranscoded) {
       videoUpload.resolutions = [
         {
@@ -45,17 +45,6 @@ export class VideoUploadParser {
       if (!video.is_series) {
         this.signResolutionsOrRaw(video.video_upload as any)
         return
-      }
-
-      // series here
-
-      if (!video.seasons.length) return
-
-      for (const season of video.seasons as unknown as Season[]) {
-        //
-        for (const episode of season.episodes) {
-          this.signResolutionsOrRaw(episode.video_upload)
-        }
       }
     })
 

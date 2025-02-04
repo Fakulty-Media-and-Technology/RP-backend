@@ -8,6 +8,7 @@ import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
 import { ClientSession } from 'mongoose'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import env from '../../env'
 
 export class OnboardingService {
   private static _createCustomerWithSession = async (
@@ -274,13 +275,17 @@ export class OnboardingService {
         auth_expiry: Date.now() + 1000 * 60 * 5,
       })
 
-      const userData = {
+      /**
+       *
+       */
+
+      /**
+       * await new Email({
         firstName: userExist.first_name,
         lastName: userExist.last_name,
         email: userExist.email,
-      }
-
-      await new Email(userData).sendVerifyEmail(pin)
+      }).sendVerifyEmail(pin)
+       */
 
       throw new OperationalError(
         'user account not verified, check your email for verification code',
@@ -303,6 +308,7 @@ export class OnboardingService {
       role: userExist.role,
       accessToken: token,
       refreshToken: refToken,
+      verificationPin: env.IS_PROD ? undefined : pin,
     }
   }
 

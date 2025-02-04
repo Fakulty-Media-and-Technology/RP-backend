@@ -1,5 +1,4 @@
 import fs from 'node:fs'
-import { Assets } from './Assets'
 
 export class FileHandler {
   static createDirIfNotExistSync = (path: string) => {

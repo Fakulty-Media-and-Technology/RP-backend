@@ -7,20 +7,31 @@ const subtitleSchema = new Schema(
       ref: 'Video',
       required: true,
     },
-    bucket: {
+
+    parentType: {
       type: String,
+      enum: ['vod', 'episode'],
       required: true,
     },
+
     key: {
       type: String,
-      required: true,
+      unique: true,
+      required: [true, 'A subtitle must have a key'],
     },
+
+    bucket: {
+      type: String,
+      required: [true, 'A subtitle must have a bucket'],
+    },
+
     language: {
       type: String,
       trim: true,
       lowercase: true,
-      required: true,
+      required: [true, 'A subtitle must have a language'],
     },
+
     is_series: {
       type: Boolean,
       required: true,

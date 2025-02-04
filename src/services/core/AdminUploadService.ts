@@ -9,24 +9,29 @@ import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { SeasonModel } from '../../models/seasons.model'
 import { EpisodeModel } from '../../models/episodes.model'
 import { VideoUploadParser } from '../../utils/VideoUploadParser'
-import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
+import { MediaManagement, UploadAndTranscodeConfig } from '../media-management'
+import { StringOrObjectId } from '../../types'
+import { TrailerModel } from '../../models/trailer.model'
+import { VideoUploadModel } from '../../models/videoupload.model'
+import { SubtitleModel } from '../../models/subtitle.model'
+import { videoUploadParents } from '../../models/assets'
 
 export type AllVideoTypes = Video['type']
 
+type EpisodeReqData = {
+  title: string
+  description?: string
+  videoLink?: string
+  trailerLink?: string
+  subTitleLanguage?: string
+  subTitle?: Express.Multer.File
+  video?: Express.Multer.File
+  trailer?: Express.Multer.File
+}
+
 type AddEpisodeInput = {
   seasonId: string
-  data: Record<string, any>
-  adminId: string
-}
-
-type AddVideoInput = {
-  type: AllVideoTypes
-  data: Record<string, any>
-  adminId: string
-}
-
-type AddSeasonWithSessionInput = {
-  videoId: string
+  data: EpisodeReqData
   adminId: string
 }
 
@@ -36,57 +41,254 @@ type EditVideoInput = {
   changes: Record<string, any>
 }
 
-type AddVideoWithSessionInput = AddVideoInput
+export type MovieData = {
+  title: string
+  pg: string
+  description: string
+  vidClass: string
+
+  defaultRating?: string
+  videoLink?: string
+  trailerLink?: string
+  runtime?: string
+  expiryDate?: string
+  releasedDate: string
+  artistName?: string
+  subTitleLanguage?: string
+
+  category?: string[]
+  genre?: string[]
+  cast?: string[]
+
+  //files
+  landscapePoster: Express.Multer.File
+  portraitPoster: Express.Multer.File
+  subTitle?: Express.Multer.File
+  trailer?: Express.Multer.File
+  video?: Express.Multer.File
+}
+
+export type AddVideoParams = {
+  data: MovieData
+  type: AllVideoTypes
+  adminId: string
+}
+
+type ImageUploadRes = Awaited<ReturnType<typeof MediaManagement.uploadImageOrSubtitle>>
+
+type SavePostersUploadToDBParams = {
+  portraitPosterUpload: ImageUploadRes
+  landscapePosterUpload: ImageUploadRes
+  videoId: StringOrObjectId
+}
+
+type UploadAndSavePostersToDBParams = {
+  portraitFile: Express.Multer.File
+  landscapeFile: Express.Multer.File
+  videoId: StringOrObjectId
+}
+type GetVideoUploadDoc = UploadAndTranscodeConfig & {
+  parentType: (typeof videoUploadParents)[number]
+  parentId: StringOrObjectId
+}
+
+const allowMimetype = (
+  file: Express.Multer.File,
+  type: 'image' | 'video' | 'text',
+  msg: string,
+) => {
+  if (!file.mimetype.startsWith(type)) {
+    throw new OperationalError(msg, 400)
+  }
+}
 
 export class AdminUploadService {
-  private static _addVideoWithSession = async (
-    input: AddVideoWithSessionInput,
-    session: ClientSession,
+  private static _getVideoUploadDoc = async (
+    params: GetVideoUploadDoc,
+    session?: ClientSession,
   ) => {
-    const { poster1_data, poster2_data } = input.data
+    const res = await MediaManagement.uploadAndTransacodeVideo({
+      file: params.file,
+      waitTranscode: params.waitTranscode,
+      waitDuration: params.waitDuration,
+      expire: params.expire,
+    })
 
-    const video = await new VideoModel({
-      admin_id: input.adminId,
-      type: input.type,
-      ...input.data,
-    }).save({ session })
+    const videoUploadDoc = new VideoUploadModel({
+      bucket: res.Bucket,
+      key: res.Key,
+      mimetype: res.mimetype,
+      size: res.size,
+      isTranscoded: res.isTranscoded,
+      parentId: params.parentId,
+      parentType: params.parentType,
+    })
 
-    if (video.type !== 'series') {
-      if (video.video_upload == null) {
-        throw new OperationalError(`video_upload is required for ${video.type} videos`, 400)
-      }
+    await videoUploadDoc.save({ session })
+    return videoUploadDoc
+  }
 
-      await VideoUploadRepo.updateWithParent({
-        id: video.video_upload.toString(),
-        parentId: video._id.toString(),
-        parentType: 'vod',
-        session,
-      })
-    }
-
-    const posterOne = await new PosterImageModel({
-      video_id: video.id,
-      bucket: poster1_data.bucket,
-      key: poster1_data.key,
-      dimension: poster1_data.dimension,
-    }).save({ session })
-
-    const posterTwo = await new PosterImageModel({
-      video_id: video.id,
-      bucket: poster2_data.bucket,
-      key: poster2_data.key,
-      dimension: poster2_data.dimension,
-    }).save({ session })
+  private static _uploadVideoPosters = async (
+    portraitFile: Express.Multer.File,
+    landscapeFile: Express.Multer.File,
+  ) => {
+    const [portraitUpload, landscapeUpload] = await Promise.all([
+      MediaManagement.uploadImageOrSubtitle({ type: 'image', file: portraitFile }),
+      MediaManagement.uploadImageOrSubtitle({ type: 'image', file: landscapeFile }),
+    ])
 
     return {
-      video,
-      posterOne,
-      posterTwo,
+      portraitUpload,
+      landscapeUpload,
     }
   }
 
-  static addVideo = async (input: AddVideoInput) => {
-    return await withMongoDBSession(this._addVideoWithSession, input)
+  private static _savePostersUploadToDb = async (
+    { portraitPosterUpload, landscapePosterUpload, videoId }: SavePostersUploadToDBParams,
+    session: ClientSession,
+  ) => {
+    // save portrait
+    await new PosterImageModel({
+      video_id: videoId,
+      bucket: portraitPosterUpload.Bucket,
+      key: portraitPosterUpload.Key,
+      dimension: 'portrait',
+    }).save({ session })
+
+    // save landscape
+    await new PosterImageModel({
+      video_id: videoId,
+      bucket: landscapePosterUpload.Bucket,
+      key: landscapePosterUpload.Key,
+      dimension: 'landscape',
+    }).save({ session })
+  }
+
+  private static _uploadAndSavePostersToDB = async (
+    { landscapeFile, portraitFile, videoId }: UploadAndSavePostersToDBParams,
+    session: ClientSession,
+  ) => {
+    const { portraitUpload, landscapeUpload } = await this._uploadVideoPosters(
+      portraitFile,
+      landscapeFile,
+    )
+
+    //save to db
+    await this._savePostersUploadToDb(
+      {
+        portraitPosterUpload: portraitUpload,
+        landscapePosterUpload: landscapeUpload,
+        videoId,
+      },
+      session,
+    )
+  }
+
+  private static _uploadMovieOrSkitSession = async (
+    { data, type, adminId }: AddVideoParams,
+    session: ClientSession,
+  ) => {
+    allowMimetype(data.portraitPoster, 'image', 'portraitPoster must be an image')
+    allowMimetype(data.landscapePoster, 'image', 'landscapePoster must be an image')
+    data.subTitle && allowMimetype(data.subTitle, 'text', 'subTitle must be a text file')
+    data.trailer && allowMimetype(data.trailer, 'video', ' trailer must be a video file')
+    data.video && allowMimetype(data.video, 'video', 'video must be a video file')
+
+    const isSeries = type === 'series'
+
+    const videoDoc = new VideoModel({
+      type,
+      admin_id: adminId,
+      title: data.title,
+      description: data.description,
+      vid_class: data.vidClass,
+      artist_name: data.artistName,
+      pg: data.pg,
+      genre: data.genre ?? [],
+      category: data.category ?? [],
+      cast: data.cast ?? [],
+      default_rating: data.defaultRating,
+      released_date: data.releasedDate,
+      expiry_date: data.expiryDate,
+      videoLink: data.videoLink,
+      trailerLink: data.trailerLink,
+      runtime: data.runtime,
+      is_series: isSeries,
+    })
+
+    await this._uploadAndSavePostersToDB(
+      {
+        portraitFile: data.portraitPoster,
+        landscapeFile: data.landscapePoster,
+        videoId: videoDoc._id,
+      },
+      session,
+    )
+
+    const vidUploadExpire = videoDoc.expiry_date || undefined
+
+    if (data.subTitle) {
+      const res = await MediaManagement.uploadImageOrSubtitle({
+        type: 'subtitle',
+        file: data.subTitle,
+      })
+
+      const subtitleDoc = new SubtitleModel({
+        video_id: videoDoc._id,
+        parentType: 'vod',
+        language: data.subTitleLanguage,
+        key: res.Key,
+        bucket: res.Bucket,
+        is_series: isSeries,
+      })
+
+      videoDoc.subtitle_upload = subtitleDoc._id
+      await subtitleDoc.save({ session })
+    }
+
+    if (data.trailer) {
+      const trailerDoc = new TrailerModel({
+        video_id: videoDoc._id,
+        parentType: 'vod',
+      })
+
+      const tVidUploadDoc = await this._getVideoUploadDoc(
+        {
+          file: data.trailer,
+          waitTranscode: false,
+          expire: vidUploadExpire,
+          parentId: trailerDoc._id,
+          parentType: 'trailer',
+        },
+        session,
+      )
+
+      trailerDoc.video_upload = tVidUploadDoc._id
+      videoDoc.trailer_upload = trailerDoc._id
+      await trailerDoc.save({ session })
+    }
+
+    if (data.video) {
+      const vidUploadDoc = await this._getVideoUploadDoc(
+        {
+          file: data.video,
+          waitTranscode: true,
+          waitDuration: 30,
+          expire: vidUploadExpire,
+          parentId: videoDoc._id,
+          parentType: 'vod',
+        },
+        session,
+      )
+
+      videoDoc.video_upload = vidUploadDoc._id
+    }
+
+    await videoDoc.save({ session })
+  }
+
+  static addVideo = async (input: AddVideoParams) => {
+    await withMongoDBSession(this._uploadMovieOrSkitSession, input)
   }
 
   static editVideo = async ({ vidId, type, changes }: EditVideoInput) => {
@@ -122,8 +324,6 @@ export class AdminUploadService {
     if (deletedVid == null) {
       throw new OperationalError(`Not found or video is not a ${type} `, 404)
     }
-
-    // delete the
   }
 
   static getVideos = async (type: AllVideoTypes, queryParams: Request['query']) => {
@@ -144,35 +344,24 @@ export class AdminUploadService {
 
   // ********* seasons
 
-  private static _addSeasonWithSession = async (
-    { videoId, adminId }: AddSeasonWithSessionInput,
-    session: ClientSession,
-  ) => {
-    const prevSeasons = await SeasonModel.find({ video: videoId })
+  static addSeason = async (videoId: string, adminId: string) => {
+    const [prevSeasons, parentVideo] = await Promise.all([
+      SeasonModel.find({ video: videoId }),
+      VideoModel.findById(videoId),
+    ])
 
-    const season = await new SeasonModel({
+    if (parentVideo == null) {
+      throw new OperationalError('invalid videoId', 404)
+    }
+
+    if (parentVideo.type !== 'series') {
+      throw new OperationalError('only series video type can have seasons', 403)
+    }
+
+    await SeasonModel.create({
       admin: adminId,
       video: videoId,
       serial_number: prevSeasons.length + 1,
-    }).save({ session })
-
-    const parentVideo = await VideoModel.findOneAndUpdate(
-      { _id: videoId, is_series: true },
-      { $push: { seasons: season._id } },
-      { session },
-    )
-
-    if (parentVideo === null) {
-      throw new OperationalError('video Id is invalid or the video is not a series', 400)
-    }
-
-    return season
-  }
-
-  static addSeason = async (videoId: string, adminId: string) => {
-    return await withMongoDBSession(this._addSeasonWithSession, {
-      videoId,
-      adminId,
     })
   }
 
@@ -181,46 +370,91 @@ export class AdminUploadService {
     { seasonId, data, adminId }: AddEpisodeInput,
     session: ClientSession,
   ) => {
-    let episodeNumber: number
+    data.subTitle && allowMimetype(data.subTitle, 'text', 'subTitle must be a text file')
+    data.trailer && allowMimetype(data.trailer, 'video', ' trailer must be a video file')
+    data.video && allowMimetype(data.video, 'video', 'video must be a video file')
 
-    if (data.episode_number) {
-      episodeNumber = data.episode_number
-    } else {
-      const prevEpisodes = await EpisodeModel.find({ season: seasonId })
-      episodeNumber = prevEpisodes.length + 1
-    }
-
-    const episode = await new EpisodeModel({
-      ...data,
-      episode_number: episodeNumber,
-      season: seasonId,
-      admin: adminId,
-    }).save({ session })
-
-    const parentSeason = await SeasonModel.findByIdAndUpdate(
-      seasonId,
-      { $push: { episodes: episode._id } },
-      { session },
-    )
+    const [prevEpisodes, parentSeason] = await Promise.all([
+      EpisodeModel.find({ season: seasonId }),
+      SeasonModel.findById(seasonId),
+    ])
 
     if (parentSeason == null) {
       throw new OperationalError('invalid season Id', 404)
     }
 
-    if (episode.video_upload) {
-      await VideoUploadRepo.updateWithParent({
-        id: episode.video_upload.toString(),
-        parentId: episode._id.toString(),
-        parentType: 'episode',
-        session,
+    const episode = new EpisodeModel({
+      title: data.title,
+      description: data.description,
+      episodeNumber: prevEpisodes.length + 1,
+      trailerLink: data.trailerLink,
+      videoLink: data.videoLink,
+      season: seasonId,
+      admin: adminId,
+    })
+
+    if (data.subTitle) {
+      const res = await MediaManagement.uploadImageOrSubtitle({
+        type: 'subtitle',
+        file: data.subTitle,
       })
+
+      const subtitleDoc = new SubtitleModel({
+        video_id: episode._id,
+        parentType: 'episode',
+        language: data.subTitleLanguage,
+        key: res.Key,
+        bucket: res.Bucket,
+        is_series: true,
+      })
+
+      episode.subtitleUpload = subtitleDoc._id
+      await subtitleDoc.save({ session })
     }
+
+    if (data.trailer) {
+      const trailerDoc = new TrailerModel({
+        video_id: episode._id,
+        parentType: 'episode',
+      })
+
+      const tVidUploadDoc = await this._getVideoUploadDoc(
+        {
+          file: data.trailer,
+          waitTranscode: false,
+          expire: undefined,
+          parentId: trailerDoc._id,
+          parentType: 'trailer',
+        },
+        session,
+      )
+
+      trailerDoc.video_upload = tVidUploadDoc._id
+      episode.trailerUpload = trailerDoc._id
+      await trailerDoc.save({ session })
+    }
+
+    if (data.video) {
+      const vidUploadDoc = await this._getVideoUploadDoc(
+        {
+          file: data.video,
+          waitTranscode: true,
+          waitDuration: 30,
+          expire: undefined,
+          parentId: episode._id,
+          parentType: 'episode',
+        },
+        session,
+      )
+
+      episode.videoUpload = vidUploadDoc._id
+    }
+
+    await episode.save({ session })
     return episode
   }
 
   static addEpisode = async (input: AddEpisodeInput) => {
     return await withMongoDBSession(this._addEpisodesWithSession, input)
   }
-
-  // static
 }

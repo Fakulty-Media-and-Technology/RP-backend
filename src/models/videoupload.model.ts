@@ -39,17 +39,17 @@ const schema = new Schema(
       type: Number,
     },
 
+    isTranscoded: {
+      type: Boolean,
+      default: false,
+    },
+
     parentType: {
       type: String,
       enum: videoUploadParents, // add more as needed
     },
 
     parentId: Schema.Types.ObjectId,
-
-    isTranscoded: {
-      type: Boolean,
-      default: false,
-    },
 
     resolutions: {
       type: [resolutionsSchema],

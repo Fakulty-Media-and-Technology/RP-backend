@@ -1,5 +1,4 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
-import { OperationalError } from '../utils/OperationalError'
 
 const schema = new Schema(
   {
@@ -11,12 +10,8 @@ const schema = new Schema(
 
     title: {
       type: String,
-      required: true,
+      required: [true, 'A video must have a title'],
       unique: true,
-    },
-
-    sub_title: {
-      type: String,
     },
 
     type: {
@@ -25,11 +20,19 @@ const schema = new Schema(
       required: true,
     },
 
-    video_link: String,
-
     video_upload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
+    },
+
+    trailer_upload: {
+      type: Schema.Types.ObjectId,
+      ref: 'trailers',
+    },
+
+    subtitle_upload: {
+      type: Schema.Types.ObjectId,
+      ref: 'sub_titles',
     },
 
     description: {
@@ -106,19 +109,8 @@ const schema = new Schema(
       required: true,
     },
 
+    videoLink: String,
     trailerLink: String,
-
-    trailerUpload: {
-      type: Schema.Types.ObjectId,
-      ref: 'trailers',
-    },
-
-    seasons: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'seasons',
-      },
-    ],
 
     artist_name: {
       type: String,
@@ -128,22 +120,6 @@ const schema = new Schema(
     timestamps: true,
   },
 )
-
-schema.pre('validate', function (next) {
-  this.is_series = this.type === 'series'
-  next()
-})
-
-schema.pre('validate', function (next) {
-  if (!this.is_series && !!this.trailerLink === !!this.trailerUpload) {
-    throw new OperationalError('provide either trailer link or trailer upload', 400)
-  }
-
-  if (!this.is_series && !!this.video_link === !!this.video_upload) {
-    throw new OperationalError('provide either a video_link or a video_uoload', 400)
-  }
-  next()
-})
 
 export const VideoModel = model('videos', schema)
 export type VideoSchema = InferSchemaType<typeof schema>

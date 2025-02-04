@@ -27,7 +27,6 @@ export type LivesType = Extract<LiveSchema['type'], 'event' | 'channel' | 'tvsho
 type UploadVideoInput = {
   file: Express.Multer.File | undefined
   expire: string | undefined
-  fileName?: string
   parentType?: (typeof videoUploadParents)[number]
   parentId?: string
 }
@@ -42,7 +41,7 @@ type CreateVideoUploadWithSession = {
   parentId: UploadVideoInput['parentId']
 }
 
-type UploadImageOrSubtitleInput = Pick<UploadVideoInput, 'file' | 'fileName'> & {
+type UploadImageOrSubtitleInput = Pick<UploadVideoInput, 'file'> & {
   type: UploadImageOrSubtitleType
 }
 
@@ -124,19 +123,20 @@ export class AdminManageMediaService {
     return videoUpload
   }
 
-  static uploadVideo = async ({
-    file,
-    expire,
-    fileName,
-    parentId,
-    parentType,
-  }: UploadVideoInput) => {
+  // static uploadVideoMinimal = (videoFile: Express.Multer., convertWaitDuration: 20) => {
+
+  // }
+
+  static uploadVideo = async ({ file, expire, parentId, parentType }: UploadVideoInput) => {
     if (file == null) {
       throw new OperationalError('upload a video file', 400)
     }
 
-    const expireDate = typeof expire === 'string' ? new Date(expire) : undefined
-    const video = await MediaManagement.uploadVideo(file, expireDate, fileName)
+    // const video = await MediaManagement.uploadVideo(file, expireDate, fileName)
+    const video = await MediaManagement.uploadVideo({
+      file,
+      expire: typeof expire === 'string' ? new Date(expire) : undefined,
+    })
 
     rimraf(file.path).catch(_ =>
       console.error('🛑 error deleting ', +file.filename + ' from tempMedia folder'),
@@ -144,6 +144,7 @@ export class AdminManageMediaService {
 
     const { Job } = await MediaConvert.transcode(video.Key)
     const isTranscoded = await MediaConvert.waitForJobCompletion(Job?.Id, 20)
+
     const videoUpload = await withMongoDBSession(this._createVideoUploadAndParent, {
       ...video,
       isTranscoded,
@@ -154,14 +155,13 @@ export class AdminManageMediaService {
     return { vidoeUploadId: videoUpload._id }
   }
 
-  static uploadPhotoOrSubtitle = async ({ file, fileName, type }: UploadImageOrSubtitleInput) => {
+  static uploadPhotoOrSubtitle = async ({ file, type }: UploadImageOrSubtitleInput) => {
     if (file == null) {
       throw new OperationalError(`upload a ${type === 'image' ? 'photo' : 'subtitle'} file`, 400)
     }
 
     const upload = await MediaManagement.uploadImageOrSubtitle({
       file,
-      fileName,
       type,
     })
 

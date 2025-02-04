@@ -24,9 +24,6 @@ import {
   addCategorySchema,
   addFeaturedContentSchema,
   addGenreSchema,
-  addMovieOrSkitSchema,
-  addMusicVideoSchema,
-  addSeriesSchema,
   addSubtitleSchema,
   createAdminORSuperAdminSchema,
   createAdSchema,
@@ -220,36 +217,35 @@ superAdminRouter.post(
 superAdminRouter.get('/featured/contents/fetch', AdminFeaturedController.getFeaturedContents)
 
 // ***** Uploads
+superAdminRouter.post(
+  '/uploads/music-video/add',
+  Multer.adminUploadVideoConfig,
+  AdminUploadController.addVideoByType('music video'),
+)
 
 superAdminRouter.post(
   '/uploads/movie/add',
-  requestValidator(addMovieOrSkitSchema),
+  Multer.adminUploadVideoConfig,
   AdminUploadController.addVideoByType('movie'),
 )
 
 superAdminRouter.post(
   '/uploads/skit/add',
-  requestValidator(addMovieOrSkitSchema),
+  Multer.adminUploadVideoConfig,
   AdminUploadController.addVideoByType('skit'),
 )
 
 superAdminRouter.post(
-  '/uploads/music-video/add',
-  requestValidator(addMusicVideoSchema),
-  AdminUploadController.addVideoByType('music video'),
-)
-
-superAdminRouter.post(
   '/uploads/series/add',
-  requestValidator(addSeriesSchema),
+  Multer.adminUploadVideoConfig,
   AdminUploadController.addVideoByType('series'),
 )
 
+// Seasons and Episodes Uploads
 superAdminRouter.post('/uploads/seasons/add/:videoId', AdminUploadController.addSeason)
-
 superAdminRouter.post(
   '/uploads/episodes/add/:seasonId',
-  requestValidator(addEpisodeSchema),
+  Multer.adminUploadVideoConfig,
   AdminUploadController.addEpisode,
 )
 

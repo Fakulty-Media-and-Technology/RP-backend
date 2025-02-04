@@ -9,97 +9,108 @@ import {
   NUMERIC_REG,
   PHOTO_SCHEMA_WITH_CONTENT_TYPE,
   PHOTO_SCHEMA,
-  POSTER_SCHEMA,
   STRING_SCHEMA,
   VIDEO_CLASS_SCHEMA,
 } from './common'
 
-export const addEpisodeSchema = {
-  body: Joi.object({
-    episode_number: Joi.number().min(1).optional(),
-    episode_title: STRING_SCHEMA.required(),
-    episode_description: STRING_SCHEMA.optional(),
-    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-    video_link: STRING_SCHEMA.optional(),
-    trailerLink: STRING_SCHEMA.optional(),
-    trailerUpload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-  })
-    .xor('trailerLink', 'trailerUpload')
-    .xor('video_upload', 'video_link'),
-}
+export const addEpisodeSchema = Joi.object({
+  title: STRING_SCHEMA.required(),
+  description: STRING_SCHEMA.optional(),
+  videoLink: STRING_SCHEMA.optional(),
+  trailerLink: STRING_SCHEMA.optional(),
 
-export const addMovieOrSkitSchema = {
-  body: Joi.object({
-    title: STRING_SCHEMA.required(),
-    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-    pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
-    vid_class: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
-    category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
-    released_date: ISO_STRING_SCHEMA.required(),
-    runtime: STRING_SCHEMA.required(),
-    default_rating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
-    poster1_data: POSTER_SCHEMA.required(),
-    poster2_data: POSTER_SCHEMA.required(),
+  subTitle: Joi.object().optional(), //file
+  subTitleLanguage: STRING_SCHEMA.optional(),
 
-    trailerLink: STRING_SCHEMA.optional(),
-    trailerUpload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
+  video: Joi.object().optional(), // file
+  trailer: Joi.object().optional(), // file
+})
+  .xor('trailerLink', 'trailer')
+  .xor('video', 'videoLink')
+  .and('subTitle', 'subTitleLanguage')
 
-    video_link: STRING_SCHEMA.optional(),
+export const addMovieOrSkitSchema = Joi.object({
+  title: STRING_SCHEMA.required(),
+  pg: STRING_SCHEMA.required(),
+  releasedDate: ISO_STRING_SCHEMA.required(),
 
-    //
-    genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
-    cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
-    expiry_date: ISO_STRING_SCHEMA,
-    sub_title: STRING_SCHEMA,
-  })
-    .xor('trailerLink', 'trailerUpload')
-    .xor('video_upload', 'video_link'),
-}
+  // enums
+  category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
+  genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.max(3).required(),
+  cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.max(10).required(),
 
-export const addSeriesSchema = {
-  body: Joi.object({
-    title: STRING_SCHEMA.required(),
-    pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
-    vid_class: VIDEO_CLASS_SCHEMA.required(),
-    category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
-    released_date: ISO_STRING_SCHEMA.required(),
-    runtime: STRING_SCHEMA.required(),
-    default_rating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
-    poster1_data: POSTER_SCHEMA.required(),
-    poster2_data: POSTER_SCHEMA.required(),
+  // maps to details in UI
+  description: STRING_SCHEMA.required(),
 
-    //
-    genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
-    cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
-    expiry_date: ISO_STRING_SCHEMA,
-    sub_title: STRING_SCHEMA,
-  }),
-}
+  runtime: STRING_SCHEMA,
+  defaultRating: STRING_SCHEMA.pattern(FLOATS_REG),
 
-export const addMusicVideoSchema = {
-  body: Joi.object({
-    title: STRING_SCHEMA.required(),
-    pg: STRING_SCHEMA.required(),
-    vid_class: VIDEO_CLASS_SCHEMA.required(),
-    video_upload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-    category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
-    released_date: ISO_STRING_SCHEMA.required(),
-    runtime: STRING_SCHEMA.required(),
-    default_rating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
-    poster1_data: POSTER_SCHEMA.required(),
-    poster2_data: POSTER_SCHEMA.required(),
-    artist_name: STRING_SCHEMA.required(),
-    expiry_date: ISO_STRING_SCHEMA,
-    sub_title: STRING_SCHEMA,
+  subTitle: Joi.object().required(), //file
+  subTitleLanguage: STRING_SCHEMA.required(),
 
-    video_link: STRING_SCHEMA.optional(),
+  // files
+  landscapePoster: Joi.object().required(),
+  portraitPoster: Joi.object().required(),
 
-    trailerLink: STRING_SCHEMA.optional(),
-    trailerUpload: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-  })
-    .xor('trailerLink', 'trailerUpload')
-    .xor('video_upload', 'video_link'),
-}
+  trailer: Joi.object().optional(), // file
+  trailerLink: STRING_SCHEMA.optional(),
+
+  video: Joi.object().optional(), //file
+  videoLink: STRING_SCHEMA.optional(),
+  vidClass: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
+
+  expiryDate: ISO_STRING_SCHEMA,
+})
+  .xor('trailerLink', 'trailer')
+  .xor('video', 'videoLink')
+  .and('subTitle', 'subTitleLanguage')
+
+export const addSeriesSchema = Joi.object({
+  title: STRING_SCHEMA.required(),
+  pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
+  vidClass: VIDEO_CLASS_SCHEMA.required(),
+  category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
+  releasedDate: ISO_STRING_SCHEMA.required(),
+  runtime: STRING_SCHEMA.required(),
+  defaultRating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
+
+  // files
+  landscapePoster: Joi.object().required(),
+  portraitPoster: Joi.object().required(),
+
+  //
+  genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
+  cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
+  expiryDate: ISO_STRING_SCHEMA,
+})
+
+export const addMusicVideoSchema = Joi.object({
+  title: STRING_SCHEMA.required(),
+  pg: STRING_SCHEMA.required(),
+  vidClass: VIDEO_CLASS_SCHEMA.required(),
+  category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
+  releasedDate: ISO_STRING_SCHEMA.required(),
+  runtime: STRING_SCHEMA.required(),
+  defaultRating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
+  artistName: STRING_SCHEMA.required(),
+  expiryDate: ISO_STRING_SCHEMA,
+
+  // files
+  landscapePoster: Joi.object().required(),
+  portraitPoster: Joi.object().required(),
+
+  subTitle: Joi.object().required(), //file
+  subTitleLanguage: STRING_SCHEMA.required(),
+
+  video: Joi.object().optional(), // file
+  videoLink: STRING_SCHEMA.optional(),
+
+  trailerLink: STRING_SCHEMA.optional(), // file
+  trailer: Joi.object().optional(),
+})
+  .xor('trailerLink', 'trailer')
+  .xor('video', 'videoLink')
+  .and('subTitle', 'subTitleLanguage')
 
 export const addSubtitleSchema = {
   body: Joi.object({
@@ -125,7 +136,7 @@ export const createLiveSchema = {
     cover_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
     location: STRING_SCHEMA.required(),
     video: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-    vid_class: VIDEO_CLASS_SCHEMA.required(),
+    vidClass: VIDEO_CLASS_SCHEMA.required(),
     pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
     description: STRING_SCHEMA.optional(),
     type: LIVE_TYPE_SCHEMA.required(),

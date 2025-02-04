@@ -11,12 +11,11 @@ import { OperationalError } from '../../utils/OperationalError'
 
 export class AdminManagemediaController {
   static uploadVideo = Catch.async(
-    async ({ file, body: { expire, fileName, parentId, parentType } }, res) => {
+    async ({ file, body: { expire, parentId, parentType } }, res) => {
       //
       const video = await AdminManageMediaService.uploadVideo({
         file,
         expire,
-        fileName,
         parentId,
         parentType,
       })
@@ -26,10 +25,9 @@ export class AdminManagemediaController {
   )
 
   static uploadImageOrSubtitle = (type: UploadImageOrSubtitleType) =>
-    Catch.async(async ({ file, body: { fileName } }, res) => {
+    Catch.async(async ({ file }, res) => {
       const upload = await AdminManageMediaService.uploadPhotoOrSubtitle({
         file,
-        fileName,
         type,
       })
 

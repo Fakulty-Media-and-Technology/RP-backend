@@ -45,7 +45,7 @@ type LiveEventsType =
 type GetLiveEventsWithPhotoUrlResults = Array<GetLiveEventsWithPhotoUrlResult>
 
 export class CustomerMediaController {
-  static uploadImageRoute = Catch.async(async ({ file, body: { fileName }, user }, res) => {
+  static uploadImageRoute = Catch.async(async ({ file, user }, res) => {
     denyGuestUser(GetDefined.loggedInUser(user))
 
     if (!file) {
@@ -54,7 +54,7 @@ export class CustomerMediaController {
 
     sendResponse({
       res,
-      data: await MediaManagement.uploadImageOrSubtitle({ file, fileName, type: 'image' }),
+      data: await MediaManagement.uploadImageOrSubtitle({ file, type: 'image' }),
       message: 'image uploaded',
     })
   })

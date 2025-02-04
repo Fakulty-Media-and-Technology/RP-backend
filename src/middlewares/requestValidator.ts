@@ -21,11 +21,21 @@ export const requestValidator = (schema: Record<string, Joi.Schema>) =>
     const validSchema = pickObject(schema, ['body', 'params', 'query'])
     const pickedReq = pickObject(req, Object.keys(validSchema))
 
-    const { error } = Joi.compile(validSchema).validate(pickedReq)
-
-    if (error) {
-      return next(new OperationalError(error.details.map(detail => detail.message).join(' '), 400))
+    try {
+      validate(Joi.compile(validSchema), pickedReq)
+    } catch (e) {
+      return next(e)
     }
 
     next()
   })
+
+export const validate = (schema: Joi.Schema, object: Record<string, any>) => {
+  const { error, value } = schema.validate(object)
+
+  if (error) {
+    throw new OperationalError(error.details.map(detail => detail.message).join(' '), 400)
+  }
+
+  return value
+}

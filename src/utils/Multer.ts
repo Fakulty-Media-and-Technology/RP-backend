@@ -49,4 +49,12 @@ export class Multer {
   static uploadSingleImage = this._configs.imageConfig.single('photo')
   static uploadSingleVideo = this._configs.videConfig.single('video')
   static uploadSingleSubtitle = this._configs.subtitleConfig.single('subtitle')
+
+  static adminUploadVideoConfig = multer({ storage: multer.memoryStorage() }).fields([
+    { name: 'subTitle', maxCount: 1, },
+    { name: 'trailer', maxCount: 1 },
+    { name: 'video', maxCount: 1 },
+    { name: 'landscapePoster', maxCount: 1 },
+    { name: 'portraitPoster', maxCount: 1 },
+  ])
 }
