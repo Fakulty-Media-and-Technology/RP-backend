@@ -217,72 +217,27 @@ superAdminRouter.post(
 superAdminRouter.get('/featured/contents/fetch', AdminFeaturedController.getFeaturedContents)
 
 // ***** Uploads
+
+// Add video
 superAdminRouter.post(
-  '/uploads/music-video/add',
+  '/uploads/video/add/:type',
   Multer.adminUploadVideoConfig,
-  AdminUploadController.addVideoByType('music video'),
+  AdminUploadController.addVideo,
 )
 
-superAdminRouter.post(
-  '/uploads/movie/add',
-  Multer.adminUploadVideoConfig,
-  AdminUploadController.addVideoByType('movie'),
-)
-
-superAdminRouter.post(
-  '/uploads/skit/add',
-  Multer.adminUploadVideoConfig,
-  AdminUploadController.addVideoByType('skit'),
-)
-
-superAdminRouter.post(
-  '/uploads/series/add',
-  Multer.adminUploadVideoConfig,
-  AdminUploadController.addVideoByType('series'),
-)
-
-// Seasons and Episodes Uploads
-superAdminRouter.post('/uploads/seasons/add/:videoId', AdminUploadController.addSeason)
+// Add Episode
 superAdminRouter.post(
   '/uploads/episodes/add/:seasonId',
   Multer.adminUploadVideoConfig,
   AdminUploadController.addEpisode,
 )
 
-// delete upload
-superAdminRouter.delete(
-  '/uploads/movie/remove/:id',
-  AdminUploadController.deleteVideoByType('movie'),
-)
+// Add Season
+superAdminRouter.post('/uploads/seasons/add/:videoId', AdminUploadController.addSeason)
 
-superAdminRouter.delete('/uploads/skit/remove/:id', AdminUploadController.deleteVideoByType('skit'))
-
-superAdminRouter.delete(
-  '/uploads/series/remove/:id',
-  AdminUploadController.deleteVideoByType('series'),
-)
-superAdminRouter.delete(
-  '/uploads/music-video/remove/:id',
-  AdminUploadController.deleteVideoByType('music video'),
-)
-
-// fetch upload
-superAdminRouter.get('/uploads/movie/fetch', AdminUploadController.fetchVideosByType('movie'))
-superAdminRouter.get('/uploads/skit/fetch', AdminUploadController.fetchVideosByType('skit'))
-superAdminRouter.get('/uploads/series/fetch', AdminUploadController.fetchVideosByType('series'))
-superAdminRouter.get(
-  '/uploads/music-video/fetch',
-  AdminUploadController.fetchVideosByType('music video'),
-)
-
-// edit upload
-superAdminRouter.put('/uploads/movie/edit/:id', AdminUploadController.editVideoByType('movie'))
-superAdminRouter.put('/uploads/skit/edit/:id', AdminUploadController.editVideoByType('skit'))
-superAdminRouter.put('/uploads/series/edit/:id', AdminUploadController.editVideoByType('series'))
-superAdminRouter.put(
-  '/uploads/music-video/edit/:id',
-  AdminUploadController.editVideoByType('music video'),
-)
+superAdminRouter.get('/uploads/fetch/:type', AdminUploadController.fetchVideos)
+superAdminRouter.put('/uploads/edit/:id/:type', AdminUploadController.editVideo)
+superAdminRouter.delete('/uploads/remove/:id/:type', AdminUploadController.deleteVideo)
 
 // **** suggestions
 superAdminRouter.get('/suggestions/all', AdminSuggestionController.suggestionsAll)

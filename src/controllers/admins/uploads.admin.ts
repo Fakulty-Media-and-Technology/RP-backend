@@ -1,4 +1,5 @@
 import { validate } from '../../middlewares/requestValidator'
+import { videoTypes } from '../../models/videos.model'
 import {
   AdminUploadService,
   AllVideoTypes,
@@ -22,19 +23,96 @@ type RequestFiles =
   | Express.Multer.File[]
   | undefined
 
-const checkFiles = (files?: RequestFiles) => {
-  if (files == null) {
-    throw new OperationalError('expected at least one file', 400)
-  }
-
-  if (Array.isArray(files)) {
-    throw new OperationalError('expected multiple files as an object', 400)
-  }
-
-  return files
-}
-
 export class AdminUploadController {
+  private static _checkFiles = (files?: RequestFiles) => {
+    if (files == null) {
+      throw new OperationalError('expected at least one file', 400)
+    }
+
+    if (Array.isArray(files)) {
+      throw new OperationalError('expected multiple files as an object', 400)
+    }
+
+    return files
+  }
+
+  private static _validateVideoType = (type: string) => {
+    if (!videoTypes.includes(type as any)) {
+      throw new OperationalError(`Valid video types are ${videoTypes.join(' || ')} `, 400)
+    }
+    return type as AllVideoTypes
+  }
+
+  private static _validateAddMovieData = (type: AllVideoTypes, data: MovieData, files: any) => {
+    if (type === 'series') {
+      validate(addSeriesSchema, data)
+      return
+    }
+
+    Object.assign(data, {
+      ...data,
+      subTitle: files.subTitle?.[0],
+      trailer: files.trailer?.[0],
+      video: files.video?.[0],
+    })
+
+    switch (type) {
+      case 'movie':
+        validate(addMovieOrSkitSchema, data)
+        break
+
+      case 'skit':
+        validate(addMovieOrSkitSchema, data)
+        break
+
+      case 'music-video':
+        validate(addMusicVideoSchema, data)
+        break
+
+      default:
+        throw new OperationalError(`Valid movie types are ${videoTypes.join(' || ')} `, 400)
+    }
+  }
+
+  static addVideo = Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
+    const type = this._validateVideoType(params.type)
+    const admin = GetDefined.loggedInUser(user)
+
+    const { data: _data } = body
+
+    if (_data == null || typeof _data !== 'string') {
+      throw new OperationalError(
+        'formData.data is required and must be a JSON serialized string',
+        400,
+      )
+    }
+
+    const files = this._checkFiles(reqFiles)
+
+    if (Object.keys(files).length === 0) {
+      throw new OperationalError('Expected at least one file', 400)
+    }
+
+    const data: MovieData = {
+      ...JSON.parse(body.data),
+      landscapePoster: files.landscapePoster?.[0],
+      portraitPoster: files.portraitPoster?.[0],
+    }
+
+    this._validateAddMovieData(type, data, files)
+
+    await AdminUploadService.addVideo({
+      type,
+      data: data,
+      adminId: admin.id,
+    })
+
+    sendResponse({
+      res,
+      message: `${type} added successfully`,
+    })
+  })
+
   static addSeason = Catch.async(async (req, res) => {
     sendResponse({
       res,
@@ -59,7 +137,7 @@ export class AdminUploadController {
     }
 
     if (!!req.files) {
-      const files = checkFiles(req.files)
+      const files = this._checkFiles(req.files)
 
       Object.assign(data, {
         subTitle: files.subTitle?.[0],
@@ -82,108 +160,40 @@ export class AdminUploadController {
     })
   })
 
-  private static _validateAddMovieData = (type: AllVideoTypes, data: MovieData, files: any) => {
-    if (type === 'series') {
-      validate(addSeriesSchema, data)
-      return
-    }
+  static editVideo = Catch.async(async ({ params, body }, res) => {
+    const type = this._validateVideoType(params.type)
 
-    Object.assign(data, {
-      ...data,
-      subTitle: files.subTitle?.[0],
-      trailer: files.trailer?.[0],
-      video: files.video?.[0],
+    const updatedVid = await AdminUploadService.editVideo({
+      vidId: params.id,
+      changes: body,
+      type,
     })
 
-    switch (type) {
-      case 'movie':
-        validate(addMovieOrSkitSchema, data)
-        break
-
-      case 'skit':
-        validate(addMovieOrSkitSchema, data)
-        break
-
-      case 'music video':
-        validate(addMusicVideoSchema, data)
-        break
-
-      default:
-        const validTypes: Array<AllVideoTypes> = ['movie', 'music video', 'series', 'skit']
-        throw new OperationalError(`Valid movie types are ${validTypes.join(' || ')} `, 400)
-    }
-  }
-
-  static addVideoByType = (type: AllVideoTypes) =>
-    Catch.async(async ({ files: reqFiles, body, user }, res) => {
-      const admin = GetDefined.loggedInUser(user)
-
-      const { data: _data } = body
-
-      if (_data == null || typeof _data !== 'string') {
-        throw new OperationalError(
-          'formData.data is required and must be a JSON serialized string',
-          400,
-        )
-      }
-
-      const files = checkFiles(reqFiles)
-
-      if (Object.keys(files).length === 0) {
-        throw new OperationalError('Expected at least one file', 400)
-      }
-
-      const data: MovieData = {
-        ...JSON.parse(body.data),
-        landscapePoster: files.landscapePoster?.[0],
-        portraitPoster: files.portraitPoster?.[0],
-      }
-
-      this._validateAddMovieData(type, data, files)
-
-      await AdminUploadService.addVideo({
-        type,
-        data: data,
-        adminId: admin.id,
-      })
-
-      sendResponse({
-        res,
-        message: `${type} added successfully`,
-      })
+    sendResponse({
+      res,
+      data: updatedVid,
+      message: `${type} edited successfully`,
     })
+  })
 
-  static editVideoByType = (type: AllVideoTypes) =>
-    Catch.async(async (req, res) => {
-      const updatedVid = await AdminUploadService.editVideo({
-        vidId: req.params.id,
-        changes: req.body,
-        type,
-      })
+  static fetchVideos = Catch.async(async ({ query, params }, res) => {
+    const type = this._validateVideoType(params.type)
 
-      sendResponse({
-        res,
-        data: updatedVid,
-        message: `${type} edited successfully`,
-      })
+    sendResponse({
+      res,
+      message: `${type}s fetched successfully`,
+      data: await AdminUploadService.getVideos(type, query),
     })
+  })
 
-  static fetchVideosByType = (type: AllVideoTypes) =>
-    Catch.async(async ({ query }, res) => {
-      sendResponse({
-        res,
-        message: `${type}s fetched successfully`,
-        data: await AdminUploadService.getVideos(type, query),
-      })
+  static deleteVideo = Catch.async(async ({ params }, res) => {
+    const type = this._validateVideoType(params.type)
+
+    await AdminUploadService.deleteVideo(params.id, type)
+
+    sendResponse({
+      res,
+      message: `${type} deleted successfully`,
     })
-
-  static deleteVideoByType = (type: AllVideoTypes) =>
-    Catch.async(async (req, res) => {
-      await AdminUploadService.deleteVideo(req.params.id, type)
-
-      sendResponse({
-        res,
-        message: `${type} deleted successfully`,
-      })
-    })
+  })
 }

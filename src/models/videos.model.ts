@@ -1,5 +1,7 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 
+export const videoTypes = ['movie', 'series', 'music-video', 'skit'] as const
+
 const schema = new Schema(
   {
     admin_id: {
@@ -16,7 +18,7 @@ const schema = new Schema(
 
     type: {
       type: String,
-      enum: ['movie', 'series', 'music video', 'skit'],
+      enum: videoTypes,
       required: true,
     },
 
