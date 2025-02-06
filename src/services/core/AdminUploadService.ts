@@ -4,7 +4,11 @@ import { PosterImageModel } from '../../models/poster.model'
 
 import { Video, VideoModel } from '../../models/videos.model'
 import { OperationalError } from '../../utils/OperationalError'
-import { handleDefaultNumAndUnknown, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import {
+  handleDefaultNumAndUnknown,
+  QueryParamsFeatures,
+  QueryParamsFeaturesOptions,
+} from '../../utils/QueryParamsFeatures'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { SeasonModel } from '../../models/seasons.model'
 import { EpisodeModel } from '../../models/episodes.model'
@@ -107,6 +111,7 @@ type UploadTrailerAndVIdeoInput = {
   file: Express.Multer.File
   expire: Date | undefined
   parentId: StringOrObjectId
+  parentType: (typeof videoUploadParents)[number]
 }
 
 export class AdminUploadService {
@@ -118,14 +123,14 @@ export class AdminUploadService {
     const files = [video, trailer]
 
     const [videoUpload, trailerUpload] = await Promise.all(
-      files.map((file, i) => {
-        return MediaManagement.uploadAndTransacodeVideo({
+      files.map(file =>
+        MediaManagement.uploadAndTransacodeVideo({
           file: file.file,
           waitTranscode: true,
-          waitDuration: i === 0 ? 30 : 10,
+          waitDuration: 30,
           expire: file.expire,
-        })
-      }),
+        }),
+      ),
     )
 
     const videoUploadDoc = new VideoUploadModel({
@@ -135,7 +140,7 @@ export class AdminUploadService {
       size: videoUpload.size,
       isTranscoded: videoUpload.isTranscoded,
       parentId: video.parentId,
-      parentType: 'vod',
+      parentType: video.parentType,
     })
 
     const trailerVidUploadDoc = new VideoUploadModel({
@@ -145,7 +150,7 @@ export class AdminUploadService {
       size: trailerUpload.size,
       isTranscoded: trailerUpload.isTranscoded,
       parentId: trailer.parentId,
-      parentType: 'trailer',
+      parentType: trailer.parentType,
     })
 
     await videoUploadDoc.save({ session })
@@ -308,15 +313,15 @@ export class AdminUploadService {
       })
 
       const { videoUploadDoc, trailerVidUploadDoc } = await this._uploadTrailerAndVideo(
-        { file: data.video, expire, parentId: videoDoc._id },
-        { file: data.trailer, expire, parentId: trailerDoc._id },
+        { file: data.video, expire, parentId: videoDoc._id, parentType: 'vod' },
+        { file: data.trailer, expire, parentId: trailerDoc._id, parentType: 'trailer' },
         session,
       )
 
       trailerDoc.video_upload = trailerVidUploadDoc._id
       videoDoc.video_upload = videoUploadDoc._id
       videoDoc.trailer_upload = trailerDoc._id
-      
+
       await trailerDoc.save({ session })
       await videoDoc.save({ session })
       return
@@ -480,6 +485,29 @@ export class AdminUploadService {
       await subtitleDoc.save({ session })
     }
 
+    if (data.trailer && data.video) {
+      const expire = undefined
+
+      const trailerDoc = new TrailerModel({
+        video_id: episode._id,
+        parentType: 'episode',
+      })
+
+      const { videoUploadDoc, trailerVidUploadDoc } = await this._uploadTrailerAndVideo(
+        { file: data.video, expire, parentId: episode._id, parentType: 'episode' },
+        { file: data.trailer, expire, parentId: trailerDoc._id, parentType: 'trailer' },
+        session,
+      )
+
+      trailerDoc.video_upload = trailerVidUploadDoc._id
+      episode.videoUpload = videoUploadDoc._id
+      episode.trailerUpload = trailerDoc._id
+
+      await trailerDoc.save({ session })
+      await episode.save({ session })
+      return
+    }
+
     if (data.trailer) {
       const trailerDoc = new TrailerModel({
         video_id: episode._id,
@@ -519,10 +547,29 @@ export class AdminUploadService {
     }
 
     await episode.save({ session })
-    return episode
+    return
   }
 
   static addEpisode = async (input: AddEpisodeInput) => {
     return await withMongoDBSession(this._addEpisodesWithSession, input)
+  }
+
+  static getSeasonsAndEpisodes = async (
+    vidSeriesId: string,
+    queryParams: QueryParamsFeaturesOptions['queryParams'],
+  ) => {
+    const vid = await VideoModel.findById(vidSeriesId)
+
+    if (vid == null) {
+      throw new OperationalError('invalid video Id', 404)
+    }
+
+    if (!vid.is_series) {
+      throw new OperationalError('video is not a series', 400)
+    }
+
+    const page = handleDefaultNumAndUnknown(queryParams.page, 1)
+    const limit = handleDefaultNumAndUnknown(queryParams.limit, 10)
+    return await VideoRepo.fetchSeasonsAndEpisodes(vidSeriesId, page, limit)
   }
 }

@@ -228,6 +228,7 @@ superAdminRouter.post(
 
 // Add Season
 superAdminRouter.post('/uploads/seasons/add/:videoId', AdminUploadController.addSeason)
+superAdminRouter.get('/uploads/seasons/fetch/:vidId', AdminUploadController.fetchSeasonsAndEpisodes)
 
 superAdminRouter.get('/uploads/fetch/:type', AdminUploadController.fetchVideos)
 superAdminRouter.put('/uploads/edit/:id/:type', AdminUploadController.editVideo)

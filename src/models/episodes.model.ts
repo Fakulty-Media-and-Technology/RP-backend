@@ -27,22 +27,32 @@ const schema = new Schema(
 
     description: String,
 
-    trailerLink: String,
-    videoLink: String,
+    trailerLink: {
+      type: String,
+      default: null,
+    },
+
+    videoLink: {
+      type: String,
+      default: null,
+    },
 
     trailerUpload: {
       type: Schema.Types.ObjectId,
       ref: 'trailer',
+      default: null,
     },
 
     videoUpload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
+      default: null,
     },
 
     subtitleUpload: {
       type: Schema.Types.ObjectId,
       ref: 'sub_titles',
+      default: null,
     },
   },
   { timestamps: true },

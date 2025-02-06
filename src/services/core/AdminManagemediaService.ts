@@ -1,4 +1,3 @@
-import { rimraf } from 'rimraf'
 import { Request } from 'express'
 import { ClientSession } from 'mongoose'
 
@@ -56,7 +55,7 @@ export class AdminManageMediaService {
   static getPhotoUrl = async (bucket: string, key: string) => {
     return await MediaAccess.getSignedUrl(bucket, key, 'photo')
   }
-  
+
   static getSubtitleUrl = async (bucket: string, key: string) => {
     return await MediaAccess.getSignedUrl(bucket, key, 'subtitle')
   }

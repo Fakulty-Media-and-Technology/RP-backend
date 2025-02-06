@@ -1,7 +1,10 @@
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { Video, VideoModel } from '../models/videos.model'
 import { AllVideoTypes } from '../services/core/AdminUploadService'
 import { skip } from '../utils/QueryParamsFeatures'
+import { SeasonModel } from '../models/seasons.model'
+
+export const toObjectId = (val: string) => new Types.ObjectId(val)
 
 export class VideoRepo {
   static findByType = (type: string) => VideoModel.find({ type })
@@ -29,11 +32,83 @@ export class VideoRepo {
       feat_expiry: new Date(expiry),
     })
 
+  private static _episodesPipeline = [
+    {
+      $lookup: {
+        from: 'sub_titles',
+        localField: '_id',
+        foreignField: 'video_id',
+        as: 'subtitle',
+        pipeline: [{ $project: { key: true, bucket: true, language: true } }],
+      },
+    },
+    {
+      $lookup: {
+        from: 'trailers',
+        localField: '_id',
+        foreignField: 'video_id',
+        as: 'trailerUpload',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'video_uploads',
+              localField: '_id',
+              foreignField: 'parentId',
+              as: 'tVideoUpload',
+              // pipeline: [{ $match: { isTranscoded: true } }],
+            },
+          },
+
+          { $addFields: { tVideoUploadId: { $first: '$tVideoUpload._id' } } },
+        ],
+      },
+    },
+
+    {
+      $addFields: {
+        trailerVideoUpload: { $first: '$trailerUpload.tVideoUploadId' },
+        subtitle: { $first: '$subtitle' },
+      },
+    },
+    {
+      $project: {
+        __v: false,
+        subtitleUpload: false,
+        trailerUpload: false,
+      },
+    },
+  ]
+
+  static fetchSeasonsAndEpisodes = async (videoId: string, page: number, limit: number) => {
+    const aggr = await SeasonModel.aggregate([
+      {
+        $match: { video: toObjectId(videoId) },
+      },
+      {
+        $lookup: {
+          from: 'episodes',
+          localField: '_id',
+          foreignField: 'season',
+          as: 'episodes',
+          pipeline: this._episodesPipeline,
+        },
+      },
+
+      { $sort: { createdAt: 1 } },
+      { $skip: skip(page, limit) },
+      { $limit: limit },
+      { $project: { __v: false } },
+    ])
+
+    return aggr
+  }
+
   static fetchByType = async (type: AllVideoTypes, page: number, limit: number) => {
     const aggr = await VideoModel.aggregate([
       {
         $match: { type },
       },
+
       {
         $lookup: {
           from: 'poster_images',
@@ -99,11 +174,34 @@ export class VideoRepo {
       },
       {
         $addFields: {
-          trailerVideoUpload: { $first: '$trailer.trailerVideoUpload._id' },
+          trailerVideoUpload: { $first: '$trailer.trailerVideoUpload.video_upload' },
           videoUpload: { $first: '$videoUpload._id' },
           portraitPhoto: { $first: '$portraitPhoto' },
           landscapePhoto: { $first: '$landscapePhoto' },
           subtitle: { $first: '$subtitle' },
+        },
+      },
+      {
+        $lookup: {
+          from: 'seasons',
+          localField: '_id',
+          foreignField: 'video',
+          as: 'seasons',
+
+          pipeline: [
+            {
+              $lookup: {
+                from: 'episodes',
+                localField: '_id',
+                foreignField: 'season',
+                as: 'episodes',
+                pipeline: this._episodesPipeline,
+              },
+            },
+
+            { $sort: { createdAt: 1 } },
+            { $project: { __v: false } },
+          ],
         },
       },
       {
@@ -118,7 +216,7 @@ export class VideoRepo {
           updatedAt: false,
         },
       },
-      { $sort: { createdAt: 1 } },
+      { $sort: { createdAt: -1 } },
       { $skip: skip(page, limit) },
       { $limit: limit },
     ])

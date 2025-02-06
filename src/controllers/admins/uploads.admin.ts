@@ -186,6 +186,14 @@ export class AdminUploadController {
     })
   })
 
+  static fetchSeasonsAndEpisodes = Catch.async(async ({ query, params }, res) => {
+    sendResponse({
+      res,
+      message: `seasons fetched successfully`,
+      data: await AdminUploadService.getSeasonsAndEpisodes(params.vidId, query),
+    })
+  })
+
   static deleteVideo = Catch.async(async ({ params }, res) => {
     const type = this._validateVideoType(params.type)
 

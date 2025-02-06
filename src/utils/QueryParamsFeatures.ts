@@ -1,7 +1,7 @@
 import { Query } from 'mongoose'
 import { Request } from 'express'
 
-type QueryParamsFeaturesOptions = {
+export type QueryParamsFeaturesOptions = {
   queryParams: Request['query']
   defaultPage?: number
   defaultLimit?: number

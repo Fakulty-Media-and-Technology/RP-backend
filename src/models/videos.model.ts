@@ -37,16 +37,19 @@ const schema = new Schema(
     video_upload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
+      default: null,
     },
 
     trailer_upload: {
       type: Schema.Types.ObjectId,
       ref: 'trailers',
+      default: null,
     },
 
     subtitle_upload: {
       type: Schema.Types.ObjectId,
       ref: 'sub_titles',
+      default: null,
     },
 
     description: {
