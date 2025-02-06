@@ -40,7 +40,10 @@ export class VideoRepo {
           localField: '_id',
           foreignField: 'video_id',
           as: 'landscapePhoto',
-          pipeline: [{ $match: { dimension: 'landscape' } }],
+          pipeline: [
+            { $match: { dimension: 'landscape' } },
+            { $project: { key: true, bucket: true } },
+          ],
         },
       },
       {
@@ -49,7 +52,10 @@ export class VideoRepo {
           localField: '_id',
           foreignField: 'video_id',
           as: 'portraitPhoto',
-          pipeline: [{ $match: { dimension: 'portrait' } }],
+          pipeline: [
+            { $match: { dimension: 'portrait' } },
+            { $project: { key: true, bucket: true } },
+          ],
         },
       },
       {
@@ -58,10 +64,7 @@ export class VideoRepo {
           localField: '_id',
           foreignField: 'parentId',
           as: 'videoUpload',
-          pipeline: [
-            { $match: { isTranscoded: true } },
-            { $project: { isTranscoded: true, resolutions: true, key: true } },
-          ],
+          pipeline: [{ $match: { isTranscoded: true } }],
         },
       },
       {
@@ -70,6 +73,7 @@ export class VideoRepo {
           localField: '_id',
           foreignField: 'video_id',
           as: 'subtitle',
+          pipeline: [{ $project: { key: true, bucket: true } }],
         },
       },
       {
@@ -85,10 +89,7 @@ export class VideoRepo {
                 localField: '_id',
                 foreignField: 'parentId',
                 as: 'trailerVideoUpload',
-                pipeline: [
-                  { $match: { isTranscoded: true } },
-                  { $project: { isTranscoded: true, resolutions: true, key: true } },
-                ],
+                pipeline: [{ $match: { isTranscoded: true } }],
               },
             },
 
@@ -98,19 +99,16 @@ export class VideoRepo {
       },
       {
         $addFields: {
-          trailerUpload: { $first: '$trailer.trailerVideoUpload' },
-          subtitleKey: { $first: '$subtitle.key' },
-          subtitleLang: { $first: '$subtitle.language' },
-          videoUpload: { $first: '$videoUpload' },
-          landscapePhoto: { $first: '$landscapePhoto.key' },
-          portraitPhoto: { $first: '$portraitPhoto.key' },
+          trailerVideoUpload: { $first: '$trailer.trailerVideoUpload._id' },
+          videoUpload: { $first: '$videoUpload._id' },
+          portraitPhoto: { $first: '$portraitPhoto' },
+          landscapePhoto: { $first: '$landscapePhoto' },
+          subtitle: { $first: '$subtitle' },
         },
       },
       {
         $project: {
           is_series: false,
-          subtitle_upload: false,
-          subtitle: false,
           trailer: false,
           trailer_upload: false,
           landscape_photo: false,

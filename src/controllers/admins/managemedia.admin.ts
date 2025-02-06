@@ -1,43 +1,30 @@
 import { Catch } from '../../utils/Catch'
 import { sendResponse } from '../../utils/responder'
 
-import {
-  AdminManageMediaService,
-  LivesType,
-  UploadImageOrSubtitleType,
-} from '../../services/core/AdminManagemediaService'
+import { AdminManageMediaService } from '../../services/core/AdminManagemediaService'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
+import { LiveSchema } from '../../models/lives.model'
 
 export class AdminManagemediaController {
-  static uploadVideo = Catch.async(
-    async ({ file, body: { expire, parentId, parentType } }, res) => {
-      //
-      const video = await AdminManageMediaService.uploadVideo({
-        file,
-        expire,
-        parentId,
-        parentType,
-      })
-
-      sendResponse({ res, data: video, message: 'video uploaded' })
-    },
-  )
-
-  static uploadImageOrSubtitle = (type: UploadImageOrSubtitleType) =>
-    Catch.async(async ({ file }, res) => {
-      const upload = await AdminManageMediaService.uploadPhotoOrSubtitle({
-        file,
-        type,
-      })
-
-      sendResponse({ res, data: upload, message: `video ${type} uploaded` })
-    })
-
   static adminGetPhotoUrl = Catch.async(async (req, res) => {
     const { bucket, key } = req.body
     const image = await AdminManageMediaService.getPhotoUrl(bucket, key)
     sendResponse({ res, data: image, message: 'image fetched' })
+  })
+
+  static adminGetSubtitleUrl = Catch.async(async (req, res) => {
+    const { bucket, key } = req.body
+    const image = await AdminManageMediaService.getSubtitleUrl(bucket, key)
+    sendResponse({ res, data: image, message: 'subtitle fetched' })
+  })
+
+  static getVidoeUploadStream = Catch.async(async (req, res) => {
+    const image = await AdminManageMediaService.getVodStream(
+      req.params.vidUploadId,
+      GetDefined.loggedInUser(req.user),
+    )
+    sendResponse({ res, data: image, message: 'stream fetched' })
   })
 
   static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
@@ -70,7 +57,7 @@ export class AdminManagemediaController {
     })
   })
 
-  static getLivesByType = (type: LivesType) =>
+  static getLivesByType = (type: LiveSchema['type']) =>
     Catch.async(async ({ query }, res) => {
       sendResponse({
         res,

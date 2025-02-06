@@ -6,12 +6,11 @@ import { OperationalError } from '../utils/OperationalError'
 import { S3 } from './aws/s3'
 import { AwsUtils } from './aws/utils'
 import { Bytes } from '../utils/Bytes'
-import { UploadImageOrSubtitleType } from './core/AdminManagemediaService'
 import { rimraf } from 'rimraf'
 import { MediaConvert } from './aws/mediaConvert'
 
 type UploadImageOrSubtitle = {
-  type: UploadImageOrSubtitleType
+  type: 'image' | 'subtitle'
   file: Express.Multer.File
 }
 

@@ -9,168 +9,56 @@ import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
 import { MediaAccess } from '../../services/media-access'
-import { MediaManagement } from '../../services/media-management'
-import { MediaConvert } from '../../services/aws/mediaConvert'
 import { UserRepo } from '../../repositories/UserRepo'
 import { getUniqueStreamKey } from '../../utils/live'
-import { VideoUploadModel } from '../../models/videoupload.model'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
-import { videoUploadParents } from '../../models/assets'
-import { EpisodeModel } from '../../models/episodes.model'
 import { VideoUploadParser } from '../../utils/VideoUploadParser'
-import { TrailerModel } from '../../models/trailer.model'
-
-export type UploadImageOrSubtitleType = 'image' | 'subtitle'
-export type LivesType = Extract<LiveSchema['type'], 'event' | 'channel' | 'tvshow'>
-
-type UploadVideoInput = {
-  file: Express.Multer.File | undefined
-  expire: string | undefined
-  parentType?: (typeof videoUploadParents)[number]
-  parentId?: string
-}
-
-type CreateVideoUploadWithSession = {
-  Bucket: string | undefined
-  Key: string
-  mimetype: string
-  size: number
-  isTranscoded: boolean
-  parentType: UploadVideoInput['parentType']
-  parentId: UploadVideoInput['parentId']
-}
-
-type UploadImageOrSubtitleInput = Pick<UploadVideoInput, 'file'> & {
-  type: UploadImageOrSubtitleType
-}
+import { LoggedInUser } from '../../types'
+import { VideoUploadModel } from '../../models/videoupload.model'
+import { SettingsModel } from '../../models/userSettings.model'
 
 export class AdminManageMediaService {
-  private static _createVideoUploadAndParent = async (
-    params: CreateVideoUploadWithSession,
-    session: ClientSession,
-  ) => {
-    const videoUpload = await new VideoUploadModel({
-      bucket: params.Bucket,
-      key: params.Key,
-      mimetype: params.mimetype,
-      size: params.size,
-      parentId: params.parentId,
-      parentType: params.parentType,
-      isTranscoded: params.isTranscoded,
-    }).save({ session })
+  static getVodStream = async (vidUploadId: string, currentUser: LoggedInUser) => {
+    const vidUpload = await VideoUploadModel.findById(vidUploadId)
 
-    if (!params.parentId || !params.parentType) return videoUpload
-
-    const { _id: videoUploadId } = videoUpload
-
-    switch (params.parentType) {
-      case 'episode':
-        const episode = await EpisodeModel.findByIdAndUpdate(
-          params.parentId,
-          { video_upload: videoUploadId },
-          { session },
-        )
-
-        if (episode == null) {
-          throw new OperationalError('invalid Episode Id', 404)
-        }
-
-        break
-      case 'live':
-        const live = await LiveModel.findByIdAndUpdate(
-          params.parentId,
-          { preview_video: videoUploadId },
-          { session },
-        )
-
-        if (live == null) {
-          throw new OperationalError('invalid live Id', 404)
-        }
-
-        break
-      case 'vod':
-        const video = await VideoModel.findByIdAndUpdate(
-          params.parentId,
-          { video_upload: videoUploadId },
-          { session },
-        )
-
-        if (video == null) {
-          throw new OperationalError('invalid video Id', 404)
-        }
-        break
-      case 'trailer':
-        const trailer = await TrailerModel.findByIdAndUpdate(
-          params.parentId,
-          {
-            video_upload: videoUploadId,
-          },
-          { session },
-        )
-
-        if (trailer == null) {
-          throw new OperationalError('invalid trailer Id', 404)
-        }
-        break
-      default:
-        throw new OperationalError(
-          `invalid ParentType. Allowed types are ${videoUploadParents.join(' | ')}`,
-          400,
-        )
+    if (vidUpload == null) {
+      throw new OperationalError('Invalid video Upload Id', 404)
     }
 
-    return videoUpload
-  }
-
-  // static uploadVideoMinimal = (videoFile: Express.Multer., convertWaitDuration: 20) => {
-
-  // }
-
-  static uploadVideo = async ({ file, expire, parentId, parentType }: UploadVideoInput) => {
-    if (file == null) {
-      throw new OperationalError('upload a video file', 400)
+    const response = {
+      isTranscodedStream: vidUpload.isTranscoded,
+      streamUrl: '',
     }
 
-    // const video = await MediaManagement.uploadVideo(file, expireDate, fileName)
-    const video = await MediaManagement.uploadVideo({
-      file,
-      expire: typeof expire === 'string' ? new Date(expire) : undefined,
-    })
-
-    rimraf(file.path).catch(_ =>
-      console.error('🛑 error deleting ', +file.filename + ' from tempMedia folder'),
-    )
-
-    const { Job } = await MediaConvert.transcode(video.Key)
-    const isTranscoded = await MediaConvert.waitForJobCompletion(Job?.Id, 20)
-
-    const videoUpload = await withMongoDBSession(this._createVideoUploadAndParent, {
-      ...video,
-      isTranscoded,
-      parentId,
-      parentType,
-    })
-
-    return { vidoeUploadId: videoUpload._id }
-  }
-
-  static uploadPhotoOrSubtitle = async ({ file, type }: UploadImageOrSubtitleInput) => {
-    if (file == null) {
-      throw new OperationalError(`upload a ${type === 'image' ? 'photo' : 'subtitle'} file`, 400)
+    if (!vidUpload.isTranscoded) {
+      response.streamUrl = MediaAccess.getCloudFrontSignedUrl(vidUpload.key)
+      return response
     }
 
-    const upload = await MediaManagement.uploadImageOrSubtitle({
-      file,
-      type,
+    const [recentSetting] = await SettingsModel.find({ user_id: currentUser._id }).sort({
+      createdAt: -1,
     })
 
-    return upload
+    const vidQuality =
+      recentSetting && recentSetting.video_quality ? recentSetting.video_quality : '720p'
+
+    const vidUploadRes = vidUpload.resolutions.find(r => r.key.endsWith(`${vidQuality}.mp4`))
+
+    if (vidUploadRes == null) {
+      throw new OperationalError('something went wrong', 500)
+    }
+
+    response.streamUrl = MediaAccess.getCloudFrontSignedUrl(vidUploadRes.key)
+    return response
   }
 
   static getPhotoUrl = async (bucket: string, key: string) => {
-    const imageURL = await MediaAccess.getSignedUrl(bucket, key, 'photo')
-    return imageURL
+    return await MediaAccess.getSignedUrl(bucket, key, 'photo')
+  }
+  
+  static getSubtitleUrl = async (bucket: string, key: string) => {
+    return await MediaAccess.getSignedUrl(bucket, key, 'subtitle')
   }
 
   static searchClient = async (searchText: string, query: Request['query']) => {
@@ -186,7 +74,7 @@ export class AdminManageMediaService {
     return clients
   }
 
-  static getLivesByType = async (type: LivesType, query: Request['query']) => {
+  static getLivesByType = async (type: LiveSchema['type'], query: Request['query']) => {
     const DBQuery = LiveModel.find({ type })
       .select('_id title pg type vid_class active expiry cover_photo views')
       .populate('preview_video')

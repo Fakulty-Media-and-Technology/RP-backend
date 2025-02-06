@@ -4,15 +4,15 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { getSignedUrl as getCFSignedUrl } from '@aws-sdk/cloudfront-signer'
 import { AwsUtils } from './aws/utils'
 import env from '../env'
-import { VideoUpload } from '../models/videoupload.model'
 
-type KeyType = 'video' | 'photo'
+type KeyType = 'subtitle' | 'photo'
 
 export class MediaAccess {
   static getSignedUrl = async (Bucket: string, Key: string, type: KeyType) => {
-    const options = { expiresIn: type === 'video' ? 36000 : 259200 }
     const command = new GetObjectCommand({ Bucket, Key })
-    return await getSignedUrl(AwsUtils.clients.s3, command, options)
+    return await getSignedUrl(AwsUtils.clients.s3, command, {
+      expiresIn: type == 'subtitle' ? 250900 : 300000,
+    })
   }
 
   static getCloudFrontSignedUrl = (key: string) => {

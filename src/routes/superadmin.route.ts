@@ -105,28 +105,22 @@ superAdminRouter.get('/enums/get-cast', AdminEnumController.getCast)
 superAdminRouter.delete('/enums/rem-cast/:id', AdminEnumController.remcast)
 
 // **** managed media
-superAdminRouter.post(
-  '/media/upload-vid',
-  Multer.uploadSingleVideo,
-  AdminManagemediaController.uploadVideo,
-)
-
-superAdminRouter.post(
-  '/media/upload-subtitle',
-  Multer.uploadSingleSubtitle,
-  AdminManagemediaController.uploadImageOrSubtitle('subtitle'),
-)
-
-superAdminRouter.post(
-  '/media/upload-image',
-  Multer.uploadSingleImage,
-  AdminManagemediaController.uploadImageOrSubtitle('image'),
-)
 
 superAdminRouter.get(
   '/media/read-photo',
   requestValidator(getPhotoURLSchema),
   AdminManagemediaController.adminGetPhotoUrl,
+)
+
+superAdminRouter.get(
+  '/media/read-subtitle',
+  requestValidator(getPhotoURLSchema),
+  AdminManagemediaController.adminGetSubtitleUrl,
+)
+
+superAdminRouter.get(
+  '/media/read-video/:vidUploadId',
+  AdminManagemediaController.getVidoeUploadStream,
 )
 
 superAdminRouter.post(
