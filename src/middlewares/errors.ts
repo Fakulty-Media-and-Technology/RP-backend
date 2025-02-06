@@ -17,6 +17,10 @@ export class ErrorMiddleware {
         error = new OperationalError('Network Error', 502)
         break
 
+      case 'MongoNetworkTimeoutError':
+        error = new OperationalError('Database Connection error', 502)
+        break
+
       case 'MongoServerError':
         if (error.code === 11000) {
           const entries = Object.entries(error.keyValue)
@@ -33,7 +37,8 @@ export class ErrorMiddleware {
           break
         }
 
-        error = new OperationalError('Unkonwn database error', 502)
+        console.log(error.name, error.message)
+
         break
       default:
         error = new OperationalError(

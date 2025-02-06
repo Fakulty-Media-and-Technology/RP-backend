@@ -22,6 +22,18 @@ const schema = new Schema(
       required: true,
     },
 
+    landscape_photo: {
+      type: Schema.Types.ObjectId,
+      ref: 'poster_images',
+      required: true,
+    },
+
+    portrait_photo: {
+      type: Schema.Types.ObjectId,
+      ref: 'poster_images',
+      required: true,
+    },
+
     video_upload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
@@ -111,8 +123,15 @@ const schema = new Schema(
       required: true,
     },
 
-    videoLink: String,
-    trailerLink: String,
+    videoLink: {
+      type: String,
+      default: null,
+    },
+
+    trailerLink: {
+      type: String,
+      default: null,
+    },
 
     artist_name: {
       type: String,

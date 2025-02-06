@@ -4,7 +4,7 @@ import { PosterImageModel } from '../../models/poster.model'
 
 import { Video, VideoModel } from '../../models/videos.model'
 import { OperationalError } from '../../utils/OperationalError'
-import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { handleDefaultNumAndUnknown, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { SeasonModel } from '../../models/seasons.model'
 import { EpisodeModel } from '../../models/episodes.model'
@@ -15,6 +15,7 @@ import { TrailerModel } from '../../models/trailer.model'
 import { VideoUploadModel } from '../../models/videoupload.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { videoUploadParents } from '../../models/assets'
+import { VideoRepo } from '../../repositories/VideoRepo'
 
 export type AllVideoTypes = Video['type']
 
@@ -79,13 +80,13 @@ type ImageUploadRes = Awaited<ReturnType<typeof MediaManagement.uploadImageOrSub
 type SavePostersUploadToDBParams = {
   portraitPosterUpload: ImageUploadRes
   landscapePosterUpload: ImageUploadRes
-  videoId: StringOrObjectId
+  video: Video
 }
 
 type UploadAndSavePostersToDBParams = {
   portraitFile: Express.Multer.File
   landscapeFile: Express.Multer.File
-  videoId: StringOrObjectId
+  video: Video
 }
 type GetVideoUploadDoc = UploadAndTranscodeConfig & {
   parentType: (typeof videoUploadParents)[number]
@@ -102,7 +103,56 @@ const allowMimetype = (
   }
 }
 
+type UploadTrailerAndVIdeoInput = {
+  file: Express.Multer.File
+  expire: Date | undefined
+  parentId: StringOrObjectId
+}
+
 export class AdminUploadService {
+  private static _uploadTrailerAndVideo = async (
+    video: UploadTrailerAndVIdeoInput,
+    trailer: UploadTrailerAndVIdeoInput,
+    session: ClientSession,
+  ) => {
+    const files = [video, trailer]
+
+    const [videoUpload, trailerUpload] = await Promise.all(
+      files.map((file, i) => {
+        return MediaManagement.uploadAndTransacodeVideo({
+          file: file.file,
+          waitTranscode: true,
+          waitDuration: i === 0 ? 30 : 10,
+          expire: file.expire,
+        })
+      }),
+    )
+
+    const videoUploadDoc = new VideoUploadModel({
+      bucket: videoUpload.Bucket,
+      key: videoUpload.Key,
+      mimetype: videoUpload.mimetype,
+      size: videoUpload.size,
+      isTranscoded: videoUpload.isTranscoded,
+      parentId: video.parentId,
+      parentType: 'vod',
+    })
+
+    const trailerVidUploadDoc = new VideoUploadModel({
+      bucket: trailerUpload.Bucket,
+      key: trailerUpload.Key,
+      mimetype: trailerUpload.mimetype,
+      size: trailerUpload.size,
+      isTranscoded: trailerUpload.isTranscoded,
+      parentId: trailer.parentId,
+      parentType: 'trailer',
+    })
+
+    await videoUploadDoc.save({ session })
+    await trailerVidUploadDoc.save({ session })
+    return { videoUploadDoc, trailerVidUploadDoc }
+  }
+
   private static _getVideoUploadDoc = async (
     params: GetVideoUploadDoc,
     session?: ClientSession,
@@ -144,28 +194,31 @@ export class AdminUploadService {
   }
 
   private static _savePostersUploadToDb = async (
-    { portraitPosterUpload, landscapePosterUpload, videoId }: SavePostersUploadToDBParams,
+    { portraitPosterUpload, landscapePosterUpload, video }: SavePostersUploadToDBParams,
     session: ClientSession,
   ) => {
     // save portrait
-    await new PosterImageModel({
-      video_id: videoId,
+    const portrait = await new PosterImageModel({
+      video_id: video._id,
       bucket: portraitPosterUpload.Bucket,
       key: portraitPosterUpload.Key,
       dimension: 'portrait',
     }).save({ session })
 
     // save landscape
-    await new PosterImageModel({
-      video_id: videoId,
+    const landscape = await new PosterImageModel({
+      video_id: video._id,
       bucket: landscapePosterUpload.Bucket,
       key: landscapePosterUpload.Key,
       dimension: 'landscape',
     }).save({ session })
+
+    video.landscape_photo = landscape._id
+    video.portrait_photo = portrait._id
   }
 
   private static _uploadAndSavePostersToDB = async (
-    { landscapeFile, portraitFile, videoId }: UploadAndSavePostersToDBParams,
+    { landscapeFile, portraitFile, video }: UploadAndSavePostersToDBParams,
     session: ClientSession,
   ) => {
     const { portraitUpload, landscapeUpload } = await this._uploadVideoPosters(
@@ -178,13 +231,13 @@ export class AdminUploadService {
       {
         portraitPosterUpload: portraitUpload,
         landscapePosterUpload: landscapeUpload,
-        videoId,
+        video,
       },
       session,
     )
   }
 
-  private static _uploadMovieOrSkitSession = async (
+  private static _uploadVideoSesion = async (
     { data, type, adminId }: AddVideoParams,
     session: ClientSession,
   ) => {
@@ -220,7 +273,7 @@ export class AdminUploadService {
       {
         portraitFile: data.portraitPoster,
         landscapeFile: data.landscapePoster,
-        videoId: videoDoc._id,
+        video: videoDoc,
       },
       session,
     )
@@ -246,6 +299,29 @@ export class AdminUploadService {
       await subtitleDoc.save({ session })
     }
 
+    if (data.trailer && data.video) {
+      const expire = vidUploadExpire
+
+      const trailerDoc = new TrailerModel({
+        video_id: videoDoc._id,
+        parentType: 'vod',
+      })
+
+      const { videoUploadDoc, trailerVidUploadDoc } = await this._uploadTrailerAndVideo(
+        { file: data.video, expire, parentId: videoDoc._id },
+        { file: data.trailer, expire, parentId: trailerDoc._id },
+        session,
+      )
+
+      trailerDoc.video_upload = trailerVidUploadDoc._id
+      videoDoc.video_upload = videoUploadDoc._id
+      videoDoc.trailer_upload = trailerDoc._id
+      
+      await trailerDoc.save({ session })
+      await videoDoc.save({ session })
+      return
+    }
+
     if (data.trailer) {
       const trailerDoc = new TrailerModel({
         video_id: videoDoc._id,
@@ -255,7 +331,8 @@ export class AdminUploadService {
       const tVidUploadDoc = await this._getVideoUploadDoc(
         {
           file: data.trailer,
-          waitTranscode: false,
+          waitTranscode: true,
+          waitDuration: 30,
           expire: vidUploadExpire,
           parentId: trailerDoc._id,
           parentType: 'trailer',
@@ -288,7 +365,7 @@ export class AdminUploadService {
   }
 
   static addVideo = async (input: AddVideoParams) => {
-    await withMongoDBSession(this._uploadMovieOrSkitSession, input)
+    await withMongoDBSession(this._uploadVideoSesion, input)
   }
 
   static editVideo = async ({ vidId, type, changes }: EditVideoInput) => {
@@ -327,19 +404,10 @@ export class AdminUploadService {
   }
 
   static getVideos = async (type: AllVideoTypes, queryParams: Request['query']) => {
-    const dbQuery = VideoModel.find({ type }).sort('-createdAt').populate('seasons').populate({
-      path: 'video_upload',
-      select: 'resolutions key bucket isTranscoded',
-    })
-
-    const queryFeatures = new QueryParamsFeatures(dbQuery, {
-      defaultLimit: 50,
-      defaultPage: 1,
-      queryParams,
-    })
-
-    const vids = await queryFeatures.paginate().query
-    return VideoUploadParser.populateVideoVidUploadResolutions(vids)
+    const page = handleDefaultNumAndUnknown(queryParams.page, 1)
+    const limit = handleDefaultNumAndUnknown(queryParams.limit, 1)
+    const vids = await VideoRepo.fetchByType(type, page, limit)
+    return vids
   }
 
   // ********* seasons

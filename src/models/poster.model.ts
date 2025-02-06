@@ -4,7 +4,7 @@ const posterSchema = new Schema(
   {
     video_id: {
       type: Schema.Types.ObjectId,
-      ref: 'Video',
+      ref: 'videos',
       required: true,
     },
 
