@@ -1,4 +1,4 @@
-import { FilterQuery, Types } from 'mongoose'
+import { FilterQuery, PipelineStage, Types } from 'mongoose'
 import { Video, VideoModel } from '../models/videos.model'
 import { AllVideoTypes } from '../services/core/AdminUploadService'
 import { skip } from '../utils/QueryParamsFeatures'
@@ -132,12 +132,9 @@ export class VideoRepo {
     return aggr
   }
 
-  static fetchByType = async (type: AllVideoTypes, page: number, limit: number) => {
+  static fetchVideoAggr = async (prevStages: PipelineStage[], page: number, limit: number) => {
     const aggr = await VideoModel.aggregate([
-      {
-        $match: { type },
-      },
-
+      ...prevStages,
       {
         $lookup: {
           from: 'poster_images',
@@ -220,6 +217,9 @@ export class VideoRepo {
       {
         $addFields: {
           vidClass: '$vid_class',
+          artistName: '$artist_name',
+          releaseDate: '$released_date',
+          expiryDate: '$expiry_date',
           defaultRating: '$default_rating',
           trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
           videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
@@ -254,6 +254,9 @@ export class VideoRepo {
       },
       {
         $project: {
+          expiry_date: false,
+          released_date: false,
+          artist_name: false,
           subtitle_upload: false,
           vid_class: false,
           default_rating: false,
@@ -274,6 +277,10 @@ export class VideoRepo {
     ])
 
     return aggr
+  }
+
+  static fetchByType = async (type: AllVideoTypes, page: number, limit: number) => {
+    return await this.fetchVideoAggr([{ $match: { type } }], page, limit)
   }
 
   static getMostEngaged = async () => {

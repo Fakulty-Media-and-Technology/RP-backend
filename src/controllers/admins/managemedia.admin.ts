@@ -5,28 +5,9 @@ import { AdminManageMediaService } from '../../services/core/AdminManagemediaSer
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { LiveSchema } from '../../models/lives.model'
+import { MediaController } from '../common/media.controller'
 
-export class AdminManagemediaController {
-  static adminGetPhotoUrl = Catch.async(async (req, res) => {
-    const { bucket, key } = req.body
-    const image = await AdminManageMediaService.getPhotoUrl(bucket, key)
-    sendResponse({ res, data: image, message: 'image fetched' })
-  })
-
-  static adminGetSubtitleUrl = Catch.async(async (req, res) => {
-    const { bucket, key } = req.body
-    const image = await AdminManageMediaService.getSubtitleUrl(bucket, key)
-    sendResponse({ res, data: image, message: 'subtitle fetched' })
-  })
-
-  static getVidoeUploadStream = Catch.async(async (req, res) => {
-    const image = await AdminManageMediaService.getVodStream(
-      req.params.vidUploadId,
-      GetDefined.loggedInUser(req.user),
-    )
-    sendResponse({ res, data: image, message: 'stream fetched' })
-  })
-
+export class AdminManagemediaController extends MediaController {
   static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
     Catch.async(async (req, res) => {
       if (isAdmin && typeof req.body.client_id !== 'string') {

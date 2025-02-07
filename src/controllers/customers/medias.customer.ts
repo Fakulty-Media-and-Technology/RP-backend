@@ -7,17 +7,14 @@ import { VideoModel } from '../../models/videos.model'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { Live, LiveModel, LiveSchema } from '../../models/lives.model'
-import { SettingsModel } from '../../models/userSettings.model'
 import { OperationalError } from '../../utils/OperationalError'
 
 import env from '../../env'
 import { MediaManagement } from '../../services/media-management'
 import { MediaAccess } from '../../services/media-access'
-import { AwsUtils } from '../../services/aws/utils'
-import { MediaConvert } from '../../services/aws/mediaConvert'
 import { signCred } from '../../utils/live'
 import { VideoRepo } from '../../repositories/VideoRepo'
-import { VideoUploadModel } from '../../models/videoupload.model'
+import { MediaController } from '../common/media.controller'
 
 type GetLiveEventsWithPhotoUrlResult = {
   liveEvent: Live
@@ -41,7 +38,7 @@ type LiveEventsType =
 
 type GetLiveEventsWithPhotoUrlResults = Array<GetLiveEventsWithPhotoUrlResult>
 
-export class CustomerMediaController {
+export class CustomerMediaController extends MediaController {
   static uploadImageRoute = Catch.async(async ({ file, user }, res) => {
     denyGuestUser(GetDefined.loggedInUser(user))
 
@@ -53,41 +50,6 @@ export class CustomerMediaController {
       res,
       data: await MediaManagement.uploadImageOrSubtitle({ file, type: 'image' }),
       message: 'image uploaded',
-    })
-  })
-
-  static customerGetPhotoUrl = Catch.async(async (req, res) => {
-    const { bucket, key } = req.body
-
-    sendResponse({
-      res,
-      data: await MediaAccess.getSignedUrl(bucket, key, 'photo'),
-      message: 'image uploaded',
-    })
-  })
-
-  static vodStream = Catch.async(async (req, res) => {
-    const videoUploadId = req.params.vid
-    const vidUpload = await VideoUploadModel.findById(videoUploadId)
-
-    if (vidUpload == null) {
-      throw new OperationalError('Invalid Video upload Id', 404)
-    }
-
-    if (!vidUpload.isTranscoded) {
-      throw new OperationalError('Video upload has not been transcoded', 400)
-    }
-
-    // const user = GetDefined.loggedInUser(req.user)
-    // const user_resolution = await SettingsModel.findOne({ user_id: user.id })
-    // const userRes = user_resolution?.video_quality || '480p'
-
-    sendResponse({
-      res,
-      message: 'video streaming',
-      data: {
-        video_content: vidUpload,
-      },
     })
   })
 

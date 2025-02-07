@@ -275,6 +275,8 @@ export class OnboardingService {
         auth_expiry: Date.now() + 1000 * 60 * 5,
       })
 
+      // TODO: Send email
+
       /**
        *
        */
@@ -287,10 +289,10 @@ export class OnboardingService {
       }).sendVerifyEmail(pin)
        */
 
-      throw new OperationalError(
-        'user account not verified, check your email for verification code',
-        400,
-      )
+      // throw new OperationalError(
+      //   'user account not verified, check your email for verification code',
+      //   400,
+      // )
     }
 
     const tokenPayload = {

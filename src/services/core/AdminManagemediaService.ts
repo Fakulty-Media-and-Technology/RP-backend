@@ -7,58 +7,12 @@ import { UserModel } from '../../models/users.model'
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
-import { MediaAccess } from '../../services/media-access'
 import { UserRepo } from '../../repositories/UserRepo'
 import { getUniqueStreamKey } from '../../utils/live'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
-import { LoggedInUser } from '../../types'
-import { VideoUploadModel } from '../../models/videoupload.model'
-import { SettingsModel } from '../../models/userSettings.model'
 
 export class AdminManageMediaService {
-  static getVodStream = async (vidUploadId: string, currentUser: LoggedInUser) => {
-    const vidUpload = await VideoUploadModel.findById(vidUploadId)
-
-    if (vidUpload == null) {
-      throw new OperationalError('Invalid video Upload Id', 404)
-    }
-
-    const response = {
-      isTranscodedStream: vidUpload.isTranscoded,
-      streamUrl: '',
-    }
-
-    if (!vidUpload.isTranscoded) {
-      response.streamUrl = MediaAccess.getCloudFrontSignedUrl(vidUpload.key)
-      return response
-    }
-
-    const [recentSetting] = await SettingsModel.find({ user_id: currentUser._id }).sort({
-      createdAt: -1,
-    })
-
-    const vidQuality =
-      recentSetting && recentSetting.video_quality ? recentSetting.video_quality : '720p'
-
-    const vidUploadRes = vidUpload.resolutions.find(r => r.key.endsWith(`${vidQuality}.mp4`))
-
-    if (vidUploadRes == null) {
-      throw new OperationalError('something went wrong', 500)
-    }
-
-    response.streamUrl = MediaAccess.getCloudFrontSignedUrl(vidUploadRes.key)
-    return response
-  }
-
-  static getPhotoUrl = async (bucket: string, key: string) => {
-    return await MediaAccess.getSignedUrl(bucket, key, 'photo')
-  }
-
-  static getSubtitleUrl = async (bucket: string, key: string) => {
-    return await MediaAccess.getSignedUrl(bucket, key, 'subtitle')
-  }
-
   static searchClient = async (searchText: string, query: Request['query']) => {
     const searchReg = new RegExp(searchText, 'i')
 

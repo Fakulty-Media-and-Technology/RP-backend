@@ -19,6 +19,7 @@ import {
   updateCommentSchema,
   updateRatingSchema,
 } from '../validations/customers'
+import { AdminManagemediaController } from '../controllers/admins/managemedia.admin'
 
 export const customerRouter = express.Router()
 
@@ -79,7 +80,7 @@ customerRouter
 
 // *** Media
 customerRouter.post('/media/upload-photo', CustomerMediaController.uploadImageRoute)
-customerRouter.post('/media/vod-streaming/:vid', CustomerMediaController.vodStream)
+customerRouter.post('/media/vod-streaming/:vidUploadId', CustomerMediaController.getVidoeUploadStream)
 customerRouter.get('/media/vod/fetch/featured', CustomerMediaController.getFeaturedVods)
 customerRouter.post('/media/vod/like/:id', CustomerMediaController.likeVideo)
 customerRouter.get('/media/vod/userliked/:id', CustomerMediaController.userLikedVideo)
