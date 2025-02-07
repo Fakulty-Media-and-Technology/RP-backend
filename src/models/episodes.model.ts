@@ -58,8 +58,8 @@ const schema = new Schema(
   { timestamps: true },
 )
 
-schema.index({ season: 1, episode_title: 1 }, { unique: true })
-schema.index({ season: 1, episode_number: 1 }, { unique: true })
+schema.index({ season: 1, title: 1 }, { unique: true })
+schema.index({ season: 1, episodeNumber: 1 }, { unique: true })
 
 schema.pre('validate', function (next) {
   if (!!this.trailerLink === !!this.trailerUpload) {

@@ -44,35 +44,64 @@ export class VideoRepo {
     },
     {
       $lookup: {
+        from: 'video_uploads',
+        localField: '_id',
+        foreignField: 'parentId',
+        as: 'videoUpload',
+        pipeline: [
+          { $match: { isTranscoded: true } },
+          { $project: { key: true, isTranscoded: true, resolutions: true } },
+        ],
+      },
+    },
+    {
+      $lookup: {
         from: 'trailers',
         localField: '_id',
         foreignField: 'video_id',
-        as: 'trailerUpload',
+        as: 'trailer',
         pipeline: [
           {
             $lookup: {
               from: 'video_uploads',
               localField: '_id',
               foreignField: 'parentId',
-              as: 'tVideoUpload',
-              // pipeline: [{ $match: { isTranscoded: true } }],
+              as: 'trailerVideoUpload',
+              pipeline: [
+                { $match: { isTranscoded: true } },
+                { $project: { key: true, isTranscoded: true, resolutions: true } },
+              ],
             },
           },
 
-          { $addFields: { tVideoUploadId: { $first: '$tVideoUpload._id' } } },
+          { $addFields: { trailerVideoUpload: { $first: '$trailerVideoUpload' } } },
         ],
       },
     },
 
     {
+      $lookup: {
+        from: 'ratings',
+        foreignField: 'parentId',
+        localField: '_id',
+        as: 'ratings',
+        pipeline: [{ $group: { _id: null, avgRating: { $avg: '$rate' } } }],
+      },
+    },
+
+    {
       $addFields: {
-        trailerVideoUpload: { $first: '$trailerUpload.tVideoUploadId' },
+        trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
+        videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
         subtitle: { $first: '$subtitle' },
+        averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
       },
     },
     {
       $project: {
         __v: false,
+        ratings: false,
+        trailer: false,
         subtitleUpload: false,
         trailerUpload: false,
       },
@@ -139,7 +168,10 @@ export class VideoRepo {
           localField: '_id',
           foreignField: 'parentId',
           as: 'videoUpload',
-          pipeline: [{ $match: { isTranscoded: true } }],
+          pipeline: [
+            { $match: { isTranscoded: true } },
+            { $project: { key: true, isTranscoded: true, resolutions: true } },
+          ],
         },
       },
       {
@@ -164,7 +196,10 @@ export class VideoRepo {
                 localField: '_id',
                 foreignField: 'parentId',
                 as: 'trailerVideoUpload',
-                pipeline: [{ $match: { isTranscoded: true } }],
+                pipeline: [
+                  { $match: { isTranscoded: true } },
+                  { $project: { key: true, isTranscoded: true, resolutions: true } },
+                ],
               },
             },
 
@@ -173,12 +208,25 @@ export class VideoRepo {
         },
       },
       {
+        $lookup: {
+          from: 'ratings',
+          foreignField: 'parentId',
+          localField: '_id',
+          as: 'ratings',
+
+          pipeline: [{ $group: { _id: null, avgRating: { $avg: '$rate' } } }],
+        },
+      },
+      {
         $addFields: {
-          trailerVideoUpload: { $first: '$trailer.trailerVideoUpload.video_upload' },
-          videoUpload: { $first: '$videoUpload._id' },
+          vidClass: '$vid_class',
+          defaultRating: '$default_rating',
+          trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
+          videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
           portraitPhoto: { $first: '$portraitPhoto' },
           landscapePhoto: { $first: '$landscapePhoto' },
           subtitle: { $first: '$subtitle' },
+          averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
         },
       },
       {
@@ -206,6 +254,10 @@ export class VideoRepo {
       },
       {
         $project: {
+          subtitle_upload: false,
+          vid_class: false,
+          default_rating: false,
+          ratings: false,
           is_series: false,
           trailer: false,
           trailer_upload: false,

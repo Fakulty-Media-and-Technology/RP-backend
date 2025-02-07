@@ -1,5 +1,6 @@
 import { CommentModel } from '../../models/comments.model'
 import { RatingModel } from '../../models/rating.model'
+import { toObjectId } from '../../repositories/VideoRepo'
 import { OperationalError } from '../../utils/OperationalError'
 
 type UpdateRatingInput = {
@@ -36,14 +37,7 @@ export class CustomerCommentsRatingsService {
     const comments = await CommentModel.aggregate([
       {
         $match: {
-          $expr: {
-            $eq: [
-              '$parentId',
-              {
-                $toObjectId: parentId,
-              },
-            ],
-          },
+          parentId: toObjectId(parentId),
         },
       },
 
@@ -69,14 +63,7 @@ export class CustomerCommentsRatingsService {
     const ratings = await RatingModel.aggregate([
       {
         $match: {
-          $expr: {
-            $eq: [
-              '$parentId',
-              {
-                $toObjectId: parentId,
-              },
-            ],
-          },
+          parentId: toObjectId(parentId),
         },
       },
 

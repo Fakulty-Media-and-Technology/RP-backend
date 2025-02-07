@@ -7,7 +7,6 @@ import { LoggedInUser } from '../../types'
 import { MediaAccess } from '../media-access'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { getFulfilledValues } from '../../utils/promise'
-import { VideoUploadParser } from '../../utils/VideoUploadParser'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
@@ -66,9 +65,9 @@ export class UpcomingService {
       )
     }
 
-    if (event.trailer && event.trailer.video_upload) {
-      await VideoUploadParser.signResolutionsOrRaw(event.trailer.video_upload)
-    }
+    // if (event.trailer && event.trailer.video_upload) {
+    //   await VideoUploadParser.signResolutionsOrRaw(event.trailer.video_upload)
+    // }
 
     return event
   }

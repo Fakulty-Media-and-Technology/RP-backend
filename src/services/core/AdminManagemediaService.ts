@@ -12,7 +12,6 @@ import { UserRepo } from '../../repositories/UserRepo'
 import { getUniqueStreamKey } from '../../utils/live'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
-import { VideoUploadParser } from '../../utils/VideoUploadParser'
 import { LoggedInUser } from '../../types'
 import { VideoUploadModel } from '../../models/videoupload.model'
 import { SettingsModel } from '../../models/userSettings.model'
@@ -85,7 +84,7 @@ export class AdminManageMediaService {
     })
 
     const lives = await features.paginate().query
-    return VideoUploadParser.populateLivesVidUploadResolutions(lives)
+    return lives
   }
 
   static addSubtitle = async (data: Record<string, any>) => {

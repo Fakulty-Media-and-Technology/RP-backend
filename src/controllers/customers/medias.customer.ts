@@ -1,6 +1,4 @@
 import { FilterQuery } from 'mongoose'
-import { getSignedUrl as getCFSignedUrl } from '@aws-sdk/cloudfront-signer'
-import { ListObjectsV2Command } from '@aws-sdk/client-s3'
 
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
@@ -20,7 +18,6 @@ import { MediaConvert } from '../../services/aws/mediaConvert'
 import { signCred } from '../../utils/live'
 import { VideoRepo } from '../../repositories/VideoRepo'
 import { VideoUploadModel } from '../../models/videoupload.model'
-import { VideoUploadParser } from '../../utils/VideoUploadParser'
 
 type GetLiveEventsWithPhotoUrlResult = {
   liveEvent: Live
@@ -84,8 +81,6 @@ export class CustomerMediaController {
     // const user = GetDefined.loggedInUser(req.user)
     // const user_resolution = await SettingsModel.findOne({ user_id: user.id })
     // const userRes = user_resolution?.video_quality || '480p'
-
-    VideoUploadParser.signResolutionsOrRaw(vidUpload)
 
     sendResponse({
       res,

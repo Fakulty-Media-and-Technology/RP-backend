@@ -12,7 +12,6 @@ import {
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { SeasonModel } from '../../models/seasons.model'
 import { EpisodeModel } from '../../models/episodes.model'
-import { VideoUploadParser } from '../../utils/VideoUploadParser'
 import { MediaManagement, UploadAndTranscodeConfig } from '../media-management'
 import { StringOrObjectId } from '../../types'
 import { TrailerModel } from '../../models/trailer.model'
@@ -20,6 +19,10 @@ import { VideoUploadModel } from '../../models/videoupload.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { videoUploadParents } from '../../models/assets'
 import { VideoRepo } from '../../repositories/VideoRepo'
+import { GetVideoSourceParams, Movie, Episode, Season } from '../../types/movie'
+import { MediaAccess } from '../media-access'
+import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
+import { getPromiseeAllFulfilledResults } from '../../utils/promises'
 
 export type AllVideoTypes = Video['type']
 
@@ -411,8 +414,9 @@ export class AdminUploadService {
   static getVideos = async (type: AllVideoTypes, queryParams: Request['query']) => {
     const page = handleDefaultNumAndUnknown(queryParams.page, 1)
     const limit = handleDefaultNumAndUnknown(queryParams.limit, 1)
-    const vids = await VideoRepo.fetchByType(type, page, limit)
-    return vids
+    const vids = (await VideoRepo.fetchByType(type, page, limit)) as Movie[]
+    const vidsWithSources = await MovieMediaSourcesUtils.resolveMovieMediaSources(vids)
+    return getPromiseeAllFulfilledResults(vidsWithSources)
   }
 
   // ********* seasons
