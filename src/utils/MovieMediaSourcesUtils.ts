@@ -40,14 +40,15 @@ export class MovieMediaSourcesUtils {
 
   public static resolveSeasonsMediaSources = async (
     seasons: Season[],
-    episodesMediaResolver?: (e: Episode[]) => Promise<Episode[]>,
+    withMediaSources: boolean,
+    episodesMediaResolver?: (e: Episode[], withMediaSources: boolean) => Promise<Episode[]>,
   ) => {
     const seasonsWithSources = await Promise.all(
       seasons.map(async season => {
         // process trailerLink and trailervideoUpload
 
         if (episodesMediaResolver) {
-          season.episodes = await episodesMediaResolver(season.episodes)
+          season.episodes = await episodesMediaResolver(season.episodes, withMediaSources)
         }
 
         return season
@@ -56,25 +57,35 @@ export class MovieMediaSourcesUtils {
 
     return seasonsWithSources as Season[]
   }
-  public static resolveEpisodesMediaSources = async (episodes: Episode[]) => {
+  public static resolveEpisodesMediaSources = async (
+    episodes: Episode[],
+    withMediaSources: boolean,
+  ) => {
     const episodesWithSources = await Promise.all(
       episodes.map(async episode => {
-        return {
+        const res: Record<string, any> = {
           ...episode,
-          trailerVideoUpload: undefined,
-          videoUpload: undefined,
-          videoLink: undefined,
-          trailerLink: undefined,
-          videoSource: this.getMovieVideoSource(episode, 'vid'),
-          trailerSource: this.getMovieVideoSource(episode, 'trailer'),
-          subtitle: episode.subtitle
-            ? await MediaAccess.getSignedUrl(
-                episode.subtitle.bucket,
-                episode.subtitle.key,
-                'subtitle',
-              )
-            : null,
         }
+
+        if (withMediaSources) {
+          res.trailerVideoUpload = undefined
+          res.videoUpload = undefined
+          res.mediaSources = {
+            videoSource: this.getMovieVideoSource(episode, 'vid'),
+            trailerSource: this.getMovieVideoSource(episode, 'trailer'),
+            subtitleSource: episode.subtitle
+              ? await MediaAccess.getSignedUrl(
+                  episode.subtitle.bucket,
+                  episode.subtitle.key,
+                  'subtitle',
+                )
+              : null,
+          }
+
+          res.subtitle = undefined
+        }
+
+        return res
       }),
     )
 
@@ -90,31 +101,37 @@ export class MovieMediaSourcesUtils {
     return { landscapePhoto, portraitPhoto }
   }
 
-  public static resolveMovieMediaSources = async (vids: Movie[]) => {
+  public static resolveMovieMediaSources = async (vids: Movie[], withMediaSources = true) => {
     return await Promise.allSettled(
       vids.map(async vid => {
         const { landscapePhoto, portraitPhoto } = await this._getMoviePhotos(vid)
 
         vid.seasons = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
           vid.seasons,
+          withMediaSources,
           MovieMediaSourcesUtils.resolveEpisodesMediaSources,
         )
 
         const res: Record<string, any> = {
           ...vid,
-          trailerVideoUpload: undefined,
-          videoUpload: undefined,
-          videoLink: undefined,
-          trailerLink: undefined,
           landscapePhoto,
           portraitPhoto,
         }
 
-        res.videoSource = this.getMovieVideoSource(vid, 'vid')
-        res.trailerSource = this.getMovieVideoSource(vid, 'trailer')
-        res.subtitle = vid.subtitle
-          ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
-          : null
+        if (withMediaSources) {
+          res.trailerVideoUpload = undefined
+          res.videoUpload = undefined
+
+          res.mediaSources = {
+            videoSource: this.getMovieVideoSource(vid, 'vid'),
+            trailerSource: this.getMovieVideoSource(vid, 'trailer'),
+            subtitleSource: vid.subtitle
+              ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
+              : null,
+          }
+
+          res.subtitle = undefined
+        }
 
         return res
       }),

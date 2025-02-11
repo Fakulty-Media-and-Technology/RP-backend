@@ -1,14 +1,9 @@
-import { Request } from 'express'
 import { ClientSession } from 'mongoose'
 import { PosterImageModel } from '../../models/poster.model'
 
 import { Video, VideoModel } from '../../models/videos.model'
 import { OperationalError } from '../../utils/OperationalError'
-import {
-  handleDefaultNumAndUnknown,
-  QueryParamsFeatures,
-  QueryParamsFeaturesOptions,
-} from '../../utils/QueryParamsFeatures'
+
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { SeasonModel } from '../../models/seasons.model'
 import { EpisodeModel } from '../../models/episodes.model'
@@ -19,10 +14,15 @@ import { VideoUploadModel } from '../../models/videoupload.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { videoUploadParents } from '../../models/assets'
 import { VideoRepo } from '../../repositories/VideoRepo'
-import { GetVideoSourceParams, Movie, Episode, Season } from '../../types/movie'
-import { MediaAccess } from '../media-access'
+import { Movie, Season } from '../../types/movie'
+
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { getPromiseeAllFulfilledResults } from '../../utils/promises'
+
+import {
+  handleDefaultNumAndUnknown,
+  QueryParamsFeaturesOptions,
+} from '../../utils/QueryParamsFeatures'
 
 export type AllVideoTypes = Video['type']
 
@@ -76,6 +76,15 @@ export type MovieData = {
   video?: Express.Multer.File
 }
 
+type AddSeasonParams = {
+  adminId: string
+  videoId: string
+  trailerLink?: string
+  portraitPhoto?: Express.Multer.File
+  landscapePhoto?: Express.Multer.File
+  trailer?: Express.Multer.File
+}
+
 export type AddVideoParams = {
   data: MovieData
   type: AllVideoTypes
@@ -87,14 +96,15 @@ type ImageUploadRes = Awaited<ReturnType<typeof MediaManagement.uploadImageOrSub
 type SavePostersUploadToDBParams = {
   portraitPosterUpload: ImageUploadRes
   landscapePosterUpload: ImageUploadRes
-  video: Video
+  videoId: StringOrObjectId
 }
 
 type UploadAndSavePostersToDBParams = {
   portraitFile: Express.Multer.File
   landscapeFile: Express.Multer.File
-  video: Video
+  videoId: StringOrObjectId
 }
+
 type GetVideoUploadDoc = UploadAndTranscodeConfig & {
   parentType: (typeof videoUploadParents)[number]
   parentId: StringOrObjectId
@@ -118,6 +128,10 @@ type UploadTrailerAndVIdeoInput = {
 }
 
 export class AdminUploadService {
+  private static _resolveWithMediaSources = (
+    queryParams: QueryParamsFeaturesOptions['queryParams'],
+  ) => queryParams.withMediaSources === 'true'
+
   private static _uploadTrailerAndVideo = async (
     video: UploadTrailerAndVIdeoInput,
     trailer: UploadTrailerAndVIdeoInput,
@@ -202,12 +216,12 @@ export class AdminUploadService {
   }
 
   private static _savePostersUploadToDb = async (
-    { portraitPosterUpload, landscapePosterUpload, video }: SavePostersUploadToDBParams,
+    { portraitPosterUpload, landscapePosterUpload, videoId }: SavePostersUploadToDBParams,
     session: ClientSession,
   ) => {
     // save portrait
     const portrait = await new PosterImageModel({
-      video_id: video._id,
+      video_id: videoId,
       bucket: portraitPosterUpload.Bucket,
       key: portraitPosterUpload.Key,
       dimension: 'portrait',
@@ -215,18 +229,17 @@ export class AdminUploadService {
 
     // save landscape
     const landscape = await new PosterImageModel({
-      video_id: video._id,
+      video_id: videoId,
       bucket: landscapePosterUpload.Bucket,
       key: landscapePosterUpload.Key,
       dimension: 'landscape',
     }).save({ session })
 
-    video.landscape_photo = landscape._id
-    video.portrait_photo = portrait._id
+    return { portrait, landscape }
   }
 
   private static _uploadAndSavePostersToDB = async (
-    { landscapeFile, portraitFile, video }: UploadAndSavePostersToDBParams,
+    { landscapeFile, portraitFile, videoId }: UploadAndSavePostersToDBParams,
     session: ClientSession,
   ) => {
     const { portraitUpload, landscapeUpload } = await this._uploadVideoPosters(
@@ -235,11 +248,11 @@ export class AdminUploadService {
     )
 
     //save to db
-    await this._savePostersUploadToDb(
+    return await this._savePostersUploadToDb(
       {
         portraitPosterUpload: portraitUpload,
         landscapePosterUpload: landscapeUpload,
-        video,
+        videoId,
       },
       session,
     )
@@ -277,14 +290,17 @@ export class AdminUploadService {
       is_series: isSeries,
     })
 
-    await this._uploadAndSavePostersToDB(
+    const { landscape, portrait } = await this._uploadAndSavePostersToDB(
       {
         portraitFile: data.portraitPoster,
         landscapeFile: data.landscapePoster,
-        video: videoDoc,
+        videoId: videoDoc._id,
       },
       session,
     )
+
+    videoDoc.landscape_photo = landscape._id
+    videoDoc.portrait_photo = portrait._id
 
     const vidUploadExpire = videoDoc.expiry_date || undefined
 
@@ -327,7 +343,7 @@ export class AdminUploadService {
 
       await trailerDoc.save({ session })
       await videoDoc.save({ session })
-      return
+      return videoDoc
     }
 
     if (data.trailer) {
@@ -370,58 +386,21 @@ export class AdminUploadService {
     }
 
     await videoDoc.save({ session })
+    return videoDoc
   }
 
-  static addVideo = async (input: AddVideoParams) => {
-    await withMongoDBSession(this._uploadVideoSesion, input)
-  }
+  private static _addSeasonWithSession = async (
+    { videoId, adminId, ...params }: AddSeasonParams,
+    session: ClientSession,
+  ) => {
+    params.trailer && allowMimetype(params.trailer, 'video', ' trailer must be a video file')
 
-  static editVideo = async ({ vidId, type, changes }: EditVideoInput) => {
-    const video = await VideoModel.findOne({ _id: vidId, type })
+    params.landscapePhoto &&
+      allowMimetype(params.landscapePhoto, 'image', ' landscapePhoto must be an image file')
 
-    if (video == null) {
-      throw new OperationalError('video does not exist or does not exist as this type', 400)
-    }
+    params.portraitPhoto &&
+      allowMimetype(params.portraitPhoto, 'image', ' portraitPhoto must be an image file')
 
-    delete changes['_id']
-
-    const updatedVid = await VideoModel.findOneAndUpdate(
-      {
-        _id: vidId,
-        type,
-      },
-      changes,
-      {
-        new: true,
-      },
-    )
-
-    if (updatedVid == null) {
-      throw new OperationalError('Could not update video or video does not exist', 404)
-    }
-
-    return updatedVid
-  }
-
-  static deleteVideo = async (vidId: string, type: AllVideoTypes) => {
-    const deletedVid = await VideoModel.findOneAndDelete({ _id: vidId, type })
-
-    if (deletedVid == null) {
-      throw new OperationalError(`Not found or video is not a ${type} `, 404)
-    }
-  }
-
-  static getVideos = async (type: AllVideoTypes, queryParams: Request['query']) => {
-    const page = handleDefaultNumAndUnknown(queryParams.page, 1)
-    const limit = handleDefaultNumAndUnknown(queryParams.limit, 1)
-    const vids = (await VideoRepo.fetchByType(type, page, limit)) as Movie[]
-    const vidsWithSources = await MovieMediaSourcesUtils.resolveMovieMediaSources(vids)
-    return getPromiseeAllFulfilledResults(vidsWithSources)
-  }
-
-  // ********* seasons
-
-  static addSeason = async (videoId: string, adminId: string) => {
     const [prevSeasons, parentVideo] = await Promise.all([
       SeasonModel.find({ video: videoId }),
       VideoModel.findById(videoId),
@@ -435,14 +414,55 @@ export class AdminUploadService {
       throw new OperationalError('only series video type can have seasons', 403)
     }
 
-    await SeasonModel.create({
+    const season = new SeasonModel({
       admin: adminId,
       video: videoId,
       serial_number: prevSeasons.length + 1,
+      trailerLink: params.trailerLink,
     })
+
+    if (params.landscapePhoto && params.portraitPhoto) {
+      const { landscape, portrait } = await this._uploadAndSavePostersToDB(
+        {
+          portraitFile: params.portraitPhoto,
+          landscapeFile: params.landscapePhoto,
+          videoId: season._id,
+        },
+        session,
+      )
+
+      season.landscapePhoto = landscape._id
+      season.portraitPhoto = portrait.id
+    }
+
+    if (params.trailer) {
+      const trailerDoc = new TrailerModel({
+        video_id: season._id,
+        parentType: 'season',
+      })
+
+      const tVidUploadDoc = await this._getVideoUploadDoc(
+        {
+          file: params.trailer,
+          waitTranscode: true,
+          waitDuration: 30,
+          expire: parentVideo.expiry_date || undefined,
+          parentId: trailerDoc._id,
+          parentType: 'trailer',
+        },
+        session,
+      )
+
+      trailerDoc.video_upload = tVidUploadDoc._id
+      season.trailer = trailerDoc._id
+      await trailerDoc.save({ session })
+    }
+
+    await season.save({ session })
+
+    return season
   }
 
-  // ********* episodes
   private static _addEpisodesWithSession = async (
     { seasonId, data, adminId }: AddEpisodeInput,
     session: ClientSession,
@@ -509,7 +529,7 @@ export class AdminUploadService {
 
       await trailerDoc.save({ session })
       await episode.save({ session })
-      return
+      return episode
     }
 
     if (data.trailer) {
@@ -551,11 +571,69 @@ export class AdminUploadService {
     }
 
     await episode.save({ session })
-    return
+    return episode
+  }
+
+  static addVideo = async (input: AddVideoParams) => {
+    return await withMongoDBSession(this._uploadVideoSesion, input)
+  }
+
+  static addSeason = async (params: AddSeasonParams) => {
+    return await withMongoDBSession(this._addSeasonWithSession, params)
   }
 
   static addEpisode = async (input: AddEpisodeInput) => {
     return await withMongoDBSession(this._addEpisodesWithSession, input)
+  }
+
+  static editVideo = async ({ vidId, type, changes }: EditVideoInput) => {
+    const video = await VideoModel.findOne({ _id: vidId, type })
+
+    if (video == null) {
+      throw new OperationalError('video does not exist or does not exist as this type', 400)
+    }
+
+    delete changes['_id']
+
+    const updatedVid = await VideoModel.findOneAndUpdate(
+      {
+        _id: vidId,
+        type,
+      },
+      changes,
+      {
+        new: true,
+      },
+    )
+
+    if (updatedVid == null) {
+      throw new OperationalError('Could not update video or video does not exist', 404)
+    }
+
+    return updatedVid
+  }
+
+  static deleteVideo = async (vidId: string, type: AllVideoTypes) => {
+    const deletedVid = await VideoModel.findOneAndDelete({ _id: vidId, type })
+
+    if (deletedVid == null) {
+      throw new OperationalError(`Not found or video is not a ${type} `, 404)
+    }
+  }
+
+  static getVideos = async (
+    type: AllVideoTypes,
+    queryParams: QueryParamsFeaturesOptions['queryParams'],
+  ) => {
+    const page = handleDefaultNumAndUnknown(queryParams.page, 1)
+    const limit = handleDefaultNumAndUnknown(queryParams.limit, 1)
+    const vids = (await VideoRepo.fetchByType(type, page, limit)) as Movie[]
+    const vidsWithSources = await MovieMediaSourcesUtils.resolveMovieMediaSources(
+      vids,
+      this._resolveWithMediaSources(queryParams),
+    )
+
+    return getPromiseeAllFulfilledResults(vidsWithSources)
   }
 
   static getSeasonsAndEpisodes = async (
@@ -574,6 +652,15 @@ export class AdminUploadService {
 
     const page = handleDefaultNumAndUnknown(queryParams.page, 1)
     const limit = handleDefaultNumAndUnknown(queryParams.limit, 10)
-    return await VideoRepo.fetchSeasonsAndEpisodes(vidSeriesId, page, limit)
+
+    const seasons = (await VideoRepo.fetchSeasonsAndEpisodes(vidSeriesId, page, limit)) as Season[]
+
+    const seasonsWithMediaSources = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
+      seasons,
+      this._resolveWithMediaSources(queryParams),
+      MovieMediaSourcesUtils.resolveEpisodesMediaSources,
+    )
+
+    return seasonsWithMediaSources
   }
 }

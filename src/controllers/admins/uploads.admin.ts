@@ -1,19 +1,23 @@
 import { validate } from '../../middlewares/requestValidator'
 import { videoTypes } from '../../models/videos.model'
+
 import {
   AdminUploadService,
   AllVideoTypes,
   MovieData,
 } from '../../services/core/AdminUploadService'
+
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
+
 import {
   addEpisodeSchema,
   addMovieOrSkitSchema,
   addMusicVideoSchema,
   addSeriesSchema,
+  createSeasonSchema,
 } from '../../validations/admin'
 
 type RequestFiles =
@@ -52,7 +56,6 @@ export class AdminUploadController {
     Object.assign(data, {
       ...data,
       subTitle: files.subTitle?.[0],
-      trailer: files.trailer?.[0],
       video: files.video?.[0],
     })
 
@@ -97,30 +100,40 @@ export class AdminUploadController {
       ...JSON.parse(body.data),
       landscapePoster: files.landscapePoster?.[0],
       portraitPoster: files.portraitPoster?.[0],
+      trailer: files.trailer?.[0],
     }
 
     this._validateAddMovieData(type, data, files)
 
-    await AdminUploadService.addVideo({
-      type,
-      data: data,
-      adminId: admin.id,
-    })
-
     sendResponse({
       res,
       message: `${type} added successfully`,
+      data: await AdminUploadService.addVideo({
+        type,
+        data: data,
+        adminId: admin.id,
+      }),
     })
   })
 
-  static addSeason = Catch.async(async (req, res) => {
+  static addSeason = Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
+    const files = this._checkFiles(reqFiles)
+
+    const _data = {
+      trailerLink: body.trailerLink,
+      portraitPhoto: files['portraitPhoto'][0],
+      landscapePhoto: files['portraitPhoto'][0],
+      trailer: files['trailer'][0],
+    }
+
+    validate(createSeasonSchema, _data)
+
+    const data = { ..._data, videoId: params.videoId, adminId: GetDefined.loggedInUser(user).id }
+
     sendResponse({
       res,
       message: `season added successfully`,
-      data: await AdminUploadService.addSeason(
-        req.params.videoId,
-        GetDefined.loggedInUser(req.user).id,
-      ),
+      data: await AdminUploadService.addSeason(data),
     })
   })
 
@@ -148,15 +161,14 @@ export class AdminUploadController {
 
     validate(addEpisodeSchema, data)
 
-    await AdminUploadService.addEpisode({
-      seasonId: req.params.seasonId,
-      adminId: GetDefined.loggedInUser(req.user).id,
-      data,
-    })
-
     sendResponse({
       res,
       message: 'episode added successfully',
+      data: await AdminUploadService.addEpisode({
+        seasonId: req.params.seasonId,
+        adminId: GetDefined.loggedInUser(req.user).id,
+        data,
+      }),
     })
   })
 

@@ -33,7 +33,6 @@ import {
   createPlanSchema,
   createTrailerSchema,
   createUpcomingEventSchema,
-  addEpisodeSchema,
   getPhotoURLSchema,
   updatePayOutReqStatusSchema,
   updatePlanSchema,
@@ -227,7 +226,12 @@ superAdminRouter.post(
 )
 
 // Add Season
-superAdminRouter.post('/uploads/seasons/add/:videoId', AdminUploadController.addSeason)
+superAdminRouter.post(
+  '/uploads/seasons/add/:videoId',
+  Multer.adminUploadSeasonConfig,
+  AdminUploadController.addSeason,
+)
+
 superAdminRouter.get('/uploads/seasons/fetch/:vidId', AdminUploadController.fetchSeasonsAndEpisodes)
 
 superAdminRouter.get('/uploads/fetch/:type', AdminUploadController.fetchVideos)

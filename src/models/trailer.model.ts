@@ -16,7 +16,7 @@ const trailerSchema = new Schema(
 
     parentType: {
       type: String,
-      enum: ['vod', 'episode'],
+      enum: ['vod', 'episode', 'season'],
       required: true,
     },
   },

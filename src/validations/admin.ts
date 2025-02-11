@@ -29,6 +29,15 @@ export const addEpisodeSchema = Joi.object({
   .xor('video', 'videoLink')
   .and('subTitle', 'subTitleLanguage')
 
+export const createSeasonSchema = Joi.object({
+  trailerLink: Joi.string(),
+  portraitPhoto: Joi.object(),
+  landscapePhoto: Joi.object(),
+  trailer: Joi.object(),
+})
+  .and('portraitPhoto', 'landscapePhoto')
+  .xor('trailerLink', 'trailer')
+
 export const addMovieOrSkitSchema = Joi.object({
   title: STRING_SCHEMA.required(),
   pg: STRING_SCHEMA.required(),
@@ -78,11 +87,14 @@ export const addSeriesSchema = Joi.object({
   landscapePoster: Joi.object().required(),
   portraitPoster: Joi.object().required(),
 
+  trailer: Joi.object().optional(), // file
+  trailerLink: STRING_SCHEMA.optional(),
+
   //
   genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
   cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
   expiryDate: ISO_STRING_SCHEMA,
-})
+}).xor('trailerLink', 'trailer')
 
 export const addMusicVideoSchema = Joi.object({
   title: STRING_SCHEMA.required(),
