@@ -258,14 +258,14 @@ export class CustomerMediaController extends MediaController {
     })
 
   static bannerContents = Catch.async(async (_, res) => {
-    const [featuredLives, featuredVods, engagedLives, engagedVods] = await Promise.all([
+    const [featuredLives, engagedLives, featuredVods, engagedVods] = await Promise.all([
       // featured
-      LiveRepo.getFeatured().sort({ $natural: -1 }).limit(10),
-      VideoRepo.getFeatured().sort({ $natural: -1 }).limit(10),
+      LiveRepo.getFeatured(),
+      LiveRepo.getMostEngaged(),
 
       // engagements
-      LiveRepo.getMostEngaged(),
-      VideoRepo.getMostEngaged(),
+      VideoRepo.fetchFeatured(),
+      VideoRepo.fetchMostEngaged(),
     ])
 
     sendResponse({

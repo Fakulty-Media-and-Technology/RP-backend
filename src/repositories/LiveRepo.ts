@@ -1,30 +1,16 @@
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, PipelineStage } from 'mongoose'
 import { LiveModel, LiveSchema } from '../models/lives.model'
+import { skip } from '../utils/QueryParamsFeatures'
+import { toObjectId } from './VideoRepo'
+
+type FetchLives = {
+  prevStages: PipelineStage[]
+  sortStage?: PipelineStage.Sort
+  page: number
+  limit: number
+}
 
 export class LiveRepo {
-  static getByStreamKey = async (streamKey: string) => LiveModel.findOne({ stream_key: streamKey })
-
-  static getChannels = () => LiveModel.find({ type: 'channel' })
-
-  static totalActiveLiveQuery = () => LiveModel.find({ active: true })
-
-  static searchLivesByTextReg = (textReg: RegExp) => {
-    return LiveModel.find({
-      $or: [
-        { title: { $regex: textReg } },
-        { sub_title: { $regex: textReg } },
-        { description: { $regex: textReg } },
-      ],
-    })
-  }
-
-  static getFeatured = () => {
-    return LiveModel.find({
-      featured: true,
-      expired: false,
-    })
-  }
-
   static addFeatured = (id: string, expiry: string) => {
     return LiveModel.findByIdAndUpdate(id, {
       featured: true,
@@ -32,14 +18,135 @@ export class LiveRepo {
     })
   }
 
-  static getActiveById = (id: string) => {
-    return LiveModel.findOne({ _id: id, active: true })
+  static totalActiveLiveQuery = () => LiveModel.find({ active: true })
+
+  static getByStreamKey = async (streamKey: string) => {
+    return await this.fetchLivesAggr({
+      prevStages: [
+        {
+          $match: { stream_key: streamKey },
+        },
+      ],
+      page: 1,
+      limit: 1,
+    })
   }
 
-  static getSelectedLive = (filter: FilterQuery<LiveSchema>) => {
-    return LiveModel.find(filter).select(
-      '-__v -client_id -createdAt -updatedAt -sponsored -popular -likes -stream_key',
-    )
+  static getChannels = async (page = 1, limit = 10) => {
+    return await this.fetchLivesAggr({
+      prevStages: [
+        {
+          $match: {
+            type: 'channel',
+          },
+        },
+      ],
+      page,
+      limit,
+    })
+  }
+
+  static searchLivesByTextReg = async (textReg: RegExp, page = 1, limit = 10) => {
+    return await this.fetchLivesAggr({
+      prevStages: [
+        {
+          $match: {
+            $or: [
+              { title: { $regex: textReg } },
+              { sub_title: { $regex: textReg } },
+              { description: { $regex: textReg } },
+            ],
+          },
+        },
+      ],
+      page,
+      limit,
+    })
+  }
+
+  static getFeatured = async (page = 1, limit = 10) => {
+    return await this.fetchLivesAggr({
+      prevStages: [{ $match: { featured: true, expired: false } }],
+      page,
+      limit,
+    })
+  }
+
+  static getActiveById = async (id: string, page = 1, limit = 10) => {
+    return await this.fetchLivesAggr({
+      prevStages: [{ $match: { _id: toObjectId(id), active: true } }],
+      page,
+      limit,
+    })
+  }
+
+  static getSelectedLive = async (filter: FilterQuery<LiveSchema>) => {
+    return await this.fetchLivesAggr({
+      prevStages: [{ $match: filter }],
+      page: 1,
+      limit: 500,
+    })
+  }
+
+  static fetchLivesByType = async (type: LiveSchema['type'], page: number, limit: number) => {
+    return this.fetchLivesAggr({
+      prevStages: [{ $match: { type } }],
+      sortStage: { $sort: { createdAt: -1 } },
+      page,
+      limit,
+    })
+  }
+
+  static fetchLivesAggr = async ({ prevStages, sortStage, page, limit }: FetchLives) => {
+    const sortPaginateStages: PipelineStage[] = [{ $skip: skip(page, limit) }, { $limit: limit }]
+
+    if (sortStage) sortPaginateStages.unshift(sortStage)
+
+    const aggr = await LiveModel.aggregate([
+      ...prevStages,
+      {
+        $lookup: {
+          from: 'poster_images',
+          localField: '_id',
+          foreignField: 'video_id',
+          as: 'previewPhoto',
+          pipeline: [{ $match: { dimension: 'live' } }, { $project: { key: true, bucket: true } }],
+        },
+      },
+      {
+        $lookup: {
+          from: 'video_uploads',
+          localField: '_id',
+          foreignField: 'parentId',
+          as: 'previewVideoUpload',
+          pipeline: [
+            { $match: { isTranscoded: true } },
+            { $project: { key: true, isTranscoded: true, resolutions: true } },
+          ],
+        },
+      },
+      ...sortPaginateStages,
+      {
+        $addFields: {
+          coverPhoto: { $first: '$previewPhoto' },
+          previewVideoUpload: { $ifNull: [{ $first: '$previewVideoUpload' }, null] },
+          activeViews: '$active_views',
+          featExpiry: '$feat_expiry',
+          clientId: '$client_id',
+        },
+      },
+      {
+        $project: {
+          previewPhoto: false,
+          feat_expiry: false,
+          active_views: false,
+          client_id: false,
+          __v: false,
+        },
+      },
+    ])
+
+    return aggr
   }
 
   static getMostEngaged = () => {

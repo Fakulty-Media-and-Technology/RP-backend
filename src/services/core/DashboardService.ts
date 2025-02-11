@@ -1,6 +1,4 @@
-import { Request } from 'express'
 import { LiveRepo } from '../../repositories/LiveRepo'
-import { PosterImageRepo } from '../../repositories/PosterImageRepo'
 import { SubscriptionRepo } from '../../repositories/SubscriptionRepo'
 import { UserRepo } from '../../repositories/UserRepo'
 import { VideoRepo } from '../../repositories/VideoRepo'
@@ -8,10 +6,14 @@ import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
-import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+
+import {
+  handleDefaultNumAndUnknown,
+  QueryParamsFeaturesOptions,
+} from '../../utils/QueryParamsFeatures'
 
 import { MediaManagement } from '../media-management'
-import { MediaAccess } from '../media-access'
+import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 
 function isValidEmail(email: string) {
   const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
@@ -46,8 +48,6 @@ export class DashboardService {
       }
     }
 
-    const prevPhoto = currentUser.photo
-
     if (photo) {
       if (currentUser.photo)
         await MediaManagement.deleteObject(currentUser.photo.Key, currentUser.photo.Bucket)
@@ -66,53 +66,31 @@ export class DashboardService {
     })
   }
 
-  static fetchVideosByType = async (type: unknown, queryParams: Request['query']) => {
+  static fetchVideosByType = async (
+    type: any,
+    queryParams: QueryParamsFeaturesOptions['queryParams'],
+  ) => {
     if (typeof type !== 'string') {
       throw new OperationalError('invalid or missing type', 400)
     }
 
-    const features = new QueryParamsFeatures(
-      VideoRepo.findByType(type).select('-__v').sort({ createdAt: -1 }),
-      {
-        queryParams,
-        defaultLimit: 5,
-      },
-    ).paginate()
-
-    const videos = await features.query
-
-    const finalVideos = await Promise.all(
-      videos.map(async video => {
-        const finalVideo = {
-          ...video,
-          photo: {},
-        }
-
-        const vidPoster = await PosterImageRepo.findByVideoId(video.id)
-
-        if (vidPoster) {
-          finalVideo.photo = await MediaAccess.getSignedUrl(
-            vidPoster.bucket,
-            vidPoster.key,
-            'photo',
-          )
-        }
-
-        return finalVideo
-      }),
+    const vids = await VideoRepo.fetchByType(
+      type as any,
+      handleDefaultNumAndUnknown(queryParams.page, 1),
+      handleDefaultNumAndUnknown(queryParams.limit, 10),
     )
 
-    return finalVideos
+    return await MovieMediaSourcesUtils.resolveMovieMediaSources(
+      vids,
+      queryParams.withMediaSources === 'true',
+    )
   }
 
-  static fetchChannels = async (query: Request['query']) => {
-    const features = new QueryParamsFeatures(LiveRepo.getChannels().select('title cover_photo'), {
-      queryParams: query,
-      defaultLimit: 4000,
-      defaultPage: 1,
-    }).paginate()
-
-    return await features.query
+  static fetchChannels = async (query: QueryParamsFeaturesOptions['queryParams']) => {
+    return await LiveRepo.getChannels(
+      handleDefaultNumAndUnknown(query.page, 1),
+      handleDefaultNumAndUnknown(query.limit, 10),
+    )
   }
 
   static fetchBalanceAndUser = async () => {

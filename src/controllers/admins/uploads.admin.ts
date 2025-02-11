@@ -27,19 +27,19 @@ type RequestFiles =
   | Express.Multer.File[]
   | undefined
 
-export class AdminUploadController {
-  private static _checkFiles = (files?: RequestFiles) => {
-    if (files == null) {
-      throw new OperationalError('expected at least one file', 400)
-    }
-
-    if (Array.isArray(files)) {
-      throw new OperationalError('expected multiple files as an object', 400)
-    }
-
-    return files
+export const checkFiles = (files?: RequestFiles) => {
+  if (files == null) {
+    throw new OperationalError('expected at least one file', 400)
   }
 
+  if (Array.isArray(files)) {
+    throw new OperationalError('expected multiple files as an object', 400)
+  }
+
+  return files
+}
+
+export class AdminUploadController {
   private static _validateVideoType = (type: string) => {
     if (!videoTypes.includes(type as any)) {
       throw new OperationalError(`Valid video types are ${videoTypes.join(' || ')} `, 400)
@@ -90,7 +90,7 @@ export class AdminUploadController {
       )
     }
 
-    const files = this._checkFiles(reqFiles)
+    const files = checkFiles(reqFiles)
 
     if (Object.keys(files).length === 0) {
       throw new OperationalError('Expected at least one file', 400)
@@ -117,7 +117,7 @@ export class AdminUploadController {
   })
 
   static addSeason = Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
-    const files = this._checkFiles(reqFiles)
+    const files = checkFiles(reqFiles)
 
     const _data = {
       trailerLink: body.trailerLink,
@@ -150,7 +150,7 @@ export class AdminUploadController {
     }
 
     if (!!req.files) {
-      const files = this._checkFiles(req.files)
+      const files = checkFiles(req.files)
 
       Object.assign(data, {
         subTitle: files.subTitle?.[0],

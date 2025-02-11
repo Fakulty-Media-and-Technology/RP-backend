@@ -1,9 +1,42 @@
-import { MedaiService } from '../../services/core/MediaService'
+import { MedaiService, CreateLiveData } from '../../services/core/MediaService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
+import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
+import { checkFiles } from '../admins/uploads.admin'
+import { validate } from '../../middlewares/requestValidator'
+import { createLiveSchema } from '../../validations/admin'
 
 export class MediaController {
+  static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
+    Catch.async(async (req, res) => {
+      const { data: _data } = req.body
+
+      if (_data == null || typeof _data !== 'string') {
+        throw new OperationalError(
+          'formData.data is required and must be a JSON serialized string',
+          400,
+        )
+      }
+
+      const files = checkFiles(req.files)
+      const parsedData = JSON.parse(_data)
+      const data: CreateLiveData = {
+        ...parsedData,
+        previewVideo: files.previewVideo?.[0],
+        coverPhoto: files.coverPhoto?.[0],
+        clientId: isAdmin ? parsedData.clientId : GetDefined.loggedInUser(req.user).id,
+      }
+
+      validate(createLiveSchema, data)
+
+      sendResponse({
+        res,
+        data: await MedaiService.createLive(data),
+        message: 'live stream created, credentials are on attached user dashboard',
+      })
+    })
+
   static adminGetPhotoUrl = Catch.async(async (req, res) => {
     const { bucket, key } = req.body
     const image = await MedaiService.getPhotoUrl(bucket, key)

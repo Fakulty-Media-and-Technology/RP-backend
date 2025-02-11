@@ -43,7 +43,6 @@ export class AdminManagemediaController extends MediaController {
       sendResponse({
         res,
         data: await AdminManageMediaService.getLivesByType(type, query),
-        message: `live ${type}s fecthed`,
       })
     })
 

@@ -19,7 +19,7 @@ const posterSchema = new Schema(
 
     dimension: {
       type: String,
-      enum: ['landscape', 'portrait'],
+      enum: ['landscape', 'portrait', 'live'],
     },
   },
   {

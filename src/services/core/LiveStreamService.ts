@@ -18,124 +18,6 @@ type CreateClientWithSessionInput = {
 type ExtendLiveEventWithSessionInput = CreateClientWithSessionInput
 
 export class LiveStreamService {
-  private static _createClientWithSession = async (
-    { data, currentUser }: CreateClientWithSessionInput,
-    session: ClientSession,
-  ) => {
-    const { id: client_id } = currentUser
-
-    const {
-      title,
-      sub_title,
-      cover_photo,
-      vid_class,
-      pg,
-      category,
-      description,
-      type,
-      start,
-      expiry,
-      sponsored,
-      popular,
-      video,
-      location,
-      payment_id,
-    } = data
-
-    if (
-      !title ||
-      !sub_title ||
-      !cover_photo ||
-      !vid_class ||
-      !pg ||
-      !category ||
-      !description ||
-      !type ||
-      !sponsored ||
-      !popular ||
-      !start ||
-      !payment_id ||
-      !location
-    ) {
-      throw new OperationalError('all important fields are required', 400)
-    }
-
-    const vclient_id = await UserRepo.getClientByRolesAndId(client_id, [
-      'channel',
-      'event',
-      'podcast',
-      'tvshow',
-    ])
-
-    if (!vclient_id) {
-      throw new OperationalError('assigned user not found', 400)
-    }
-
-    const confirmPayment = await PaymentModel.findOne({
-      _id: payment_id,
-      user_id: vclient_id._id,
-      status: 'success',
-      is_used: false,
-    })
-
-    if (!confirmPayment) {
-      throw new OperationalError('your payment is invalid', 400)
-    }
-
-    if (confirmPayment.amount !== calcLiveCharges(start, expiry)) {
-      throw new OperationalError('payment made does not match charges', 400)
-    }
-
-    const streamOngoing = await LiveRepo.getActiveById(client_id)
-
-    if (streamOngoing) {
-      throw new OperationalError('client have an ongoing stream', 400)
-    }
-
-    const scheduledStream = await LiveModel.find({
-      _id: client_id,
-      active: false,
-      expired: true,
-    })
-
-    if (scheduledStream.length > 0) {
-      throw new OperationalError('client alrealy has a pending scheduled stream', 400)
-    }
-
-    await new LiveModel({
-      client_id: vclient_id._id,
-      title: title,
-      sub_title: sub_title,
-      stream_key: await getUniqueStreamKey(),
-      cover_photo: cover_photo,
-      vid_class: vid_class,
-      pg: pg,
-      category: category,
-      description: description,
-      type: type,
-      start: new Date(start),
-      expiry: new Date(expiry),
-      sponsored,
-      popular,
-      location,
-      preview_video: video,
-      payment_id: confirmPayment._id,
-    }).save({ session })
-
-    const updatedPayment = await PaymentModel.findByIdAndUpdate(
-      confirmPayment._id,
-      {
-        is_used: true,
-        use_case: 'live schedule',
-      },
-      { session },
-    )
-
-    if (updatedPayment == null) {
-      throw new OperationalError('could not update payment', 500)
-    }
-  }
-
   private static _extendLiveEventWithSession = async (
     { currentUser, data }: ExtendLiveEventWithSessionInput,
     session: ClientSession,
@@ -251,13 +133,6 @@ export class LiveStreamService {
     })
 
     return modifiedCredentials
-  }
-
-  static createClient = async (currentUser: LoggedInUser, data: Record<string, any>) => {
-    await withMongoDBSession(this._createClientWithSession, {
-      currentUser,
-      data,
-    })
   }
 
   static extendLiveEvent = async (currentUser: LoggedInUser, data: Record<string, any>) => {

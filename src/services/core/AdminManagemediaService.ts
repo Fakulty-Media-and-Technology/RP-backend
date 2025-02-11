@@ -5,12 +5,13 @@ import { LiveModel, LiveSchema } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { UserModel } from '../../models/users.model'
 import { OperationalError } from '../../utils/OperationalError'
-import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { handleDefaultNumAndUnknown, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { getUniqueStreamKey } from '../../utils/live'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
-import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
+import { LiveRepo } from '../../repositories/LiveRepo'
+import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 
 export class AdminManageMediaService {
   static searchClient = async (searchText: string, query: Request['query']) => {
@@ -22,23 +23,17 @@ export class AdminManageMediaService {
       queryParams: query,
     })
 
-    const clients = await features.paginate().query
-    return clients
+    return await features.paginate().query
   }
 
   static getLivesByType = async (type: LiveSchema['type'], query: Request['query']) => {
-    const DBQuery = LiveModel.find({ type })
-      .select('_id title pg type vid_class active expiry cover_photo views')
-      .populate('preview_video')
+    const lives = await LiveRepo.fetchLivesByType(
+      type,
+      handleDefaultNumAndUnknown(query.page, 1),
+      handleDefaultNumAndUnknown(query.limit, 10),
+    )
 
-    const features = new QueryParamsFeatures(DBQuery, {
-      defaultLimit: 10,
-      defaultPage: 1,
-      queryParams: query,
-    })
-
-    const lives = await features.paginate().query
-    return lives
+    return await LiveMediaSourcesUtils.resolveSources(lives)
   }
 
   static addSubtitle = async (data: Record<string, any>) => {
@@ -78,10 +73,12 @@ export class AdminManageMediaService {
       location,
     } = data
 
-    const vclient_id = await UserModel.findOne({
-      _id: client_id,
-      role: { $in: ['channel', 'event', 'podcast', 'tvshow'] },
-    })
+    const vclient_id = await UserRepo.getClientByRolesAndId(data.clientId, [
+      'channel',
+      'event',
+      'podcast',
+      'tvshow',
+    ])
 
     if (!vclient_id) {
       throw new OperationalError('Client not found', 404)
@@ -100,7 +97,7 @@ export class AdminManageMediaService {
       throw new OperationalError('client has a scheduled stream', 400)
     }
 
-    const live = await new LiveModel({
+    await new LiveModel({
       client_id: vclient_id._id,
       title: title,
       sub_title: sub_title,
@@ -119,14 +116,14 @@ export class AdminManageMediaService {
       preview_video: video,
     }).save({ session })
 
-    if (live.preview_video) {
-      await VideoUploadRepo.updateWithParent({
-        session,
-        id: live.preview_video.toString(),
-        parentId: live._id.toString(),
-        parentType: 'live',
-      })
-    }
+    //   if (live.preview_video) {
+    //     await VideoUploadRepo.updateWithParent({
+    //       session,
+    //       id: live.preview_video.toString(),
+    //       parentId: live._id.toString(),
+    //       parentType: 'live',
+    //     })
+    //   }
   }
 
   static createLive = async (data: Record<string, any>) => {

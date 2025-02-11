@@ -627,9 +627,9 @@ export class AdminUploadService {
   ) => {
     const page = handleDefaultNumAndUnknown(queryParams.page, 1)
     const limit = handleDefaultNumAndUnknown(queryParams.limit, 1)
-    const vids = (await VideoRepo.fetchByType(type, page, limit)) as Movie[]
+
     const vidsWithSources = await MovieMediaSourcesUtils.resolveMovieMediaSources(
-      vids,
+      await VideoRepo.fetchByType(type, page, limit),
       this._resolveWithMediaSources(queryParams),
     )
 

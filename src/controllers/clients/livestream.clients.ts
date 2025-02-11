@@ -4,15 +4,6 @@ import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 export class ClientLiveStreamController {
-  static createLiveClient = Catch.async(async ({ user, body }, res) => {
-    await LiveStreamService.createClient(GetDefined.loggedInUser(user), body)
-
-    sendResponse({
-      res,
-      message: 'Credentials added to dashboard',
-    })
-  })
-
   static getLiveStreamCredentials = Catch.async(async ({ user }, res) => {
     sendResponse({
       res,

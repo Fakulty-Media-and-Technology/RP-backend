@@ -9,5 +9,5 @@ export class VideoService {
 
   static addFeatured = async (id: string, expiry: string) => await VideoRepo.addFeatured(id, expiry)
 
-  static getFeaturedVideos = async () => await VideoRepo.getFeatured()
+  static getFeaturedVideos = async () => await VideoRepo.fetchFeatured()
 }

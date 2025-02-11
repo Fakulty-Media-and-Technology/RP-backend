@@ -57,9 +57,15 @@ export class Multer {
     { name: 'landscapePoster', maxCount: 1 },
     { name: 'portraitPoster', maxCount: 1 },
   ])
+
   static adminUploadSeasonConfig = multer({ storage: multer.memoryStorage() }).fields([
     { name: 'trailer', maxCount: 1 },
     { name: 'portraitPhoto', maxCount: 1 },
     { name: 'landscapePhoto', maxCount: 1 },
+  ])
+
+  static createLiveConfig = multer({ storage: multer.memoryStorage() }).fields([
+    { name: 'previewVideo', maxCount: 1 },
+    { name: 'coverPhoto', maxCount: 1 },
   ])
 }

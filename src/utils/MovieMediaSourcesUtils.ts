@@ -2,6 +2,14 @@ import { MediaAccess } from '../services/media-access'
 import { Episode, GetVideoSourceParams, Movie, Season } from '../types/movie'
 import { OperationalError } from './OperationalError'
 
+export const getVidUploadSource = (
+  videoUpload: NonNullable<Movie['trailerVideoUpload']>,
+  targetRes = '1080',
+) => {
+  const res = videoUpload.resolutions.find(r => r.resolution === targetRes)
+  return res == null ? null : MediaAccess.getCloudFrontSignedUrl(res.key)
+}
+
 export class MovieMediaSourcesUtils {
   public static getMovieVideoSource = (vid: GetVideoSourceParams, routine: 'vid' | 'trailer') => {
     switch (routine) {
@@ -11,9 +19,7 @@ export class MovieMediaSourcesUtils {
         }
 
         if (vid.videoUpload) {
-          const resolution1080 = vid.videoUpload.resolutions.find(r => r.resolution === '1080')
-          if (resolution1080 == null) return null
-          return MediaAccess.getCloudFrontSignedUrl(resolution1080.key)
+          return getVidUploadSource(vid.videoUpload)
         }
 
         return null
@@ -23,14 +29,9 @@ export class MovieMediaSourcesUtils {
         }
 
         if (vid.trailerVideoUpload) {
-          const resolution1080 = vid.trailerVideoUpload.resolutions.find(
-            r => r.resolution === '1080',
-          )
-
-          if (resolution1080 == null) return null
-
-          return MediaAccess.getCloudFrontSignedUrl(resolution1080.key)
+          return getVidUploadSource(vid.trailerVideoUpload)
         }
+
         return null
 
       default:
@@ -70,6 +71,8 @@ export class MovieMediaSourcesUtils {
         if (withMediaSources) {
           res.trailerVideoUpload = undefined
           res.videoUpload = undefined
+          res.subtitleLang = episode.subtitle?.language
+
           res.mediaSources = {
             videoSource: this.getMovieVideoSource(episode, 'vid'),
             trailerSource: this.getMovieVideoSource(episode, 'trailer'),
@@ -125,6 +128,7 @@ export class MovieMediaSourcesUtils {
           res.mediaSources = {
             videoSource: this.getMovieVideoSource(vid, 'vid'),
             trailerSource: this.getMovieVideoSource(vid, 'trailer'),
+            subtitleLang: res.subtitle?.language as any,
             subtitleSource: vid.subtitle
               ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
               : null,

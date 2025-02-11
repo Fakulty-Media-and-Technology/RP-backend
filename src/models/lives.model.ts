@@ -1,5 +1,4 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
-import { previewPhotoSchema } from './commonSchema'
 import { OperationalError } from '../utils/OperationalError'
 
 const schema = new Schema(
@@ -36,12 +35,13 @@ const schema = new Schema(
       required: true,
     },
 
-    cover_photo: {
-      type: previewPhotoSchema,
+    coverPhoto: {
+      type: Schema.Types.ObjectId,
+      ref: 'poster_images',
       required: true,
     },
 
-    preview_video: {
+    previewVideoUpload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
     },
@@ -74,12 +74,8 @@ const schema = new Schema(
     type: {
       type: String,
       enum: ['channel', 'event', 'tvshow', 'podcast', 'sport'],
+      required: true,
     },
-
-    // participants: {
-    //   type: Number,
-    //   default: 0,
-    // },
 
     start: {
       type: Date,
@@ -91,7 +87,6 @@ const schema = new Schema(
       required: true,
     },
 
-
     views: [
       {
         type: Schema.Types.ObjectId,
@@ -102,13 +97,6 @@ const schema = new Schema(
     active_views: {
       type: Number,
     },
-
-    // likes: [
-    //   {
-    //     type: Schema.Types.ObjectId,
-    //     ref: 'users',
-    //   },
-    // ],
 
     sponsored: {
       type: Boolean,
@@ -133,18 +121,6 @@ const schema = new Schema(
     timestamps: true,
   },
 )
-
-schema.pre('save', function (next) {
-  if (this.start && new Date() > this.start) {
-    throw new OperationalError('start date of live event can not be backdated', 400)
-  }
-
-  if (this.start && this.expiry && this.start >= this.expiry) {
-    throw new OperationalError('start date must be lesser than expiry date', 400)
-  }
-
-  next()
-})
 
 export const LiveModel = model('lives', schema)
 export type LiveSchema = InferSchemaType<typeof schema>

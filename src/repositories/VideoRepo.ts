@@ -6,8 +6,19 @@ import { SeasonModel } from '../models/seasons.model'
 
 export const toObjectId = (val: string) => new Types.ObjectId(val)
 
+export type FetchVideosParams = {
+  prevStages: PipelineStage[]
+  sortStage?: PipelineStage.Sort
+  page: number
+  limit: number
+}
+
 export class VideoRepo {
-  static findByType = (type: string) => VideoModel.find({ type })
+  static addFeatured = (id: string, expiry: string) =>
+    VideoModel.findByIdAndUpdate(id, {
+      featured: true,
+      feat_expiry: new Date(expiry),
+    })
 
   static totalVideosCountQuery = (filter: FilterQuery<Video> = {}) =>
     VideoModel.find(filter).countDocuments()
@@ -24,13 +35,44 @@ export class VideoRepo {
       $or: [{ title: { $regex: textReg } }, { description: { $regex: textReg } }],
     })
 
-  static getFeatured = () => VideoModel.find({ featured: true })
+  private static _mostEngagedPrevStages: PipelineStage[] = [
+    {
+      $lookup: {
+        from: 'comments',
+        foreignField: 'parentId',
+        localField: '_id',
+        as: 'comments',
 
-  static addFeatured = (id: string, expiry: string) =>
-    VideoModel.findByIdAndUpdate(id, {
-      featured: true,
-      feat_expiry: new Date(expiry),
-    })
+        pipeline: [{ $match: { parentType: 'vod' } }],
+      },
+    },
+    {
+      $lookup: {
+        from: 'ratings',
+        foreignField: 'parentId',
+        localField: '_id',
+        as: 'ratings',
+
+        pipeline: [
+          { $match: { parentType: 'vod' } },
+          { $group: { _id: null, totalRatings: { $sum: '$rate' } } },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        enagements: {
+          $sum: [
+            { $size: '$likes' },
+            { $size: '$comments' },
+            { $ifNull: [{ $first: '$ratings.totalRatings' }, 0] },
+          ],
+        },
+      },
+    },
+    { $sort: { enagements: -1 } },
+    { $project: { ratings: false, comments: false, __v: false } },
+  ]
 
   private static _episodesPipeline = [
     {
@@ -132,9 +174,14 @@ export class VideoRepo {
     return aggr
   }
 
-  static fetchVideoAggr = async (prevStages: PipelineStage[], page: number, limit: number) => {
+  static fetchVideoAggr = async ({ prevStages, sortStage, page, limit }: FetchVideosParams) => {
+    const sortPaginateStages: PipelineStage[] = [{ $skip: skip(page, limit) }, { $limit: limit }]
+
+    if (sortStage) sortPaginateStages.unshift(sortStage)
+
     const aggr = await VideoModel.aggregate([
       ...prevStages,
+
       {
         $lookup: {
           from: 'poster_images',
@@ -177,7 +224,7 @@ export class VideoRepo {
           localField: '_id',
           foreignField: 'video_id',
           as: 'subtitle',
-          pipeline: [{ $project: { key: true, bucket: true } }],
+          pipeline: [{ $project: { key: true, bucket: true, language: true } }],
         },
       },
       {
@@ -229,6 +276,19 @@ export class VideoRepo {
           averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
         },
       },
+
+      // ensures that for video with video uploads, only docs with vidUpload.isTranscoded: true is returned
+      {
+        $match: {
+          $or: [
+            { $and: [{ videoLink: { $ne: null } }, { videoUpload: null }] },
+            { $and: [{ videoLink: null }, { videoUpload: { $ne: null } }] },
+          ],
+        },
+      },
+
+      ...sortPaginateStages,
+
       {
         $lookup: {
           from: 'seasons',
@@ -271,57 +331,42 @@ export class VideoRepo {
           updatedAt: false,
         },
       },
-      { $sort: { createdAt: -1 } },
-      { $skip: skip(page, limit) },
-      { $limit: limit },
     ])
 
     return aggr
   }
 
-  static fetchByType = async (type: AllVideoTypes, page: number, limit: number) => {
-    return await this.fetchVideoAggr([{ $match: { type } }], page, limit)
+  static fetchByType = async (type: AllVideoTypes, page = 1, limit = 20) => {
+    return await this.fetchVideoAggr({
+      prevStages: [{ $match: { type } }],
+      sortStage: { $sort: { createdAt: -1 } },
+      page,
+      limit,
+    })
+  }
+  static fetchById = async (id: string) => {
+    return await this.fetchVideoAggr({
+      prevStages: [{ $match: { _id: toObjectId(id) } }],
+      page: 1,
+      limit: 1,
+    })
   }
 
-  static getMostEngaged = async () => {
-    return VideoModel.aggregate([
-      {
-        $lookup: {
-          from: 'comments',
-          foreignField: 'parentId',
-          localField: '_id',
-          as: 'comments',
+  static fetchFeatured = async (page = 1, limit = 5) => {
+    return await this.fetchVideoAggr({
+      prevStages: [{ $match: { featured: true } }],
+      sortStage: { $sort: { $natural: -1 } },
+      page,
+      limit,
+    })
+  }
 
-          pipeline: [{ $match: { parentType: 'vod' } }],
-        },
-      },
-      {
-        $lookup: {
-          from: 'ratings',
-          foreignField: 'parentId',
-          localField: '_id',
-          as: 'ratings',
-
-          pipeline: [
-            { $match: { parentType: 'vod' } },
-            { $group: { _id: null, totalRatings: { $sum: '$rate' } } },
-          ],
-        },
-      },
-      {
-        $addFields: {
-          enagements: {
-            $sum: [
-              { $size: '$likes' },
-              { $size: '$comments' },
-              { $ifNull: [{ $first: '$ratings.totalRatings' }, 0] },
-            ],
-          },
-        },
-      },
-      { $sort: { enagements: -1 } },
-      { $limit: 10 },
-      { $project: { ratings: false, comments: false, __v: false } },
-    ])
+  static fetchMostEngaged = async (page = 1, limit = 5) => {
+    return await this.fetchVideoAggr({
+      prevStages: this._mostEngagedPrevStages,
+      sortStage: { $sort: { enagements: -1 } },
+      page,
+      limit,
+    })
   }
 }

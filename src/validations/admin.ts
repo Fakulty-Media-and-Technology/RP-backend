@@ -141,23 +141,21 @@ export const getPhotoURLSchema = {
   }),
 }
 
-export const createLiveSchema = {
-  body: Joi.object({
-    client_id: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-    title: STRING_SCHEMA.required(),
-    cover_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
-    location: STRING_SCHEMA.required(),
-    video: MONGO_DB_OBJECT_ID_SCHEMA.optional(),
-    vidClass: VIDEO_CLASS_SCHEMA.required(),
-    pg: STRING_SCHEMA.pattern(NUMERIC_REG).required(),
-    description: STRING_SCHEMA.optional(),
-    type: LIVE_TYPE_SCHEMA.required(),
-    sponsored: Joi.boolean().optional(),
-    popular: Joi.boolean().optional(),
-    start: ISO_STRING_SCHEMA.required(),
-    expiry: ISO_STRING_SCHEMA.required(),
-  }),
-}
+export const createLiveSchema = Joi.object({
+  clientId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+  title: STRING_SCHEMA.required(),
+  pg: STRING_SCHEMA.required(),
+  start: ISO_STRING_SCHEMA.required(),
+  expiry: ISO_STRING_SCHEMA.required(),
+  coverPhoto: Joi.object().required(),
+  previewVideo: Joi.object(),
+  description: STRING_SCHEMA,
+  vidClass: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
+  type: LIVE_TYPE_SCHEMA.required(),
+  sponsored: Joi.boolean(),
+  popular: Joi.boolean(),
+  location: STRING_SCHEMA,
+})
 
 export const createUpcomingEventSchema = {
   body: Joi.object({

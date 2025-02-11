@@ -39,6 +39,7 @@ import {
   updateCategorySchema,
   updateTrailerSchema,
 } from '../validations/admin'
+import { SharedRoutes } from '../utils/SharedRoutes'
 
 export const superAdminRouter = express.Router()
 
@@ -128,12 +129,7 @@ superAdminRouter.post(
   AdminManagemediaController.addSubtitle,
 )
 
-// **** lives
-superAdminRouter.post(
-  '/lives/create',
-  requestValidator(createLiveSchema),
-  AdminManagemediaController.createLive({ isAdmin: true }),
-)
+new SharedRoutes(superAdminRouter).livesRoutes('Admin')
 
 superAdminRouter.get('/lives/search-clients', AdminManagemediaController.searchClient)
 superAdminRouter.get('/lives/all/channels', AdminManagemediaController.getLivesByType('channel'))
