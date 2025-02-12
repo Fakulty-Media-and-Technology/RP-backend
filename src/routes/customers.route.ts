@@ -4,8 +4,6 @@ import { CustomerMediaController } from '../controllers/customers/medias.custome
 import { OnboardingController } from '../controllers/customers/onboarding.customer'
 import { CustomerPaymentController } from '../controllers/customers/payment.customer'
 import { CustomerProfileController } from '../controllers/customers/profile.customer'
-import { CustomerPushNotificationController } from '../controllers/customers/pushNotification.customer'
-import { CustomerNotificationController } from '../controllers/customers/notifications.customer'
 
 import { AuthMiddleware } from '../middlewares/auth'
 

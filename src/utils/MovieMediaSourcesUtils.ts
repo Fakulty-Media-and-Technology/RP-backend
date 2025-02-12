@@ -1,6 +1,7 @@
 import { MediaAccess } from '../services/media-access'
 import { Episode, GetVideoSourceParams, Movie, Season } from '../types/movie'
 import { OperationalError } from './OperationalError'
+import { getPromiseAllFulfilledResults } from './promises'
 
 export const getVidUploadSource = (
   videoUpload: NonNullable<Movie['trailerVideoUpload']>,
@@ -105,7 +106,7 @@ export class MovieMediaSourcesUtils {
   }
 
   public static resolveMovieMediaSources = async (vids: Movie[], withMediaSources = true) => {
-    return await Promise.allSettled(
+    const movies = await Promise.allSettled(
       vids.map(async vid => {
         const { landscapePhoto, portraitPhoto } = await this._getMoviePhotos(vid)
 
@@ -140,5 +141,7 @@ export class MovieMediaSourcesUtils {
         return res
       }),
     )
+
+    return getPromiseAllFulfilledResults(movies)
   }
 }

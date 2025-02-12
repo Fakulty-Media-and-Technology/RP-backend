@@ -17,7 +17,6 @@ import { VideoRepo } from '../../repositories/VideoRepo'
 import { Movie, Season } from '../../types/movie'
 
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
-import { getPromiseeAllFulfilledResults } from '../../utils/promises'
 
 import {
   handleDefaultNumAndUnknown,
@@ -633,7 +632,7 @@ export class AdminUploadService {
       this._resolveWithMediaSources(queryParams),
     )
 
-    return getPromiseeAllFulfilledResults(vidsWithSources)
+    return vidsWithSources
   }
 
   static getSeasonsAndEpisodes = async (

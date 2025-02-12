@@ -16,6 +16,7 @@ import { VideoRepo } from '../../repositories/VideoRepo'
 import { MediaController } from '../common/media.controller'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 
 type LiveEventsType =
   | 'all'
@@ -172,10 +173,10 @@ export class CustomerMediaController extends MediaController {
           filter.popular = true
           break
         case 'events':
-          filter.type = 'events'
+          filter.type = 'event'
           break
         case 'events popular':
-          filter.type = 'events'
+          filter.type = 'event'
           filter.popular = true
           break
         case 'tvshows':
@@ -186,11 +187,11 @@ export class CustomerMediaController extends MediaController {
           filter.popular = true
           break
         case 'sports popular':
-          filter.type = 'sports'
+          filter.type = 'sport'
           filter.popular = true
           break
         case 'sports':
-          filter.type = 'sports'
+          filter.type = 'sport'
           break
         case 'podcasts':
           filter.type = 'podcast'
@@ -222,13 +223,10 @@ export class CustomerMediaController extends MediaController {
 
   static bannerContents = Catch.async(async (_, res) => {
     const [featuredLives, engagedLives, featuredVods, engagedVods] = await Promise.all([
-      // featured
-      LiveRepo.getFeatured(),
-      LiveRepo.getMostEngaged(),
-
-      // engagements
-      VideoRepo.fetchFeatured(),
-      VideoRepo.fetchMostEngaged(),
+      LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured()),
+      LiveMediaSourcesUtils.resolveSources(await LiveRepo.getMostEngaged()),
+      MovieMediaSourcesUtils.resolveMovieMediaSources(await VideoRepo.fetchFeatured(), true),
+      MovieMediaSourcesUtils.resolveMovieMediaSources(await VideoRepo.fetchMostEngaged(), true),
     ])
 
     sendResponse({

@@ -355,7 +355,7 @@ export class VideoRepo {
   static fetchFeatured = async (page = 1, limit = 5) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { featured: true } }],
-      sortStage: { $sort: { $natural: -1 } },
+      // sortStage: { $sort: { $natural: -1 } },
       page,
       limit,
     })
