@@ -29,7 +29,6 @@ import {
   createAdSchema,
   createClientSchema,
   createGiftCardSchema,
-  createLiveSchema,
   createPlanSchema,
   createTrailerSchema,
   createUpcomingEventSchema,
@@ -39,6 +38,7 @@ import {
   updateCategorySchema,
   updateTrailerSchema,
 } from '../validations/admin'
+
 import { SharedRoutes } from '../utils/SharedRoutes'
 
 export const superAdminRouter = express.Router()

@@ -43,6 +43,7 @@ interface LandscapePhoto {
   _id: string
   bucket: string
   key: string
+  language?: string
 }
 
 export interface Season {

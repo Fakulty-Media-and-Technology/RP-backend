@@ -17,6 +17,9 @@ import { MediaController } from '../common/media.controller'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
+import { LiveAggrRes } from '../../types/Live'
+import { Movie } from '../../types/movie'
+import { query } from 'express'
 
 type LiveEventsType =
   | 'all'
@@ -48,30 +51,32 @@ export class CustomerMediaController extends MediaController {
     })
   })
 
-  static getFeaturedVods = Catch.async(async (_, res) => {
-    const vods = await VideoModel.find({ featured: true })
-
-    // for (let vod of vods) {
-    //      if (
-    //           vod.cover_photo &&
-    //           vod.cover_photo.Bucket &&
-    //           vod.cover_photo.Key
-    //      ) {
-    //           const signedUrl = await readPhotos(
-    //                vod.cover_photo.Bucket,
-    //                vod.cover_photo.Key
-    //           );
-    //           vod.photo_url =
-    //                signedUrl.status == 400 ? "no picture" : signedUrl;
-    //      } else {
-    //           vod.photo_url = "no picture";
-    //      }
-    // }
+  static getFeaturedVods = Catch.async(async ({ query }, res) => {
+    const vods = await MovieMediaSourcesUtils.resolveMovieMediaSources(
+      await VideoRepo.fetchFeatured(
+        handleDefaultNumAndUnknown(query.page, 1),
+        handleDefaultNumAndUnknown(query.limit, 10),
+      ),
+      true,
+    )
 
     sendResponse({
       res,
       data: vods,
       message: 'featured contents fetched successful',
+    })
+  })
+
+  static getFeaturedLives = Catch.async(async ({ query }, res) => {
+    sendResponse({
+      res,
+      message: 'featured contents fetched successful',
+      data: await LiveMediaSourcesUtils.resolveSources(
+        await LiveRepo.getFeatured(
+          handleDefaultNumAndUnknown(query.page, 1),
+          handleDefaultNumAndUnknown(query.limit, 10),
+        ),
+      ),
     })
   })
 
@@ -222,19 +227,28 @@ export class CustomerMediaController extends MediaController {
     })
 
   static bannerContents = Catch.async(async (_, res) => {
-    const [featuredLives, engagedLives, featuredVods, engagedVods] = await Promise.all([
+    let lives: LiveAggrRes[]
+    let vods: Movie[]
+
+      //
+    ;[lives, vods] = await Promise.all([
       LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured()),
-      LiveMediaSourcesUtils.resolveSources(await LiveRepo.getMostEngaged()),
       MovieMediaSourcesUtils.resolveMovieMediaSources(await VideoRepo.fetchFeatured(), true),
-      MovieMediaSourcesUtils.resolveMovieMediaSources(await VideoRepo.fetchMostEngaged(), true),
     ])
+
+    if (lives.length + vods.length < 10) {
+      ;[lives, vods] = await Promise.all([
+        LiveMediaSourcesUtils.resolveSources(await LiveRepo.getMostEngaged()),
+        MovieMediaSourcesUtils.resolveMovieMediaSources(await VideoRepo.fetchMostEngaged(), true),
+      ])
+    }
 
     sendResponse({
       res,
       message: 'contents fetched',
       data: {
-        featured: { lives: featuredLives, vods: featuredVods },
-        mostEnagaged: { lives: engagedLives, vods: engagedVods },
+        lives,
+        vods,
       },
     })
   })

@@ -65,31 +65,28 @@ export class MovieMediaSourcesUtils {
   ) => {
     const episodesWithSources = await Promise.all(
       episodes.map(async episode => {
-        const res: Record<string, any> = {
-          ...episode,
-        }
-
         if (withMediaSources) {
-          res.trailerVideoUpload = undefined
-          res.videoUpload = undefined
-          res.subtitleLang = episode.subtitle?.language
+          Object.assign(episode, {
+            trailerVideoUpload: undefined,
+            videoUpload: undefined,
+            subtitleLang: episode.subtitle?.language,
 
-          res.mediaSources = {
-            videoSource: this.getMovieVideoSource(episode, 'vid'),
-            trailerSource: this.getMovieVideoSource(episode, 'trailer'),
-            subtitleSource: episode.subtitle
-              ? await MediaAccess.getSignedUrl(
-                  episode.subtitle.bucket,
-                  episode.subtitle.key,
-                  'subtitle',
-                )
-              : null,
-          }
-
-          res.subtitle = undefined
+            mediaSources: {
+              videoSource: this.getMovieVideoSource(episode, 'vid'),
+              trailerSource: this.getMovieVideoSource(episode, 'trailer'),
+              subtitleSource: episode.subtitle
+                ? await MediaAccess.getSignedUrl(
+                    episode.subtitle.bucket,
+                    episode.subtitle.key,
+                    'subtitle',
+                  )
+                : null,
+            },
+            subtitle: undefined,
+          })
         }
 
-        return res
+        return episode
       }),
     )
 
@@ -116,29 +113,28 @@ export class MovieMediaSourcesUtils {
           MovieMediaSourcesUtils.resolveEpisodesMediaSources,
         )
 
-        const res: Record<string, any> = {
-          ...vid,
+        Object.assign(vid, {
           landscapePhoto,
           portraitPhoto,
-        }
+        })
 
         if (withMediaSources) {
-          res.trailerVideoUpload = undefined
-          res.videoUpload = undefined
-
-          res.mediaSources = {
-            videoSource: this.getMovieVideoSource(vid, 'vid'),
-            trailerSource: this.getMovieVideoSource(vid, 'trailer'),
-            subtitleLang: res.subtitle?.language as any,
-            subtitleSource: vid.subtitle
-              ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
-              : null,
-          }
-
-          res.subtitle = undefined
+          Object.assign(vid, {
+            trailerVideoUpload: undefined,
+            videoUpload: undefined,
+            mediaSources: {
+              videoSource: this.getMovieVideoSource(vid, 'vid'),
+              trailerSource: this.getMovieVideoSource(vid, 'trailer'),
+              subtitleLang: vid.subtitle?.language,
+              subtitleSource: vid.subtitle
+                ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
+                : null,
+            },
+            subtitle: undefined,
+          })
         }
 
-        return res
+        return vid
       }),
     )
 

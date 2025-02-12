@@ -140,7 +140,6 @@ export class LiveRepo {
           ],
         },
       },
-      ...sortPaginateStages,
       {
         $addFields: {
           vidClass: '$vid_class',
@@ -151,6 +150,7 @@ export class LiveRepo {
           clientId: '$client_id',
         },
       },
+      ...sortPaginateStages,
       {
         $project: {
           vid_class: false,

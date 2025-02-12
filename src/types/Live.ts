@@ -10,7 +10,7 @@ export interface LiveAggrRes {
   expired: boolean
   type: string
   start: string
-  expiry: string
+  expiry: Date
   views: any[]
   sponsored: boolean
   popular: boolean

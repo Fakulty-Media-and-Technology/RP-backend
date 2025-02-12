@@ -14,7 +14,7 @@ import { VideoUploadModel } from '../../models/videoupload.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { videoUploadParents } from '../../models/assets'
 import { VideoRepo } from '../../repositories/VideoRepo'
-import { Movie, Season } from '../../types/movie'
+import { Season } from '../../types/movie'
 
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 

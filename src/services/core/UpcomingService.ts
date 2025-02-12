@@ -6,7 +6,7 @@ import { QueryParamsFeatures, skip } from '../../utils/QueryParamsFeatures'
 import { LoggedInUser } from '../../types'
 import { MediaAccess } from '../media-access'
 import { denyGuestUser } from '../../utils/denyGuestUser'
-import { getFulfilledValues } from '../../utils/promise'
+import { getPromiseAllFulfilledResults } from '../../utils/promises'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
@@ -126,7 +126,7 @@ export class UpcomingService {
       },
     ])
 
-    return getFulfilledValues(
+    return getPromiseAllFulfilledResults(
       await Promise.allSettled(
         upcomingEvents.map(upcomingEvent => this._signS3Keys(upcomingEvent)),
       ),
