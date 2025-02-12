@@ -1,14 +1,14 @@
 import env from '../../env'
 
-import { Live, LiveModel } from '../../models/lives.model'
+import { LiveModel } from '../../models/lives.model'
 import { PaymentModel } from '../../models/payments.model'
-import { LiveRepo } from '../../repositories/LiveRepo'
-import { UserRepo } from '../../repositories/UserRepo'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { ClientSession } from 'mongoose'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
-import { calcLiveCharges, signCred, getUniqueStreamKey } from '../../utils/live'
+import { calcLiveCharges, signCred } from '../../utils/live'
+import { LiveRepo } from '../../repositories/LiveRepo'
+import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 
 type CreateClientWithSessionInput = {
   currentUser: LoggedInUser
@@ -97,42 +97,23 @@ export class LiveStreamService {
   }
 
   static getLiveStreamCredentials = async (currentUser: LoggedInUser) => {
-    type StreamCredential = Live & {
-      stream_server: string
-      stream_url: string
-    }
+    const lives = await LiveMediaSourcesUtils.resolveSources(
+      await LiveRepo.getValidClientLive(currentUser._id.toString()),
+    )
 
-    const credentials = await LiveModel.aggregate([
-      {
-        $match: {
-          client_id: currentUser._id,
-          expired: false,
-        },
-      },
-      {
-        $addFields: {
+    return await Promise.all(
+      lives.map(async live => {
+        const signed = `?sign=${signCred(live.stream_key || '', live.expiry)}`
+
+        Object.assign(live, {
           stream_server: env.RP_RTMP_URL,
-          stream_url: {
-            $concat: [env.RP_HLS_URL, '$stream_key', '/index.m3u8'],
-          },
-        },
-      },
-      {
-        $sort: {
-          createdAt: -1,
-        },
-      },
-      { $project: { __v: false } },
-    ])
+          stream_url: env.RP_HLS_URL + live.stream_key + '/index.m3u8' + signed,
+          stream_key: live.stream_key + signed,
+        })
 
-    const modifiedCredentials = (credentials as StreamCredential[]).map(cred => {
-      const signed = `?sign=${signCred(cred.stream_key || '', cred.expiry)}`
-      cred.stream_key = cred.stream_key + signed
-      cred.stream_url = cred.stream_url + signed
-      return cred
-    })
-
-    return modifiedCredentials
+        return live
+      }),
+    )
   }
 
   static extendLiveEvent = async (currentUser: LoggedInUser, data: Record<string, any>) => {

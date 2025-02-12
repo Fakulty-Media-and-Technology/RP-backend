@@ -277,10 +277,10 @@ export class VideoRepo {
         },
       },
 
-      // ensures that for video with video uploads, only docs with vidUpload.isTranscoded: true is returned
       {
         $match: {
           $or: [
+            { type: 'series' },
             { $and: [{ videoLink: { $ne: null } }, { videoUpload: null }] },
             { $and: [{ videoLink: null }, { videoUpload: { $ne: null } }] },
           ],

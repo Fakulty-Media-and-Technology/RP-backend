@@ -6,20 +6,16 @@ import { sendResponse } from '../../utils/responder'
 import { VideoModel } from '../../models/videos.model'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { denyGuestUser } from '../../utils/denyGuestUser'
-import { Live, LiveModel, LiveSchema } from '../../models/lives.model'
+import { LiveModel, LiveSchema } from '../../models/lives.model'
 import { OperationalError } from '../../utils/OperationalError'
 
 import env from '../../env'
 import { MediaManagement } from '../../services/media-management'
-import { MediaAccess } from '../../services/media-access'
 import { signCred } from '../../utils/live'
 import { VideoRepo } from '../../repositories/VideoRepo'
 import { MediaController } from '../common/media.controller'
-
-type GetLiveEventsWithPhotoUrlResult = {
-  liveEvent: Live
-  photo_url: Awaited<ReturnType<typeof MediaAccess.getSignedUrl>>
-}
+import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
+import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 
 type LiveEventsType =
   | 'all'
@@ -35,8 +31,6 @@ type LiveEventsType =
   | 'sports popular'
   | 'podcasts'
   | 'podcasts popular'
-
-type GetLiveEventsWithPhotoUrlResults = Array<GetLiveEventsWithPhotoUrlResult>
 
 export class CustomerMediaController extends MediaController {
   static uploadImageRoute = Catch.async(async ({ file, user }, res) => {
@@ -84,7 +78,6 @@ export class CustomerMediaController extends MediaController {
 
   static likeVideo = Catch.async(async (req, res) => {
     const streamId = req.params.id
-
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
@@ -112,7 +105,6 @@ export class CustomerMediaController extends MediaController {
 
   static userLikedVideo = Catch.async(async (req, res) => {
     const streamId = req.params.id
-
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
@@ -133,8 +125,8 @@ export class CustomerMediaController extends MediaController {
 
   static unLikeVideo = Catch.async(async (req, res) => {
     const streamId = req.params.id
-
     const user = GetDefined.loggedInUser(req.user)
+
     denyGuestUser(user)
 
     const vod = await VideoModel.findOneAndUpdate(
@@ -161,43 +153,8 @@ export class CustomerMediaController extends MediaController {
 
   // ************ GET EVENTS *********************//
 
-  private static _mergeEventAndPhotoUrl = (results: GetLiveEventsWithPhotoUrlResults) => {
-    return results.map(result => ({ ...result.liveEvent, photo_url: result.photo_url }))
-  }
-
-  private static _getLiveEventsWithPhotoUrl = async (filterQuery: FilterQuery<LiveSchema>) => {
-    const liveEvents = await LiveRepo.getSelectedLive(filterQuery)
-
-    const settledResults = await Promise.allSettled(
-      liveEvents.map(async event => {
-        const signedUrl = await MediaAccess.getSignedUrl(
-          event.cover_photo.Bucket,
-          event.cover_photo.Key,
-          'photo',
-        )
-
-        const result: GetLiveEventsWithPhotoUrlResult = {
-          liveEvent: event,
-          photo_url: signedUrl,
-        }
-
-        return result
-      }),
-    )
-
-    const results: GetLiveEventsWithPhotoUrlResults = []
-
-    settledResults.forEach(result => {
-      if (result.status === 'fulfilled') {
-        results.push(result.value)
-      }
-    })
-
-    return results
-  }
-
   static getLiveEventsByType = (type: LiveEventsType) =>
-    Catch.async(async (_, res) => {
+    Catch.async(async (req, res) => {
       let filter: FilterQuery<LiveSchema> = { expired: false }
 
       switch (type) {
@@ -248,11 +205,17 @@ export class CustomerMediaController extends MediaController {
           break
       }
 
-      const liveEvents = await this._getLiveEventsWithPhotoUrl(filter)
+      const liveEvents = await LiveMediaSourcesUtils.resolveSources(
+        await LiveRepo.getSelectedLive(
+          filter,
+          handleDefaultNumAndUnknown(req.query.page, 1),
+          handleDefaultNumAndUnknown(req.query.limit, 10),
+        ),
+      )
 
       sendResponse({
         res,
-        data: this._mergeEventAndPhotoUrl(liveEvents),
+        data: liveEvents,
         message: 'Events fetched',
       })
     })

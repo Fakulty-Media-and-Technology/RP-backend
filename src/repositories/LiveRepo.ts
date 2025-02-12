@@ -80,11 +80,26 @@ export class LiveRepo {
     })
   }
 
-  static getSelectedLive = async (filter: FilterQuery<LiveSchema>) => {
+  static getValidClientLive = async (clientId: string, page = 1, limit = 10) => {
+    return await this.fetchLivesAggr({
+      prevStages: [
+        {
+          $match: {
+            client_id: toObjectId(clientId),
+            expired: false,
+          },
+        },
+      ],
+      page,
+      limit,
+    })
+  }
+
+  static getSelectedLive = async (filter: FilterQuery<LiveSchema>, page = 1, limit = 10) => {
     return await this.fetchLivesAggr({
       prevStages: [{ $match: filter }],
-      page: 1,
-      limit: 500,
+      page,
+      limit,
     })
   }
 
@@ -128,6 +143,7 @@ export class LiveRepo {
       ...sortPaginateStages,
       {
         $addFields: {
+          vidClass: '$vid_class',
           coverPhoto: { $first: '$previewPhoto' },
           previewVideoUpload: { $ifNull: [{ $first: '$previewVideoUpload' }, null] },
           activeViews: '$active_views',
@@ -137,6 +153,7 @@ export class LiveRepo {
       },
       {
         $project: {
+          vid_class: false,
           previewPhoto: false,
           feat_expiry: false,
           active_views: false,
