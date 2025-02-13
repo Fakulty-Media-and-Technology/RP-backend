@@ -1,8 +1,17 @@
+import { PipelineStage } from 'mongoose'
 import { UpcomingModel } from '../models/upcoming.model'
+import { skip } from '../utils/QueryParamsFeatures'
+
+type FetchAggrOptions = {
+  prevStages: PipelineStage[]
+  page: number
+  limit: number
+}
 
 export class UpcomingRepo {
-  static fetchAggr = async () => {
+  static fetchAggr = async ({ prevStages, page, limit }: FetchAggrOptions) => {
     const aggr = await UpcomingModel.aggregate([
+      ...prevStages,
       {
         $lookup: {
           from: 'trailers',
@@ -35,6 +44,10 @@ export class UpcomingRepo {
       },
 
       { $match: { trailerVideoUpload: { $ne: null } } },
+
+      { $sort: { updatedAt: -1 } },
+      { $skip: skip(page, limit) },
+      { $limit: limit },
 
       {
         $lookup: {

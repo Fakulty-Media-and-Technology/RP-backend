@@ -2,19 +2,16 @@ import {
   UpcomingService,
   CustomerSubScriptionActionType,
 } from '../../services/core/UpcomingService'
+
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
 export class CustomerUpcomingController {
-  static fetch = Catch.async(async ({ query }, res) => {
-    const page = handleDefaultNumAndUnknown(query.page, 1)
-    const limit = handleDefaultNumAndUnknown(query.limit, 50)
-
+  static fetch = Catch.async(async ({ query, user }, res) => {
     sendResponse({
       res,
-      data: await UpcomingService.customerFetch(page, limit),
+      data: await UpcomingService.customerFetch(query, GetDefined.loggedInUser(user)),
     })
   })
 

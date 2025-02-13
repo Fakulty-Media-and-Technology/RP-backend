@@ -1,5 +1,6 @@
 import { Query } from 'mongoose'
 import { Request } from 'express'
+import { OperationalError } from './OperationalError'
 
 export type QueryParamsFeaturesOptions = {
   queryParams: Request['query']
@@ -16,8 +17,13 @@ export const handleDefaultNumAndUnknown = (val: unknown, defaultNum: number) => 
     return defaultNum
   }
 
-  // value is numeric here
-  return Number(val)
+  const num = Number(val)
+
+  if (num <= 0) {
+    throw new OperationalError('pagination values cannot be less than or equal zero', 400)
+  }
+
+  return num
 }
 
 export const skip = (page: number, limit: number) => (page - 1) * limit
@@ -31,15 +37,11 @@ export class QueryParamsFeatures<T, U> {
     this._options = options
   }
 
-  private _setNumDefaultNum(val: unknown, defaultNum: number) {
-    return handleDefaultNumAndUnknown(val, defaultNum)
-  }
-
   paginate() {
     const { queryParams, defaultPage = 1, defaultLimit = 50 } = this._options
 
-    const page = this._setNumDefaultNum(queryParams.page, defaultPage)
-    const limit = this._setNumDefaultNum(queryParams.limit, defaultLimit)
+    const page = handleDefaultNumAndUnknown(queryParams.page, defaultPage)
+    const limit = handleDefaultNumAndUnknown(queryParams.limit, defaultLimit)
     this.query.skip(skip(page, limit)).limit(limit)
     return this
   }
