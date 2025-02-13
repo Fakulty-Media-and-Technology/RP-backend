@@ -1,4 +1,4 @@
-import multer from 'multer'
+import multer, { StorageEngine } from 'multer'
 
 import { Bytes } from './Bytes'
 import { OperationalError } from './OperationalError'
@@ -6,15 +6,19 @@ import { Assets } from './Assets'
 import { genRandUniqId } from './strGen'
 
 export class Multer {
-  private static _configs = {
-    videConfig: multer({
-      storage: multer.diskStorage({
-        destination: Assets.rootMediaDirs.multer,
+  private static _diskStorageConfig: StorageEngine = multer.diskStorage({
+    destination: Assets.rootMediaDirs.multer,
 
-        filename: (_, file, cb) => {
-          cb(null, genRandUniqId(5) + '_' + file.originalname)
-        },
-      }),
+    filename: (_, file, cb) => {
+      cb(null, genRandUniqId(5) + '_' + file.originalname)
+    },
+  })
+
+  private static _configs = {
+    multipleTypesConfig: multer({ storage: this._diskStorageConfig }),
+
+    vidConfig: multer({
+      storage: this._diskStorageConfig,
 
       limits: { fieldSize: Bytes.gb(20) },
 
@@ -47,10 +51,10 @@ export class Multer {
   }
 
   static uploadSingleImage = this._configs.imageConfig.single('photo')
-  static uploadSingleVideo = this._configs.videConfig.single('video')
+  static uploadSingleVideo = this._configs.vidConfig.single('video')
   static uploadSingleSubtitle = this._configs.subtitleConfig.single('subtitle')
 
-  static adminUploadVideoConfig = multer({ storage: multer.memoryStorage() }).fields([
+  static adminUploadVideoConfig = this._configs.multipleTypesConfig.fields([
     { name: 'subTitle', maxCount: 1 },
     { name: 'trailer', maxCount: 1 },
     { name: 'video', maxCount: 1 },
@@ -58,18 +62,18 @@ export class Multer {
     { name: 'portraitPoster', maxCount: 1 },
   ])
 
-  static adminUploadSeasonConfig = multer({ storage: multer.memoryStorage() }).fields([
+  static adminUploadSeasonConfig = this._configs.multipleTypesConfig.fields([
     { name: 'trailer', maxCount: 1 },
     { name: 'portraitPhoto', maxCount: 1 },
     { name: 'landscapePhoto', maxCount: 1 },
   ])
 
-  static createLiveConfig = multer({ storage: multer.memoryStorage() }).fields([
+  static createLiveConfig = this._configs.multipleTypesConfig.fields([
     { name: 'previewVideo', maxCount: 1 },
     { name: 'coverPhoto', maxCount: 1 },
   ])
 
-  static createUpcomingConfig = multer({ storage: multer.memoryStorage() }).fields([
+  static createUpcomingConfig = this._configs.multipleTypesConfig.fields([
     { name: 'portraitPhoto', maxCount: 1 },
     { name: 'landscapePhoto', maxCount: 1 },
     { name: 'trailer', maxCount: 1 },

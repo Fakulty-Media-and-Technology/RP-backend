@@ -46,7 +46,7 @@ export class CustomerMediaController extends MediaController {
 
     sendResponse({
       res,
-      data: await MediaManagement.uploadImageOrSubtitle({ file, type: 'image' }),
+      data: await MediaManagement.store({ file, baseDir: 'images', expire: undefined }),
       message: 'image uploaded',
     })
   })
@@ -251,11 +251,7 @@ export class CustomerMediaController extends MediaController {
       //
     ;[lives, vods] = await Promise.all([
       LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured(), vidQuality),
-      MovieMediaSourcesUtils.resolveMediaSources(
-        await VideoRepo.fetchFeatured(),
-        true,
-        vidQuality,
-      ),
+      MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo.fetchFeatured(), true, vidQuality),
     ])
 
     if (lives.length + vods.length < 10) {

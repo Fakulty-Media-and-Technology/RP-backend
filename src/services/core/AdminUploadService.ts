@@ -90,7 +90,7 @@ export type AddVideoParams = {
   adminId: string
 }
 
-type ImageUploadRes = Awaited<ReturnType<typeof MediaManagement.uploadImageOrSubtitle>>
+type ImageUploadRes = Awaited<ReturnType<typeof MediaManagement.store>>
 
 type SavePostersUploadToDBParams = {
   portraitPosterUpload: ImageUploadRes
@@ -205,8 +205,8 @@ export class AdminUploadService {
     landscapeFile: Express.Multer.File,
   ) => {
     const [portraitUpload, landscapeUpload] = await Promise.all([
-      MediaManagement.uploadImageOrSubtitle({ type: 'image', file: portraitFile }),
-      MediaManagement.uploadImageOrSubtitle({ type: 'image', file: landscapeFile }),
+      MediaManagement.store({ baseDir: 'images', expire: undefined, file: portraitFile }),
+      MediaManagement.store({ baseDir: 'images', expire: undefined, file: landscapeFile }),
     ])
 
     return {
@@ -314,8 +314,9 @@ export class AdminUploadService {
     const vidUploadExpire = videoDoc.expiry_date || undefined
 
     if (data.subTitle) {
-      const res = await MediaManagement.uploadImageOrSubtitle({
-        type: 'subtitle',
+      const res = await MediaManagement.store({
+        expire: undefined,
+        baseDir: 'subtitles',
         file: data.subTitle,
       })
 
@@ -501,8 +502,9 @@ export class AdminUploadService {
     })
 
     if (data.subTitle) {
-      const res = await MediaManagement.uploadImageOrSubtitle({
-        type: 'subtitle',
+      const res = await MediaManagement.store({
+        baseDir: 'subtitles',
+        expire: undefined,
         file: data.subTitle,
       })
 

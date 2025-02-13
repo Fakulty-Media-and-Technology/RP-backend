@@ -9,39 +9,45 @@ import { Bytes } from '../utils/Bytes'
 import { rimraf } from 'rimraf'
 import { MediaConvert } from './aws/mediaConvert'
 
-type UploadImageOrSubtitle = {
-  type: 'image' | 'subtitle'
-  file: Express.Multer.File
-}
-
 export type UploadAndTranscodeConfig = UploadVideoInput & {
   waitTranscode: boolean
   waitDuration?: number
 }
-
-// const fileExtensionReg = /.[a-zA-Z0-9]+$/
-
-const getUniqueKey = () => Date.now() + '-' + crypto.randomBytes(5).toString('hex')
 
 type UploadVideoInput = {
   file: Express.Multer.File
   expire: Date | undefined
 }
 
+type StoreConfig = {
+  file: Express.Multer.File
+  expire: Date | undefined
+  baseDir: 'images' | 'videos' | 'subtitles'
+}
+
 export class MediaManagement {
+  private static _genUniqueKey = () => Date.now() + '-' + crypto.randomBytes(5).toString('hex')
+
+  private static _deleteFile = async (file: Express.Multer.File) => {
+    if (file.path == null) return
+
+    try {
+      await rimraf(file.path)
+    } catch {
+      console.error('🛑 error deleting ', +file.filename, 'after upload')
+    }
+  }
+
   static uploadAndTransacodeVideo = async ({
     file,
     expire,
     waitTranscode,
     waitDuration = 20,
   }: UploadAndTranscodeConfig) => {
-    if (file == null) {
-      throw new OperationalError('upload a video file', 400)
-    }
-
-    const video = await this.uploadVideo({
+    const video = await this.store({
       file,
       expire: typeof expire === 'string' ? new Date(expire) : undefined,
+      baseDir: 'videos',
     })
 
     const response = {
@@ -57,33 +63,28 @@ export class MediaManagement {
     return response
   }
 
-  static uploadVideo = async ({ file, expire }: UploadVideoInput) => {
+  static store = async ({ file, expire, baseDir }: StoreConfig) => {
     let Body: Buffer | PassThrough
 
-    if (file.path) {
-      const passThroughStream = new PassThrough()
-      createReadStream(file.path, { highWaterMark: Bytes.mb(200) }).pipe(passThroughStream)
-      Body = passThroughStream
-    } else if (file.buffer) {
+    if (file.buffer) {
       Body = file.buffer
+    } else if (file.path) {
+      const passThrough = new PassThrough()
+      createReadStream(file.path, { highWaterMark: Bytes.mb(100) }).pipe(passThrough)
+      Body = passThrough 
     } else {
-      throw new OperationalError('File must be a stream or buffer', 500)
+      throw new OperationalError('file is improperly formatted', 500)
     }
 
-    // https://github.com/aws/aws-sdk-js-v3/blob/main/lib/lib-storage/example-code/upload-unknown-length.ts
     const uploadRes = await S3.upload({
       Body,
       Bucket: AwsUtils.buckets.reeplay,
-      Key: `videos/${getUniqueKey()}`,
+      Key: `${baseDir}/${this._genUniqueKey()}`,
       ContentType: file.mimetype,
       Expires: expire,
     })
 
-    if (file.path) {
-      rimraf(file.path).catch(_ =>
-        console.error('🛑 error deleting ', +file.filename + ' from tempMedia folder'),
-      )
-    }
+    this._deleteFile(file)
 
     if (uploadRes.$metadata.httpStatusCode !== 200 || !uploadRes.Key) {
       throw new OperationalError('could not upload video. Please try again', 500)
@@ -97,30 +98,11 @@ export class MediaManagement {
     }
   }
 
-  static uploadImageOrSubtitle = async ({ type, file }: UploadImageOrSubtitle) => {
-    const dir = type === 'image' ? 'photos' : 'subtitles'
-
-    const response = await S3.upload({
-      Bucket: AwsUtils.buckets.reeplay,
-      Body: file.buffer,
-      Key: `${dir}/${getUniqueKey()}`,
-      ContentType: file.mimetype,
-    })
-
-    return {
-      Bucket: response.Bucket,
-      Key: response.Key,
-      mimetype: file.mimetype,
-    }
-  }
-
   static deleteObject = async (key: string, bucket: string) => {
     const response = await S3.deleteObject(key, bucket)
     const deleted = response.$metadata.httpStatusCode === 200
 
-    if (!deleted) {
-      console.error(`🛑🛑 S3 Object delete error. KEY: ${key} | BUCKET: ${bucket}`)
-    }
+    if (!deleted) console.error(`🛑🛑 S3 Object delete error. KEY: ${key} | BUCKET: ${bucket}`)
 
     return deleted
   }

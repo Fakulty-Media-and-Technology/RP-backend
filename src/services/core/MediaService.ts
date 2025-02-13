@@ -67,7 +67,7 @@ export class MedaiService {
     { liveId, file }: CreateLiveCoverPhotoUploadParams,
     session: ClientSession,
   ) => {
-    const upload = await MediaManagement.uploadImageOrSubtitle({ type: 'image', file })
+    const upload = await MediaManagement.store({ expire: undefined, baseDir: 'images', file })
 
     const coverPhoto = await new PosterImageModel({
       video_id: liveId,
