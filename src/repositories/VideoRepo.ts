@@ -175,6 +175,9 @@ export class VideoRepo {
   }
 
   static fetchVideoAggr = async ({ prevStages, sortStage, page, limit }: FetchVideosParams) => {
+    const enumsProjectShared: PipelineStage.Project = {
+      $project: { __v: false, createdAt: false, updatedAt: false },
+    }
     const sortPaginateStages: PipelineStage[] = [{ $skip: skip(page, limit) }, { $limit: limit }]
 
     if (sortStage) sortPaginateStages.unshift(sortStage)
@@ -218,6 +221,37 @@ export class VideoRepo {
           ],
         },
       },
+
+      {
+        $lookup: {
+          from: 'genre_enums',
+          foreignField: '_id',
+          localField: 'genre',
+          as: 'genre',
+          pipeline: [enumsProjectShared],
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'category_enums',
+          foreignField: '_id',
+          localField: 'category',
+          as: 'category',
+          pipeline: [enumsProjectShared],
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'cast_enums',
+          foreignField: '_id',
+          localField: 'cast',
+          as: 'cast',
+          pipeline: [enumsProjectShared],
+        },
+      },
+
       {
         $lookup: {
           from: 'sub_titles',
