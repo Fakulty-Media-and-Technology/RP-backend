@@ -81,7 +81,7 @@ export class DashboardService {
       handleDefaultNumAndUnknown(queryParams.limit, 10),
     )
 
-    return await MovieMediaSourcesUtils.resolveMovieMediaSources(
+    return await MovieMediaSourcesUtils.resolveMediaSources(
       vids,
       AdminUploadService.resolveWithMediaSources(queryParams),
       '720p',

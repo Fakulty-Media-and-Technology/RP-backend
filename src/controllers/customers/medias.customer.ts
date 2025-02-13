@@ -56,7 +56,7 @@ export class CustomerMediaController extends MediaController {
       GetDefined.loggedInUser(user)._id.toString(),
     )
 
-    const vods = await MovieMediaSourcesUtils.resolveMovieMediaSources(
+    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
       await VideoRepo.fetchFeatured(
         handleDefaultNumAndUnknown(query.page, 1),
         handleDefaultNumAndUnknown(query.limit, 10),
@@ -251,7 +251,7 @@ export class CustomerMediaController extends MediaController {
       //
     ;[lives, vods] = await Promise.all([
       LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured(), vidQuality),
-      MovieMediaSourcesUtils.resolveMovieMediaSources(
+      MovieMediaSourcesUtils.resolveMediaSources(
         await VideoRepo.fetchFeatured(),
         true,
         vidQuality,
@@ -261,7 +261,7 @@ export class CustomerMediaController extends MediaController {
     if (lives.length + vods.length < 10) {
       ;[lives, vods] = await Promise.all([
         LiveMediaSourcesUtils.resolveSources(await LiveRepo.getMostEngaged(), vidQuality),
-        MovieMediaSourcesUtils.resolveMovieMediaSources(
+        MovieMediaSourcesUtils.resolveMediaSources(
           await VideoRepo.fetchMostEngaged(),
           true,
           vidQuality,

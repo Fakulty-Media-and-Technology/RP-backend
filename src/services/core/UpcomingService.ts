@@ -10,6 +10,8 @@ import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { ClientSession } from 'mongoose'
 import { AdminUploadService } from './AdminUploadService'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { UpcomingRepo } from '../../repositories/UpcomingRepo'
+import { UpcomingMediaSourceUtils } from '../../utils/UpcomingMediaSourceUtils'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
@@ -79,18 +81,8 @@ export class UpcomingService extends AdminUploadService {
     return withMongoDBSession(this._createUpcomingWithSession, data)
   }
 
-  static adminFetch = async (query: Request['query']) => {
-    const features = new QueryParamsFeatures(
-      UpcomingModel.find({}).sort({ updatedAt: -1 }).select('-__v -createdAt -updatedAt'),
-      {
-        defaultLimit: 10,
-        defaultPage: 1,
-        queryParams: query,
-      },
-    )
-
-    const upcomingEvents = await features.paginate().query
-    return upcomingEvents
+  static adminFetch = async (_: Request['query']) => {
+    return await UpcomingMediaSourceUtils.resolveSources(await UpcomingRepo.fetchAggr(), '1080p')
   }
 
   //   ********************** customers

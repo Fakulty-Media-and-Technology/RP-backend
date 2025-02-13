@@ -625,7 +625,7 @@ export class AdminUploadService {
     const page = handleDefaultNumAndUnknown(queryParams.page, 1)
     const limit = handleDefaultNumAndUnknown(queryParams.limit, 1)
 
-    const vidsWithSources = await MovieMediaSourcesUtils.resolveMovieMediaSources(
+    const vidsWithSources = await MovieMediaSourcesUtils.resolveMediaSources(
       await VideoRepo.fetchByType(type, page, limit),
       this.resolveWithMediaSources(queryParams),
       '720p',

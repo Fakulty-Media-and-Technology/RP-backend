@@ -33,28 +33,10 @@ const schema = new Schema(
       required: true,
     },
 
-    // portraitPhoto: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: 'poster_images',
-    //   required: true,
-    // },
-
-    // landscapePhoto: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: 'poster_images',
-    //   required: true,
-    // },
-
     active: {
       type: Boolean,
       default: true,
     },
-
-    // trailer: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: 'trailers',
-    //   required: true,
-    // },
   },
   {
     timestamps: true,

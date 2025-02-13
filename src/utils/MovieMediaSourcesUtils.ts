@@ -4,8 +4,10 @@ import { OperationalError } from './OperationalError'
 import { getPromiseAllFulfilledResults } from './promises'
 import { VidUploadUtils, VidRes } from './VideoUploadUtils'
 
+import { UpcomingAggrRes } from '../types/upcoming'
+
 export class MovieMediaSourcesUtils {
-  private static _getMoviePhotos = async (vid: Movie) => {
+  protected static _getMoviePhotos = async (vid: Movie | UpcomingAggrRes) => {
     const [landscapePhoto, portraitPhoto] = await Promise.all([
       MediaAccess.getSignedUrl(vid.landscapePhoto.bucket, vid.landscapePhoto.key, 'photo'),
       MediaAccess.getSignedUrl(vid.portraitPhoto.bucket, vid.portraitPhoto.key, 'photo'),
@@ -94,7 +96,7 @@ export class MovieMediaSourcesUtils {
     return episodesWithSources as unknown as Episode[]
   }
 
-  public static resolveMovieMediaSources = async (
+  public static resolveMediaSources = async (
     vids: Movie[],
     withMediaSources: boolean,
     quality: VidRes,
