@@ -109,16 +109,6 @@ type GetVideoUploadDoc = UploadAndTranscodeConfig & {
   parentId: StringOrObjectId
 }
 
-const allowMimetype = (
-  file: Express.Multer.File,
-  type: 'image' | 'video' | 'text',
-  msg: string,
-) => {
-  if (!file.mimetype.startsWith(type)) {
-    throw new OperationalError(msg, 400)
-  }
-}
-
 type UploadTrailerAndVIdeoInput = {
   file: Express.Multer.File
   expire: Date | undefined
@@ -127,6 +117,15 @@ type UploadTrailerAndVIdeoInput = {
 }
 
 export class AdminUploadService {
+  protected static _allowMimetype = (
+    file: Express.Multer.File,
+    type: 'image' | 'video' | 'text',
+    msg: string,
+  ) => {
+    if (!file.mimetype.startsWith(type)) {
+      throw new OperationalError(msg, 400)
+    }
+  }
   static resolveWithMediaSources = (queryParams: QueryParamsFeaturesOptions['queryParams']) =>
     queryParams.withMediaSources === 'true'
 
@@ -173,7 +172,7 @@ export class AdminUploadService {
     return { videoUploadDoc, trailerVidUploadDoc }
   }
 
-  private static _getVideoUploadDoc = async (
+  protected static _getVideoUploadDoc = async (
     params: GetVideoUploadDoc,
     session?: ClientSession,
   ) => {
@@ -198,7 +197,7 @@ export class AdminUploadService {
     return videoUploadDoc
   }
 
-  private static _uploadVideoPosters = async (
+  protected static _uploadVideoPosters = async (
     portraitFile: Express.Multer.File,
     landscapeFile: Express.Multer.File,
   ) => {
@@ -213,7 +212,7 @@ export class AdminUploadService {
     }
   }
 
-  private static _savePostersUploadToDb = async (
+  protected static _savePostersUploadToDb = async (
     { portraitPosterUpload, landscapePosterUpload, videoId }: SavePostersUploadToDBParams,
     session: ClientSession,
   ) => {
@@ -236,7 +235,7 @@ export class AdminUploadService {
     return { portrait, landscape }
   }
 
-  private static _uploadAndSavePostersToDB = async (
+  protected static _uploadAndSavePostersToDB = async (
     { landscapeFile, portraitFile, videoId }: UploadAndSavePostersToDBParams,
     session: ClientSession,
   ) => {
@@ -260,11 +259,11 @@ export class AdminUploadService {
     { data, type, adminId }: AddVideoParams,
     session: ClientSession,
   ) => {
-    allowMimetype(data.portraitPoster, 'image', 'portraitPoster must be an image')
-    allowMimetype(data.landscapePoster, 'image', 'landscapePoster must be an image')
-    data.subTitle && allowMimetype(data.subTitle, 'text', 'subTitle must be a text file')
-    data.trailer && allowMimetype(data.trailer, 'video', ' trailer must be a video file')
-    data.video && allowMimetype(data.video, 'video', 'video must be a video file')
+    this._allowMimetype(data.portraitPoster, 'image', 'portraitPoster must be an image')
+    this._allowMimetype(data.landscapePoster, 'image', 'landscapePoster must be an image')
+    data.subTitle && this._allowMimetype(data.subTitle, 'text', 'subTitle must be a text file')
+    data.trailer && this._allowMimetype(data.trailer, 'video', ' trailer must be a video file')
+    data.video && this._allowMimetype(data.video, 'video', 'video must be a video file')
 
     const isSeries = type === 'series'
 
@@ -391,13 +390,13 @@ export class AdminUploadService {
     { videoId, adminId, ...params }: AddSeasonParams,
     session: ClientSession,
   ) => {
-    params.trailer && allowMimetype(params.trailer, 'video', ' trailer must be a video file')
+    params.trailer && this._allowMimetype(params.trailer, 'video', ' trailer must be a video file')
 
     params.landscapePhoto &&
-      allowMimetype(params.landscapePhoto, 'image', ' landscapePhoto must be an image file')
+      this._allowMimetype(params.landscapePhoto, 'image', ' landscapePhoto must be an image file')
 
     params.portraitPhoto &&
-      allowMimetype(params.portraitPhoto, 'image', ' portraitPhoto must be an image file')
+      this._allowMimetype(params.portraitPhoto, 'image', ' portraitPhoto must be an image file')
 
     const [prevSeasons, parentVideo] = await Promise.all([
       SeasonModel.find({ video: videoId }),
@@ -465,9 +464,9 @@ export class AdminUploadService {
     { seasonId, data, adminId }: AddEpisodeInput,
     session: ClientSession,
   ) => {
-    data.subTitle && allowMimetype(data.subTitle, 'text', 'subTitle must be a text file')
-    data.trailer && allowMimetype(data.trailer, 'video', ' trailer must be a video file')
-    data.video && allowMimetype(data.video, 'video', 'video must be a video file')
+    data.subTitle && this._allowMimetype(data.subTitle, 'text', 'subTitle must be a text file')
+    data.trailer && this._allowMimetype(data.trailer, 'video', ' trailer must be a video file')
+    data.video && this._allowMimetype(data.video, 'video', 'video must be a video file')
 
     const [prevEpisodes, parentSeason] = await Promise.all([
       EpisodeModel.find({ season: seasonId }),

@@ -1,12 +1,11 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
-import { previewPhotoSchema } from './commonSchema'
 
 const schema = new Schema(
   {
     title: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
 
     type: {
@@ -29,31 +28,33 @@ const schema = new Schema(
       ],
     },
 
-    release_date: {
+    releaseDate: {
       type: Date,
       required: true,
     },
 
-    portrait_photo: {
-      type: previewPhotoSchema,
-      required: true,
-    },
+    // portraitPhoto: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: 'poster_images',
+    //   required: true,
+    // },
 
-    landscape_photo: {
-      type: previewPhotoSchema,
-      required: true,
-    },
+    // landscapePhoto: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: 'poster_images',
+    //   required: true,
+    // },
 
     active: {
       type: Boolean,
       default: true,
     },
 
-    trailer_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'trailers',
-      required: true,
-    },
+    // trailer: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: 'trailers',
+    //   required: true,
+    // },
   },
   {
     timestamps: true,

@@ -7,30 +7,76 @@ import { LoggedInUser } from '../../types'
 import { MediaAccess } from '../media-access'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
+import { ClientSession } from 'mongoose'
+import { AdminUploadService } from './AdminUploadService'
+import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
-export class UpcomingService {
-  static adminCreate = async (data: UpcomingSchema) => {
-    const { title, type, details, release_date, portrait_photo, landscape_photo, trailer_id } = data
+export type UpcomingData = {
+  title: string
+  type: string
+  details: string
+  releaseDate: string
+  trailer: Express.Multer.File
+  portraitPhoto: Express.Multer.File
+  landscapePhoto: Express.Multer.File
+  active?: boolean
+}
 
-    const checkTrailer = await TrailerModel.findOne({ _id: trailer_id })
+export class UpcomingService extends AdminUploadService {
+  private static _createUpcomingWithSession = async (
+    data: UpcomingData,
+    session: ClientSession,
+  ) => {
+    this._allowMimetype(data.trailer, 'video', 'trailer must be a video')
+    this._allowMimetype(data.landscapePhoto, 'image', 'landscapePhoto must be an image')
+    this._allowMimetype(data.portraitPhoto, 'image', 'portraitPhoto must be an image')
 
-    if (checkTrailer == null) {
-      throw new OperationalError('invalid trailer_id supplied', 400)
-    }
-
-    const upcomingEvent = await UpcomingModel.create({
-      title: title,
-      type: type,
-      details: details,
-      release_date: new Date(release_date),
-      portrait_photo: portrait_photo,
-      landscape_photo: landscape_photo,
-      trailer_id: trailer_id,
+    const upcoming = new UpcomingModel({
+      title: data.title,
+      type: data.type,
+      details: data.details,
+      releaseDate: data.releaseDate,
+      active: data.active,
     })
 
-    return upcomingEvent
+    await upcoming.save({ session })
+
+    await this._uploadAndSavePostersToDB(
+      {
+        landscapeFile: data.landscapePhoto,
+        portraitFile: data.portraitPhoto,
+        videoId: upcoming._id,
+      },
+      session,
+    )
+
+    const trailerDoc = new TrailerModel({
+      video_id: upcoming._id,
+      parentType: 'upcoming',
+    })
+
+    const tVidUploadDoc = await this._getVideoUploadDoc(
+      {
+        file: data.trailer,
+        waitTranscode: true,
+        waitDuration: 30,
+        expire: undefined,
+        parentId: trailerDoc._id,
+        parentType: 'trailer',
+      },
+      session,
+    )
+
+    trailerDoc.video_upload = tVidUploadDoc._id
+    await trailerDoc.save({ session })
+
+    return upcoming
+  }
+
+  static adminCreate = async (data: UpcomingData) => {
+    return withMongoDBSession(this._createUpcomingWithSession, data)
   }
 
   static adminFetch = async (query: Request['query']) => {

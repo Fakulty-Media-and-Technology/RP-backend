@@ -68,4 +68,10 @@ export class Multer {
     { name: 'previewVideo', maxCount: 1 },
     { name: 'coverPhoto', maxCount: 1 },
   ])
+
+  static createUpcomingConfig = multer({ storage: multer.memoryStorage() }).fields([
+    { name: 'portraitPhoto', maxCount: 1 },
+    { name: 'landscapePhoto', maxCount: 1 },
+    { name: 'trailer', maxCount: 1 },
+  ])
 }

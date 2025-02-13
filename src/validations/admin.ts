@@ -157,17 +157,16 @@ export const createLiveSchema = Joi.object({
   location: STRING_SCHEMA,
 })
 
-export const createUpcomingEventSchema = {
-  body: Joi.object({
-    title: STRING_SCHEMA.required(),
-    type: STRING_SCHEMA.valid('movie', 'series', 'music video', 'documentary', 'skit').required(),
-    details: STRING_SCHEMA.required(),
-    release_date: STRING_SCHEMA.required(),
-    portrait_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
-    landscape_photo: PHOTO_SCHEMA_WITH_CONTENT_TYPE.required(),
-    trailer_id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-  }),
-}
+export const createUpcomingEventSchema = Joi.object({
+  title: STRING_SCHEMA.required(),
+  type: STRING_SCHEMA.valid('movie', 'series', 'music video', 'documentary', 'skit').required(),
+  details: STRING_SCHEMA.required(),
+  releaseDate: ISO_STRING_SCHEMA.required(),
+  active: Joi.boolean(),
+  trailer: Joi.object().required(),
+  portraitPhoto: Joi.object().required(),
+  landscapePhoto: Joi.object().required(),
+})
 
 export const createPlanSchema = {
   body: Joi.object({

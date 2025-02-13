@@ -1,8 +1,8 @@
 import { UpdateQuery } from 'mongoose'
-import { UserModel, UserSchema } from '../models/users.model'
+import { UserModel, UserSchema, User } from '../models/users.model'
 import { StringOrObjectId } from '../types'
 
-type UserRole = UserSchema['role']
+type UserRole = User['role']
 type UserRoles = Array<UserRole>
 
 export class UserRepo {

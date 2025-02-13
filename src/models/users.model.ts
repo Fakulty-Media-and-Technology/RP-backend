@@ -1,6 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { previewPhotoSchema } from './commonSchema'
-import { MediaAccess } from '../services/media-access'
 
 const schema = new Schema(
   {
@@ -51,6 +50,7 @@ const schema = new Schema(
       required: true,
     },
 
+    // TODO:
     photo: previewPhotoSchema,
 
     auth_code: {
