@@ -49,6 +49,7 @@ export class UpcomingService extends AdminUploadService {
         landscapeFile: data.landscapePhoto,
         portraitFile: data.portraitPhoto,
         videoId: upcoming._id,
+        posterParentType: 'upcoming',
       },
       session,
     )

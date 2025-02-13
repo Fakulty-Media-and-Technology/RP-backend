@@ -12,7 +12,8 @@ export class UpcomingMediaSourceUtils extends MovieMediaSourcesUtils {
         Object.assign(upcoming, {
           landscapePhoto,
           portraitPhoto,
-          trailerVideoUpload: VidUploadUtils.getResSourceUrl(upcoming.trailerVideoUpload, quality),
+          trailer: VidUploadUtils.getResSourceUrl(upcoming.trailerVideoUpload, quality),
+          trailerVideoUpload: undefined,
         })
 
         return upcoming

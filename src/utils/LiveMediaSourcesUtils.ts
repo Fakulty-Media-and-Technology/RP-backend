@@ -10,7 +10,6 @@ export class LiveMediaSourcesUtils {
       lives.map(async live => {
         Object.assign(live, {
           previewVideoUpload: VidUploadUtils.getResSourceUrl(live.previewVideoUpload, quality),
-
           coverPhoto: await MediaAccess.getSignedUrl(
             live.coverPhoto.bucket,
             live.coverPhoto.key,

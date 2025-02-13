@@ -19,7 +19,14 @@ const posterSchema = new Schema(
 
     dimension: {
       type: String,
-      enum: ['landscape', 'portrait', 'live'],
+      enum: ['landscape', 'portrait', null],
+      default: null,
+    },
+
+    parentType: {
+      type: String,
+      enum: ['vod', 'live', 'season', 'episode', 'upcoming'],
+      required: [true, 'A poster must have a parent type'],
     },
   },
   {

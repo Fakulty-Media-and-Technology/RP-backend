@@ -1,5 +1,5 @@
 import { ClientSession } from 'mongoose'
-import { PosterImageModel } from '../../models/poster.model'
+import { PosterImage, PosterImageModel } from '../../models/poster.model'
 
 import { Video, VideoModel } from '../../models/videos.model'
 import { OperationalError } from '../../utils/OperationalError'
@@ -96,12 +96,15 @@ type SavePostersUploadToDBParams = {
   portraitPosterUpload: ImageUploadRes
   landscapePosterUpload: ImageUploadRes
   videoId: StringOrObjectId
+  posterParentType: PosterImage['parentType']
 }
 
-type UploadAndSavePostersToDBParams = {
+type UploadAndSavePostersToDBParams = Pick<
+  SavePostersUploadToDBParams,
+  'videoId' | 'posterParentType'
+> & {
   portraitFile: Express.Multer.File
   landscapeFile: Express.Multer.File
-  videoId: StringOrObjectId
 }
 
 type GetVideoUploadDoc = UploadAndTranscodeConfig & {
@@ -213,7 +216,12 @@ export class AdminUploadService {
   }
 
   protected static _savePostersUploadToDb = async (
-    { portraitPosterUpload, landscapePosterUpload, videoId }: SavePostersUploadToDBParams,
+    {
+      portraitPosterUpload,
+      landscapePosterUpload,
+      videoId,
+      posterParentType,
+    }: SavePostersUploadToDBParams,
     session: ClientSession,
   ) => {
     // save portrait
@@ -221,6 +229,7 @@ export class AdminUploadService {
       video_id: videoId,
       bucket: portraitPosterUpload.Bucket,
       key: portraitPosterUpload.Key,
+      parentType: posterParentType,
       dimension: 'portrait',
     }).save({ session })
 
@@ -229,6 +238,7 @@ export class AdminUploadService {
       video_id: videoId,
       bucket: landscapePosterUpload.Bucket,
       key: landscapePosterUpload.Key,
+      parentType: posterParentType,
       dimension: 'landscape',
     }).save({ session })
 
@@ -236,7 +246,7 @@ export class AdminUploadService {
   }
 
   protected static _uploadAndSavePostersToDB = async (
-    { landscapeFile, portraitFile, videoId }: UploadAndSavePostersToDBParams,
+    { landscapeFile, portraitFile, videoId, posterParentType }: UploadAndSavePostersToDBParams,
     session: ClientSession,
   ) => {
     const { portraitUpload, landscapeUpload } = await this._uploadVideoPosters(
@@ -250,6 +260,7 @@ export class AdminUploadService {
         portraitPosterUpload: portraitUpload,
         landscapePosterUpload: landscapeUpload,
         videoId,
+        posterParentType,
       },
       session,
     )
@@ -292,6 +303,7 @@ export class AdminUploadService {
         portraitFile: data.portraitPoster,
         landscapeFile: data.landscapePoster,
         videoId: videoDoc._id,
+        posterParentType: 'vod',
       },
       session,
     )
@@ -424,6 +436,7 @@ export class AdminUploadService {
           portraitFile: params.portraitPhoto,
           landscapeFile: params.landscapePhoto,
           videoId: season._id,
+          posterParentType: 'season',
         },
         session,
       )

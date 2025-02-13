@@ -73,7 +73,7 @@ export class MedaiService {
       video_id: liveId,
       bucket: upload.Bucket,
       key: upload.Key,
-      dimension: 'live',
+      parentType: 'live',
     }).save({ session })
 
     return coverPhoto

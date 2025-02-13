@@ -30,10 +30,25 @@ export class VideoRepo {
 
   static totalSkitVideosCOuntQuery = () => this.totalVideosCountQuery({ type: 'skit' })
 
-  static searchTitleOrDescriptionByTextReg = (textReg: RegExp) =>
-    VideoModel.find({
-      $or: [{ title: { $regex: textReg } }, { description: { $regex: textReg } }],
+  // static searchTitleOrDescriptionByTextReg = (textReg: RegExp) =>
+  //   VideoModel.find({
+  //     $or: [{ title: { $regex: textReg } }, { description: { $regex: textReg } }],
+  //   })
+
+  static searchTitleOrDescriptionByTextReg = async (textReg: RegExp, page = 1, limit = 10) => {
+    return await this.fetchVideoAggr({
+      prevStages: [
+        {
+          $match: {
+            $or: [{ title: { $regex: textReg } }, { description: { $regex: textReg } }],
+          },
+        },
+      ],
+      sortStage: { $sort: { createdAt: -1 } },
+      page,
+      limit,
     })
+  }
 
   private static _mostEngagedPrevStages: PipelineStage[] = [
     {
@@ -150,11 +165,80 @@ export class VideoRepo {
     },
   ]
 
+  private static _seasonPipeline: PipelineStage[] = [
+    {
+      $lookup: {
+        from: 'poster_images',
+        localField: '_id',
+        foreignField: 'video_id',
+        as: 'landscapePhoto',
+        pipeline: [
+          { $match: { dimension: 'landscape' } },
+          { $project: { key: true, bucket: true } },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: 'poster_images',
+        localField: '_id',
+        foreignField: 'video_id',
+        as: 'portraitPhoto',
+        pipeline: [
+          { $match: { dimension: 'portrait' } },
+          { $project: { key: true, bucket: true } },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: 'trailers',
+        localField: '_id',
+        foreignField: 'video_id',
+        as: 'trailer',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'video_uploads',
+              localField: '_id',
+              foreignField: 'parentId',
+              as: 'trailerVideoUpload',
+              pipeline: [{ $project: { key: true, isTranscoded: true, resolutions: true } }],
+            },
+          },
+
+          { $addFields: { trailerVideoUpload: { $first: '$trailerVideoUpload' } } },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: 'episodes',
+        localField: '_id',
+        foreignField: 'season',
+        as: 'episodes',
+        pipeline: this._episodesPipeline,
+      },
+    },
+
+    {
+      $addFields: {
+        trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
+        portraitPhoto: { $first: '$portraitPhoto' },
+        landscapePhoto: { $first: '$landscapePhoto' },
+      },
+    },
+
+    { $sort: { createdAt: -1 } },
+    { $project: { __v: false, trailer: false } },
+  ]
+
   static fetchSeasonsAndEpisodes = async (videoId: string, page: number, limit: number) => {
     const aggr = await SeasonModel.aggregate([
       {
         $match: { video: toObjectId(videoId) },
       },
+      ...this._seasonPipeline,
       {
         $lookup: {
           from: 'episodes',
@@ -168,7 +252,6 @@ export class VideoRepo {
       { $sort: { createdAt: 1 } },
       { $skip: skip(page, limit) },
       { $limit: limit },
-      { $project: { __v: false } },
     ])
 
     return aggr
@@ -329,21 +412,7 @@ export class VideoRepo {
           localField: '_id',
           foreignField: 'video',
           as: 'seasons',
-
-          pipeline: [
-            {
-              $lookup: {
-                from: 'episodes',
-                localField: '_id',
-                foreignField: 'season',
-                as: 'episodes',
-                pipeline: this._episodesPipeline,
-              },
-            },
-
-            { $sort: { createdAt: 1 } },
-            { $project: { __v: false } },
-          ],
+          pipeline: this._seasonPipeline as any,
         },
       },
       {
@@ -378,6 +447,7 @@ export class VideoRepo {
       limit,
     })
   }
+
   static fetchById = async (id: string) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { _id: toObjectId(id) } }],
@@ -386,7 +456,7 @@ export class VideoRepo {
     })
   }
 
-  static fetchFeatured = async (page = 1, limit = 5) => {
+  static fetchFeatured = async (page = 1, limit = 10) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { featured: true } }],
       // sortStage: { $sort: { $natural: -1 } },

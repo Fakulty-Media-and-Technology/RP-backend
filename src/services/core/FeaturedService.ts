@@ -1,3 +1,7 @@
+import { LiveRepo } from '../../repositories/LiveRepo'
+import { VideoRepo } from '../../repositories/VideoRepo'
+import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
+import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { OperationalError } from '../../utils/OperationalError'
 import { VideoService } from './VideoService'
 
@@ -9,9 +13,16 @@ type AddFeaturedInput = {
 
 export class FeaturedService {
   static searchVideosByText = async (text: string) => {
+    const reg = new RegExp(text, 'i')
+
     const [vods, events] = await Promise.all([
-      VideoService.searceByText(text),
-      VideoService.Live.searchByText(text),
+      MovieMediaSourcesUtils.resolveMediaSources(
+        await VideoRepo.searchTitleOrDescriptionByTextReg(reg),
+        true,
+        '1080p',
+      ),
+
+      LiveMediaSourcesUtils.resolveSources(await LiveRepo.searchLivesByTextReg(reg), '1080p'),
     ])
 
     return { vods, events }
@@ -30,8 +41,12 @@ export class FeaturedService {
 
   static getFeaturedContents = async () => {
     const [vods, events] = await Promise.all([
-      VideoService.getFeaturedVideos(),
-      VideoService.Live.getFeatured(),
+      MovieMediaSourcesUtils.resolveMediaSources(
+        await VideoRepo.fetchFeatured(),
+        true,
+        '1080p',
+      ),
+      LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured(), '1080p'),
     ])
 
     return {

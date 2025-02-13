@@ -52,6 +52,9 @@ export interface Season {
   video: string
   serial_number: number
   episodes: Episode[]
+  landscapePhoto: LandscapePhoto
+  portraitPhoto: LandscapePhoto
+  trailerVideoUpload: TrailerVideoUpload
 }
 
 export interface Episode {

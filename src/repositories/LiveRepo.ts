@@ -124,8 +124,8 @@ export class LiveRepo {
           from: 'poster_images',
           localField: '_id',
           foreignField: 'video_id',
-          as: 'previewPhoto',
-          pipeline: [{ $match: { dimension: 'live' } }, { $project: { key: true, bucket: true } }],
+          as: 'coverPhoto',
+          pipeline: [{ $project: { key: true, bucket: true } }],
         },
       },
       {
@@ -142,19 +142,22 @@ export class LiveRepo {
       },
       {
         $addFields: {
+          streamKey: '$stream_key',
           vidClass: '$vid_class',
-          coverPhoto: { $first: '$previewPhoto' },
+          coverPhoto: { $first: '$coverPhoto' },
           previewVideoUpload: { $ifNull: [{ $first: '$previewVideoUpload' }, null] },
           activeViews: '$active_views',
           featExpiry: '$feat_expiry',
           clientId: '$client_id',
         },
       },
+
+      { $match: { previewVideoUpload: { $ne: null } } },
       ...sortPaginateStages,
       {
         $project: {
+          stream_key: false,
           vid_class: false,
-          previewPhoto: false,
           feat_expiry: false,
           active_views: false,
           client_id: false,

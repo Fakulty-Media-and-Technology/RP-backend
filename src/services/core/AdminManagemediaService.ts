@@ -3,7 +3,6 @@ import { ClientSession } from 'mongoose'
 
 import { LiveModel, LiveSchema } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
-import { UserModel } from '../../models/users.model'
 import { OperationalError } from '../../utils/OperationalError'
 import { handleDefaultNumAndUnknown, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'

@@ -25,12 +25,11 @@ export class MovieMediaSourcesUtils {
       case 'vid':
         return vid.videoLink
           ? vid.videoLink
-          : VidUploadUtils.getResSourceUrl(vid.trailerVideoUpload, quality)
-
+          : VidUploadUtils.getResSourceUrl(vid.videoUpload, quality)
       case 'trailer':
         return vid.trailerLink
           ? vid.trailerLink
-          : VidUploadUtils.getResSourceUrl(vid.videoUpload, quality)
+          : VidUploadUtils.getResSourceUrl(vid.trailerVideoUpload, quality)
 
       default:
         throw new OperationalError('invalid getVideoSource routine', 500)
@@ -49,7 +48,27 @@ export class MovieMediaSourcesUtils {
   ) => {
     const seasonsWithSources = await Promise.all(
       seasons.map(async season => {
-        // process trailerLink and trailervideoUpload
+        Object.assign(season, {
+          trailer: this._getMovieVideoSource(season, 'trailer', quality),
+
+          landscapePhoto: season.landscapePhoto
+            ? await MediaAccess.getSignedUrl(
+                season.landscapePhoto.bucket,
+                season.landscapePhoto.key,
+                'photo',
+              )
+            : null,
+
+          portraitPhoto: season.portraitPhoto
+            ? await MediaAccess.getSignedUrl(
+                season.portraitPhoto.bucket,
+                season.portraitPhoto.key,
+                'photo',
+              )
+            : null,
+
+          trailerVideoUpload: undefined,
+        })
 
         if (episodesMediaResolver) {
           season.episodes = await episodesMediaResolver(season.episodes, withMediaSources, quality)
@@ -73,19 +92,15 @@ export class MovieMediaSourcesUtils {
             trailerVideoUpload: undefined,
             videoUpload: undefined,
             subtitleLang: episode.subtitle?.language,
-
-            mediaSources: {
-              videoSource: this._getMovieVideoSource(episode, 'vid', quality),
-              trailerSource: this._getMovieVideoSource(episode, 'trailer', quality),
-              subtitleSource: episode.subtitle
-                ? await MediaAccess.getSignedUrl(
-                    episode.subtitle.bucket,
-                    episode.subtitle.key,
-                    'subtitle',
-                  )
-                : null,
-            },
-            subtitle: undefined,
+            video: this._getMovieVideoSource(episode, 'vid', quality),
+            trailer: this._getMovieVideoSource(episode, 'trailer', quality),
+            subtitle: episode.subtitle
+              ? await MediaAccess.getSignedUrl(
+                  episode.subtitle.bucket,
+                  episode.subtitle.key,
+                  'subtitle',
+                )
+              : null,
           })
         }
 
@@ -121,15 +136,13 @@ export class MovieMediaSourcesUtils {
           Object.assign(vid, {
             trailerVideoUpload: undefined,
             videoUpload: undefined,
-            mediaSources: {
-              videoSource: this._getMovieVideoSource(vid, 'vid', quality),
-              trailerSource: this._getMovieVideoSource(vid, 'trailer', quality),
-              subtitleLang: vid.subtitle?.language,
-              subtitleSource: vid.subtitle
-                ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
-                : null,
-            },
-            subtitle: undefined,
+
+            video: this._getMovieVideoSource(vid, 'vid', quality),
+            trailer: this._getMovieVideoSource(vid, 'trailer', quality),
+            subtitleLang: vid.subtitle?.language,
+            subtitle: vid.subtitle
+              ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
+              : null,
           })
         }
 
