@@ -127,9 +127,8 @@ type UploadTrailerAndVIdeoInput = {
 }
 
 export class AdminUploadService {
-  private static _resolveWithMediaSources = (
-    queryParams: QueryParamsFeaturesOptions['queryParams'],
-  ) => queryParams.withMediaSources === 'true'
+  static resolveWithMediaSources = (queryParams: QueryParamsFeaturesOptions['queryParams']) =>
+    queryParams.withMediaSources === 'true'
 
   private static _uploadTrailerAndVideo = async (
     video: UploadTrailerAndVIdeoInput,
@@ -629,7 +628,8 @@ export class AdminUploadService {
 
     const vidsWithSources = await MovieMediaSourcesUtils.resolveMovieMediaSources(
       await VideoRepo.fetchByType(type, page, limit),
-      this._resolveWithMediaSources(queryParams),
+      this.resolveWithMediaSources(queryParams),
+      '720p',
     )
 
     return vidsWithSources
@@ -656,7 +656,8 @@ export class AdminUploadService {
 
     const seasonsWithMediaSources = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
       seasons,
-      this._resolveWithMediaSources(queryParams),
+      this.resolveWithMediaSources(queryParams),
+      '720p',
       MovieMediaSourcesUtils.resolveEpisodesMediaSources,
     )
 

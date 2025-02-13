@@ -9,6 +9,7 @@ import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { calcLiveCharges, signCred } from '../../utils/live'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
+import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 
 type CreateClientWithSessionInput = {
   currentUser: LoggedInUser
@@ -97,8 +98,11 @@ export class LiveStreamService {
   }
 
   static getLiveStreamCredentials = async (currentUser: LoggedInUser) => {
+    const vidQuality = await VidUploadUtils.getUserVideoQuality(currentUser._id.toString(), '720p')
+
     const lives = await LiveMediaSourcesUtils.resolveSources(
       await LiveRepo.getValidClientLive(currentUser._id.toString()),
+      vidQuality,
     )
 
     return await Promise.all(

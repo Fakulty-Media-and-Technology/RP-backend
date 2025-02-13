@@ -33,7 +33,7 @@ export class AdminManageMediaService {
       handleDefaultNumAndUnknown(query.limit, 10),
     )
 
-    return await LiveMediaSourcesUtils.resolveSources(lives)
+    return await LiveMediaSourcesUtils.resolveSources(lives, '720p')
   }
 
   static addSubtitle = async (data: Record<string, any>) => {

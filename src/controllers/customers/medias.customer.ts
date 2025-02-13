@@ -19,7 +19,7 @@ import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { LiveAggrRes } from '../../types/Live'
 import { Movie } from '../../types/movie'
-import { query } from 'express'
+import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 
 type LiveEventsType =
   | 'all'
@@ -51,13 +51,18 @@ export class CustomerMediaController extends MediaController {
     })
   })
 
-  static getFeaturedVods = Catch.async(async ({ query }, res) => {
+  static getFeaturedVods = Catch.async(async ({ query, user }, res) => {
+    const vidQuality = await VidUploadUtils.getUserVideoQuality(
+      GetDefined.loggedInUser(user)._id.toString(),
+    )
+
     const vods = await MovieMediaSourcesUtils.resolveMovieMediaSources(
       await VideoRepo.fetchFeatured(
         handleDefaultNumAndUnknown(query.page, 1),
         handleDefaultNumAndUnknown(query.limit, 10),
       ),
       true,
+      vidQuality,
     )
 
     sendResponse({
@@ -67,7 +72,10 @@ export class CustomerMediaController extends MediaController {
     })
   })
 
-  static getFeaturedLives = Catch.async(async ({ query }, res) => {
+  static getFeaturedLives = Catch.async(async ({ query, user }, res) => {
+    const vidQuality = await VidUploadUtils.getUserVideoQuality(
+      GetDefined.loggedInUser(user)._id.toString(),
+    )
     sendResponse({
       res,
       message: 'featured contents fetched successful',
@@ -76,6 +84,7 @@ export class CustomerMediaController extends MediaController {
           handleDefaultNumAndUnknown(query.page, 1),
           handleDefaultNumAndUnknown(query.limit, 10),
         ),
+        vidQuality,
       ),
     })
   })
@@ -211,12 +220,17 @@ export class CustomerMediaController extends MediaController {
           break
       }
 
+      const vidQuality = await VidUploadUtils.getUserVideoQuality(
+        GetDefined.loggedInUser(req.user)._id.toString(),
+      )
+
       const liveEvents = await LiveMediaSourcesUtils.resolveSources(
         await LiveRepo.getSelectedLive(
           filter,
           handleDefaultNumAndUnknown(req.query.page, 1),
           handleDefaultNumAndUnknown(req.query.limit, 10),
         ),
+        vidQuality,
       )
 
       sendResponse({
@@ -226,20 +240,32 @@ export class CustomerMediaController extends MediaController {
       })
     })
 
-  static bannerContents = Catch.async(async (_, res) => {
+  static bannerContents = Catch.async(async (req, res) => {
+    const vidQuality = await VidUploadUtils.getUserVideoQuality(
+      GetDefined.loggedInUser(req.user)._id.toString(),
+    )
+
     let lives: LiveAggrRes[]
     let vods: Movie[]
 
       //
     ;[lives, vods] = await Promise.all([
-      LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured()),
-      MovieMediaSourcesUtils.resolveMovieMediaSources(await VideoRepo.fetchFeatured(), true),
+      LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured(), vidQuality),
+      MovieMediaSourcesUtils.resolveMovieMediaSources(
+        await VideoRepo.fetchFeatured(),
+        true,
+        vidQuality,
+      ),
     ])
 
     if (lives.length + vods.length < 10) {
       ;[lives, vods] = await Promise.all([
-        LiveMediaSourcesUtils.resolveSources(await LiveRepo.getMostEngaged()),
-        MovieMediaSourcesUtils.resolveMovieMediaSources(await VideoRepo.fetchMostEngaged(), true),
+        LiveMediaSourcesUtils.resolveSources(await LiveRepo.getMostEngaged(), vidQuality),
+        MovieMediaSourcesUtils.resolveMovieMediaSources(
+          await VideoRepo.fetchMostEngaged(),
+          true,
+          vidQuality,
+        ),
       ])
     }
 

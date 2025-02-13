@@ -14,6 +14,7 @@ import {
 
 import { MediaManagement } from '../media-management'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
+import { AdminUploadService } from './AdminUploadService'
 
 function isValidEmail(email: string) {
   const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
@@ -82,7 +83,8 @@ export class DashboardService {
 
     return await MovieMediaSourcesUtils.resolveMovieMediaSources(
       vids,
-      queryParams.withMediaSources === 'true',
+      AdminUploadService.resolveWithMediaSources(queryParams),
+      '720p',
     )
   }
 

@@ -2,38 +2,33 @@ import { MediaAccess } from '../services/media-access'
 import { Episode, GetVideoSourceParams, Movie, Season } from '../types/movie'
 import { OperationalError } from './OperationalError'
 import { getPromiseAllFulfilledResults } from './promises'
-
-export const getVidUploadSource = (
-  videoUpload: NonNullable<Movie['trailerVideoUpload']>,
-  targetRes = '1080',
-) => {
-  const res = videoUpload.resolutions.find(r => r.resolution === targetRes)
-  return res == null ? null : MediaAccess.getCloudFrontSignedUrl(res.key)
-}
+import { VidUploadUtils, VidRes } from './VideoUploadUtils'
 
 export class MovieMediaSourcesUtils {
-  public static getMovieVideoSource = (vid: GetVideoSourceParams, routine: 'vid' | 'trailer') => {
+  private static _getMoviePhotos = async (vid: Movie) => {
+    const [landscapePhoto, portraitPhoto] = await Promise.all([
+      MediaAccess.getSignedUrl(vid.landscapePhoto.bucket, vid.landscapePhoto.key, 'photo'),
+      MediaAccess.getSignedUrl(vid.portraitPhoto.bucket, vid.portraitPhoto.key, 'photo'),
+    ])
+
+    return { landscapePhoto, portraitPhoto }
+  }
+
+  private static _getMovieVideoSource = (
+    vid: GetVideoSourceParams,
+    routine: 'vid' | 'trailer',
+    quality: VidRes,
+  ) => {
     switch (routine) {
       case 'vid':
-        if (vid.videoLink) {
-          return vid.videoLink
-        }
+        return vid.videoLink
+          ? vid.videoLink
+          : VidUploadUtils.getResSourceUrl(vid.trailerVideoUpload, quality)
 
-        if (vid.videoUpload) {
-          return getVidUploadSource(vid.videoUpload)
-        }
-
-        return null
       case 'trailer':
-        if (vid.trailerLink) {
-          return vid.trailerLink
-        }
-
-        if (vid.trailerVideoUpload) {
-          return getVidUploadSource(vid.trailerVideoUpload)
-        }
-
-        return null
+        return vid.trailerLink
+          ? vid.trailerLink
+          : VidUploadUtils.getResSourceUrl(vid.videoUpload, quality)
 
       default:
         throw new OperationalError('invalid getVideoSource routine', 500)
@@ -43,14 +38,19 @@ export class MovieMediaSourcesUtils {
   public static resolveSeasonsMediaSources = async (
     seasons: Season[],
     withMediaSources: boolean,
-    episodesMediaResolver?: (e: Episode[], withMediaSources: boolean) => Promise<Episode[]>,
+    quality: VidRes,
+    episodesMediaResolver?: (
+      e: Episode[],
+      withMediaSources: boolean,
+      quality: VidRes,
+    ) => Promise<Episode[]>,
   ) => {
     const seasonsWithSources = await Promise.all(
       seasons.map(async season => {
         // process trailerLink and trailervideoUpload
 
         if (episodesMediaResolver) {
-          season.episodes = await episodesMediaResolver(season.episodes, withMediaSources)
+          season.episodes = await episodesMediaResolver(season.episodes, withMediaSources, quality)
         }
 
         return season
@@ -62,6 +62,7 @@ export class MovieMediaSourcesUtils {
   public static resolveEpisodesMediaSources = async (
     episodes: Episode[],
     withMediaSources: boolean,
+    quality: VidRes,
   ) => {
     const episodesWithSources = await Promise.all(
       episodes.map(async episode => {
@@ -72,8 +73,8 @@ export class MovieMediaSourcesUtils {
             subtitleLang: episode.subtitle?.language,
 
             mediaSources: {
-              videoSource: this.getMovieVideoSource(episode, 'vid'),
-              trailerSource: this.getMovieVideoSource(episode, 'trailer'),
+              videoSource: this._getMovieVideoSource(episode, 'vid', quality),
+              trailerSource: this._getMovieVideoSource(episode, 'trailer', quality),
               subtitleSource: episode.subtitle
                 ? await MediaAccess.getSignedUrl(
                     episode.subtitle.bucket,
@@ -93,16 +94,11 @@ export class MovieMediaSourcesUtils {
     return episodesWithSources as unknown as Episode[]
   }
 
-  private static _getMoviePhotos = async (vid: Movie) => {
-    const [landscapePhoto, portraitPhoto] = await Promise.all([
-      MediaAccess.getSignedUrl(vid.landscapePhoto.bucket, vid.landscapePhoto.key, 'photo'),
-      MediaAccess.getSignedUrl(vid.portraitPhoto.bucket, vid.portraitPhoto.key, 'photo'),
-    ])
-
-    return { landscapePhoto, portraitPhoto }
-  }
-
-  public static resolveMovieMediaSources = async (vids: Movie[], withMediaSources = true) => {
+  public static resolveMovieMediaSources = async (
+    vids: Movie[],
+    withMediaSources: boolean,
+    quality: VidRes,
+  ) => {
     const movies = await Promise.allSettled(
       vids.map(async vid => {
         const { landscapePhoto, portraitPhoto } = await this._getMoviePhotos(vid)
@@ -110,6 +106,7 @@ export class MovieMediaSourcesUtils {
         vid.seasons = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
           vid.seasons,
           withMediaSources,
+          quality,
           MovieMediaSourcesUtils.resolveEpisodesMediaSources,
         )
 
@@ -123,8 +120,8 @@ export class MovieMediaSourcesUtils {
             trailerVideoUpload: undefined,
             videoUpload: undefined,
             mediaSources: {
-              videoSource: this.getMovieVideoSource(vid, 'vid'),
-              trailerSource: this.getMovieVideoSource(vid, 'trailer'),
+              videoSource: this._getMovieVideoSource(vid, 'vid', quality),
+              trailerSource: this._getMovieVideoSource(vid, 'trailer', quality),
               subtitleLang: vid.subtitle?.language,
               subtitleSource: vid.subtitle
                 ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
