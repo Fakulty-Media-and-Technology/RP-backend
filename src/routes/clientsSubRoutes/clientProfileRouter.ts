@@ -9,4 +9,3 @@ router
   .route('/')
   .get(ClientProfileController.clientProfileFetch)
   .post(requestValidator(updateProfileSchema), ClientProfileController.clientEditProfile)
-

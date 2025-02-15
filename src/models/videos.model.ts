@@ -128,7 +128,7 @@ const schema = new Schema(
 
     videoLink: {
       type: String,
-      default: null,
+      default: null, // crucial for Aggregation
     },
 
     trailerLink: {

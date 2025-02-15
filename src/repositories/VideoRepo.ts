@@ -608,9 +608,29 @@ export class VideoRepo {
       {
         $match: {
           $or: [
-            { type: 'series' },
-            { $and: [{ videoLink: { $ne: null } }, { videoUpload: null }] },
-            { $and: [{ videoLink: null }, { videoUpload: { $ne: null } }] },
+            // series can have vids and trailers properties as as null
+            { is_series: true },
+
+            // TODO: find a coincise way
+            {
+              // videoLink and videoUpload are not null on the same document
+              // trailerLink and trailerVideoUpload are not null on the same document
+              $and: [
+                {
+                  $or: [
+                    { $and: [{ videoLink: { $ne: null } }, { videoUpload: null }] },
+                    { $and: [{ videoLink: null }, { videoUpload: { $ne: null } }] },
+                  ],
+                },
+
+                {
+                  $or: [
+                    { $and: [{ trailerLink: { $ne: null } }, { trailerVideoUpload: null }] },
+                    { $and: [{ trailerLink: null }, { trailerVideoUpload: { $ne: null } }] },
+                  ],
+                },
+              ],
+            },
           ],
         },
       },

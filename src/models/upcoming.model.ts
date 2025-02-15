@@ -19,6 +19,24 @@ const schema = new Schema(
       required: true,
     },
 
+    portraitPhoto: {
+      type: Schema.Types.ObjectId,
+      ref: 'poster_images',
+      required: true,
+    },
+
+    landscapePhoto: {
+      type: Schema.Types.ObjectId,
+      ref: 'poster_images',
+      required: true,
+    },
+
+    peviewTrailer: {
+      type: Schema.Types.ObjectId,
+      ref: 'trailers',
+      required: true,
+    },
+
     reminder: {
       type: [
         {

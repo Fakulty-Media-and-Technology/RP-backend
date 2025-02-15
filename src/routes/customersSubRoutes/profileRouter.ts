@@ -1,5 +1,5 @@
-import { Router } from "express";
-import { CustomerProfileController } from "../../controllers/customers/profile.customer";
+import { Router } from 'express'
+import { CustomerProfileController } from '../../controllers/customers/profile.customer'
 
 export const router = Router()
 

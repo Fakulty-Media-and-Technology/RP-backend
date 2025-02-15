@@ -45,8 +45,6 @@ export class MedaiService {
   ) => {
     const upload = await MediaManagement.uploadAndTransacodeVideo({
       file,
-      waitTranscode: true,
-      waitDuration: 20,
       expire: undefined,
     })
 

@@ -9,10 +9,7 @@ import { Bytes } from '../utils/Bytes'
 import { rimraf } from 'rimraf'
 import { MediaConvert } from './aws/mediaConvert'
 
-export type UploadAndTranscodeConfig = UploadVideoInput & {
-  waitTranscode: boolean
-  waitDuration?: number
-}
+export type UploadAndTranscodeConfig = UploadVideoInput
 
 type UploadVideoInput = {
   file: Express.Multer.File
@@ -38,12 +35,7 @@ export class MediaManagement {
     }
   }
 
-  static uploadAndTransacodeVideo = async ({
-    file,
-    expire,
-    waitTranscode,
-    waitDuration = 20,
-  }: UploadAndTranscodeConfig) => {
+  static uploadAndTransacodeVideo = async ({ file, expire }: UploadAndTranscodeConfig) => {
     const video = await this.store({
       file,
       expire: typeof expire === 'string' ? new Date(expire) : undefined,
@@ -55,10 +47,8 @@ export class MediaManagement {
       isTranscoded: false,
     }
 
-    if (waitTranscode) {
-      const { Job } = await MediaConvert.transcode(video.Key)
-      response.isTranscoded = await MediaConvert.waitForJobCompletion(Job?.Id, waitDuration)
-    }
+    const { Job } = await MediaConvert.transcode(video.Key)
+    response.isTranscoded = await MediaConvert.waitForJobCompletion(Job?.Id, 1)
 
     return response
   }
@@ -71,7 +61,7 @@ export class MediaManagement {
     } else if (file.path) {
       const passThrough = new PassThrough()
       createReadStream(file.path, { highWaterMark: Bytes.mb(100) }).pipe(passThrough)
-      Body = passThrough 
+      Body = passThrough
     } else {
       throw new OperationalError('file is improperly formatted', 500)
     }

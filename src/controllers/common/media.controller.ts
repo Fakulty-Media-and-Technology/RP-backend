@@ -5,7 +5,7 @@ import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 import { checkFiles } from '../admins/uploads.admin'
 import { validate } from '../../middlewares/requestValidator'
-import { createLiveSchema } from '../../validations/admin'
+import { addLiveSchema } from '../../validations/admin'
 
 export class MediaController {
   static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
@@ -28,7 +28,7 @@ export class MediaController {
         clientId: isAdmin ? parsedData.clientId : GetDefined.loggedInUser(req.user).id,
       }
 
-      validate(createLiveSchema, data)
+      validate(addLiveSchema, data)
 
       sendResponse({
         res,

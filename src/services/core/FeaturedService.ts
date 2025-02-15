@@ -41,11 +41,7 @@ export class FeaturedService {
 
   static getFeaturedContents = async () => {
     const [vods, events] = await Promise.all([
-      MovieMediaSourcesUtils.resolveMediaSources(
-        await VideoRepo.fetchFeatured(),
-        true,
-        '1080p',
-      ),
+      MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo.fetchFeatured(), true, '1080p'),
       LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured(), '1080p'),
     ])
 

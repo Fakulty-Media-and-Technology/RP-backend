@@ -42,9 +42,7 @@ export class UpcomingService extends AdminUploadService {
       active: data.active,
     })
 
-    await upcoming.save({ session })
-
-    await this._uploadAndSavePostersToDB(
+    const photosDocs = await this._uploadAndSavePostersToDB(
       {
         landscapeFile: data.landscapePhoto,
         portraitFile: data.portraitPhoto,
@@ -62,8 +60,6 @@ export class UpcomingService extends AdminUploadService {
     const tVidUploadDoc = await this._getVideoUploadDoc(
       {
         file: data.trailer,
-        waitTranscode: true,
-        waitDuration: 30,
         expire: undefined,
         parentId: trailerDoc._id,
         parentType: 'trailer',
@@ -72,8 +68,12 @@ export class UpcomingService extends AdminUploadService {
     )
 
     trailerDoc.video_upload = tVidUploadDoc._id
-    await trailerDoc.save({ session })
+    upcoming.peviewTrailer = trailerDoc._id
+    upcoming.landscapePhoto = photosDocs.landscape._id
+    upcoming.portraitPhoto = photosDocs.portrait._id
 
+    await trailerDoc.save({ session })
+    await upcoming.save({ session })
     return upcoming
   }
 

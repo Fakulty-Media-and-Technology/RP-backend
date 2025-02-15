@@ -148,8 +148,6 @@ export class AdminUploadService {
       files.map(file =>
         MediaManagement.uploadAndTransacodeVideo({
           file: file.file,
-          waitTranscode: true,
-          waitDuration: 30,
           expire: file.expire,
         }),
       ),
@@ -186,8 +184,6 @@ export class AdminUploadService {
   ) => {
     const res = await MediaManagement.uploadAndTransacodeVideo({
       file: params.file,
-      waitTranscode: params.waitTranscode,
-      waitDuration: params.waitDuration,
       expire: params.expire,
     })
 
@@ -370,8 +366,7 @@ export class AdminUploadService {
       const tVidUploadDoc = await this._getVideoUploadDoc(
         {
           file: data.trailer,
-          waitTranscode: true,
-          waitDuration: 30,
+
           expire: vidUploadExpire,
           parentId: trailerDoc._id,
           parentType: 'trailer',
@@ -388,8 +383,7 @@ export class AdminUploadService {
       const vidUploadDoc = await this._getVideoUploadDoc(
         {
           file: data.video,
-          waitTranscode: true,
-          waitDuration: 30,
+
           expire: vidUploadExpire,
           parentId: videoDoc._id,
           parentType: 'vod',
@@ -488,8 +482,7 @@ export class AdminUploadService {
       const tVidUploadDoc = await this._getVideoUploadDoc(
         {
           file: params.trailer,
-          waitTranscode: true,
-          waitDuration: 30,
+
           expire: aggrRes[0].movieExpiryDate,
           parentId: trailerDoc._id,
           parentType: 'trailer',
@@ -612,7 +605,6 @@ export class AdminUploadService {
       const tVidUploadDoc = await this._getVideoUploadDoc(
         {
           file: data.trailer,
-          waitTranscode: false,
           expire: undefined,
           parentId: trailerDoc._id,
           parentType: 'trailer',
@@ -629,8 +621,6 @@ export class AdminUploadService {
       const vidUploadDoc = await this._getVideoUploadDoc(
         {
           file: data.video,
-          waitTranscode: true,
-          waitDuration: 30,
           expire: undefined,
           parentId: episode._id,
           parentType: 'episode',
