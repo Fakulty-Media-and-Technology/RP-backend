@@ -121,9 +121,9 @@ export class AdminUploadController {
 
     const _data = {
       trailerLink: body.trailerLink,
-      portraitPhoto: files['portraitPhoto'][0],
-      landscapePhoto: files['portraitPhoto'][0],
-      trailer: files['trailer'][0],
+      portraitPhoto: files['portraitPhoto']?.[0],
+      landscapePhoto: files['landscapePhoto']?.[0],
+      trailer: files['trailer']?.[0],
     }
 
     validate(createSeasonSchema, _data)

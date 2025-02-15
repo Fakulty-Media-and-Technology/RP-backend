@@ -13,7 +13,12 @@ import { TrailerModel } from '../../models/trailer.model'
 import { VideoUploadModel } from '../../models/videoupload.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { videoUploadParents } from '../../models/assets'
-import { AddEpisodeUtilAggrRes, toObjectId, VideoRepo } from '../../repositories/VideoRepo'
+import {
+  AddEpisodeUtilAggrRes,
+  AddSeasonUtilAggrRes,
+  toObjectId,
+  VideoRepo,
+} from '../../repositories/VideoRepo'
 import { Season } from '../../types/movie'
 
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
@@ -399,6 +404,43 @@ export class AdminUploadService {
     return videoDoc
   }
 
+  private static _validateWithMovieAndPrevSeasonsAggrResult = (res: AddSeasonUtilAggrRes[]) => {
+    if (res.length === 0) {
+      throw new OperationalError('invalid videoId', 404)
+    }
+
+    console.dir({ res: JSON.parse(JSON.stringify(res)) }, { depth: null })
+
+    const {
+      totalEpisodesOfLastSeason,
+      movieExpiryDate,
+      totalPreviousSeasons,
+      movieTrailerLink,
+      isMovieTrailerVidUploadTranscoded,
+      isMovieSeries,
+    } = res[0]
+
+    if (!isMovieSeries) {
+      throw new OperationalError('movie is not a series', 403)
+    }
+
+    if (totalPreviousSeasons > 0 && totalEpisodesOfLastSeason === 0) {
+      throw new OperationalError(
+        'Creating a new season when the most recent season has no episodes is not allowed',
+        403,
+      )
+    }
+
+    // Movie must not have a trailer but if it does and it is a trailer upload then season creation must wait for transcode to complete
+    if (movieTrailerLink == null && isMovieTrailerVidUploadTranscoded === false) {
+      throw new OperationalError('Movie trailer video upload has not finished transcoding', 403)
+    }
+
+    if (movieExpiryDate && new Date() > movieExpiryDate) {
+      throw new OperationalError('Movie has expired', 403)
+    }
+  }
+
   private static _addSeasonWithSession = async (
     { videoId, adminId, ...params }: AddSeasonParams,
     session: ClientSession,
@@ -411,23 +453,14 @@ export class AdminUploadService {
     params.portraitPhoto &&
       this._allowMimetype(params.portraitPhoto, 'image', ' portraitPhoto must be an image file')
 
-    const [prevSeasons, parentVideo] = await Promise.all([
-      SeasonModel.find({ video: videoId }),
-      VideoModel.findById(videoId),
-    ])
+    const aggrRes = await VideoRepo.addSeasonUtilAggr(videoId)
 
-    if (parentVideo == null) {
-      throw new OperationalError('invalid videoId', 404)
-    }
-
-    if (parentVideo.type !== 'series') {
-      throw new OperationalError('only series video type can have seasons', 403)
-    }
+    this._validateWithMovieAndPrevSeasonsAggrResult(aggrRes)
 
     const season = new SeasonModel({
       admin: adminId,
       video: videoId,
-      serial_number: prevSeasons.length + 1,
+      serial_number: aggrRes[0].totalPreviousSeasons + 1,
       trailerLink: params.trailerLink,
     })
 
@@ -457,7 +490,7 @@ export class AdminUploadService {
           file: params.trailer,
           waitTranscode: true,
           waitDuration: 30,
-          expire: parentVideo.expiry_date || undefined,
+          expire: aggrRes[0].movieExpiryDate,
           parentId: trailerDoc._id,
           parentType: 'trailer',
         },
@@ -470,11 +503,10 @@ export class AdminUploadService {
     }
 
     await season.save({ session })
-
     return season
   }
 
-  private static _validateSeasonAndPrevEpisodesVidUploads = (aggrRes: AddEpisodeUtilAggrRes[]) => {
+  private static _validateWithSeasonAndPrevEpisodes = (aggrRes: AddEpisodeUtilAggrRes[]) => {
     if (aggrRes.length == 0) {
       throw new OperationalError('invalid season Id', 404)
     }
@@ -516,7 +548,7 @@ export class AdminUploadService {
 
     const aggrUtilsRes = await VideoRepo.addEpisodeUtilAggr(seasonId)
 
-    this._validateSeasonAndPrevEpisodesVidUploads(aggrUtilsRes)
+    this._validateWithSeasonAndPrevEpisodes(aggrUtilsRes)
 
     const episode = new EpisodeModel({
       title: data.title,

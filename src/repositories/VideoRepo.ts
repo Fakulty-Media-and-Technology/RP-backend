@@ -13,6 +13,16 @@ export type FetchVideosParams = {
   limit: number
 }
 
+export type AddSeasonUtilAggrRes = {
+  _id: string
+  isMovieSeries: boolean
+  totalPreviousSeasons: number
+  totalEpisodesOfLastSeason: number
+  movieExpiryDate: Date | undefined
+  movieTrailerLink: null | string
+  isMovieTrailerVidUploadTranscoded: boolean
+}
+
 export type AddEpisodeUtilAggrRes = {
   _id: string
   seasonTrailerLink: null
@@ -40,6 +50,76 @@ export class VideoRepo {
   static totalMusicVideosCountQuery = () => this.totalVideosCountQuery({ type: 'music-video' })
 
   static totalSkitVideosCOuntQuery = () => this.totalVideosCountQuery({ type: 'skit' })
+
+  static addSeasonUtilAggr = async (vidId: string) => {
+    const aggr = await VideoModel.aggregate([
+      { $match: { _id: toObjectId(vidId) } },
+
+      {
+        $lookup: {
+          from: 'seasons',
+          localField: '_id',
+          foreignField: 'video',
+          as: 'seasons',
+
+          pipeline: [
+            { $sort: { _id: -1 } },
+            {
+              $lookup: {
+                from: 'episodes',
+                localField: '_id',
+                foreignField: 'season',
+                as: 'episodes',
+              },
+            },
+          ],
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'trailers',
+          localField: '_id',
+          foreignField: 'video_id',
+          as: 'trailers',
+
+          pipeline: [
+            {
+              $lookup: {
+                from: 'video_uploads',
+                localField: 'video_upload',
+                foreignField: '_id',
+                as: 'trailerVideUploads',
+              },
+            },
+
+            {
+              $addFields: {
+                isTrailerVidUploadTranscoded: {
+                  $ifNull: [{ $first: '$trailerVideUploads.isTranscoded' }, null],
+                },
+              },
+            },
+          ],
+        },
+      },
+
+      {
+        $project: {
+          totalPreviousSeasons: { $size: '$seasons' },
+          totalEpisodesOfLastSeason: { $size: { $ifNull: [{ $first: '$seasons.episodes' }, 0] } },
+          isMovieSeries: '$is_series',
+          movieExpiryDate: { $ifNull: ['$expiry_date', undefined] },
+          movieTrailerLink: { $ifNull: ['$trailerLink', null] },
+          isMovieTrailerVidUploadTranscoded: {
+            $ifNull: [{ $first: '$trailers.isTrailerVidUploadTranscoded' }, null],
+          },
+        },
+      },
+    ])
+
+    return aggr as Array<AddSeasonUtilAggrRes>
+  }
 
   static addEpisodeUtilAggr = async (seasonId: string) => {
     const seasonTrailerLookupStage: PipelineStage.Lookup = {
@@ -135,7 +215,7 @@ export class VideoRepo {
       episodesLookupStage,
 
       {
-        $addFields: {
+        $project: {
           seasonTrailerLink: '$trailerLink',
 
           recentEpisodeTrailerLink: {
