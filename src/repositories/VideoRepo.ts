@@ -13,6 +13,17 @@ export type FetchVideosParams = {
   limit: number
 }
 
+export type AddEpisodeUtilAggrRes = {
+  _id: string
+  seasonTrailerLink: null
+  recentEpisodeTrailerLink: boolean
+  recentEpisodeVideoLink: boolean
+  isTrailerUploadVidTranscoded: boolean
+  isRecentEpisodeTrailerVidUploadTranscoded: boolean
+  isRecentEpisodeVidUploadTranscoded: boolean
+  totalPreviousEpisodes: number
+}
+
 export class VideoRepo {
   static addFeatured = (id: string, expiry: string) =>
     VideoModel.findByIdAndUpdate(id, {
@@ -30,10 +41,130 @@ export class VideoRepo {
 
   static totalSkitVideosCOuntQuery = () => this.totalVideosCountQuery({ type: 'skit' })
 
-  // static searchTitleOrDescriptionByTextReg = (textReg: RegExp) =>
-  //   VideoModel.find({
-  //     $or: [{ title: { $regex: textReg } }, { description: { $regex: textReg } }],
-  //   })
+  static addEpisodeUtilAggr = async (seasonId: string) => {
+    const seasonTrailerLookupStage: PipelineStage.Lookup = {
+      $lookup: {
+        from: 'trailers',
+        localField: 'trailer',
+        foreignField: '_id',
+        as: 'trailer',
+
+        pipeline: [
+          {
+            $lookup: {
+              from: 'video_uploads',
+              localField: 'video_upload',
+              foreignField: '_id',
+              as: 'trailerVidUpload',
+            },
+          },
+          {
+            $addFields: {
+              isTrailerVidTranscoded: {
+                $ifNull: [{ $first: '$trailerVidUpload.isTranscoded' }, null],
+              },
+            },
+          },
+        ],
+      },
+    }
+
+    const episodesLookupStage: PipelineStage.Lookup = {
+      $lookup: {
+        from: 'episodes',
+        localField: '_id',
+        foreignField: 'season',
+        as: 'episodes',
+
+        pipeline: [
+          { $sort: { createdAt: -1 } },
+
+          {
+            $lookup: {
+              from: 'video_uploads',
+              localField: 'videoUpload',
+              foreignField: '_id',
+              as: 'videoUploads',
+            },
+          },
+          {
+            $lookup: {
+              from: 'trailers',
+              localField: 'trailerUpload',
+              foreignField: '_id',
+              as: 'episodeTrailers',
+
+              pipeline: [
+                {
+                  $lookup: {
+                    from: 'video_uploads',
+                    localField: 'video_upload',
+                    foreignField: '_id',
+                    as: 'episodeTrailerVidUpload',
+                  },
+                },
+
+                {
+                  $addFields: {
+                    isEpisodeTrailerVidTranscoded: {
+                      $ifNull: [{ $first: '$episodeTrailerVidUpload.isTranscoded' }, null],
+                    },
+                  },
+                },
+              ],
+            },
+          },
+
+          {
+            $addFields: {
+              isEpisodeVidUploadTranscoded: {
+                $ifNull: [{ $first: '$videoUploads.isTranscoded' }, null],
+              },
+              isTrailerVidUploadTranscoded: {
+                $ifNull: [{ $first: '$episodeTrailers.isEpisodeTrailerVidTranscoded' }, null],
+              },
+            },
+          },
+        ],
+      },
+    }
+
+    const aggr = await SeasonModel.aggregate([
+      { $match: { _id: toObjectId(seasonId) } },
+      seasonTrailerLookupStage,
+      episodesLookupStage,
+
+      {
+        $addFields: {
+          seasonTrailerLink: '$trailerLink',
+
+          recentEpisodeTrailerLink: {
+            $ifNull: [{ $first: '$episodes.trailerLink' }, null],
+          },
+
+          recentEpisodeVideoLink: {
+            $ifNull: [{ $first: '$episodes.videoLink' }, null],
+          },
+
+          isTrailerUploadVidTranscoded: {
+            $ifNull: [{ $first: '$trailer.isTrailerVidTranscoded' }, null],
+          },
+
+          isRecentEpisodeTrailerVidUploadTranscoded: {
+            $ifNull: [{ $first: '$episodes.isTrailerVidUploadTranscoded' }, null],
+          },
+
+          isRecentEpisodeVidUploadTranscoded: {
+            $ifNull: [{ $first: '$episodes.isEpisodeVidUploadTranscoded' }, null],
+          },
+
+          totalPreviousEpisodes: { $size: '$episodes' },
+        },
+      },
+    ])
+
+    return aggr as Array<AddEpisodeUtilAggrRes>
+  }
 
   static searchTitleOrDescriptionByTextReg = async (textReg: RegExp, page = 1, limit = 10) => {
     return await this.fetchVideoAggr({

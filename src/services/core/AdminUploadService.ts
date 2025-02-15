@@ -13,7 +13,7 @@ import { TrailerModel } from '../../models/trailer.model'
 import { VideoUploadModel } from '../../models/videoupload.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { videoUploadParents } from '../../models/assets'
-import { VideoRepo } from '../../repositories/VideoRepo'
+import { AddEpisodeUtilAggrRes, toObjectId, VideoRepo } from '../../repositories/VideoRepo'
 import { Season } from '../../types/movie'
 
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
@@ -266,7 +266,7 @@ export class AdminUploadService {
     )
   }
 
-  private static _uploadVideoSesion = async (
+  private static _uploadVideoSession = async (
     { data, type, adminId }: AddVideoParams,
     session: ClientSession,
   ) => {
@@ -474,6 +474,38 @@ export class AdminUploadService {
     return season
   }
 
+  private static _validateSeasonAndPrevEpisodesVidUploads = (aggrRes: AddEpisodeUtilAggrRes[]) => {
+    if (aggrRes.length == 0) {
+      throw new OperationalError('invalid season Id', 404)
+    }
+
+    const [
+      {
+        totalPreviousEpisodes,
+        isRecentEpisodeTrailerVidUploadTranscoded,
+        isRecentEpisodeVidUploadTranscoded,
+        isTrailerUploadVidTranscoded,
+        seasonTrailerLink,
+        recentEpisodeTrailerLink,
+        recentEpisodeVideoLink,
+      },
+    ] = aggrRes
+
+    if (totalPreviousEpisodes === 0) return
+
+    if (seasonTrailerLink === null && isTrailerUploadVidTranscoded === false) {
+      throw new OperationalError('season trailer upload video is still transcoding', 400)
+    }
+
+    if (recentEpisodeTrailerLink === null && isRecentEpisodeTrailerVidUploadTranscoded === false) {
+      throw new OperationalError("previousEpisode's trailer video upload is still transcoding", 400)
+    }
+
+    if (recentEpisodeVideoLink === null && isRecentEpisodeVidUploadTranscoded === false) {
+      throw new OperationalError("previousEpisode's video is still transcoding", 400)
+    }
+  }
+
   private static _addEpisodesWithSession = async (
     { seasonId, data, adminId }: AddEpisodeInput,
     session: ClientSession,
@@ -482,19 +514,14 @@ export class AdminUploadService {
     data.trailer && this._allowMimetype(data.trailer, 'video', ' trailer must be a video file')
     data.video && this._allowMimetype(data.video, 'video', 'video must be a video file')
 
-    const [prevEpisodes, parentSeason] = await Promise.all([
-      EpisodeModel.find({ season: seasonId }),
-      SeasonModel.findById(seasonId),
-    ])
+    const aggrUtilsRes = await VideoRepo.addEpisodeUtilAggr(seasonId)
 
-    if (parentSeason == null) {
-      throw new OperationalError('invalid season Id', 404)
-    }
+    this._validateSeasonAndPrevEpisodesVidUploads(aggrUtilsRes)
 
     const episode = new EpisodeModel({
       title: data.title,
       description: data.description,
-      episodeNumber: prevEpisodes.length + 1,
+      episodeNumber: aggrUtilsRes[0].totalPreviousEpisodes + 1,
       trailerLink: data.trailerLink,
       videoLink: data.videoLink,
       season: seasonId,
@@ -587,7 +614,7 @@ export class AdminUploadService {
   }
 
   static addVideo = async (input: AddVideoParams) => {
-    return await withMongoDBSession(this._uploadVideoSesion, input)
+    return await withMongoDBSession(this._uploadVideoSession, input)
   }
 
   static addSeason = async (params: AddSeasonParams) => {
