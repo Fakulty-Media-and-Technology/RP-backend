@@ -16,7 +16,7 @@ export interface LiveAggrRes {
   popular: boolean
   featured: boolean
   coverPhoto: PreviewPhoto
-  previewVideoUpload?: PreviewVideoUpload
+  previewVideoUploadDoc?: PreviewVideoUpload
   createdAt: string
   updatedAt: string
   clientId: string

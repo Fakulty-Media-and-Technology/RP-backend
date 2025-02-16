@@ -133,7 +133,7 @@ export class LiveRepo {
           from: 'video_uploads',
           localField: '_id',
           foreignField: 'parentId',
-          as: 'previewVideoUpload',
+          as: 'previewVideoUploads',
           pipeline: [
             { $match: { isTranscoded: true } },
             { $project: { key: true, isTranscoded: true, resolutions: true } },
@@ -145,18 +145,27 @@ export class LiveRepo {
           streamKey: '$stream_key',
           vidClass: '$vid_class',
           coverPhoto: { $first: '$coverPhoto' },
-          previewVideoUpload: { $ifNull: [{ $first: '$previewVideoUpload' }, null] },
+          previewVideoUploadDoc: { $ifNull: [{ $first: '$previewVideoUploads' }, null] },
           activeViews: '$active_views',
           featExpiry: '$feat_expiry',
           clientId: '$client_id',
         },
       },
 
-      { $match: { previewVideoUpload: { $ne: null } } },
+      {
+        $match: {
+          $or: [
+            { previewVideoUpload: null },
+            { previewVideoUploadDoc: { $ne: null } },
+          ],
+        },
+      },
 
       ...sortPaginateStages,
       {
         $project: {
+          previewVideoUploads: false,
+          previewVideoUpload: false,
           stream_key: false,
           vid_class: false,
           feat_expiry: false,

@@ -44,6 +44,7 @@ const schema = new Schema(
     previewVideoUpload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
+      default: null
     },
 
     vid_class: {

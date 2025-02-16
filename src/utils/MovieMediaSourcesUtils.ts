@@ -134,15 +134,18 @@ export class MovieMediaSourcesUtils {
 
         if (withMediaSources) {
           Object.assign(vid, {
-            trailerVideoUpload: undefined,
-            videoUpload: undefined,
-
             video: this._getMovieVideoSource(vid, 'vid', quality),
             trailer: this._getMovieVideoSource(vid, 'trailer', quality),
+
             subtitleLang: vid.subtitle?.language,
             subtitle: vid.subtitle
               ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
               : null,
+
+            trailerVideoUpload: undefined,
+            videoUpload: undefined,
+            trailerLink: undefined,
+            videoLink: undefined,
           })
         }
 
