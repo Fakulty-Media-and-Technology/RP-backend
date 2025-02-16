@@ -46,12 +46,6 @@ const schema = new Schema(
       default: null,
     },
 
-    subtitle_upload: {
-      type: Schema.Types.ObjectId,
-      ref: 'sub_titles',
-      default: null,
-    },
-
     description: {
       type: String,
       trim: true,

@@ -24,7 +24,6 @@ import {
   addCategorySchema,
   addFeaturedContentSchema,
   addGenreSchema,
-  addSubtitleSchema,
   createAdminORSuperAdminSchema,
   createAdSchema,
   createClientSchema,
@@ -124,7 +123,7 @@ superAdminRouter.get(
 
 superAdminRouter.post(
   '/media/add-subtitle',
-  requestValidator(addSubtitleSchema),
+  Multer.uploadSingleSubtitle,
   AdminManagemediaController.addSubtitle,
 )
 

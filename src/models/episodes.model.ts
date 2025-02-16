@@ -48,12 +48,6 @@ const schema = new Schema(
       ref: 'video_uploads',
       default: null,
     },
-
-    subtitleUpload: {
-      type: Schema.Types.ObjectId,
-      ref: 'sub_titles',
-      default: null,
-    },
   },
   { timestamps: true },
 )

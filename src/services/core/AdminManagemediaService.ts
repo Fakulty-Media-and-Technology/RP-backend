@@ -11,6 +11,15 @@ import { getUniqueStreamKey } from '../../utils/live'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
+import { EpisodeModel } from '../../models/episodes.model'
+import { MediaManagement } from '../media-management'
+
+type AddSubtitleData = {
+  parentId: string
+  parentType: 'vod' | 'episode'
+  language: string
+  subtitle: Express.Multer.File
+}
 
 export class AdminManageMediaService {
   static searchClient = async (searchText: string, query: Request['query']) => {
@@ -35,22 +44,39 @@ export class AdminManageMediaService {
     return await LiveMediaSourcesUtils.resolveSources(lives, '720p')
   }
 
-  static addSubtitle = async (data: Record<string, any>) => {
-    const { vid_id, bucket, key, language, is_series } = data
+  private static _findSubtitlesParent = async (data: AddSubtitleData) => {
+    switch (data.parentType) {
+      case 'episode':
+        return await EpisodeModel.findById(data.parentId)
 
-    const vid = await VideoModel.findById(vid_id)
+      case 'vod':
+        return await VideoModel.findById(data.parentId)
 
-    if (!vid) {
-      throw new OperationalError('specified video id not found', 400)
+      default:
+        throw new OperationalError(`${data.parentType} is not a valid subtitle parent type`, 400)
+    }
+  }
+
+  static addSubtitle = async (data: AddSubtitleData) => {
+    if ((await this._findSubtitlesParent(data)) == null) {
+      throw new OperationalError('parent does not exist', 404)
     }
 
-    await SubtitleModel.create({
-      video_id: vid_id,
-      bucket,
-      key,
-      language,
-      is_series,
+    const { Bucket, Key } = await MediaManagement.store({
+      file: data.subtitle,
+      expire: undefined,
+      baseDir: 'subtitles',
     })
+
+    const subtitle = await SubtitleModel.create({
+      video_id: data.parentId,
+      parentType: data.parentType,
+      bucket: Bucket,
+      key: Key,
+      language: data.language
+    })
+
+    return subtitle
   }
 
   private static _createLiveWithSession = async (data: any, session: ClientSession) => {

@@ -11,14 +11,13 @@ import { MediaManagement, UploadAndTranscodeConfig } from '../media-management'
 import { StringOrObjectId } from '../../types'
 import { TrailerModel } from '../../models/trailer.model'
 import { VideoUploadModel } from '../../models/videoupload.model'
-import { SubtitleModel } from '../../models/subtitle.model'
 import { videoUploadParents } from '../../models/assets'
 import {
   AddEpisodeUtilAggrRes,
   AddSeasonUtilAggrRes,
-  toObjectId,
   VideoRepo,
 } from '../../repositories/VideoRepo'
+
 import { Season } from '../../types/movie'
 
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
@@ -29,6 +28,7 @@ import {
 } from '../../utils/QueryParamsFeatures'
 
 export type AllVideoTypes = Video['type']
+
 
 type EpisodeReqData = {
   title: string
@@ -66,7 +66,6 @@ export type MovieData = {
   expiryDate?: string
   releasedDate: string
   artistName?: string
-  subTitleLanguage?: string
 
   category?: string[]
   genre?: string[]
@@ -75,7 +74,7 @@ export type MovieData = {
   //files
   landscapePoster: Express.Multer.File
   portraitPoster: Express.Multer.File
-  subTitle?: Express.Multer.File
+
   trailer?: Express.Multer.File
   video?: Express.Multer.File
 }
@@ -273,7 +272,6 @@ export class AdminUploadService {
   ) => {
     this._allowMimetype(data.portraitPoster, 'image', 'portraitPoster must be an image')
     this._allowMimetype(data.landscapePoster, 'image', 'landscapePoster must be an image')
-    data.subTitle && this._allowMimetype(data.subTitle, 'text', 'subTitle must be a text file')
     data.trailer && this._allowMimetype(data.trailer, 'video', ' trailer must be a video file')
     data.video && this._allowMimetype(data.video, 'video', 'video must be a video file')
 
@@ -313,26 +311,6 @@ export class AdminUploadService {
     videoDoc.portrait_photo = portrait._id
 
     const vidUploadExpire = videoDoc.expiry_date || undefined
-
-    if (data.subTitle) {
-      const res = await MediaManagement.store({
-        expire: undefined,
-        baseDir: 'subtitles',
-        file: data.subTitle,
-      })
-
-      const subtitleDoc = new SubtitleModel({
-        video_id: videoDoc._id,
-        parentType: 'vod',
-        language: data.subTitleLanguage,
-        key: res.Key,
-        bucket: res.Bucket,
-        is_series: isSeries,
-      })
-
-      videoDoc.subtitle_upload = subtitleDoc._id
-      await subtitleDoc.save({ session })
-    }
 
     if (data.trailer && data.video) {
       const expire = vidUploadExpire
@@ -552,26 +530,6 @@ export class AdminUploadService {
       season: seasonId,
       admin: adminId,
     })
-
-    if (data.subTitle) {
-      const res = await MediaManagement.store({
-        baseDir: 'subtitles',
-        expire: undefined,
-        file: data.subTitle,
-      })
-
-      const subtitleDoc = new SubtitleModel({
-        video_id: episode._id,
-        parentType: 'episode',
-        language: data.subTitleLanguage,
-        key: res.Key,
-        bucket: res.Bucket,
-        is_series: true,
-      })
-
-      episode.subtitleUpload = subtitleDoc._id
-      await subtitleDoc.save({ session })
-    }
 
     if (data.trailer && data.video) {
       const expire = undefined

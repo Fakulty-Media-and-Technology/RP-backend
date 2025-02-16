@@ -19,15 +19,11 @@ export const addEpisodeSchema = Joi.object({
   videoLink: STRING_SCHEMA.optional(),
   trailerLink: STRING_SCHEMA.optional(),
 
-  subTitle: Joi.object().optional(), //file
-  subTitleLanguage: STRING_SCHEMA.optional(),
-
   video: Joi.object().optional(), // file
   trailer: Joi.object().optional(), // file
 })
   .xor('trailerLink', 'trailer')
   .xor('video', 'videoLink')
-  .and('subTitle', 'subTitleLanguage')
 
 export const createSeasonSchema = Joi.object({
   trailerLink: Joi.string(),
@@ -54,9 +50,6 @@ export const addMovieOrSkitSchema = Joi.object({
   runtime: STRING_SCHEMA,
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG),
 
-  subTitle: Joi.object().required(), //file
-  subTitleLanguage: STRING_SCHEMA.required(),
-
   // files
   landscapePoster: Joi.object().required(),
   portraitPoster: Joi.object().required(),
@@ -72,7 +65,6 @@ export const addMovieOrSkitSchema = Joi.object({
 })
   .xor('trailerLink', 'trailer')
   .xor('video', 'videoLink')
-  .and('subTitle', 'subTitleLanguage')
 
 export const addSeriesSchema = Joi.object({
   title: STRING_SCHEMA.required(),
@@ -111,9 +103,6 @@ export const addMusicVideoSchema = Joi.object({
   landscapePoster: Joi.object().required(),
   portraitPoster: Joi.object().required(),
 
-  subTitle: Joi.object().required(), //file
-  subTitleLanguage: STRING_SCHEMA.required(),
-
   video: Joi.object().optional(), // file
   videoLink: STRING_SCHEMA.optional(),
 
@@ -122,17 +111,13 @@ export const addMusicVideoSchema = Joi.object({
 })
   .xor('trailerLink', 'trailer')
   .xor('video', 'videoLink')
-  .and('subTitle', 'subTitleLanguage')
 
-export const addSubtitleSchema = {
-  body: Joi.object({
-    vid_id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-    bucket: STRING_SCHEMA.required(),
-    key: STRING_SCHEMA.required(),
-    language: STRING_SCHEMA.required(),
-    is_series: Joi.boolean().required(),
-  }),
-}
+export const addSubtitleSchema = Joi.object({
+  parentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+  parentType: STRING_SCHEMA.valid('vod', 'episode').required(),
+  language: STRING_SCHEMA.required(),
+  subtitle: Joi.object().required(),
+}).required()
 
 export const getPhotoURLSchema = {
   body: Joi.object({

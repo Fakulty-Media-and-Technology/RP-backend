@@ -4,7 +4,6 @@ const subtitleSchema = new Schema(
   {
     video_id: {
       type: Schema.Types.ObjectId,
-      ref: 'Video',
       required: true,
     },
 
@@ -31,16 +30,13 @@ const subtitleSchema = new Schema(
       lowercase: true,
       required: [true, 'A subtitle must have a language'],
     },
-
-    is_series: {
-      type: Boolean,
-      required: true,
-    },
   },
   {
     timestamps: true,
   },
 )
+
+subtitleSchema.index({ video_id: 1, language: 1 }, { unique: true })
 
 export const SubtitleModel = model('sub_titles', subtitleSchema)
 export type SubtitleSchema = InferSchemaType<typeof subtitleSchema>

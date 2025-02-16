@@ -20,7 +20,7 @@ export interface Movie {
   createdAt: string
   landscapePhoto: LandscapePhoto
   portraitPhoto: LandscapePhoto
-  subtitle: null | LandscapePhoto
+
   vidClass: string
   defaultRating: number
   averageRating: number
@@ -70,15 +70,7 @@ export interface Episode {
   trailerVideoUpload: null | TrailerVideoUpload
   createdAt: string
   updatedAt: string
-  subtitle: null | Subtitle
   averageRating: number
-}
-
-interface Subtitle {
-  _id: string
-  key: string
-  bucket: string
-  language: string
 }
 
 interface LandscapePhoto {

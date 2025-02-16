@@ -6,6 +6,8 @@ import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { LiveSchema } from '../../models/lives.model'
 import { MediaController } from '../common/media.controller'
+import { validate } from '../../middlewares/requestValidator'
+import { addSubtitleSchema } from '../../validations/admin'
 
 export class AdminManagemediaController extends MediaController {
   static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
@@ -48,11 +50,14 @@ export class AdminManagemediaController extends MediaController {
 
   //TODO delete and edit channel
   static addSubtitle = Catch.async(async (req, res) => {
-    await AdminManageMediaService.addSubtitle(req.body)
+    req.body.subtitle = req.file
+
+    validate(addSubtitleSchema, req.body)
 
     sendResponse({
       res,
       message: 'subtitle added successfully',
+      data: await AdminManageMediaService.addSubtitle(req.body),
     })
   })
 }

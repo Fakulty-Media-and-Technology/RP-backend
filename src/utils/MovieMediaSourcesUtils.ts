@@ -91,16 +91,8 @@ export class MovieMediaSourcesUtils {
           Object.assign(episode, {
             trailerVideoUpload: undefined,
             videoUpload: undefined,
-            subtitleLang: episode.subtitle?.language,
             video: this._getMovieVideoSource(episode, 'vid', quality),
             trailer: this._getMovieVideoSource(episode, 'trailer', quality),
-            subtitle: episode.subtitle
-              ? await MediaAccess.getSignedUrl(
-                  episode.subtitle.bucket,
-                  episode.subtitle.key,
-                  'subtitle',
-                )
-              : null,
           })
         }
 
@@ -136,12 +128,6 @@ export class MovieMediaSourcesUtils {
           Object.assign(vid, {
             video: this._getMovieVideoSource(vid, 'vid', quality),
             trailer: this._getMovieVideoSource(vid, 'trailer', quality),
-
-            subtitleLang: vid.subtitle?.language,
-            subtitle: vid.subtitle
-              ? await MediaAccess.getSignedUrl(vid.subtitle.bucket, vid.subtitle.key, 'subtitle')
-              : null,
-
             trailerVideoUpload: undefined,
             videoUpload: undefined,
             trailerLink: undefined,
