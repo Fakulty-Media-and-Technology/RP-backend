@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.router = void 0;
+const express_1 = require("express");
+const payment_customer_1 = require("../../controllers/customers/payment.customer");
+exports.router = (0, express_1.Router)();
+exports.router.post('/paystack/start-payment', payment_customer_1.CustomerPaymentController.startPayment);
+exports.router.post('/paystack/create-payment', payment_customer_1.CustomerPaymentController.createPayment);
+exports.router.get('/paystack/payment-receipt', payment_customer_1.CustomerPaymentController.getPaymentReceipt);
+exports.router.get('/paystack/transaction-history', payment_customer_1.CustomerPaymentController.transactionHistory);
+exports.router.post('/paystack/authorize-payment', payment_customer_1.CustomerPaymentController.authorizePayment);

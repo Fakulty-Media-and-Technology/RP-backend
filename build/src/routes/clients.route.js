@@ -1,0 +1,24 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.clientsRouter = void 0;
+const express_1 = __importDefault(require("express"));
+const profile_clients_1 = require("../controllers/clients/profile.clients");
+const payment_customer_1 = require("../controllers/customers/payment.customer");
+const auth_1 = require("../middlewares/auth");
+const clientsLivestreamRouter_1 = require("./clientsSubRoutes/clientsLivestreamRouter");
+const clientsPayoutRouter_1 = require("./clientsSubRoutes/clientsPayoutRouter");
+const clientEventRouter_1 = require("./clientsSubRoutes/clientEventRouter");
+const clientProfileRouter_1 = require("./clientsSubRoutes/clientProfileRouter");
+const SharedRoutes_1 = require("../utils/SharedRoutes");
+exports.clientsRouter = express_1.default.Router();
+exports.clientsRouter.use(auth_1.AuthMiddleware.authenticateRequest('clients-auth'));
+exports.clientsRouter.use('/livestream', clientsLivestreamRouter_1.router);
+exports.clientsRouter.use('/payouts', clientsPayoutRouter_1.router);
+exports.clientsRouter.use('/event', clientEventRouter_1.router);
+exports.clientsRouter.use('/profile', clientProfileRouter_1.router);
+exports.clientsRouter.get('/history/payment/fetch', profile_clients_1.ClientProfileController.clientsPaymentHis);
+exports.clientsRouter.post('/payment/paystack/init', payment_customer_1.CustomerPaymentController.startPayment);
+new SharedRoutes_1.SharedRoutes(exports.clientsRouter).livesRoutes('Client');

@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.router = void 0;
+const express_1 = require("express");
+const medias_customer_1 = require("../../controllers/customers/medias.customer");
+exports.router = (0, express_1.Router)();
+//live events
+exports.router.get('/events/fetch/all', medias_customer_1.CustomerMediaController.getLiveEventsByType('all'));
+exports.router.get('/events/fetch/featured', medias_customer_1.CustomerMediaController.getLiveEventsByType('featured'));
+exports.router.get('/events/fetch/sponsored', medias_customer_1.CustomerMediaController.getLiveEventsByType('sponsored'));
+exports.router.get('/events/fetch/channels', medias_customer_1.CustomerMediaController.getLiveEventsByType('channels'));
+exports.router.get('/events/fetch/pop/channels', medias_customer_1.CustomerMediaController.getLiveEventsByType('channels popular'));
+exports.router.get('/events/fetch/events', medias_customer_1.CustomerMediaController.getLiveEventsByType('events'));
+exports.router.get('/events/fetch/pop/events', medias_customer_1.CustomerMediaController.getLiveEventsByType('events popular'));
+exports.router.get('/events/fetch/tvshows', medias_customer_1.CustomerMediaController.getLiveEventsByType('tvshows'));
+exports.router.get('/events/fetch/pop/tvshows', medias_customer_1.CustomerMediaController.getLiveEventsByType('tvshows popular'));
+exports.router.get('/events/fetch/sports', medias_customer_1.CustomerMediaController.getLiveEventsByType('sports'));
+exports.router.get('/events/fetch/pop/sports', medias_customer_1.CustomerMediaController.getLiveEventsByType('sports popular'));
+exports.router.get('/events/fetch/podcasts', medias_customer_1.CustomerMediaController.getLiveEventsByType('podcasts'));
+exports.router.get('/events/fetch/pop/podcasts', medias_customer_1.CustomerMediaController.getLiveEventsByType('podcasts popular'));
+exports.router.get('/event/stream/:id', medias_customer_1.CustomerMediaController.streamLiveEvent);

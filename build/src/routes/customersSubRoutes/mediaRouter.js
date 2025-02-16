@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.router = void 0;
+const express_1 = require("express");
+const medias_customer_1 = require("../../controllers/customers/medias.customer");
+exports.router = (0, express_1.Router)();
+exports.router.post('/upload-photo', medias_customer_1.CustomerMediaController.uploadImageRoute);
+exports.router.post('/vod-streaming/:vidUploadId', medias_customer_1.CustomerMediaController.getVidoeUploadStream);
+exports.router.get('/vod/fetch/featured', medias_customer_1.CustomerMediaController.getFeaturedVods);
+exports.router.post('/vod/like/:id', medias_customer_1.CustomerMediaController.likeVideo);
+exports.router.get('/vod/userliked/:id', medias_customer_1.CustomerMediaController.userLikedVideo);
+exports.router.post('/vod/unlike/:id', medias_customer_1.CustomerMediaController.unLikeVideo);

@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.router = void 0;
+const express_1 = require("express");
+const livestream_clients_1 = require("../../controllers/clients/livestream.clients");
+const payment_customer_1 = require("../../controllers/customers/payment.customer");
+exports.router = (0, express_1.Router)();
+exports.router.post('/create/payment', payment_customer_1.CustomerPaymentController.createPayment);
+exports.router.get('/payment/estimate', livestream_clients_1.ClientLiveStreamController.calculateEventCharges);
+exports.router.post('/live/extend', livestream_clients_1.ClientLiveStreamController.extendLiveEvent);

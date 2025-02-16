@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.router = void 0;
+const express_1 = require("express");
+const vote_custumers_1 = require("../../controllers/customers/vote.custumers");
+exports.router = (0, express_1.Router)();
+exports.router.post('/vote/create-vote', vote_custumers_1.CustomerVoteController.createVote);
+exports.router.post('/donate/dash-fund', vote_custumers_1.CustomerVoteController.donateFund);
+exports.router.get('/vote/fetch-info', vote_custumers_1.CustomerVoteController.fetchVoteInfo);
+exports.router.get('/vote/fetch-contestants', vote_custumers_1.CustomerVoteController.fetchVoteContestants);

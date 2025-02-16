@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.router = void 0;
+const express_1 = require("express");
+const upcoming_customer_1 = require("../../controllers/customers/upcoming.customer");
+exports.router = (0, express_1.Router)();
+exports.router.get('/events/fetch', upcoming_customer_1.CustomerUpcomingController.fetch);
+exports.router.get('/events/is-subscribed/:id', upcoming_customer_1.CustomerUpcomingController.isSubscribed);
+exports.router.put('/events/subscribe/:id', upcoming_customer_1.CustomerUpcomingController.subscription('subscribe'));
+exports.router.put('/events/unsubscribe/:id', upcoming_customer_1.CustomerUpcomingController.subscription('unsubscribe'));

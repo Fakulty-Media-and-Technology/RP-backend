@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.router = void 0;
+const express_1 = require("express");
+const withdrawal_clients_1 = require("../../controllers/clients/withdrawal.clients");
+exports.router = (0, express_1.Router)();
+exports.router.post('/payment/request', withdrawal_clients_1.ClientWithdrawalController.reqPayout);
+exports.router.put('/payment/request/ed/:id', withdrawal_clients_1.ClientWithdrawalController.reqPayoutEdit);
+exports.router.get('/payment/request/his', withdrawal_clients_1.ClientWithdrawalController.payoutReqInfoAll);
+exports.router.get('/payment/request/group', withdrawal_clients_1.ClientWithdrawalController.payoutReqInfoGroup);
