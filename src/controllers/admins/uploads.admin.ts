@@ -55,7 +55,6 @@ export class AdminUploadController {
 
     Object.assign(data, {
       ...data,
-      subTitle: files.subTitle?.[0],
       video: files.video?.[0],
     })
 
@@ -153,7 +152,6 @@ export class AdminUploadController {
       const files = checkFiles(req.files)
 
       Object.assign(data, {
-        subTitle: files.subTitle?.[0],
         trailer: files.trailer?.[0],
         video: files.video?.[0],
       })

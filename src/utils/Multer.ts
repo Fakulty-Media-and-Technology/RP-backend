@@ -64,7 +64,6 @@ export class Multer {
   static uploadSingleSubtitle = this._configs.subtitleConfig.single('subtitle')
 
   static adminUploadVideoConfig = this._configs.multipleTypesConfig.fields([
-    { name: 'subTitle', maxCount: 1 },
     { name: 'trailer', maxCount: 1 },
     { name: 'video', maxCount: 1 },
     { name: 'landscapePoster', maxCount: 1 },

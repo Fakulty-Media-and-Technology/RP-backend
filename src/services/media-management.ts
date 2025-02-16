@@ -74,7 +74,7 @@ export class MediaManagement {
       Expires: expire,
     })
 
-    this._deleteFile(file)
+    await this._deleteFile(file)
 
     if (uploadRes.$metadata.httpStatusCode !== 200 || !uploadRes.Key) {
       throw new OperationalError('could not upload video. Please try again', 500)
