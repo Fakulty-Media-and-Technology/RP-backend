@@ -56,4 +56,11 @@ export class MediaController {
     )
     sendResponse({ res, data: _vodStream, message: 'stream fetched' })
   })
+
+  static getSubtitles = Catch.async(async (req, res) => {
+    sendResponse({
+      res,
+      data: await MedaiService.getSubtitles(req.params.parentId),
+    })
+  })
 }

@@ -11,6 +11,10 @@ import { UserRepo } from '../../repositories/UserRepo'
 import { calcLiveCharges, getUniqueStreamKey } from '../../utils/live'
 import { MediaManagement } from '../media-management'
 import { PosterImageModel } from '../../models/poster.model'
+import { AddSubtitleData } from './AdminManagemediaService'
+import { SubtitleModel } from '../../models/subtitle.model'
+
+type GetSubtitles = Pick<AddSubtitleData, 'parentId' | 'parentType'>
 
 export type CreateLiveData = {
   clientId: string
@@ -233,5 +237,23 @@ export class MedaiService {
 
   static getSubtitleUrl = async (bucket: string, key: string) => {
     return await MediaAccess.getSignedUrl(bucket, key, 'subtitle')
+  }
+
+  static getSubtitles = async (parentId: string) => {
+    const subtitles = await SubtitleModel.find({ video_id: parentId })
+
+    return await Promise.all(
+      subtitles.map(async subtitle => {
+        return {
+          ...subtitle.toObject(),
+          src: await MediaAccess.getSignedUrl(subtitle.bucket, subtitle.key, 'subtitle'),
+          createdAt: undefined,
+          updatedAt: undefined,
+          video_id: undefined,
+          parentType: undefined,
+          __v: undefined,
+        }
+      }),
+    )
   }
 }

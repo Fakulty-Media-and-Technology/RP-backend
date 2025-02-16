@@ -127,7 +127,7 @@ superAdminRouter.post(
   AdminManagemediaController.addSubtitle,
 )
 
-new SharedRoutes(superAdminRouter).livesRoutes('Admin')
+new SharedRoutes(superAdminRouter).livesRoutes('Admin').fetchSubtitles()
 
 superAdminRouter.get('/lives/search-clients', AdminManagemediaController.searchClient)
 superAdminRouter.get('/lives/all/channels', AdminManagemediaController.getLivesByType('channel'))

@@ -14,12 +14,13 @@ import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { EpisodeModel } from '../../models/episodes.model'
 import { MediaManagement } from '../media-management'
 
-type AddSubtitleData = {
+export type AddSubtitleData = {
   parentId: string
   parentType: 'vod' | 'episode'
   language: string
   subtitle: Express.Multer.File
 }
+
 
 export class AdminManageMediaService {
   static searchClient = async (searchText: string, query: Request['query']) => {
@@ -73,7 +74,7 @@ export class AdminManageMediaService {
       parentType: data.parentType,
       bucket: Bucket,
       key: Key,
-      language: data.language
+      language: data.language,
     })
 
     return subtitle

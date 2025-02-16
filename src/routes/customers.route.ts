@@ -22,6 +22,7 @@ import { router as GeneralRouter } from './customersSubRoutes/generalRouter'
 import { router as PasswordResetRouter } from './customersSubRoutes/passwordResetRouter'
 import { router as WalletRouter } from './customersSubRoutes/walletRouter'
 import { router as ProfileRouter } from './customersSubRoutes/profileRouter'
+import { SharedRoutes } from '../utils/SharedRoutes'
 
 export const customerRouter = Router()
 
@@ -53,6 +54,8 @@ customerRouter.use('/livestream', LivestreamRouter)
 customerRouter.use('/subscription', SubscriptionRuuter)
 customerRouter.use('/notification', PushNotificationRouter)
 customerRouter.use('/notifications', NotificationsRouter)
+
+new SharedRoutes(customerRouter).fetchSubtitles()
 
 customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.post('/suggestion/create', CustomerProfileController.createSuggestion)

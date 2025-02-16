@@ -15,5 +15,12 @@ export class SharedRoutes {
       Multer.createLiveConfig,
       MediaController.createLive({ isAdmin: caller === 'Admin' }),
     )
+
+    return this
+  }
+
+  fetchSubtitles() {
+    this._baseRouter.get('/subtitles/fetch/:parentId', MediaController.getSubtitles)
+    return this
   }
 }
