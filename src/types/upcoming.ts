@@ -5,6 +5,7 @@ export interface UpcomingAggrRes {
   details: string
   reminder: any[]
   releaseDate: string
+  trailerLink: string | null
   active: boolean
   createdAt: string
   updatedAt: string

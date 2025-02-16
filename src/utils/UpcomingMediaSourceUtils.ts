@@ -15,10 +15,11 @@ export class UpcomingMediaSourceUtils extends MovieMediaSourcesUtils {
           landscapePhoto,
           portraitPhoto,
 
-          trailer: VidUploadUtils.getResSourceUrl(upcoming.trailerVideoUpload, quality),
+          trailer: this._getMovieVideoSource(upcoming, 'trailer', quality),
 
           trailerVideoUpload: undefined,
           peviewTrailer: undefined,
+          trailerLink: undefined,
         })
 
         return upcoming

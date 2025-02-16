@@ -16,7 +16,7 @@ export class MovieMediaSourcesUtils {
     return { landscapePhoto, portraitPhoto }
   }
 
-  private static _getMovieVideoSource = (
+  protected static _getMovieVideoSource = (
     vid: GetVideoSourceParams,
     routine: 'vid' | 'trailer',
     quality: VidRes,

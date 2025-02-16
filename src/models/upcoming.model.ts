@@ -19,6 +19,11 @@ const schema = new Schema(
       required: true,
     },
 
+    trailerLink: {
+      type: String,
+      default: null,
+    },
+
     portraitPhoto: {
       type: Schema.Types.ObjectId,
       ref: 'poster_images',
@@ -34,7 +39,7 @@ const schema = new Schema(
     peviewTrailer: {
       type: Schema.Types.ObjectId,
       ref: 'trailers',
-      required: true,
+      default: null
     },
 
     reminder: {

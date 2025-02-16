@@ -24,7 +24,8 @@ export class UpcomingRepo {
                 from: 'video_uploads',
                 localField: '_id',
                 foreignField: 'parentId',
-                as: 'trailerVideoUpload',
+                as: 'trailerVideoUploads',
+
                 pipeline: [
                   { $match: { isTranscoded: true } },
                   { $project: { key: true, isTranscoded: true, resolutions: true } },
@@ -32,22 +33,14 @@ export class UpcomingRepo {
               },
             },
 
-            { $addFields: { trailerVideoUpload: { $first: '$trailerVideoUpload' } } },
+            {
+              $addFields: {
+                trailerVideoUploadDoc: { $ifNull: [{ $first: '$trailerVideoUploads' }, null] },
+              },
+            },
           ],
         },
       },
-
-      {
-        $addFields: {
-          trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
-        },
-      },
-
-      { $match: { trailerVideoUpload: { $ne: null } } },
-
-      { $sort: { updatedAt: -1 } },
-      { $skip: skip(page, limit) },
-      { $limit: limit },
 
       {
         $lookup: {
@@ -76,11 +69,17 @@ export class UpcomingRepo {
 
       {
         $addFields: {
-          trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
+          trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUploadDoc' }, null] },
           portraitPhoto: { $first: '$portraitPhoto' },
           landscapePhoto: { $first: '$landscapePhoto' },
         },
       },
+
+      { $match: { $or: [{ peviewTrailer: null }, { trailerVideoUpload: { $ne: null } }] } },
+
+      { $sort: { updatedAt: -1 } },
+      { $skip: skip(page, limit) },
+      { $limit: limit },
 
       { $project: { __v: false, trailer: false } },
     ])
