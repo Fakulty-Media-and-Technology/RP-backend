@@ -19,7 +19,8 @@ export type UpcomingData = {
   type: string
   details: string
   releaseDate: string
-  trailer: Express.Multer.File
+  trailer?: Express.Multer.File
+  trailerLink?: string
   portraitPhoto: Express.Multer.File
   landscapePhoto: Express.Multer.File
   active?: boolean
@@ -30,13 +31,20 @@ export class UpcomingService extends AdminUploadService {
     data: UpcomingData,
     session: ClientSession,
   ) => {
-    this._allowMimetype(data.trailer, 'video', 'trailer must be a video')
+    if (data.trailer && data.trailerLink) {
+      throw new OperationalError(
+        'trailer and trailerLink are optional but only ONE MAY be provided',
+        400,
+      )
+    }
+
     this._allowMimetype(data.landscapePhoto, 'image', 'landscapePhoto must be an image')
     this._allowMimetype(data.portraitPhoto, 'image', 'portraitPhoto must be an image')
 
     const upcoming = new UpcomingModel({
       title: data.title,
       type: data.type,
+      trailerLink: data.trailerLink,
       details: data.details,
       releaseDate: data.releaseDate,
       active: data.active,
@@ -52,27 +60,32 @@ export class UpcomingService extends AdminUploadService {
       session,
     )
 
-    const trailerDoc = new TrailerModel({
-      video_id: upcoming._id,
-      parentType: 'upcoming',
-    })
-
-    const tVidUploadDoc = await this._getVideoUploadDoc(
-      {
-        file: data.trailer,
-        expire: undefined,
-        parentId: trailerDoc._id,
-        parentType: 'trailer',
-      },
-      session,
-    )
-
-    trailerDoc.video_upload = tVidUploadDoc._id
-    upcoming.peviewTrailer = trailerDoc._id
     upcoming.landscapePhoto = photosDocs.landscape._id
     upcoming.portraitPhoto = photosDocs.portrait._id
 
-    await trailerDoc.save({ session })
+    if (data.trailer) {
+      this._allowMimetype(data.trailer, 'video', 'trailer must be a video')
+
+      const trailerDoc = new TrailerModel({
+        video_id: upcoming._id,
+        parentType: 'upcoming',
+      })
+
+      const tVidUploadDoc = await this._getVideoUploadDoc(
+        {
+          file: data.trailer,
+          expire: undefined,
+          parentId: trailerDoc._id,
+          parentType: 'trailer',
+        },
+        session,
+      )
+
+      trailerDoc.video_upload = tVidUploadDoc._id
+      upcoming.peviewTrailer = trailerDoc._id
+      await trailerDoc.save({ session })
+    }
+
     await upcoming.save({ session })
     return upcoming
   }

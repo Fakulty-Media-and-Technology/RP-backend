@@ -163,7 +163,8 @@ export const createUpcomingEventSchema = Joi.object({
   details: STRING_SCHEMA.required(),
   releaseDate: ISO_STRING_SCHEMA.required(),
   active: Joi.boolean(),
-  trailer: Joi.object().required(),
+  trailerLink: STRING_SCHEMA,
+  trailer: Joi.object(),
   portraitPhoto: Joi.object().required(),
   landscapePhoto: Joi.object().required(),
 })
