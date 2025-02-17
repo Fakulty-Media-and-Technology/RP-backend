@@ -6,7 +6,7 @@ import { Assets } from './Assets'
 // requires node 20.12... but current lts is 20.11...
 
 export const deleteOldFile = async (absFilePath: string, timeAgoDiffMs = 900000) => { //15minutes
-  const fileStat = await fs.promises.stat(path.join(absFilePath))
+  const fileStat = await fs.promises.stat(absFilePath)
 
   if (Date.now() - fileStat.ctimeMs >= timeAgoDiffMs) {
     await fs.promises.unlink(absFilePath)
@@ -29,7 +29,7 @@ export const purgeOldTempMediaFiles = async () => {
       }
     })
   } catch (e: any) {
-    console.error('Errorlisting tempMedia files in function: purgeOldTempMediaFiles')
+    console.error('Error listing tempMedia files in function: purgeOldTempMediaFiles')
     console.error({
       errName: e.name,
       errMsg: e.message,

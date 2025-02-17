@@ -10,7 +10,7 @@ const Assets_1 = require("./Assets");
 // npm install -S find-remove would be perfect but
 // requires node 20.12... but current lts is 20.11...
 const deleteOldFile = async (absFilePath, timeAgoDiffMs = 900000) => {
-    const fileStat = await node_fs_1.default.promises.stat(node_path_1.default.join(absFilePath));
+    const fileStat = await node_fs_1.default.promises.stat(absFilePath);
     if (Date.now() - fileStat.ctimeMs >= timeAgoDiffMs) {
         await node_fs_1.default.promises.unlink(absFilePath);
         console.log('func: deleteOldFile(..) deleted file:', absFilePath);
@@ -29,7 +29,7 @@ const purgeOldTempMediaFiles = async () => {
         });
     }
     catch (e) {
-        console.error('Errorlisting tempMedia files in function: purgeOldTempMediaFiles');
+        console.error('Error listing tempMedia files in function: purgeOldTempMediaFiles');
         console.error({
             errName: e.name,
             errMsg: e.message,
