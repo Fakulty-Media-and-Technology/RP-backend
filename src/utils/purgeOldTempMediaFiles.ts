@@ -5,7 +5,8 @@ import { Assets } from './Assets'
 // npm install -S find-remove would be perfect but
 // requires node 20.12... but current lts is 20.11...
 
-export const deleteOldFile = async (absFilePath: string, timeAgoDiffMs = 900000) => { //15minutes
+export const deleteOldFile = async (absFilePath: string, timeAgoDiffMs = 900000) => {
+  //15minutes
   const fileStat = await fs.promises.stat(absFilePath)
 
   if (Date.now() - fileStat.ctimeMs >= timeAgoDiffMs) {

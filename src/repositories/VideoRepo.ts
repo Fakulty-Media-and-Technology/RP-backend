@@ -1,8 +1,8 @@
 import { FilterQuery, PipelineStage, Types } from 'mongoose'
 import { Video, VideoModel } from '../models/videos.model'
-import { AllVideoTypes } from '../services/core/AdminUploadService'
 import { skip } from '../utils/QueryParamsFeatures'
 import { SeasonModel } from '../models/seasons.model'
+import { AllVideoTypes } from '../utils/UploadMediaUtils'
 
 export const toObjectId = (val: string) => new Types.ObjectId(val)
 

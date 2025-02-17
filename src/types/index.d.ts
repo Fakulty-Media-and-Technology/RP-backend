@@ -1,6 +1,8 @@
 import { Types } from 'mongoose'
 import { User } from '../models/users.model'
 
+export type MulterFile = Express.Multer.File
+
 export type LoggedInUser = Omit<User, 'role'> & {
   role: User['role'] | 'guest'
 }

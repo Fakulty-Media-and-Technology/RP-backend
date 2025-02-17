@@ -110,6 +110,14 @@ const schema = new mongoose_1.Schema({
     artist_name: {
         type: String,
     },
+    active: {
+        type: Boolean,
+        default: true,
+    },
+    showViews: {
+        type: Boolean,
+        default: true,
+    },
 }, {
     timestamps: true,
 });

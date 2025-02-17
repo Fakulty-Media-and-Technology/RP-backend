@@ -39,7 +39,7 @@ const schema = new Schema(
     peviewTrailer: {
       type: Schema.Types.ObjectId,
       ref: 'trailers',
-      default: null
+      default: null,
     },
 
     reminder: {

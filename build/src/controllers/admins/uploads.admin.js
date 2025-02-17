@@ -1,7 +1,7 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AdminUploadController = exports.checkFiles = void 0;
+exports.AdminUploadController = void 0;
 const requestValidator_1 = require("../../middlewares/requestValidator");
 const videos_model_1 = require("../../models/videos.model");
 const AdminUploadService_1 = require("../../services/core/AdminUploadService");
@@ -9,18 +9,9 @@ const Catch_1 = require("../../utils/Catch");
 const GetDefined_1 = require("../../utils/GetDefined");
 const OperationalError_1 = require("../../utils/OperationalError");
 const responder_1 = require("../../utils/responder");
+const UploadMediaUtils_1 = require("../../utils/UploadMediaUtils");
 const admin_1 = require("../../validations/admin");
-const checkFiles = (files) => {
-    if (files == null) {
-        throw new OperationalError_1.OperationalError('expected at least one file', 400);
-    }
-    if (Array.isArray(files)) {
-        throw new OperationalError_1.OperationalError('expected multiple files as an object', 400);
-    }
-    return files;
-};
-exports.checkFiles = checkFiles;
-class AdminUploadController {
+class AdminUploadController extends UploadMediaUtils_1.UploadMediaUtils {
 }
 exports.AdminUploadController = AdminUploadController;
 _a = AdminUploadController;
@@ -30,29 +21,6 @@ AdminUploadController._validateVideoType = (type) => {
     }
     return type;
 };
-AdminUploadController._validateAddMovieData = (type, data, files) => {
-    if (type === 'series') {
-        (0, requestValidator_1.validate)(admin_1.addSeriesSchema, data);
-        return;
-    }
-    Object.assign(data, {
-        ...data,
-        video: files.video?.[0],
-    });
-    switch (type) {
-        case 'movie':
-            (0, requestValidator_1.validate)(admin_1.addMovieOrSkitSchema, data);
-            break;
-        case 'skit':
-            (0, requestValidator_1.validate)(admin_1.addMovieOrSkitSchema, data);
-            break;
-        case 'music-video':
-            (0, requestValidator_1.validate)(admin_1.addMusicVideoSchema, data);
-            break;
-        default:
-            throw new OperationalError_1.OperationalError(`Valid movie types are ${videos_model_1.videoTypes.join(' || ')} `, 400);
-    }
-};
 AdminUploadController.addVideo = Catch_1.Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
     const type = _a._validateVideoType(params.type);
     const admin = GetDefined_1.GetDefined.loggedInUser(user);
@@ -60,7 +28,7 @@ AdminUploadController.addVideo = Catch_1.Catch.async(async ({ files: reqFiles, b
     if (_data == null || typeof _data !== 'string') {
         throw new OperationalError_1.OperationalError('formData.data is required and must be a JSON serialized string', 400);
     }
-    const files = (0, exports.checkFiles)(reqFiles);
+    const files = _a._checkFiles(reqFiles);
     if (Object.keys(files).length === 0) {
         throw new OperationalError_1.OperationalError('Expected at least one file', 400);
     }
@@ -82,7 +50,7 @@ AdminUploadController.addVideo = Catch_1.Catch.async(async ({ files: reqFiles, b
     });
 });
 AdminUploadController.addSeason = Catch_1.Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
-    const files = (0, exports.checkFiles)(reqFiles);
+    const files = _a._checkFiles(reqFiles);
     const _data = {
         trailerLink: body.trailerLink,
         portraitPhoto: files['portraitPhoto']?.[0],
@@ -105,7 +73,7 @@ AdminUploadController.addEpisode = Catch_1.Catch.async(async (req, res) => {
         ...JSON.parse(req.body.data),
     };
     if (!!req.files) {
-        const files = (0, exports.checkFiles)(req.files);
+        const files = _a._checkFiles(req.files);
         Object.assign(data, {
             trailer: files.trailer?.[0],
             video: files.video?.[0],

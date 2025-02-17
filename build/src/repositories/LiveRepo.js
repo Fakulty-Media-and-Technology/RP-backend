@@ -140,10 +140,7 @@ LiveRepo.fetchLivesAggr = async ({ prevStages, sortStage, page, limit }) => {
         },
         {
             $match: {
-                $or: [
-                    { previewVideoUpload: null },
-                    { previewVideoUploadDoc: { $ne: null } },
-                ],
+                $or: [{ previewVideoUpload: null }, { previewVideoUploadDoc: { $ne: null } }],
             },
         },
         ...sortPaginateStages,

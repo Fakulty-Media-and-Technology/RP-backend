@@ -37,7 +37,7 @@ const schema = new mongoose_1.Schema({
     previewVideoUpload: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'video_uploads',
-        default: null
+        default: null,
     },
     vid_class: {
         type: String,

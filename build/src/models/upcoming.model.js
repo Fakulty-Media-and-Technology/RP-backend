@@ -34,7 +34,7 @@ const schema = new mongoose_1.Schema({
     peviewTrailer: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'trailers',
-        default: null
+        default: null,
     },
     reminder: {
         type: [

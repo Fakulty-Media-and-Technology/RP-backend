@@ -154,10 +154,7 @@ export class LiveRepo {
 
       {
         $match: {
-          $or: [
-            { previewVideoUpload: null },
-            { previewVideoUploadDoc: { $ne: null } },
-          ],
+          $or: [{ previewVideoUpload: null }, { previewVideoUploadDoc: { $ne: null } }],
         },
       },
 

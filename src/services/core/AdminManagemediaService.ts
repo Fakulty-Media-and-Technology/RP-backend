@@ -21,7 +21,6 @@ export type AddSubtitleData = {
   subtitle: Express.Multer.File
 }
 
-
 export class AdminManageMediaService {
   static searchClient = async (searchText: string, query: Request['query']) => {
     const searchReg = new RegExp(searchText, 'i')

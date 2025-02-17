@@ -3,11 +3,11 @@ import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
-import { checkFiles } from '../admins/uploads.admin'
 import { validate } from '../../middlewares/requestValidator'
 import { addLiveSchema } from '../../validations/admin'
+import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 
-export class MediaController {
+export class MediaController extends UploadMediaUtils {
   static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
     Catch.async(async (req, res) => {
       const { data: _data } = req.body
@@ -19,8 +19,9 @@ export class MediaController {
         )
       }
 
-      const files = checkFiles(req.files)
+      const files = this._checkFiles(req.files)
       const parsedData = JSON.parse(_data)
+
       const data: CreateLiveData = {
         ...parsedData,
         previewVideo: files.previewVideo?.[0],

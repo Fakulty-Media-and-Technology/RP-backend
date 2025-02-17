@@ -7,10 +7,10 @@ const Catch_1 = require("../../utils/Catch");
 const GetDefined_1 = require("../../utils/GetDefined");
 const OperationalError_1 = require("../../utils/OperationalError");
 const responder_1 = require("../../utils/responder");
-const uploads_admin_1 = require("../admins/uploads.admin");
 const requestValidator_1 = require("../../middlewares/requestValidator");
 const admin_1 = require("../../validations/admin");
-class MediaController {
+const UploadMediaUtils_1 = require("../../utils/UploadMediaUtils");
+class MediaController extends UploadMediaUtils_1.UploadMediaUtils {
 }
 exports.MediaController = MediaController;
 _a = MediaController;
@@ -19,7 +19,7 @@ MediaController.createLive = ({ isAdmin }) => Catch_1.Catch.async(async (req, re
     if (_data == null || typeof _data !== 'string') {
         throw new OperationalError_1.OperationalError('formData.data is required and must be a JSON serialized string', 400);
     }
-    const files = (0, uploads_admin_1.checkFiles)(req.files);
+    const files = _a._checkFiles(req.files);
     const parsedData = JSON.parse(_data);
     const data = {
         ...parsedData,

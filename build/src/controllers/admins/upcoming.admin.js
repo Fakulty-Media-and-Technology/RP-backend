@@ -7,9 +7,9 @@ const Catch_1 = require("../../utils/Catch");
 const OperationalError_1 = require("../../utils/OperationalError");
 const requestValidator_1 = require("../../middlewares/requestValidator");
 const responder_1 = require("../../utils/responder");
-const uploads_admin_1 = require("./uploads.admin");
 const admin_1 = require("../../validations/admin");
-class AdminUpcomingController {
+const UploadMediaUtils_1 = require("../../utils/UploadMediaUtils");
+class AdminUpcomingController extends UploadMediaUtils_1.UploadMediaUtils {
 }
 exports.AdminUpcomingController = AdminUpcomingController;
 _a = AdminUpcomingController;
@@ -18,7 +18,7 @@ AdminUpcomingController.createUpcomingEvent = Catch_1.Catch.async(async ({ body,
     if (_data == null || typeof _data !== 'string') {
         throw new OperationalError_1.OperationalError('formData.data is required and must be a JSON serialized string', 400);
     }
-    const files = (0, uploads_admin_1.checkFiles)(reqFiles);
+    const files = _a._checkFiles(reqFiles);
     if (Object.keys(files).length === 0) {
         throw new OperationalError_1.OperationalError('Expected at least one file', 400);
     }

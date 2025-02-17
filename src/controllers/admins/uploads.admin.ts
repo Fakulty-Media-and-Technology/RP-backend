@@ -1,79 +1,25 @@
 import { validate } from '../../middlewares/requestValidator'
 import { videoTypes } from '../../models/videos.model'
-
-import {
-  AdminUploadService,
-  AllVideoTypes,
-  MovieData,
-} from '../../services/core/AdminUploadService'
+import { AdminUploadService } from '../../services/core/AdminUploadService'
 
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
-
 import {
-  addEpisodeSchema,
-  addMovieOrSkitSchema,
-  addMusicVideoSchema,
-  addSeriesSchema,
-  createSeasonSchema,
-} from '../../validations/admin'
+  AllVideoTypes,
+  MovieData,
+  UploadMediaUtils,
+} from '../../utils/UploadMediaUtils'
 
-type RequestFiles =
-  | {
-      [fieldname: string]: Express.Multer.File[]
-    }
-  | Express.Multer.File[]
-  | undefined
+import { addEpisodeSchema, createSeasonSchema } from '../../validations/admin'
 
-export const checkFiles = (files?: RequestFiles) => {
-  if (files == null) {
-    throw new OperationalError('expected at least one file', 400)
-  }
-
-  if (Array.isArray(files)) {
-    throw new OperationalError('expected multiple files as an object', 400)
-  }
-
-  return files
-}
-
-export class AdminUploadController {
+export class AdminUploadController extends UploadMediaUtils {
   private static _validateVideoType = (type: string) => {
     if (!videoTypes.includes(type as any)) {
       throw new OperationalError(`Valid video types are ${videoTypes.join(' || ')} `, 400)
     }
     return type as AllVideoTypes
-  }
-
-  private static _validateAddMovieData = (type: AllVideoTypes, data: MovieData, files: any) => {
-    if (type === 'series') {
-      validate(addSeriesSchema, data)
-      return
-    }
-
-    Object.assign(data, {
-      ...data,
-      video: files.video?.[0],
-    })
-
-    switch (type) {
-      case 'movie':
-        validate(addMovieOrSkitSchema, data)
-        break
-
-      case 'skit':
-        validate(addMovieOrSkitSchema, data)
-        break
-
-      case 'music-video':
-        validate(addMusicVideoSchema, data)
-        break
-
-      default:
-        throw new OperationalError(`Valid movie types are ${videoTypes.join(' || ')} `, 400)
-    }
   }
 
   static addVideo = Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
@@ -89,7 +35,7 @@ export class AdminUploadController {
       )
     }
 
-    const files = checkFiles(reqFiles)
+    const files = this._checkFiles(reqFiles)
 
     if (Object.keys(files).length === 0) {
       throw new OperationalError('Expected at least one file', 400)
@@ -116,7 +62,7 @@ export class AdminUploadController {
   })
 
   static addSeason = Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
-    const files = checkFiles(reqFiles)
+    const files = this._checkFiles(reqFiles)
 
     const _data = {
       trailerLink: body.trailerLink,
@@ -149,7 +95,7 @@ export class AdminUploadController {
     }
 
     if (!!req.files) {
-      const files = checkFiles(req.files)
+      const files = this._checkFiles(req.files)
 
       Object.assign(data, {
         trailer: files.trailer?.[0],

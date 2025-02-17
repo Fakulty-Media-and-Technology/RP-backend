@@ -4,10 +4,10 @@ import { OperationalError } from '../../utils/OperationalError'
 
 import { validate } from '../../middlewares/requestValidator'
 import { sendResponse } from '../../utils/responder'
-import { checkFiles } from './uploads.admin'
 import { createUpcomingEventSchema } from '../../validations/admin'
+import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 
-export class AdminUpcomingController {
+export class AdminUpcomingController extends UploadMediaUtils {
   static createUpcomingEvent = Catch.async(async ({ body, files: reqFiles }, res) => {
     const { data: _data } = body
 
@@ -18,7 +18,7 @@ export class AdminUpcomingController {
       )
     }
 
-    const files = checkFiles(reqFiles)
+    const files = this._checkFiles(reqFiles)
 
     if (Object.keys(files).length === 0) {
       throw new OperationalError('Expected at least one file', 400)
