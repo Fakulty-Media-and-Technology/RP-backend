@@ -25,7 +25,7 @@ jobs:
 
             # Map branch to Docker container
             if [ "${{ github.ref_name }}" = "typescript" ]; then
-              container_name="app"
+              container_name="app2"
               branch="typescript"
             else
               echo "Unknown branch. Exiting."
