@@ -5,8 +5,11 @@ import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 
 export class GenreService {
-  static create = async (name: string) => {
-    await GenreRepo.create(name)
+  static create = async (name: string, position: number) => {
+    await GenreRepo.create({
+      name,
+      position
+    })
   }
 
   static getGenres = async (query: Request['query']) => {

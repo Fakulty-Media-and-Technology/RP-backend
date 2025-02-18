@@ -23,8 +23,8 @@ export class AdminEnumController {
     })
   })
 
-  static addGenre = Catch.async(async ({ body: { name } }, res) => {
-    await GenreService.create(name)
+  static addGenre = Catch.async(async ({ body: { name, position } }, res) => {
+    await GenreService.create(name, position)
 
     sendResponse({
       res,

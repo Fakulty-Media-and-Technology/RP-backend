@@ -57,6 +57,9 @@ export const addMovieOrSkitSchema = Joi.object({
   trailer: Joi.object().optional(), // file
   trailerLink: STRING_SCHEMA.optional(),
 
+  active: Joi.boolean(),
+  showViews: Joi.boolean(),
+
   video: Joi.object().optional(), //file
   videoLink: STRING_SCHEMA.optional(),
   vidClass: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
@@ -82,6 +85,9 @@ export const addSeriesSchema = Joi.object({
   trailer: Joi.object().optional(), // file
   trailerLink: STRING_SCHEMA.optional(),
 
+  active: Joi.boolean(),
+  showViews: Joi.boolean(),
+
   //
   genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
   cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
@@ -106,6 +112,9 @@ export const addMusicVideoSchema = Joi.object({
   video: Joi.object().optional(), // file
   videoLink: STRING_SCHEMA.optional(),
 
+  active: Joi.boolean(),
+  showViews: Joi.boolean(),
+
   trailerLink: STRING_SCHEMA.optional(), // file
   trailer: Joi.object().optional(),
 })
@@ -117,7 +126,7 @@ export const addSubtitleSchema = Joi.object({
   parentType: STRING_SCHEMA.valid('vod', 'episode').required(),
   language: STRING_SCHEMA.required(),
   subtitle: Joi.object().required(),
-}).required()
+})
 
 export const getPhotoURLSchema = {
   body: Joi.object({
@@ -213,6 +222,7 @@ export const addFeaturedContentSchema = {
 export const addGenreSchema = {
   body: Joi.object({
     name: STRING_SCHEMA.required(),
+    position: Joi.number().required(),
   }),
 }
 

@@ -26,8 +26,8 @@ AdminEnumController.getGenres = Catch_1.Catch.async(async (req, res) => {
         message: 'generes fetched',
     });
 });
-AdminEnumController.addGenre = Catch_1.Catch.async(async ({ body: { name } }, res) => {
-    await GenreService_1.GenreService.create(name);
+AdminEnumController.addGenre = Catch_1.Catch.async(async ({ body: { name, position } }, res) => {
+    await GenreService_1.GenreService.create(name, position);
     (0, responder_1.sendResponse)({
         res,
         message: 'new unique genre added',

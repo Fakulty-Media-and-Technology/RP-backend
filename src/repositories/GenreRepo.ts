@@ -3,7 +3,8 @@ import { GenreEnumModel } from '../models/genreEnum.model'
 export type DeleteType = '_id' | 'name'
 
 export class GenreRepo {
-  static create = (name: string) => GenreEnumModel.create({ name })
+  static create = ({ name, position }: { name: string; position: number }) =>
+    GenreEnumModel.create({ name, position })
 
   static getAllGenres = () => GenreEnumModel.find({})
 

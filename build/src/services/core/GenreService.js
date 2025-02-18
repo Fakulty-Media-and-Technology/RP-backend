@@ -9,8 +9,11 @@ class GenreService {
 }
 exports.GenreService = GenreService;
 _a = GenreService;
-GenreService.create = async (name) => {
-    await GenreRepo_1.GenreRepo.create(name);
+GenreService.create = async (name, position) => {
+    await GenreRepo_1.GenreRepo.create({
+        name,
+        position
+    });
 };
 GenreService.getGenres = async (query) => {
     const features = new QueryParamsFeatures_1.QueryParamsFeatures(GenreRepo_1.GenreRepo.getAllGenres(), {

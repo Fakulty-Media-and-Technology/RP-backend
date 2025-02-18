@@ -41,6 +41,8 @@ exports.addMovieOrSkitSchema = joi_1.default.object({
     portraitPoster: joi_1.default.object().required(),
     trailer: joi_1.default.object().optional(), // file
     trailerLink: common_1.STRING_SCHEMA.optional(),
+    active: joi_1.default.boolean(),
+    showViews: joi_1.default.boolean(),
     video: joi_1.default.object().optional(), //file
     videoLink: common_1.STRING_SCHEMA.optional(),
     vidClass: common_1.STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
@@ -61,6 +63,8 @@ exports.addSeriesSchema = joi_1.default.object({
     portraitPoster: joi_1.default.object().required(),
     trailer: joi_1.default.object().optional(), // file
     trailerLink: common_1.STRING_SCHEMA.optional(),
+    active: joi_1.default.boolean(),
+    showViews: joi_1.default.boolean(),
     //
     genre: common_1.MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
     cast: common_1.MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
@@ -81,6 +85,8 @@ exports.addMusicVideoSchema = joi_1.default.object({
     portraitPoster: joi_1.default.object().required(),
     video: joi_1.default.object().optional(), // file
     videoLink: common_1.STRING_SCHEMA.optional(),
+    active: joi_1.default.boolean(),
+    showViews: joi_1.default.boolean(),
     trailerLink: common_1.STRING_SCHEMA.optional(), // file
     trailer: joi_1.default.object().optional(),
 })
@@ -91,7 +97,7 @@ exports.addSubtitleSchema = joi_1.default.object({
     parentType: common_1.STRING_SCHEMA.valid('vod', 'episode').required(),
     language: common_1.STRING_SCHEMA.required(),
     subtitle: joi_1.default.object().required(),
-}).required();
+});
 exports.getPhotoURLSchema = {
     body: joi_1.default.object({
         bucket: common_1.STRING_SCHEMA.required(),
@@ -176,6 +182,7 @@ exports.addFeaturedContentSchema = {
 exports.addGenreSchema = {
     body: joi_1.default.object({
         name: common_1.STRING_SCHEMA.required(),
+        position: joi_1.default.number().required(),
     }),
 };
 exports.addCastSchema = {
