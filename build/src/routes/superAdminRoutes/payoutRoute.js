@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.superAdminPayoutsRouter = void 0;
+const express_1 = require("express");
+const payouts_admin_1 = require("../../controllers/admins/payouts.admin");
+const requestValidator_1 = require("../../middlewares/requestValidator");
+const admin_1 = require("../../validations/admin");
+exports.superAdminPayoutsRouter = (0, express_1.Router)();
+exports.superAdminPayoutsRouter.get('/payouts/request/all', payouts_admin_1.AdminPayoutController.payoutReqAll);
+exports.superAdminPayoutsRouter.get('/payouts/request/one/:id', payouts_admin_1.AdminPayoutController.payoutReqOne);
+exports.superAdminPayoutsRouter.put('/payouts/request/status/:id', (0, requestValidator_1.requestValidator)(admin_1.updatePayOutReqStatusSchema), payouts_admin_1.AdminPayoutController.payoutStatusUpdate);
+// superAdminPayoutsRouter.get("/payouts/request/group", AdminPayoutController.payoutReqGroup);

@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.superAdminUploadsRouter = void 0;
+const express_1 = require("express");
+const uploads_admin_1 = require("../../controllers/admins/uploads.admin");
+const Multer_1 = require("../../utils/Multer");
+exports.superAdminUploadsRouter = (0, express_1.Router)();
+exports.superAdminUploadsRouter.get('/fetch/:type', uploads_admin_1.AdminUploadController.fetchVideos);
+exports.superAdminUploadsRouter.get('/seasons/fetch/:vidId', uploads_admin_1.AdminUploadController.fetchSeasonsAndEpisodes);
+exports.superAdminUploadsRouter.post('/video/add/:type', Multer_1.Multer.adminUploadVideoConfig, uploads_admin_1.AdminUploadController.addVideo);
+exports.superAdminUploadsRouter.post('/episodes/add/:seasonId', Multer_1.Multer.adminUploadVideoConfig, uploads_admin_1.AdminUploadController.addEpisode);
+exports.superAdminUploadsRouter.post('/seasons/add/:videoId', Multer_1.Multer.adminUploadSeasonConfig, uploads_admin_1.AdminUploadController.addSeason);
+exports.superAdminUploadsRouter.put('/edit/:id/:type', uploads_admin_1.AdminUploadController.editVideo);
+exports.superAdminUploadsRouter.delete('/remove/:id/:type', uploads_admin_1.AdminUploadController.deleteVideo);

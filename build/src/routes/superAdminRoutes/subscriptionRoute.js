@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.superAdminSubscriptionRouter = void 0;
+const express_1 = require("express");
+const plan_sub_admin_1 = require("../../controllers/admins/plan-sub.admin");
+const requestValidator_1 = require("../../middlewares/requestValidator");
+const admin_1 = require("../../validations/admin");
+exports.superAdminSubscriptionRouter = (0, express_1.Router)();
+exports.superAdminSubscriptionRouter.get('/plans/fetch', plan_sub_admin_1.AdminPlanSubController.fetchPlans);
+exports.superAdminSubscriptionRouter.get('/all/fetch', plan_sub_admin_1.AdminPlanSubController.fetchSubscriptions);
+exports.superAdminSubscriptionRouter.delete('/plans/delete/:id', plan_sub_admin_1.AdminPlanSubController.deletePlans);
+exports.superAdminSubscriptionRouter.post('/plans/create', (0, requestValidator_1.requestValidator)(admin_1.createPlanSchema), plan_sub_admin_1.AdminPlanSubController.createPlan);
+exports.superAdminSubscriptionRouter.put('/plans/update/:id', (0, requestValidator_1.requestValidator)(admin_1.updatePlanSchema), plan_sub_admin_1.AdminPlanSubController.updatePlan);

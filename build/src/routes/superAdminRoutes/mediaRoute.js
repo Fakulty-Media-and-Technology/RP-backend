@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.superAdminMediaRouter = void 0;
+const express_1 = require("express");
+const managemedia_admin_1 = require("../../controllers/admins/managemedia.admin");
+const requestValidator_1 = require("../../middlewares/requestValidator");
+const Multer_1 = require("../../utils/Multer");
+const admin_1 = require("../../validations/admin");
+exports.superAdminMediaRouter = (0, express_1.Router)();
+exports.superAdminMediaRouter.get('/read-photo', (0, requestValidator_1.requestValidator)(admin_1.getPhotoURLSchema), managemedia_admin_1.AdminManagemediaController.adminGetPhotoUrl);
+exports.superAdminMediaRouter.get('/read-subtitle', (0, requestValidator_1.requestValidator)(admin_1.getPhotoURLSchema), managemedia_admin_1.AdminManagemediaController.adminGetSubtitleUrl);
+exports.superAdminMediaRouter.get('/read-video/:vidUploadId', managemedia_admin_1.AdminManagemediaController.getVidoeUploadStream);
+exports.superAdminMediaRouter.post('/add-subtitle', Multer_1.Multer.uploadSingleSubtitle, managemedia_admin_1.AdminManagemediaController.addSubtitle);

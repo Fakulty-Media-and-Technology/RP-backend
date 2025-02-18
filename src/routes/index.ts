@@ -1,8 +1,8 @@
 import express from 'express'
-import { superAdminRouter } from './superadmin.route'
 import { adminRouter } from './admin.route'
-import { clientsRouter } from './clients.route'
-import { customerRouter } from './customers.route'
+import { clientsRouter } from './clientRoutes'
+import { customerRouter } from './customerRoutes'
+import { superAdminRouter } from './superAdminRoutes'
 
 export const v1Router = express.Router()
 

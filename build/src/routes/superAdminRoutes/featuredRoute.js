@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.superAdminFeaturedRouter = void 0;
+const express_1 = require("express");
+const featured_admin_1 = require("../../controllers/admins/featured.admin");
+const requestValidator_1 = require("../../middlewares/requestValidator");
+const admin_1 = require("../../validations/admin");
+exports.superAdminFeaturedRouter = (0, express_1.Router)();
+exports.superAdminFeaturedRouter.get('/contents/search', featured_admin_1.AdminFeaturedController.searchContents);
+exports.superAdminFeaturedRouter.get('/contents/fetch', featured_admin_1.AdminFeaturedController.getFeaturedContents);
+exports.superAdminFeaturedRouter.post('/contents/add', (0, requestValidator_1.requestValidator)(admin_1.addFeaturedContentSchema), featured_admin_1.AdminFeaturedController.addFeatured);

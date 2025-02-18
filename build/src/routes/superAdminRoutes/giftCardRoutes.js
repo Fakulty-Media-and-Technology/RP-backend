@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.superAdminGiftCardRouter = void 0;
+const express_1 = require("express");
+const giftcard_admin_1 = require("../../controllers/admins/giftcard.admin");
+const requestValidator_1 = require("../../middlewares/requestValidator");
+const admin_1 = require("../../validations/admin");
+exports.superAdminGiftCardRouter = (0, express_1.Router)();
+exports.superAdminGiftCardRouter.post('/generate/new', (0, requestValidator_1.requestValidator)(admin_1.createGiftCardSchema), giftcard_admin_1.AdminGiftCardController.createGiftCard);
+exports.superAdminGiftCardRouter.get('/generated/fetch', giftcard_admin_1.AdminGiftCardController.fetchGiftCards);

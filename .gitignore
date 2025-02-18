@@ -4,6 +4,8 @@ tempMedia
 
 home
 
+*.env
+
 ./test.ts
 
 media
