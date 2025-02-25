@@ -27,13 +27,4 @@ export class CustomerProfileController {
       message: 'suggestion created and submitted to the admin',
     })
   })
-
-  static editProfile = Catch.async(async ({ user, body }, res) => {
-    await CustomerProfileService.editProfile(GetDefined.loggedInUser(user), body)
-
-    sendResponse({
-      res,
-      message: 'Profile and payment details updated',
-    })
-  })
 }

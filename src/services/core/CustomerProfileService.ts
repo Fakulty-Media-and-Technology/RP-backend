@@ -159,34 +159,4 @@ export class CustomerProfileService {
       user_id: currentUser._id,
     })
   }
-
-  static editProfile = async (currentUser: LoggedInUser, data: Record<string, any>) => {
-    const { first_name, last_name, country_code, mobile, photo, email, payment } = data
-
-    if (email) {
-      if (!isValidEmail(email)) {
-        throw new OperationalError('invalid email format', 400)
-      }
-
-      if (await UserModel.findOne({ email: email })) {
-        throw new OperationalError('Email already in use', 409)
-      }
-    }
-
-    if (photo) {
-      if (currentUser.photo)
-        await MediaManagement.deleteObject(currentUser.photo.Key, currentUser.photo.Bucket)
-
-      currentUser.photo = photo
-    }
-
-    await UserRepo.updateById(currentUser._id, {
-      email: email ? email : currentUser.email,
-      first_name: first_name ? first_name : currentUser.first_name,
-      last_name: last_name ? last_name : currentUser.last_name,
-      country_code: country_code ? country_code : currentUser.country_code,
-      mobile: mobile ? mobile : currentUser.mobile,
-      photo: currentUser.photo,
-    })
-  }
 }
