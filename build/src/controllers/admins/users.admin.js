@@ -5,10 +5,8 @@ exports.AdminUsersController = void 0;
 const users_model_1 = require("../../models/users.model");
 const Catch_1 = require("../../utils/Catch");
 const OperationalError_1 = require("../../utils/OperationalError");
-const Password_1 = require("../../utils/Password");
 const QueryParamsFeatures_1 = require("../../utils/QueryParamsFeatures");
 const responder_1 = require("../../utils/responder");
-const validate_1 = require("../../utils/validate");
 class AdminUsersController {
 }
 exports.AdminUsersController = AdminUsersController;
@@ -87,30 +85,6 @@ AdminUsersController.adminFetchSingleUser = Catch_1.Catch.async(async (req, res)
         res,
         data: user,
         message: 'One user fetched successfully',
-    });
-});
-AdminUsersController.editUserProfile = Catch_1.Catch.async(async (req, res) => {
-    const { userId } = req.params;
-    const { first_name, last_name, mobile, dob, email, gender, password } = req.body;
-    if (email && !(0, validate_1.isValidEmail)(email)) {
-        throw new OperationalError_1.OperationalError('Invalid email format', 400);
-    }
-    const updatedUser = await users_model_1.UserModel.findByIdAndUpdate(userId, {
-        email: email,
-        password: await Password_1.Password.encrypt(password),
-        first_name: first_name,
-        last_name: last_name,
-        mobile: mobile,
-        gender: gender,
-        dob: dob,
-    }, { new: true });
-    if (!updatedUser) {
-        throw new OperationalError_1.OperationalError('User not found', 400);
-    }
-    (0, responder_1.sendResponse)({
-        res,
-        data: updatedUser,
-        message: 'profile updated',
     });
 });
 AdminUsersController.adminDeleteUser = Catch_1.Catch.async(async (req, res) => {

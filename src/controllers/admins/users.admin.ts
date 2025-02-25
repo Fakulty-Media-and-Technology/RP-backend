@@ -90,39 +90,6 @@ export class AdminUsersController {
     })
   })
 
-  static editUserProfile = Catch.async(async (req, res) => {
-    const { userId } = req.params
-    const { first_name, last_name, mobile, dob, email, gender, password } = req.body
-
-    if (email && !isValidEmail(email)) {
-      throw new OperationalError('Invalid email format', 400)
-    }
-
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      userId,
-      {
-        email: email,
-        password: await Password.encrypt(password),
-        first_name: first_name,
-        last_name: last_name,
-        mobile: mobile,
-        gender: gender,
-        dob: dob,
-      },
-      { new: true },
-    )
-
-    if (!updatedUser) {
-      throw new OperationalError('User not found', 400)
-    }
-
-    sendResponse({
-      res,
-      data: updatedUser,
-      message: 'profile updated',
-    })
-  })
-
   static adminDeleteUser = Catch.async(async (req, res) => {
     const { userId } = req.params
     const deleteUser = await UserModel.findOneAndDelete({
