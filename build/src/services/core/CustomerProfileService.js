@@ -3,12 +3,9 @@ var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomerProfileService = void 0;
 const media_access_1 = require("../../../src/services/media-access");
-const media_management_1 = require("../../../src/services/media-management");
 const suggestions_model_1 = require("../../models/suggestions.model");
 const users_model_1 = require("../../models/users.model");
-const UserRepo_1 = require("../../repositories/UserRepo");
 const OperationalError_1 = require("../../utils/OperationalError");
-const validate_1 = require("../../utils/validate");
 class CustomerProfileService {
 }
 exports.CustomerProfileService = CustomerProfileService;
@@ -146,29 +143,5 @@ CustomerProfileService.createSuggestion = async (currentUser, message) => {
     await suggestions_model_1.SuggestionModel.create({
         message,
         user_id: currentUser._id,
-    });
-};
-CustomerProfileService.editProfile = async (currentUser, data) => {
-    const { first_name, last_name, country_code, mobile, photo, email, payment } = data;
-    if (email) {
-        if (!(0, validate_1.isValidEmail)(email)) {
-            throw new OperationalError_1.OperationalError('invalid email format', 400);
-        }
-        if (await users_model_1.UserModel.findOne({ email: email })) {
-            throw new OperationalError_1.OperationalError('Email already in use', 409);
-        }
-    }
-    if (photo) {
-        if (currentUser.photo)
-            await media_management_1.MediaManagement.deleteObject(currentUser.photo.Key, currentUser.photo.Bucket);
-        currentUser.photo = photo;
-    }
-    await UserRepo_1.UserRepo.updateById(currentUser._id, {
-        email: email ? email : currentUser.email,
-        first_name: first_name ? first_name : currentUser.first_name,
-        last_name: last_name ? last_name : currentUser.last_name,
-        country_code: country_code ? country_code : currentUser.country_code,
-        mobile: mobile ? mobile : currentUser.mobile,
-        photo: currentUser.photo,
     });
 };

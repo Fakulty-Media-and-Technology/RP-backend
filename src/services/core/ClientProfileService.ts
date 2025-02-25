@@ -16,14 +16,6 @@ export class ClientProfileService {
     password: 0,
   }
 
-  static editProfile = async (currentUser: LoggedInUser, data: Record<string, any>) => {
-    const updatedClient = await UserModel.findByIdAndUpdate(currentUser.id, data, {
-      new: true,
-    }).select(this._deselect)
-
-    return updatedClient
-  }
-
   static clientsPaymentHis = async (currentUser: LoggedInUser) => {
     const wallHis = await PaymentModel.find({ user_id: currentUser.id }).select('-__v')
     return wallHis

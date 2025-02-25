@@ -10,14 +10,6 @@ class ClientProfileController {
 }
 exports.ClientProfileController = ClientProfileController;
 _a = ClientProfileController;
-ClientProfileController.clientEditProfile = Catch_1.Catch.async(async ({ user, body }, res) => {
-    await ClientProfileService_1.ClientProfileService.editProfile(GetDefined_1.GetDefined.loggedInUser(user), body);
-    (0, responder_1.sendResponse)({
-        res,
-        data: await ClientProfileService_1.ClientProfileService.editProfile(GetDefined_1.GetDefined.loggedInUser(user), body),
-        message: 'Profile Updated',
-    });
-});
 ClientProfileController.clientsPaymentHis = Catch_1.Catch.async(async ({ user }, res) => {
     (0, responder_1.sendResponse)({
         res,

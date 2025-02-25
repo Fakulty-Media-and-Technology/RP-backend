@@ -4,16 +4,6 @@ import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 export class ClientProfileController {
-  static clientEditProfile = Catch.async(async ({ user, body }, res) => {
-    await ClientProfileService.editProfile(GetDefined.loggedInUser(user), body)
-
-    sendResponse({
-      res,
-      data: await ClientProfileService.editProfile(GetDefined.loggedInUser(user), body),
-      message: 'Profile Updated',
-    })
-  })
-
   static clientsPaymentHis = Catch.async(async ({ user }, res) => {
     sendResponse({
       res,

@@ -20,12 +20,6 @@ ClientProfileService._deselect = {
     pin: 0,
     password: 0,
 };
-ClientProfileService.editProfile = async (currentUser, data) => {
-    const updatedClient = await users_model_1.UserModel.findByIdAndUpdate(currentUser.id, data, {
-        new: true,
-    }).select(_a._deselect);
-    return updatedClient;
-};
 ClientProfileService.clientsPaymentHis = async (currentUser) => {
     const wallHis = await payments_model_1.PaymentModel.find({ user_id: currentUser.id }).select('-__v');
     return wallHis;

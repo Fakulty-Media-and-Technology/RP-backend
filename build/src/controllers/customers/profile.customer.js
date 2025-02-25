@@ -29,10 +29,3 @@ CustomerProfileController.createSuggestion = Catch_1.Catch.async(async ({ user, 
         message: 'suggestion created and submitted to the admin',
     });
 });
-CustomerProfileController.editProfile = Catch_1.Catch.async(async ({ user, body }, res) => {
-    await CustomerProfileService_1.CustomerProfileService.editProfile(GetDefined_1.GetDefined.loggedInUser(user), body);
-    (0, responder_1.sendResponse)({
-        res,
-        message: 'Profile and payment details updated',
-    });
-});

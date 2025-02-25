@@ -5,4 +5,3 @@ const express_1 = require("express");
 const profile_customer_1 = require("../../controllers/customers/profile.customer");
 exports.router = (0, express_1.Router)();
 exports.router.get('/fetch', profile_customer_1.CustomerProfileController.customerProfileFetch);
-exports.router.put('/edit', profile_customer_1.CustomerProfileController.editProfile);
