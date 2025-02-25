@@ -1,6 +1,6 @@
 import { Router } from 'express'
 
-import { CustomerMediaController } from '../../controllers/customers/medias.customer'
+import { CustomerSharedController } from '../../controllers/customers/medias.customer'
 import { OnboardingController } from '../../controllers/customers/onboarding.customer'
 import { CustomerPaymentController } from '../../controllers/customers/payment.customer'
 import { CustomerProfileController } from '../../controllers/customers/profile.customer'
@@ -25,6 +25,7 @@ import { router as ProfileRouter } from './../customerRoutes/profileRouter'
 import { SharedRoutes } from '../../utils/SharedRoutes'
 
 export const customerRouter = Router()
+const sharedRoutes = new SharedRoutes(customerRouter)
 
 // onboarding
 customerRouter.post('/signup', OnboardingController.customerSignup)
@@ -35,6 +36,8 @@ customerRouter.use('/general', GeneralRouter)
 customerRouter.use('/pass-reset', PasswordResetRouter)
 
 customerRouter.use(AuthMiddleware.authenticateRequest('customer-auth'))
+
+sharedRoutes.fetchSubtitles().updateUserProfile('customer-auth')
 
 customerRouter.use('/profile', ProfileRouter)
 customerRouter.use('/wallet', WalletRouter)
@@ -49,11 +52,7 @@ customerRouter.use('/livestream', LivestreamRouter)
 customerRouter.use('/subscription', SubscriptionRuuter)
 customerRouter.use('/notification', PushNotificationRouter)
 customerRouter.use('/notifications', NotificationsRouter)
-
-new SharedRoutes(customerRouter).fetchSubtitles()
-
 customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
-customerRouter.get('/banner/contents', CustomerMediaController.bannerContents)
-
+customerRouter.get('/banner/contents', CustomerSharedController.bannerContents)
 customerRouter.post('/signup/createpin', OnboardingController.createPin)
 customerRouter.post('/suggestion/create', CustomerProfileController.createSuggestion)

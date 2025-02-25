@@ -22,10 +22,13 @@ import { superAdminUploadsRouter } from './uploadRoute'
 import { superAdminUsersRouter } from './userRouter'
 
 export const superAdminRouter = express.Router()
+const sharedRoutes = new SharedRoutes(superAdminRouter)
 
 superAdminRouter.post('/admins-signin', AdminOnboardingController.adminSignIn)
 
 superAdminRouter.use(AuthMiddleware.authenticateRequest('superadmin-auth'))
+
+sharedRoutes.livesRoutes('Admin').fetchSubtitles().updateUserProfile('superadmin-auth')
 
 superAdminRouter.use('/clients', superAdminClientsRouter)
 superAdminRouter.use('/enums', superAdminEnumsRouter)
@@ -43,7 +46,6 @@ superAdminRouter.use('/user', superAdminUsersRouter)
 superAdminRouter.use('/dashboard', superAdminDashboardRouter)
 superAdminRouter.use('/ads', superAdminAdsRouter)
 
-new SharedRoutes(superAdminRouter).livesRoutes('Admin').fetchSubtitles()
 
 superAdminRouter.post(
   '/create-super-admin',

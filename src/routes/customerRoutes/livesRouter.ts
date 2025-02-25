@@ -1,43 +1,43 @@
 import { Router } from 'express'
-import { CustomerMediaController } from '../../controllers/customers/medias.customer'
+import { CustomerSharedController } from '../../controllers/customers/medias.customer'
 
 export const router = Router()
 
 //live events
-router.get('/events/fetch/all', CustomerMediaController.getLiveEventsByType('all'))
-router.get('/events/fetch/featured', CustomerMediaController.getLiveEventsByType('featured'))
-router.get('/events/fetch/sponsored', CustomerMediaController.getLiveEventsByType('sponsored'))
-router.get('/events/fetch/channels', CustomerMediaController.getLiveEventsByType('channels'))
+router.get('/events/fetch/all', CustomerSharedController.getLiveEventsByType('all'))
+router.get('/events/fetch/featured', CustomerSharedController.getLiveEventsByType('featured'))
+router.get('/events/fetch/sponsored', CustomerSharedController.getLiveEventsByType('sponsored'))
+router.get('/events/fetch/channels', CustomerSharedController.getLiveEventsByType('channels'))
 router.get(
   '/events/fetch/pop/channels',
-  CustomerMediaController.getLiveEventsByType('channels popular'),
+  CustomerSharedController.getLiveEventsByType('channels popular'),
 )
 
-router.get('/events/fetch/events', CustomerMediaController.getLiveEventsByType('events'))
+router.get('/events/fetch/events', CustomerSharedController.getLiveEventsByType('events'))
 router.get(
   '/events/fetch/pop/events',
-  CustomerMediaController.getLiveEventsByType('events popular'),
+  CustomerSharedController.getLiveEventsByType('events popular'),
 )
 
-router.get('/events/fetch/tvshows', CustomerMediaController.getLiveEventsByType('tvshows'))
+router.get('/events/fetch/tvshows', CustomerSharedController.getLiveEventsByType('tvshows'))
 
 router.get(
   '/events/fetch/pop/tvshows',
-  CustomerMediaController.getLiveEventsByType('tvshows popular'),
+  CustomerSharedController.getLiveEventsByType('tvshows popular'),
 )
 
-router.get('/events/fetch/sports', CustomerMediaController.getLiveEventsByType('sports'))
+router.get('/events/fetch/sports', CustomerSharedController.getLiveEventsByType('sports'))
 
 router.get(
   '/events/fetch/pop/sports',
-  CustomerMediaController.getLiveEventsByType('sports popular'),
+  CustomerSharedController.getLiveEventsByType('sports popular'),
 )
 
-router.get('/events/fetch/podcasts', CustomerMediaController.getLiveEventsByType('podcasts'))
+router.get('/events/fetch/podcasts', CustomerSharedController.getLiveEventsByType('podcasts'))
 
 router.get(
   '/events/fetch/pop/podcasts',
-  CustomerMediaController.getLiveEventsByType('podcasts popular'),
+  CustomerSharedController.getLiveEventsByType('podcasts popular'),
 )
 
-router.get('/event/stream/:id', CustomerMediaController.streamLiveEvent)
+router.get('/event/stream/:id', CustomerSharedController.streamLiveEvent)

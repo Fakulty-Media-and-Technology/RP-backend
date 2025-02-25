@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import { AdminManagemediaController } from '../../controllers/admins/managemedia.admin'
+import { AdminManageSharedController } from '../../controllers/admins/managemedia.admin'
 
 export const superAdminLivesRouter = Router()
 
-superAdminLivesRouter.get('/search-clients', AdminManagemediaController.searchClient)
-superAdminLivesRouter.get('/all/channels', AdminManagemediaController.getLivesByType('channel'))
-superAdminLivesRouter.get('/all/events', AdminManagemediaController.getLivesByType('event'))
-superAdminLivesRouter.get('/all/tvshows', AdminManagemediaController.getLivesByType('tvshow'))
+superAdminLivesRouter.get('/search-clients', AdminManageSharedController.searchClient)
+superAdminLivesRouter.get('/all/channels', AdminManageSharedController.getLivesByType('channel'))
+superAdminLivesRouter.get('/all/events', AdminManageSharedController.getLivesByType('event'))
+superAdminLivesRouter.get('/all/tvshows', AdminManageSharedController.getLivesByType('tvshow'))

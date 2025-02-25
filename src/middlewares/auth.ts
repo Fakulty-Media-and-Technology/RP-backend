@@ -6,7 +6,7 @@ import { Catch } from '../utils/Catch'
 import { TokenManager } from '../utils/jwt'
 import { OperationalError } from '../utils/OperationalError'
 
-type AuthHeaderKey = 'superadmin-auth' | 'customer-auth' | 'clients-auth' | 'admin-auth'
+export type AuthHeaderKey = 'superadmin-auth' | 'customer-auth' | 'clients-auth' | 'admin-auth'
 
 export class AuthMiddleware {
   private static _checkRolePermission = (authHeaderType: AuthHeaderKey, user: User) => {

@@ -1,7 +1,7 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MediaController = void 0;
+exports.SharedController = void 0;
 const MediaService_1 = require("../../services/core/MediaService");
 const Catch_1 = require("../../utils/Catch");
 const GetDefined_1 = require("../../utils/GetDefined");
@@ -10,11 +10,26 @@ const responder_1 = require("../../utils/responder");
 const requestValidator_1 = require("../../middlewares/requestValidator");
 const admin_1 = require("../../validations/admin");
 const UploadMediaUtils_1 = require("../../utils/UploadMediaUtils");
-class MediaController extends UploadMediaUtils_1.UploadMediaUtils {
+class SharedController extends UploadMediaUtils_1.UploadMediaUtils {
 }
-exports.MediaController = MediaController;
-_a = MediaController;
-MediaController.createLive = ({ isAdmin }) => Catch_1.Catch.async(async (req, res) => {
+exports.SharedController = SharedController;
+_a = SharedController;
+SharedController.updateProfile = (authType) => Catch_1.Catch.async(async (req, res) => {
+    if (Object.values(req.body).length === 0 && req.file == null) {
+        throw new OperationalError_1.OperationalError('Provide at least one property to update', 400);
+    }
+    Object.assign(req.body, { userId: req.params.userId });
+    await MediaService_1.MedaiService.updateUserProfile({
+        imageFile: req.file,
+        data: req.body,
+        authType
+    });
+    (0, responder_1.sendResponse)({
+        res,
+        message: 'Update successfull',
+    });
+});
+SharedController.createLive = ({ isAdmin }) => Catch_1.Catch.async(async (req, res) => {
     const { data: _data } = req.body;
     if (_data == null || typeof _data !== 'string') {
         throw new OperationalError_1.OperationalError('formData.data is required and must be a JSON serialized string', 400);
@@ -34,21 +49,21 @@ MediaController.createLive = ({ isAdmin }) => Catch_1.Catch.async(async (req, re
         message: 'live stream created, credentials are on attached user dashboard',
     });
 });
-MediaController.adminGetPhotoUrl = Catch_1.Catch.async(async (req, res) => {
+SharedController.adminGetPhotoUrl = Catch_1.Catch.async(async (req, res) => {
     const { bucket, key } = req.body;
     const image = await MediaService_1.MedaiService.getPhotoUrl(bucket, key);
     (0, responder_1.sendResponse)({ res, data: image, message: 'image fetched' });
 });
-MediaController.adminGetSubtitleUrl = Catch_1.Catch.async(async (req, res) => {
+SharedController.adminGetSubtitleUrl = Catch_1.Catch.async(async (req, res) => {
     const { bucket, key } = req.body;
     const subtitle = await MediaService_1.MedaiService.getSubtitleUrl(bucket, key);
     (0, responder_1.sendResponse)({ res, data: subtitle, message: 'subtitle fetched' });
 });
-MediaController.getVidoeUploadStream = Catch_1.Catch.async(async (req, res) => {
+SharedController.getVidoeUploadStream = Catch_1.Catch.async(async (req, res) => {
     const _vodStream = await MediaService_1.MedaiService.getVodStream(req.params.vidUploadId, GetDefined_1.GetDefined.loggedInUser(req.user));
     (0, responder_1.sendResponse)({ res, data: _vodStream, message: 'stream fetched' });
 });
-MediaController.getSubtitles = Catch_1.Catch.async(async (req, res) => {
+SharedController.getSubtitles = Catch_1.Catch.async(async (req, res) => {
     (0, responder_1.sendResponse)({
         res,
         data: await MediaService_1.MedaiService.getSubtitles(req.params.parentId),

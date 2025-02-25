@@ -6,8 +6,28 @@ import { sendResponse } from '../../utils/responder'
 import { validate } from '../../middlewares/requestValidator'
 import { addLiveSchema } from '../../validations/admin'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
+import { AuthHeaderKey } from '../../middlewares/auth'
 
-export class MediaController extends UploadMediaUtils {
+export class SharedController extends UploadMediaUtils {
+  static updateProfile = (authType: AuthHeaderKey) => Catch.async(async (req, res) => {
+    if (Object.values(req.body).length === 0 && req.file == null) {
+      throw new OperationalError('Provide at least one property to update', 400)
+    }
+
+    Object.assign(req.body, { userId: req.params.userId })
+
+    await MedaiService.updateUserProfile({
+      imageFile: req.file,
+      data: req.body,
+      authType
+    })
+
+    sendResponse({
+      res,
+      message: 'Update successfull',
+    })
+  })
+
   static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
     Catch.async(async (req, res) => {
       const { data: _data } = req.body

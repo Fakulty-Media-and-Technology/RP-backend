@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CustomerMediaController = void 0;
+exports.CustomerSharedController = void 0;
 const Catch_1 = require("../../utils/Catch");
 const GetDefined_1 = require("../../utils/GetDefined");
 const responder_1 = require("../../utils/responder");
@@ -17,16 +17,16 @@ const env_1 = __importDefault(require("../../env"));
 const media_management_1 = require("../../services/media-management");
 const live_1 = require("../../utils/live");
 const VideoRepo_1 = require("../../repositories/VideoRepo");
-const media_controller_1 = require("../common/media.controller");
+const shared_controller_1 = require("../common/shared.controller");
 const LiveMediaSourcesUtils_1 = require("../../utils/LiveMediaSourcesUtils");
 const QueryParamsFeatures_1 = require("../../utils/QueryParamsFeatures");
 const MovieMediaSourcesUtils_1 = require("../../utils/MovieMediaSourcesUtils");
 const VideoUploadUtils_1 = require("../../utils/VideoUploadUtils");
-class CustomerMediaController extends media_controller_1.MediaController {
+class CustomerSharedController extends shared_controller_1.SharedController {
 }
-exports.CustomerMediaController = CustomerMediaController;
-_a = CustomerMediaController;
-CustomerMediaController.uploadImageRoute = Catch_1.Catch.async(async ({ file, user }, res) => {
+exports.CustomerSharedController = CustomerSharedController;
+_a = CustomerSharedController;
+CustomerSharedController.uploadImageRoute = Catch_1.Catch.async(async ({ file, user }, res) => {
     (0, denyGuestUser_1.denyGuestUser)(GetDefined_1.GetDefined.loggedInUser(user));
     if (!file) {
         throw new OperationalError_1.OperationalError('Upload an image', 400);
@@ -37,7 +37,7 @@ CustomerMediaController.uploadImageRoute = Catch_1.Catch.async(async ({ file, us
         message: 'image uploaded',
     });
 });
-CustomerMediaController.getFeaturedVods = Catch_1.Catch.async(async ({ query, user }, res) => {
+CustomerSharedController.getFeaturedVods = Catch_1.Catch.async(async ({ query, user }, res) => {
     const vidQuality = await VideoUploadUtils_1.VidUploadUtils.getUserVideoQuality(GetDefined_1.GetDefined.loggedInUser(user)._id.toString());
     const vods = await MovieMediaSourcesUtils_1.MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo_1.VideoRepo.fetchFeatured((0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(query.page, 1), (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(query.limit, 10)), true, vidQuality);
     (0, responder_1.sendResponse)({
@@ -46,7 +46,7 @@ CustomerMediaController.getFeaturedVods = Catch_1.Catch.async(async ({ query, us
         message: 'featured contents fetched successful',
     });
 });
-CustomerMediaController.getFeaturedLives = Catch_1.Catch.async(async ({ query, user }, res) => {
+CustomerSharedController.getFeaturedLives = Catch_1.Catch.async(async ({ query, user }, res) => {
     const vidQuality = await VideoUploadUtils_1.VidUploadUtils.getUserVideoQuality(GetDefined_1.GetDefined.loggedInUser(user)._id.toString());
     (0, responder_1.sendResponse)({
         res,
@@ -55,7 +55,7 @@ CustomerMediaController.getFeaturedLives = Catch_1.Catch.async(async ({ query, u
     });
 });
 // ***************** likes ************************ //
-CustomerMediaController.likeVideo = Catch_1.Catch.async(async (req, res) => {
+CustomerSharedController.likeVideo = Catch_1.Catch.async(async (req, res) => {
     const streamId = req.params.id;
     const user = GetDefined_1.GetDefined.loggedInUser(req.user);
     (0, denyGuestUser_1.denyGuestUser)(user);
@@ -76,7 +76,7 @@ CustomerMediaController.likeVideo = Catch_1.Catch.async(async (req, res) => {
         message: 'video liked',
     });
 });
-CustomerMediaController.userLikedVideo = Catch_1.Catch.async(async (req, res) => {
+CustomerSharedController.userLikedVideo = Catch_1.Catch.async(async (req, res) => {
     const streamId = req.params.id;
     const user = GetDefined_1.GetDefined.loggedInUser(req.user);
     (0, denyGuestUser_1.denyGuestUser)(user);
@@ -92,7 +92,7 @@ CustomerMediaController.userLikedVideo = Catch_1.Catch.async(async (req, res) =>
         },
     });
 });
-CustomerMediaController.unLikeVideo = Catch_1.Catch.async(async (req, res) => {
+CustomerSharedController.unLikeVideo = Catch_1.Catch.async(async (req, res) => {
     const streamId = req.params.id;
     const user = GetDefined_1.GetDefined.loggedInUser(req.user);
     (0, denyGuestUser_1.denyGuestUser)(user);
@@ -113,7 +113,7 @@ CustomerMediaController.unLikeVideo = Catch_1.Catch.async(async (req, res) => {
     });
 });
 // ************ GET EVENTS *********************//
-CustomerMediaController.getLiveEventsByType = (type) => Catch_1.Catch.async(async (req, res) => {
+CustomerSharedController.getLiveEventsByType = (type) => Catch_1.Catch.async(async (req, res) => {
     let filter = { expired: false };
     switch (type) {
         case 'featured':
@@ -169,7 +169,7 @@ CustomerMediaController.getLiveEventsByType = (type) => Catch_1.Catch.async(asyn
         message: 'Events fetched',
     });
 });
-CustomerMediaController.bannerContents = Catch_1.Catch.async(async (req, res) => {
+CustomerSharedController.bannerContents = Catch_1.Catch.async(async (req, res) => {
     const vidQuality = await VideoUploadUtils_1.VidUploadUtils.getUserVideoQuality(GetDefined_1.GetDefined.loggedInUser(req.user)._id.toString());
     let lives;
     let vods;
@@ -193,7 +193,7 @@ CustomerMediaController.bannerContents = Catch_1.Catch.async(async (req, res) =>
         },
     });
 });
-CustomerMediaController.streamLiveEvent = Catch_1.Catch.async(async (req, res) => {
+CustomerSharedController.streamLiveEvent = Catch_1.Catch.async(async (req, res) => {
     const streamId = req.params.id;
     const event = await lives_model_1.LiveModel.findById(streamId);
     if (event == null) {

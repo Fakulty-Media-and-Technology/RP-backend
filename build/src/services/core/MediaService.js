@@ -14,6 +14,9 @@ const live_1 = require("../../utils/live");
 const media_management_1 = require("../media-management");
 const poster_model_1 = require("../../models/poster.model");
 const subtitle_model_1 = require("../../models/subtitle.model");
+const users_model_1 = require("../../models/users.model");
+const Password_1 = require("../../utils/Password");
+const s3_1 = require("../aws/s3");
 class MedaiService {
 }
 exports.MedaiService = MedaiService;
@@ -147,6 +150,86 @@ MedaiService.getVodStream = async (vidUploadId, currentUser) => {
     }
     response.streamUrl = media_access_1.MediaAccess.getCloudFrontSignedUrl(vidUploadRes.key);
     return response;
+};
+MedaiService._updateUserEmail = async (email, user) => {
+    if (email === user.email)
+        return;
+    const existOnAnother = await users_model_1.UserModel.findOne({
+        _id: { $ne: user._id },
+        email,
+    });
+    if (existOnAnother)
+        throw new OperationalError_1.OperationalError(`${email} is associated with other documents`, 403);
+    // do other neccessary stuff like set auth pin and stuff
+    user.email = email;
+};
+MedaiService._handleUpdateUserPassword = async (prevPass, newPass, user) => {
+    if (!Password_1.Password.isStrong(newPass)) {
+        throw new OperationalError_1.OperationalError('new password is not strong enough', 400);
+    }
+    const isSamePassword = await Password_1.Password.compare(prevPass, user.password);
+    if (!isSamePassword) {
+        throw new OperationalError_1.OperationalError('previous password did not match user password', 403);
+    }
+    if (newPass === prevPass)
+        return;
+    user.password = await Password_1.Password.encrypt(newPass);
+};
+MedaiService._updateUserProfileImage = async (imageFile, user) => {
+    let prevKey = null;
+    let prevBucket = null;
+    const { Bucket, Key, mimetype } = await media_management_1.MediaManagement.store({
+        file: imageFile,
+        expire: undefined,
+        baseDir: 'images',
+    });
+    if (!Bucket) {
+        throw new OperationalError_1.OperationalError('error updating image', 500);
+    }
+    prevKey = user.photo?.Key;
+    prevBucket = user.photo?.Bucket;
+    user.photo = {
+        Bucket,
+        Key,
+        ContentType: mimetype,
+    };
+    return {
+        prevKey,
+        prevBucket,
+    };
+};
+MedaiService.updateUserProfile = async ({ imageFile, data, authType }) => {
+    if (data.role && authType !== 'admin-auth' && authType !== 'superadmin-auth') {
+        throw new OperationalError_1.OperationalError('only admins can update role', 403);
+    }
+    const user = await users_model_1.UserModel.findById(data.userId);
+    let prevPhotoKey = null;
+    let prevPhotoBucket = null;
+    if (user == null) {
+        throw new OperationalError_1.OperationalError('invalid userId', 404);
+    }
+    if (imageFile) {
+        const { prevBucket, prevKey } = await _a._updateUserProfileImage(imageFile, user);
+        prevPhotoKey = prevKey;
+        prevPhotoBucket = prevBucket;
+    }
+    if (data.password && data.prevPassword)
+        await _a._handleUpdateUserPassword(data.prevPassword, data.password, user);
+    if (data.email)
+        await _a._updateUserEmail(data.email, user);
+    user.first_name = data.firstName || user.first_name;
+    user.last_name = data.lastName || user.last_name;
+    user.country_code = data.countryCode || user.country_code;
+    user.mobile = data.mobile || user.mobile;
+    user.country = data.country || user.country;
+    user.gender = data.gender || user.gender;
+    user.dob = data.dob ? new Date(data.dob) : user.dob;
+    await user.save();
+    if (prevPhotoBucket && prevPhotoKey) {
+        s3_1.S3.deleteObject(prevPhotoKey, prevPhotoBucket).catch(() => {
+            console.error(`Error deleting key: ${prevPhotoKey} in bucket: ${prevPhotoBucket} from s3 on MediaService.updateUserProfile`);
+        });
+    }
 };
 MedaiService.getPhotoUrl = async (bucket, key) => {
     return await media_access_1.MediaAccess.getSignedUrl(bucket, key, 'photo');

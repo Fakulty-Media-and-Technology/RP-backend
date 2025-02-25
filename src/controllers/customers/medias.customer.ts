@@ -13,7 +13,7 @@ import env from '../../env'
 import { MediaManagement } from '../../services/media-management'
 import { signCred } from '../../utils/live'
 import { VideoRepo } from '../../repositories/VideoRepo'
-import { MediaController } from '../common/media.controller'
+import { SharedController } from '../common/shared.controller'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
@@ -36,7 +36,7 @@ type LiveEventsType =
   | 'podcasts'
   | 'podcasts popular'
 
-export class CustomerMediaController extends MediaController {
+export class CustomerSharedController extends SharedController {
   static uploadImageRoute = Catch.async(async ({ file, user }, res) => {
     denyGuestUser(GetDefined.loggedInUser(user))
 

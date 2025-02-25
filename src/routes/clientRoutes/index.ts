@@ -11,15 +11,15 @@ import { router as ClientProfileRouter } from './../clientRoutes/clientProfileRo
 import { SharedRoutes } from '../../utils/SharedRoutes'
 
 export const clientsRouter = express.Router()
+const sharedRoutes = new SharedRoutes(clientsRouter)
 
 clientsRouter.use(AuthMiddleware.authenticateRequest('clients-auth'))
+
+sharedRoutes.livesRoutes('Client').updateUserProfile('clients-auth')
 
 clientsRouter.use('/livestream', ClientsLiveStreamRouter)
 clientsRouter.use('/payouts', ClientPayoutRouter)
 clientsRouter.use('/event', ClientEventRouter)
 clientsRouter.use('/profile', ClientProfileRouter)
-
-new SharedRoutes(clientsRouter).livesRoutes('Client')
-
 clientsRouter.get('/history/payment/fetch', ClientProfileController.clientsPaymentHis)
 clientsRouter.post('/payment/paystack/init', CustomerPaymentController.startPayment)

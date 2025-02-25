@@ -5,11 +5,11 @@ import { AdminManageMediaService } from '../../services/core/AdminManagemediaSer
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { LiveSchema } from '../../models/lives.model'
-import { MediaController } from '../common/media.controller'
+import { SharedController } from '../common/shared.controller'
 import { validate } from '../../middlewares/requestValidator'
 import { addSubtitleSchema } from '../../validations/admin'
 
-export class AdminManagemediaController extends MediaController {
+export class AdminManageSharedController extends SharedController {
   static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
     Catch.async(async (req, res) => {
       if (isAdmin && typeof req.body.client_id !== 'string') {

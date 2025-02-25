@@ -36,3 +36,31 @@ export const LIVE_TYPE_SCHEMA = STRING_SCHEMA.valid(
 export const ISO_STRING_SCHEMA = STRING_SCHEMA.isoDate()
 
 export const VIDEO_CLASS_SCHEMA = STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium')
+
+export const updateUserProfileSchema = {
+  body: Joi.object({
+    firstName: STRING_SCHEMA,
+    lastName: STRING_SCHEMA,
+    email: STRING_SCHEMA.email(),
+    countryCode: STRING_SCHEMA,
+    mobile: STRING_SCHEMA,
+    password: STRING_SCHEMA,
+    prevPassword: STRING_SCHEMA,
+    gender: STRING_SCHEMA.valid('male', 'female', 'nil'),
+    role: STRING_SCHEMA.valid(
+      'customer',
+      'channel',
+      'tvshow',
+      'event',
+      'podcast',
+      'admin',
+      'superadmin',
+    ),
+    dob: STRING_SCHEMA.isoDate(),
+    country: STRING_SCHEMA,
+  }).and('password', 'prevPassword'),
+
+  params: Joi.object({
+    userId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+  }),
+}

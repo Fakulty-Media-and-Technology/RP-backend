@@ -24,6 +24,7 @@ const walletRouter_1 = require("./../customerRoutes/walletRouter");
 const profileRouter_1 = require("./../customerRoutes/profileRouter");
 const SharedRoutes_1 = require("../../utils/SharedRoutes");
 exports.customerRouter = (0, express_1.Router)();
+const sharedRoutes = new SharedRoutes_1.SharedRoutes(exports.customerRouter);
 // onboarding
 exports.customerRouter.post('/signup', onboarding_customer_1.OnboardingController.customerSignup);
 exports.customerRouter.post('/general-signin', onboarding_customer_1.OnboardingController.signIn);
@@ -32,6 +33,7 @@ exports.customerRouter.post('/signup/verifyaccount', onboarding_customer_1.Onboa
 exports.customerRouter.use('/general', generalRouter_1.router);
 exports.customerRouter.use('/pass-reset', passwordResetRouter_1.router);
 exports.customerRouter.use(auth_1.AuthMiddleware.authenticateRequest('customer-auth'));
+sharedRoutes.fetchSubtitles().updateUserProfile('customer-auth');
 exports.customerRouter.use('/profile', profileRouter_1.router);
 exports.customerRouter.use('/wallet', walletRouter_1.router);
 exports.customerRouter.use('/payment', paymentRouter_1.router);
@@ -45,8 +47,7 @@ exports.customerRouter.use('/livestream', livestreamRouter_1.router);
 exports.customerRouter.use('/subscription', subscriptionRouter_1.router);
 exports.customerRouter.use('/notification', pushNotificationRouter_1.router);
 exports.customerRouter.use('/notifications', notificationsRouter_1.router);
-new SharedRoutes_1.SharedRoutes(exports.customerRouter).fetchSubtitles();
 exports.customerRouter.get('/giftcard/redeem', payment_customer_1.CustomerPaymentController.redeemGiftCard);
-exports.customerRouter.get('/banner/contents', medias_customer_1.CustomerMediaController.bannerContents);
+exports.customerRouter.get('/banner/contents', medias_customer_1.CustomerSharedController.bannerContents);
 exports.customerRouter.post('/signup/createpin', onboarding_customer_1.OnboardingController.createPin);
 exports.customerRouter.post('/suggestion/create', profile_customer_1.CustomerProfileController.createSuggestion);

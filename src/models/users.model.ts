@@ -1,5 +1,20 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { previewPhotoSchema } from './commonSchema'
+import { Password } from '../utils/Password'
+
+type UserProfileUpdate = {
+  userId: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  countryCode?: string
+  mobile?: string
+  password?: string
+  prevPassword?: string
+  gender?: string
+  dob?: string
+  country?: string
+}
 
 const schema = new Schema(
   {

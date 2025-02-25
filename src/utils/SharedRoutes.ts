@@ -1,6 +1,9 @@
 import { Router } from 'express'
-import { MediaController } from '../controllers/common/media.controller'
+import { SharedController } from '../controllers/common/shared.controller'
 import { Multer } from '../utils/Multer'
+import { requestValidator } from '../middlewares/requestValidator'
+import { updateUserProfileSchema } from '../validations/common'
+import { AuthHeaderKey } from '../middlewares/auth'
 
 export class SharedRoutes {
   private _baseRouter: Router
@@ -13,14 +16,25 @@ export class SharedRoutes {
     this._baseRouter.post(
       '/lives/create',
       Multer.createLiveConfig,
-      MediaController.createLive({ isAdmin: caller === 'Admin' }),
+      SharedController.createLive({ isAdmin: caller === 'Admin' }),
     )
 
     return this
   }
 
   fetchSubtitles() {
-    this._baseRouter.get('/subtitles/fetch/:parentId', MediaController.getSubtitles)
+    this._baseRouter.get('/subtitles/fetch/:parentId', SharedController.getSubtitles)
+    return this
+  }
+
+  updateUserProfile(authType: AuthHeaderKey) {
+    this._baseRouter.put(
+      '/user-profile/shared/update/:userId',
+      Multer.uploadSingleImage,
+      requestValidator(updateUserProfileSchema),
+      SharedController.updateProfile(authType),
+    )
+
     return this
   }
 }
