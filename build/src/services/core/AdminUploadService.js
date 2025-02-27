@@ -9,7 +9,7 @@ const VideoRepo_1 = require("../../repositories/VideoRepo");
 const MovieMediaSourcesUtils_1 = require("../../utils/MovieMediaSourcesUtils");
 const QueryParamsFeatures_1 = require("../../utils/QueryParamsFeatures");
 const UploadMediaUtils_1 = require("../../utils/UploadMediaUtils");
-const deleteVodMedia_1 = require("../../utils/deleteVodMedia");
+const Purge_1 = require("../../utils/Purge");
 class AdminUploadService extends UploadMediaUtils_1.UploadMediaUtils {
 }
 exports.AdminUploadService = AdminUploadService;
@@ -40,7 +40,8 @@ AdminUploadService.deleteVideo = async (vidId, type) => {
     if (deletedVid == null) {
         throw new OperationalError_1.OperationalError(`Not found or video is not a ${type} `, 404);
     }
-    (0, deleteVodMedia_1.deleteVODMedia)(deletedVid);
+    // do not await
+    Purge_1.Purge.vod(deletedVid);
 };
 AdminUploadService.getVideos = async (type, queryParams) => {
     const vids = await VideoRepo_1.VideoRepo.fetchByType(type, (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(queryParams.page, 1), (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(queryParams.limit, 1));

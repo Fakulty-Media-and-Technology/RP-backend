@@ -301,15 +301,7 @@ export class VideoRepo {
   ]
 
   private static _episodesPipeline = [
-    {
-      $lookup: {
-        from: 'sub_titles',
-        localField: '_id',
-        foreignField: 'video_id',
-        as: 'subtitle',
-        pipeline: [{ $project: { key: true, bucket: true, language: true } }],
-      },
-    },
+
     {
       $lookup: {
         from: 'video_uploads',
@@ -371,7 +363,6 @@ export class VideoRepo {
         viewsCount: { $size: '$views' },
         trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
         videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
-        subtitle: { $first: '$subtitle' },
         averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
       },
     },
@@ -567,15 +558,7 @@ export class VideoRepo {
         },
       },
 
-      {
-        $lookup: {
-          from: 'sub_titles',
-          localField: '_id',
-          foreignField: 'video_id',
-          as: 'subtitle',
-          pipeline: [{ $project: { key: true, bucket: true, language: true } }],
-        },
-      },
+
       {
         $lookup: {
           from: 'trailers',
@@ -631,7 +614,6 @@ export class VideoRepo {
           videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
           portraitPhoto: { $first: '$portraitPhoto' },
           landscapePhoto: { $first: '$landscapePhoto' },
-          subtitle: { $first: '$subtitle' },
           averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
         },
       },

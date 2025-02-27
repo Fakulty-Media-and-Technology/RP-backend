@@ -243,15 +243,6 @@ VideoRepo._mostEngagedPrevStages = [
 VideoRepo._episodesPipeline = [
     {
         $lookup: {
-            from: 'sub_titles',
-            localField: '_id',
-            foreignField: 'video_id',
-            as: 'subtitle',
-            pipeline: [{ $project: { key: true, bucket: true, language: true } }],
-        },
-    },
-    {
-        $lookup: {
             from: 'video_uploads',
             localField: '_id',
             foreignField: 'parentId',
@@ -307,7 +298,6 @@ VideoRepo._episodesPipeline = [
             viewsCount: { $size: '$views' },
             trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
             videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
-            subtitle: { $first: '$subtitle' },
             averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
         },
     },
@@ -490,15 +480,6 @@ VideoRepo.fetchVideoAggr = async ({ prevStages, sortStage, page, limit }) => {
         },
         {
             $lookup: {
-                from: 'sub_titles',
-                localField: '_id',
-                foreignField: 'video_id',
-                as: 'subtitle',
-                pipeline: [{ $project: { key: true, bucket: true, language: true } }],
-            },
-        },
-        {
-            $lookup: {
                 from: 'trailers',
                 localField: '_id',
                 foreignField: 'video_id',
@@ -549,7 +530,6 @@ VideoRepo.fetchVideoAggr = async ({ prevStages, sortStage, page, limit }) => {
                 videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
                 portraitPhoto: { $first: '$portraitPhoto' },
                 landscapePhoto: { $first: '$landscapePhoto' },
-                subtitle: { $first: '$subtitle' },
                 averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
             },
         },

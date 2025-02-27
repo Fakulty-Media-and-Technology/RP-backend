@@ -1,6 +1,7 @@
 "use strict";
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteVODMedia = exports.deleteSeasons = exports.deleteSubtitles = exports.deleteTrailer = exports.deletePosters = exports.deleteVideoUploadS3Objects = void 0;
+exports.Purge = void 0;
 const poster_model_1 = require("../models/poster.model");
 const subtitle_model_1 = require("../models/subtitle.model");
 const trailer_model_1 = require("../models/trailer.model");
@@ -8,7 +9,11 @@ const videoupload_model_1 = require("../models/videoupload.model");
 const s3_1 = require("../services/aws/s3");
 const seasons_model_1 = require("../models/seasons.model");
 const episodes_model_1 = require("../models/episodes.model");
-const deleteVideoUploadS3Objects = async (vidUploadId) => {
+class Purge {
+}
+exports.Purge = Purge;
+_a = Purge;
+Purge._videoUploadById = async (vidUploadId) => {
     try {
         const vidUpload = await videoupload_model_1.VideoUploadModel.findByIdAndDelete(vidUploadId);
         if (vidUpload == null)
@@ -24,11 +29,10 @@ const deleteVideoUploadS3Objects = async (vidUploadId) => {
         console.error('Error deleting video upload with Id:', vidUploadId);
     }
 };
-exports.deleteVideoUploadS3Objects = deleteVideoUploadS3Objects;
-const deletePosters = async (parentId) => {
+Purge._postersByParentId = async (parentId) => {
     try {
         const posters = await poster_model_1.PosterImageModel.find({ video_id: parentId });
-        posters.forEach(async ({ key, bucket }) => {
+        await Promise.all(posters.map(async ({ key, bucket }) => {
             try {
                 await s3_1.S3.deleteObject(key, bucket);
                 await poster_model_1.PosterImageModel.findOneAndDelete({ video_id: parentId });
@@ -36,27 +40,25 @@ const deletePosters = async (parentId) => {
             catch (e) {
                 console.error(`Error deleting poster with Key: ${key} => bucket: ${bucket} on VOD delete`);
             }
-        });
+        }));
     }
     catch (e) {
         console.error('Error deleting poster with video_id:', parentId);
     }
 };
-exports.deletePosters = deletePosters;
-const deleteTrailer = async (parentId) => {
+Purge._trailerByParentId = async (parentId) => {
     try {
         const trailer = await trailer_model_1.TrailerModel.findOneAndDelete({ video_id: parentId });
-        trailer && trailer.video_upload && (0, exports.deleteVideoUploadS3Objects)(trailer.video_upload);
+        trailer && trailer.video_upload && _a._videoUploadById(trailer.video_upload);
     }
     catch (e) {
         console.error(`Error deleting trailer for parent with ID: ${parentId}`);
     }
 };
-exports.deleteTrailer = deleteTrailer;
-const deleteSubtitles = async (parentId) => {
+Purge._subtitlesByParentId = async (parentId) => {
     try {
         const subtitles = await subtitle_model_1.SubtitleModel.find({ video_id: parentId });
-        subtitles.forEach(async (subtitle) => {
+        await Promise.all(subtitles.map(async (subtitle) => {
             try {
                 await s3_1.S3.deleteObject(subtitle.key, subtitle.bucket);
                 await subtitle_model_1.SubtitleModel.findByIdAndDelete(subtitle._id);
@@ -64,51 +66,42 @@ const deleteSubtitles = async (parentId) => {
             catch (e) {
                 console.error('Error deleting Subtitle:', subtitle._id);
             }
-        });
+        }));
     }
     catch (e) {
         console.error('Error deleting subtitles for parent:', parentId);
     }
 };
-exports.deleteSubtitles = deleteSubtitles;
-const deleteSeasons = async (vodId) => {
+Purge._seasonsByVideoId = async (vodId) => {
     try {
         const seasons = await seasons_model_1.SeasonModel.find({ video: vodId });
-        seasons.forEach(async (season) => {
+        await Promise.all(seasons.map(async (season) => {
             try {
-                (0, exports.deletePosters)(season._id);
-                (0, exports.deleteTrailer)(season._id);
+                _a._postersByParentId(season._id);
+                _a._trailerByParentId(season._id);
                 const episodes = await episodes_model_1.EpisodeModel.find({ season: season._id });
                 episodes.forEach(async (ep) => {
-                    (0, exports.deleteVideoUploadS3Objects)(ep.videoUpload);
-                    (0, exports.deleteTrailer)(ep._id);
+                    _a._videoUploadById(ep.videoUpload);
+                    _a._trailerByParentId(ep._id);
                 });
                 await seasons_model_1.SeasonModel.findByIdAndDelete(season._id);
             }
             catch (e) {
                 console.error('Error deleting season for VOD:', vodId);
             }
-        });
+        }));
     }
     catch (e) {
         console.error('Error deleting seasons for series', vodId);
     }
 };
-exports.deleteSeasons = deleteSeasons;
-const deleteVODMedia = async (vod) => {
-    if (vod == null)
-        return;
-    const vodId = vod._id;
-    try {
-        (0, exports.deletePosters)(vodId);
-        (0, exports.deleteSubtitles)(vodId);
-        (0, exports.deleteTrailer)(vodId);
-        (0, exports.deleteVideoUploadS3Objects)(vod.video_upload);
-        if (vod.type !== 'series')
-            return;
-    }
-    catch (e) {
-        console.error('Error processing Post delete OPS for video with ID:', vodId);
-    }
+Purge.vod = async (vod) => {
+    await Promise.all([
+        _a._postersByParentId(vod._id),
+        _a._subtitlesByParentId(vod._id),
+        _a._trailerByParentId(vod._id),
+        _a._videoUploadById(vod.video_upload),
+    ]);
+    if (vod.type === 'series')
+        await _a._seasonsByVideoId(vod._id);
 };
-exports.deleteVODMedia = deleteVODMedia;
