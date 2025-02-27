@@ -18,6 +18,7 @@ import {
   AllVideoTypes,
   UploadMediaUtils,
 } from '../../utils/UploadMediaUtils'
+import { deleteVODMedia } from '../../utils/deleteVodMedia'
 
 type EditVideoInput = {
   vidId: string
@@ -71,6 +72,8 @@ export class AdminUploadService extends UploadMediaUtils {
     if (deletedVid == null) {
       throw new OperationalError(`Not found or video is not a ${type} `, 404)
     }
+
+    deleteVODMedia(deletedVid)
   }
 
   static getVideos = async (
