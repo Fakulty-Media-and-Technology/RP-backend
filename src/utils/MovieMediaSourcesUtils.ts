@@ -68,6 +68,7 @@ export class MovieMediaSourcesUtils {
             : null,
 
           trailerVideoUpload: undefined,
+          trailerLink: undefined,
         })
 
         if (episodesMediaResolver) {
@@ -87,14 +88,16 @@ export class MovieMediaSourcesUtils {
   ) => {
     const episodesWithSources = await Promise.all(
       episodes.map(async episode => {
-        if (withMediaSources) {
-          Object.assign(episode, {
-            trailerVideoUpload: undefined,
-            videoUpload: undefined,
-            video: this._getMovieVideoSource(episode, 'vid', quality),
-            trailer: this._getMovieVideoSource(episode, 'trailer', quality),
-          })
-        }
+        if (!withMediaSources) return
+
+        Object.assign(episode, {
+          trailerVideoUpload: undefined,
+          videoUpload: undefined,
+          video: this._getMovieVideoSource(episode, 'vid', quality),
+          trailer: this._getMovieVideoSource(episode, 'trailer', quality),
+          trailerLink: undefined,
+          videoLink: undefined,
+        })
 
         return episode
       }),

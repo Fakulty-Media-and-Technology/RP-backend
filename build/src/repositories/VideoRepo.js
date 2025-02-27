@@ -70,7 +70,7 @@ VideoRepo.addSeasonUtilAggr = async (vidId) => {
         {
             $project: {
                 totalPreviousSeasons: { $size: '$seasons' },
-                totalEpisodesOfLastSeason: { $size: { $ifNull: [{ $first: '$seasons.episodes' }, 0] } },
+                totalEpisodesOfLastSeason: { $size: { $ifNull: [{ $first: '$seasons.episodes' }, []] } },
                 isMovieSeries: '$is_series',
                 movieExpiryDate: { $ifNull: ['$expiry_date', undefined] },
                 movieTrailerLink: { $ifNull: ['$trailerLink', null] },
@@ -295,7 +295,16 @@ VideoRepo._episodesPipeline = [
         },
     },
     {
+        $lookup: {
+            from: 'views',
+            foreignField: 'content',
+            localField: '_id',
+            as: 'views',
+        },
+    },
+    {
         $addFields: {
+            viewsCount: { $size: '$views' },
             trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
             videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
             subtitle: { $first: '$subtitle' },
@@ -306,6 +315,7 @@ VideoRepo._episodesPipeline = [
         $project: {
             __v: false,
             ratings: false,
+            views: false,
             trailer: false,
             subtitleUpload: false,
             trailerUpload: false,
@@ -367,14 +377,23 @@ VideoRepo._seasonPipeline = [
         },
     },
     {
+        $lookup: {
+            from: 'views',
+            foreignField: 'content',
+            localField: '_id',
+            as: 'views',
+        },
+    },
+    {
         $addFields: {
+            viewsCount: { $size: '$views' },
             trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
             portraitPhoto: { $first: '$portraitPhoto' },
             landscapePhoto: { $first: '$landscapePhoto' },
         },
     },
     { $sort: { createdAt: -1 } },
-    { $project: { __v: false, trailer: false } },
+    { $project: { __v: false, trailer: false, views: false } },
 ];
 VideoRepo.fetchSeasonsAndEpisodes = async (videoId, page, limit) => {
     const aggr = await seasons_model_1.SeasonModel.aggregate([
@@ -511,7 +530,16 @@ VideoRepo.fetchVideoAggr = async ({ prevStages, sortStage, page, limit }) => {
             },
         },
         {
+            $lookup: {
+                from: 'views',
+                foreignField: 'content',
+                localField: '_id',
+                as: 'views',
+            },
+        },
+        {
             $addFields: {
+                viewsCount: { $size: '$views' },
                 vidClass: '$vid_class',
                 artistName: '$artist_name',
                 releaseDate: '$released_date',
@@ -565,6 +593,7 @@ VideoRepo.fetchVideoAggr = async ({ prevStages, sortStage, page, limit }) => {
         {
             $project: {
                 expiry_date: false,
+                views: false,
                 released_date: false,
                 artist_name: false,
                 subtitle_upload: false,

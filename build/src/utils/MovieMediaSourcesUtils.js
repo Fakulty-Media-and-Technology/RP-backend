@@ -42,6 +42,7 @@ MovieMediaSourcesUtils.resolveSeasonsMediaSources = async (seasons, withMediaSou
                 ? await media_access_1.MediaAccess.getSignedUrl(season.portraitPhoto.bucket, season.portraitPhoto.key, 'photo')
                 : null,
             trailerVideoUpload: undefined,
+            trailerLink: undefined,
         });
         if (episodesMediaResolver) {
             season.episodes = await episodesMediaResolver(season.episodes, withMediaSources, quality);
@@ -52,14 +53,16 @@ MovieMediaSourcesUtils.resolveSeasonsMediaSources = async (seasons, withMediaSou
 };
 MovieMediaSourcesUtils.resolveEpisodesMediaSources = async (episodes, withMediaSources, quality) => {
     const episodesWithSources = await Promise.all(episodes.map(async (episode) => {
-        if (withMediaSources) {
-            Object.assign(episode, {
-                trailerVideoUpload: undefined,
-                videoUpload: undefined,
-                video: _a._getMovieVideoSource(episode, 'vid', quality),
-                trailer: _a._getMovieVideoSource(episode, 'trailer', quality),
-            });
-        }
+        if (!withMediaSources)
+            return;
+        Object.assign(episode, {
+            trailerVideoUpload: undefined,
+            videoUpload: undefined,
+            video: _a._getMovieVideoSource(episode, 'vid', quality),
+            trailer: _a._getMovieVideoSource(episode, 'trailer', quality),
+            trailerLink: undefined,
+            videoLink: undefined,
+        });
         return episode;
     }));
     return episodesWithSources;

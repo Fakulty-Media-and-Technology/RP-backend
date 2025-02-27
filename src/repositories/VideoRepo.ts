@@ -107,7 +107,7 @@ export class VideoRepo {
       {
         $project: {
           totalPreviousSeasons: { $size: '$seasons' },
-          totalEpisodesOfLastSeason: { $size: { $ifNull: [{ $first: '$seasons.episodes' }, 0] } },
+          totalEpisodesOfLastSeason: { $size: { $ifNull: [{ $first: '$seasons.episodes' }, []] } },
           isMovieSeries: '$is_series',
           movieExpiryDate: { $ifNull: ['$expiry_date', undefined] },
           movieTrailerLink: { $ifNull: ['$trailerLink', null] },
@@ -358,7 +358,17 @@ export class VideoRepo {
     },
 
     {
+      $lookup: {
+        from: 'views',
+        foreignField: 'content',
+        localField: '_id',
+        as: 'views',
+      },
+    },
+
+    {
       $addFields: {
+        viewsCount: { $size: '$views' },
         trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
         videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
         subtitle: { $first: '$subtitle' },
@@ -369,6 +379,7 @@ export class VideoRepo {
       $project: {
         __v: false,
         ratings: false,
+        views: false,
         trailer: false,
         subtitleUpload: false,
         trailerUpload: false,
@@ -433,7 +444,17 @@ export class VideoRepo {
     },
 
     {
+      $lookup: {
+        from: 'views',
+        foreignField: 'content',
+        localField: '_id',
+        as: 'views',
+      },
+    },
+
+    {
       $addFields: {
+        viewsCount: { $size: '$views' },
         trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
         portraitPhoto: { $first: '$portraitPhoto' },
         landscapePhoto: { $first: '$landscapePhoto' },
@@ -441,7 +462,7 @@ export class VideoRepo {
     },
 
     { $sort: { createdAt: -1 } },
-    { $project: { __v: false, trailer: false } },
+    { $project: { __v: false, trailer: false, views: false } },
   ]
 
   static fetchSeasonsAndEpisodes = async (videoId: string, page: number, limit: number) => {
@@ -590,7 +611,17 @@ export class VideoRepo {
         },
       },
       {
+        $lookup: {
+          from: 'views',
+          foreignField: 'content',
+          localField: '_id',
+          as: 'views',
+        },
+      },
+
+      {
         $addFields: {
+          viewsCount: { $size: '$views' },
           vidClass: '$vid_class',
           artistName: '$artist_name',
           releaseDate: '$released_date',
@@ -649,6 +680,7 @@ export class VideoRepo {
       {
         $project: {
           expiry_date: false,
+          views: false,
           released_date: false,
           artist_name: false,
           subtitle_upload: false,
