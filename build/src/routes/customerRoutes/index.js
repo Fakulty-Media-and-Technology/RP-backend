@@ -23,6 +23,8 @@ const passwordResetRouter_1 = require("./../customerRoutes/passwordResetRouter")
 const walletRouter_1 = require("./../customerRoutes/walletRouter");
 const profileRouter_1 = require("./../customerRoutes/profileRouter");
 const SharedRoutes_1 = require("../../utils/SharedRoutes");
+const requestValidator_1 = require("../../middlewares/requestValidator");
+const customers_1 = require("../../validations/customers");
 exports.customerRouter = (0, express_1.Router)();
 const sharedRoutes = new SharedRoutes_1.SharedRoutes(exports.customerRouter);
 // onboarding
@@ -33,6 +35,7 @@ exports.customerRouter.post('/signup/verifyaccount', onboarding_customer_1.Onboa
 exports.customerRouter.use('/general', generalRouter_1.router);
 exports.customerRouter.use('/pass-reset', passwordResetRouter_1.router);
 exports.customerRouter.use(auth_1.AuthMiddleware.authenticateRequest('customer-auth'));
+exports.customerRouter.post('/view/content', (0, requestValidator_1.requestValidator)(customers_1.viewContentSchema), medias_customer_1.CustomerSharedController.viewContent);
 sharedRoutes.fetchSubtitles().updateUserProfile('customer-auth');
 exports.customerRouter.use('/profile', profileRouter_1.router);
 exports.customerRouter.use('/wallet', walletRouter_1.router);

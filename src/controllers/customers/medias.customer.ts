@@ -20,6 +20,7 @@ import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { LiveAggrRes } from '../../types/Live'
 import { Movie } from '../../types/movie'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { ViewModel } from '../../models/view.model'
 
 type LiveEventsType =
   | 'all'
@@ -115,6 +116,22 @@ export class CustomerSharedController extends SharedController {
     sendResponse({
       res,
       message: 'video liked',
+    })
+  })
+
+  static viewContent = Catch.async(async (req, res) => {
+    const user = GetDefined.loggedInUser(req.user)
+    denyGuestUser(user)
+
+    await ViewModel.create({
+      viewer: user._id,
+      content: req.body.content,
+      contentType: req.body.contentType,
+    })
+
+    sendResponse({
+      res,
+      message: 'done',
     })
   })
 

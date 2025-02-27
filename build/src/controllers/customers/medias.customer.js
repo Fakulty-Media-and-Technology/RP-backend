@@ -22,6 +22,7 @@ const LiveMediaSourcesUtils_1 = require("../../utils/LiveMediaSourcesUtils");
 const QueryParamsFeatures_1 = require("../../utils/QueryParamsFeatures");
 const MovieMediaSourcesUtils_1 = require("../../utils/MovieMediaSourcesUtils");
 const VideoUploadUtils_1 = require("../../utils/VideoUploadUtils");
+const view_model_1 = require("../../models/view.model");
 class CustomerSharedController extends shared_controller_1.SharedController {
 }
 exports.CustomerSharedController = CustomerSharedController;
@@ -74,6 +75,19 @@ CustomerSharedController.likeVideo = Catch_1.Catch.async(async (req, res) => {
     (0, responder_1.sendResponse)({
         res,
         message: 'video liked',
+    });
+});
+CustomerSharedController.viewContent = Catch_1.Catch.async(async (req, res) => {
+    const user = GetDefined_1.GetDefined.loggedInUser(req.user);
+    (0, denyGuestUser_1.denyGuestUser)(user);
+    await view_model_1.ViewModel.create({
+        viewer: user._id,
+        content: req.body.content,
+        contentType: req.body.contentType,
+    });
+    (0, responder_1.sendResponse)({
+        res,
+        message: 'done',
     });
 });
 CustomerSharedController.userLikedVideo = Catch_1.Catch.async(async (req, res) => {

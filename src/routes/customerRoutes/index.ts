@@ -23,6 +23,8 @@ import { router as PasswordResetRouter } from './../customerRoutes/passwordReset
 import { router as WalletRouter } from './../customerRoutes/walletRouter'
 import { router as ProfileRouter } from './../customerRoutes/profileRouter'
 import { SharedRoutes } from '../../utils/SharedRoutes'
+import { requestValidator } from '../../middlewares/requestValidator'
+import { viewContentSchema } from '../../validations/customers'
 
 export const customerRouter = Router()
 const sharedRoutes = new SharedRoutes(customerRouter)
@@ -36,6 +38,12 @@ customerRouter.use('/general', GeneralRouter)
 customerRouter.use('/pass-reset', PasswordResetRouter)
 
 customerRouter.use(AuthMiddleware.authenticateRequest('customer-auth'))
+
+customerRouter.post(
+  '/view/content',
+  requestValidator(viewContentSchema),
+  CustomerSharedController.viewContent,
+)
 
 sharedRoutes.fetchSubtitles().updateUserProfile('customer-auth')
 

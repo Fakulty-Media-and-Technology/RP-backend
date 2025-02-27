@@ -30,3 +30,10 @@ export const updateRatingSchema = {
     rate: Joi.number().min(0).max(5).optional(),
   }).or('comment', 'rate'),
 }
+
+export const viewContentSchema = {
+  body: Joi.object({
+    content: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    contentType: STRING_SCHEMA.valid('vod', 'episode', 'live', 'trailer').required(),
+  }),
+}
