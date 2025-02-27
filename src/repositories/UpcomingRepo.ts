@@ -68,7 +68,17 @@ export class UpcomingRepo {
       },
 
       {
+        $lookup: {
+          from: 'views',
+          foreignField: 'content',
+          localField: '_id',
+          as: 'views',
+        },
+      },
+
+      {
         $addFields: {
+          viewsCount: { $size: '$views' },
           trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUploadDoc' }, null] },
           portraitPhoto: { $first: '$portraitPhoto' },
           landscapePhoto: { $first: '$landscapePhoto' },
@@ -81,7 +91,7 @@ export class UpcomingRepo {
       { $skip: skip(page, limit) },
       { $limit: limit },
 
-      { $project: { __v: false, trailer: false } },
+      { $project: { __v: false, trailer: false, views: false } },
     ])
 
     return aggr

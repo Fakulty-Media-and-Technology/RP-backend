@@ -140,8 +140,18 @@ export class LiveRepo {
           ],
         },
       },
+
+      {
+        $lookup: {
+          from: 'views',
+          foreignField: 'content',
+          localField: '_id',
+          as: 'views',
+        },
+      },
       {
         $addFields: {
+          viewsCount: { $size: '$views' },
           streamKey: '$stream_key',
           vidClass: '$vid_class',
           coverPhoto: { $first: '$coverPhoto' },
@@ -161,6 +171,7 @@ export class LiveRepo {
       ...sortPaginateStages,
       {
         $project: {
+          views: false,
           previewVideoUploads: false,
           previewVideoUpload: false,
           stream_key: false,

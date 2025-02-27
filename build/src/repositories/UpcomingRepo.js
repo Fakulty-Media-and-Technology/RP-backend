@@ -63,7 +63,16 @@ UpcomingRepo.fetchAggr = async ({ prevStages, page, limit }) => {
             },
         },
         {
+            $lookup: {
+                from: 'views',
+                foreignField: 'content',
+                localField: '_id',
+                as: 'views',
+            },
+        },
+        {
             $addFields: {
+                viewsCount: { $size: '$views' },
                 trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUploadDoc' }, null] },
                 portraitPhoto: { $first: '$portraitPhoto' },
                 landscapePhoto: { $first: '$landscapePhoto' },
@@ -73,7 +82,7 @@ UpcomingRepo.fetchAggr = async ({ prevStages, page, limit }) => {
         { $sort: { updatedAt: -1 } },
         { $skip: (0, QueryParamsFeatures_1.skip)(page, limit) },
         { $limit: limit },
-        { $project: { __v: false, trailer: false } },
+        { $project: { __v: false, trailer: false, views: false } },
     ]);
     return aggr;
 };

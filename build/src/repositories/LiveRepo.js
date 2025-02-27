@@ -128,7 +128,16 @@ LiveRepo.fetchLivesAggr = async ({ prevStages, sortStage, page, limit }) => {
             },
         },
         {
+            $lookup: {
+                from: 'views',
+                foreignField: 'content',
+                localField: '_id',
+                as: 'views',
+            },
+        },
+        {
             $addFields: {
+                viewsCount: { $size: '$views' },
                 streamKey: '$stream_key',
                 vidClass: '$vid_class',
                 coverPhoto: { $first: '$coverPhoto' },
@@ -146,6 +155,7 @@ LiveRepo.fetchLivesAggr = async ({ prevStages, sortStage, page, limit }) => {
         ...sortPaginateStages,
         {
             $project: {
+                views: false,
                 previewVideoUploads: false,
                 previewVideoUpload: false,
                 stream_key: false,
