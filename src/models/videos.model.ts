@@ -112,6 +112,11 @@ const schema = new Schema(
       default: false,
     },
 
+    upcoming: {
+      type: Boolean,
+      default: false,
+    },
+
     feat_expiry: {
       type: Date,
     },
