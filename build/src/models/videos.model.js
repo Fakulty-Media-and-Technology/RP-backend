@@ -92,6 +92,10 @@ const schema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
+    upcoming: {
+        type: Boolean,
+        default: false,
+    },
     feat_expiry: {
         type: Date,
     },

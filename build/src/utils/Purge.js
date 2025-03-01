@@ -13,7 +13,7 @@ class Purge {
 }
 exports.Purge = Purge;
 _a = Purge;
-Purge._videoUploadById = async (vidUploadId) => {
+Purge.videoUploadById = async (vidUploadId) => {
     try {
         const vidUpload = await videoupload_model_1.VideoUploadModel.findByIdAndDelete(vidUploadId);
         if (vidUpload == null)
@@ -29,7 +29,16 @@ Purge._videoUploadById = async (vidUploadId) => {
         console.error('Error deleting video upload with Id:', vidUploadId);
     }
 };
-Purge._postersByParentId = async (parentId) => {
+Purge.posterById = async (posterId) => {
+    try {
+        const poster = await poster_model_1.PosterImageModel.findByIdAndDelete(posterId);
+        poster && (await s3_1.S3.deleteObject(poster.key, poster.bucket));
+    }
+    catch (e) {
+        console.error('Error deleting poster with Id:', posterId);
+    }
+};
+Purge.postersByParentId = async (parentId) => {
     try {
         const posters = await poster_model_1.PosterImageModel.find({ video_id: parentId });
         await Promise.all(posters.map(async ({ key, bucket }) => {
@@ -46,16 +55,25 @@ Purge._postersByParentId = async (parentId) => {
         console.error('Error deleting poster with video_id:', parentId);
     }
 };
-Purge._trailerByParentId = async (parentId) => {
+Purge.trailerByParentId = async (parentId) => {
     try {
         const trailer = await trailer_model_1.TrailerModel.findOneAndDelete({ video_id: parentId });
-        trailer && trailer.video_upload && _a._videoUploadById(trailer.video_upload);
+        trailer && _a.videoUploadById(trailer.video_upload);
     }
     catch (e) {
         console.error(`Error deleting trailer for parent with ID: ${parentId}`);
     }
 };
-Purge._subtitlesByParentId = async (parentId) => {
+Purge.trailerById = async (trailerId) => {
+    try {
+        const trailer = await trailer_model_1.TrailerModel.findByIdAndDelete(trailerId);
+        trailer && _a.videoUploadById(trailer.video_upload);
+    }
+    catch (e) {
+        console.error(`Error deleting trailer  with ID: ${trailerId}`);
+    }
+};
+Purge.subtitlesByParentId = async (parentId) => {
     try {
         const subtitles = await subtitle_model_1.SubtitleModel.find({ video_id: parentId });
         await Promise.all(subtitles.map(async (subtitle) => {
@@ -72,17 +90,17 @@ Purge._subtitlesByParentId = async (parentId) => {
         console.error('Error deleting subtitles for parent:', parentId);
     }
 };
-Purge._seasonsByVideoId = async (vodId) => {
+Purge.seasonsByVideoId = async (vodId) => {
     try {
         const seasons = await seasons_model_1.SeasonModel.find({ video: vodId });
         await Promise.all(seasons.map(async (season) => {
             try {
-                _a._postersByParentId(season._id);
-                _a._trailerByParentId(season._id);
+                _a.postersByParentId(season._id);
+                _a.trailerByParentId(season._id);
                 const episodes = await episodes_model_1.EpisodeModel.find({ season: season._id });
                 episodes.forEach(async (ep) => {
-                    _a._videoUploadById(ep.videoUpload);
-                    _a._trailerByParentId(ep._id);
+                    _a.videoUploadById(ep.videoUpload);
+                    _a.trailerByParentId(ep._id);
                 });
                 await seasons_model_1.SeasonModel.findByIdAndDelete(season._id);
             }
@@ -97,11 +115,11 @@ Purge._seasonsByVideoId = async (vodId) => {
 };
 Purge.vod = async (vod) => {
     await Promise.all([
-        _a._postersByParentId(vod._id),
-        _a._subtitlesByParentId(vod._id),
-        _a._trailerByParentId(vod._id),
-        _a._videoUploadById(vod.video_upload),
+        _a.postersByParentId(vod._id),
+        _a.subtitlesByParentId(vod._id),
+        _a.trailerByParentId(vod._id),
+        _a.videoUploadById(vod.video_upload),
     ]);
     if (vod.type === 'series')
-        await _a._seasonsByVideoId(vod._id);
+        await _a.seasonsByVideoId(vod._id);
 };

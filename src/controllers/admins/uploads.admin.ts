@@ -6,19 +6,16 @@ import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
-import {
-  AllVideoTypes,
-  MovieData,
-  UploadMediaUtils,
-} from '../../utils/UploadMediaUtils'
+import { AllVideoTypes, MovieData, UploadMediaUtils } from '../../utils/UploadMediaUtils'
 
-import { addEpisodeSchema, createSeasonSchema } from '../../validations/admin'
+import { addEpisodeSchema, createSeasonSchema, editVideoSchema } from '../../validations/admin'
 
 export class AdminUploadController extends UploadMediaUtils {
   private static _validateVideoType = (type: string) => {
     if (!videoTypes.includes(type as any)) {
       throw new OperationalError(`Valid video types are ${videoTypes.join(' || ')} `, 400)
     }
+
     return type as AllVideoTypes
   }
 
@@ -116,19 +113,32 @@ export class AdminUploadController extends UploadMediaUtils {
     })
   })
 
-  static editVideo = Catch.async(async ({ params, body }, res) => {
-    const type = this._validateVideoType(params.type)
+  static editVideo = Catch.async(async ({ params, body, user, files: reqFiles }, res) => {
+    if (body.data != null && typeof body.data !== 'string') {
+      throw new OperationalError('optional formData.data must be a JSON serialized string', 400)
+    }
+
+    const files = this._checkFiles(reqFiles)
+
+    const data: Partial<MovieData> = {
+      ...JSON.parse(body.data),
+      landscapePoster: files.landscapePoster?.[0],
+      portraitPoster: files.portraitPoster?.[0],
+      trailer: files.trailer?.[0],
+      video: files.video?.[0],
+    }
+
+    validate(editVideoSchema, data)
 
     const updatedVid = await AdminUploadService.editVideo({
-      vidId: params.id,
-      changes: body,
-      type,
+      data,
+      videoId: params.id,
+      adminId: GetDefined.loggedInUser(user).id,
     })
 
     sendResponse({
       res,
       data: updatedVid,
-      message: `${type} edited successfully`,
     })
   })
 

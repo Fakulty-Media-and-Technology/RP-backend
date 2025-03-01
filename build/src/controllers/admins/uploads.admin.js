@@ -90,17 +90,28 @@ AdminUploadController.addEpisode = Catch_1.Catch.async(async (req, res) => {
         }),
     });
 });
-AdminUploadController.editVideo = Catch_1.Catch.async(async ({ params, body }, res) => {
-    const type = _a._validateVideoType(params.type);
+AdminUploadController.editVideo = Catch_1.Catch.async(async ({ params, body, user, files: reqFiles }, res) => {
+    console.log({ body, reqFiles });
+    if (body.data != null && typeof body.data !== 'string') {
+        throw new OperationalError_1.OperationalError('optional formData.data must be a JSON serialized string', 400);
+    }
+    const files = _a._checkFiles(reqFiles);
+    const data = {
+        ...JSON.parse(body.data),
+        landscapePoster: files.landscapePoster?.[0],
+        portraitPoster: files.portraitPoster?.[0],
+        trailer: files.trailer?.[0],
+        video: files.video?.[0],
+    };
+    (0, requestValidator_1.validate)(admin_1.editVideoSchema, data);
     const updatedVid = await AdminUploadService_1.AdminUploadService.editVideo({
-        vidId: params.id,
-        changes: body,
-        type,
+        data,
+        videoId: params.id,
+        adminId: GetDefined_1.GetDefined.loggedInUser(user).id,
     });
     (0, responder_1.sendResponse)({
         res,
         data: updatedVid,
-        message: `${type} edited successfully`,
     });
 });
 AdminUploadController.fetchVideos = Catch_1.Catch.async(async ({ query, params }, res) => {

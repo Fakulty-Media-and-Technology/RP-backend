@@ -11,7 +11,7 @@ import { EpisodeModel } from '../models/episodes.model'
 type ObjectId = mongoose.Types.ObjectId
 
 export class Purge {
-  protected static _videoUploadById = async (vidUploadId: ObjectId) => {
+  static videoUploadById = async (vidUploadId: ObjectId) => {
     try {
       const vidUpload = await VideoUploadModel.findByIdAndDelete(vidUploadId)
 
@@ -35,7 +35,16 @@ export class Purge {
     }
   }
 
-  protected static _postersByParentId = async (parentId: ObjectId) => {
+  static posterById = async (posterId: ObjectId) => {
+    try {
+      const poster = await PosterImageModel.findByIdAndDelete(posterId)
+      poster && (await S3.deleteObject(poster.key, poster.bucket))
+    } catch (e) {
+      console.error('Error deleting poster with Id:', posterId)
+    }
+  }
+
+  static postersByParentId = async (parentId: ObjectId) => {
     try {
       const posters = await PosterImageModel.find({ video_id: parentId })
 
@@ -56,16 +65,25 @@ export class Purge {
     }
   }
 
-  protected static _trailerByParentId = async (parentId: ObjectId) => {
+  static trailerByParentId = async (parentId: ObjectId) => {
     try {
       const trailer = await TrailerModel.findOneAndDelete({ video_id: parentId })
-      trailer && trailer.video_upload && this._videoUploadById(trailer.video_upload)
+      trailer && this.videoUploadById(trailer.video_upload)
     } catch (e) {
       console.error(`Error deleting trailer for parent with ID: ${parentId}`)
     }
   }
 
-  protected static _subtitlesByParentId = async (parentId: ObjectId) => {
+  static trailerById = async (trailerId: ObjectId) => {
+    try {
+      const trailer = await TrailerModel.findByIdAndDelete(trailerId)
+      trailer && this.videoUploadById(trailer.video_upload)
+    } catch (e) {
+      console.error(`Error deleting trailer  with ID: ${trailerId}`)
+    }
+  }
+
+  static subtitlesByParentId = async (parentId: ObjectId) => {
     try {
       const subtitles = await SubtitleModel.find({ video_id: parentId })
 
@@ -84,21 +102,21 @@ export class Purge {
     }
   }
 
-  protected static _seasonsByVideoId = async (vodId: ObjectId) => {
+  static seasonsByVideoId = async (vodId: ObjectId) => {
     try {
       const seasons = await SeasonModel.find({ video: vodId })
 
       await Promise.all(
         seasons.map(async season => {
           try {
-            this._postersByParentId(season._id)
-            this._trailerByParentId(season._id)
+            this.postersByParentId(season._id)
+            this.trailerByParentId(season._id)
 
             const episodes = await EpisodeModel.find({ season: season._id })
 
             episodes.forEach(async ep => {
-              this._videoUploadById(ep.videoUpload)
-              this._trailerByParentId(ep._id)
+              this.videoUploadById(ep.videoUpload)
+              this.trailerByParentId(ep._id)
             })
 
             await SeasonModel.findByIdAndDelete(season._id)
@@ -112,14 +130,14 @@ export class Purge {
     }
   }
 
-  public static vod = async (vod: Video) => {
+  static vod = async (vod: Video) => {
     await Promise.all([
-      this._postersByParentId(vod._id),
-      this._subtitlesByParentId(vod._id),
-      this._trailerByParentId(vod._id),
-      this._videoUploadById(vod.video_upload),
+      this.postersByParentId(vod._id),
+      this.subtitlesByParentId(vod._id),
+      this.trailerByParentId(vod._id),
+      this.videoUploadById(vod.video_upload),
     ])
 
-    if (vod.type === 'series') await this._seasonsByVideoId(vod._id)
+    if (vod.type === 'series') await this.seasonsByVideoId(vod._id)
   }
 }

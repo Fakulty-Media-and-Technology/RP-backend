@@ -18,23 +18,7 @@ AdminUploadService.resolveWithMediaSources = (queryParams) => queryParams.withMe
 AdminUploadService.addVideo = async (input) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._uploadVideoSession, input);
 AdminUploadService.addSeason = async (params) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._addSeasonWithSession, params);
 AdminUploadService.addEpisode = async (input) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._addEpisodesWithSession, input);
-AdminUploadService.editVideo = async ({ vidId, type, changes }) => {
-    const video = await videos_model_1.VideoModel.findOne({ _id: vidId, type });
-    if (video == null) {
-        throw new OperationalError_1.OperationalError('video does not exist or does not exist as this type', 400);
-    }
-    delete changes['_id'];
-    const updatedVid = await videos_model_1.VideoModel.findOneAndUpdate({
-        _id: vidId,
-        type,
-    }, changes, {
-        new: true,
-    });
-    if (updatedVid == null) {
-        throw new OperationalError_1.OperationalError('Could not update video or video does not exist', 404);
-    }
-    return updatedVid;
-};
+AdminUploadService.editVideo = async (input) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._editVideoSession, input);
 AdminUploadService.deleteVideo = async (vidId, type) => {
     const deletedVid = await videos_model_1.VideoModel.findOneAndDelete({ _id: vidId, type });
     if (deletedVid == null) {

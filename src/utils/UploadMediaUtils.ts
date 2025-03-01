@@ -1,4 +1,4 @@
-import { ClientSession } from 'mongoose'
+import { ClientSession, Types } from 'mongoose'
 import { PosterImage, PosterImageModel } from '../models/poster.model'
 import { Video, VideoModel, videoTypes } from '../models/videos.model'
 import { OperationalError } from '../utils/OperationalError'
@@ -10,9 +10,15 @@ import { MulterFile, StringOrObjectId } from '../types'
 import { TrailerModel } from '../models/trailer.model'
 import { VideoUploadModel } from '../models/videoupload.model'
 import { videoUploadParents } from '../models/assets'
-import { AddEpisodeUtilAggrRes, AddSeasonUtilAggrRes, VideoRepo } from '../repositories/VideoRepo'
+import {
+  AddEpisodeUtilAggrRes,
+  AddSeasonUtilAggrRes,
+  toObjectId,
+  VideoRepo,
+} from '../repositories/VideoRepo'
 import { addSeriesSchema, addMovieOrSkitSchema, addMusicVideoSchema } from '../validations/admin'
 import { validate } from '../middlewares/requestValidator'
+import { Purge } from './Purge'
 
 type RequestFiles =
   | {
@@ -86,6 +92,11 @@ export type AddVideoParams = {
   data: MovieData
   type: AllVideoTypes
   adminId: string
+}
+
+export type EditVideoParams = Pick<AddVideoParams, 'adminId'> & {
+  data: Partial<MovieData> & { upcoming?: boolean }
+  videoId: string
 }
 
 export type ImageUploadRes = Awaited<ReturnType<typeof MediaManagement.store>>
@@ -299,9 +310,13 @@ export class UploadMediaUtils {
     )
   }
 
-  protected static _validateAddVideoFileTypes = (data: AddVideoParams['data']) => {
-    this._allowMimetype(data.portraitPoster, 'image', 'portraitPoster must be an image')
-    this._allowMimetype(data.landscapePoster, 'image', 'landscapePoster must be an image')
+  protected static _validateAddVideoFileTypes = (
+    data: AddVideoParams['data'] | EditVideoParams['data'],
+  ) => {
+    data.portraitPoster &&
+      this._allowMimetype(data.portraitPoster, 'image', 'portraitPoster must be an image')
+    data.landscapePoster &&
+      this._allowMimetype(data.landscapePoster, 'image', 'landscapePoster must be an image')
     data.trailer && this._allowMimetype(data.trailer, 'video', ' trailer must be a video file')
     data.video && this._allowMimetype(data.video, 'video', 'video must be a video file')
   }
@@ -419,6 +434,112 @@ export class UploadMediaUtils {
 
     await videoDoc.save({ session })
     return videoDoc
+  }
+  protected static _editVideoSession = async (
+    { data, adminId, videoId }: EditVideoParams,
+    session: ClientSession,
+  ) => {
+    this._validateAddVideoFileTypes(data)
+
+    const vod = await VideoModel.findById(videoId)
+
+    if (vod == null) {
+      throw new OperationalError('invalid video id', 404)
+    }
+
+    vod.upcoming = data.upcoming || vod.upcoming
+    vod.admin_id = toObjectId(adminId)
+    vod.description = data.description || vod.description
+    vod.vid_class = (data.vidClass as any) || vod.vid_class
+    vod.artist_name = data.artistName || vod.artist_name
+    vod.pg = data.pg || vod.pg
+
+    const addToSet = (prevs: Types.ObjectId[] | undefined | null, additions: string[]) => {
+      if (!prevs) return [...new Set(additions)].map(toObjectId)
+      return [...new Set([...prevs.map(e => e.toString()), ...additions])].map(toObjectId)
+    }
+
+    if (data.genre) {
+      vod.genre = addToSet(vod.genre, data.genre)
+    }
+
+    if (data.category) {
+      vod.category = addToSet(vod.category, data.category)
+    }
+
+    if (data.cast) {
+      vod.cast = addToSet(vod.cast, data.cast)
+    }
+
+    vod.default_rating = data.defaultRating ? Number(data.defaultRating) : vod.default_rating
+    vod.released_date = data.releasedDate ? new Date(data.releasedDate) : vod.released_date
+    vod.expiry_date = data.expiryDate ? new Date(data.expiryDate) : vod.expiry_date
+    vod.videoLink = data.videoLink || vod.videoLink
+    vod.trailerLink = data.trailerLink || vod.trailerLink
+    vod.runtime = data.runtime || vod.runtime
+    vod.active = data.active || vod.active
+    vod.showViews = data.showViews || vod.showViews
+    vod.upcoming = data.upcoming || vod.upcoming
+
+    let prevTrailerId: Types.ObjectId | null = null
+    let prevPortraitPoster: Types.ObjectId | null = null
+    let prevLandscapePoster: Types.ObjectId | null = null
+    let prevVideoUploadId: Types.ObjectId | null = null
+
+    if (data.portraitPoster) {
+      const newPosterUpload = await MediaManagement.store({
+        file: data.portraitPoster,
+        expire: undefined,
+        baseDir: 'images',
+      })
+
+      const posterDoc = await new PosterImageModel({
+        video_id: vod._id,
+        bucket: newPosterUpload.Bucket,
+        key: newPosterUpload.Key,
+        dimension: 'portrait',
+        parentType: 'vod',
+      }).save({ session })
+
+      prevPortraitPoster = vod.portrait_photo
+      vod.portrait_photo = posterDoc._id
+    }
+
+    if (data.landscapePoster) {
+      const newLandscapePoster = await MediaManagement.store({
+        file: data.landscapePoster,
+        expire: undefined,
+        baseDir: 'images',
+      })
+
+      const landscapeDoc = await new PosterImageModel({
+        video_id: vod._id,
+        bucket: newLandscapePoster.Bucket,
+        key: newLandscapePoster.Key,
+        dimension: 'landscape',
+        parentType: 'vod',
+      }).save({ session })
+
+      prevLandscapePoster = vod.landscape_photo
+      vod.landscape_photo = landscapeDoc._id
+    }
+
+    if (data.video) {
+      prevVideoUploadId = vod.video_upload
+    }
+
+    if (data.trailer) {
+      prevTrailerId = vod.trailer_upload
+    }
+
+    await vod.save({ session })
+
+    if (prevPortraitPoster) Purge.posterById(prevPortraitPoster)
+    if (prevLandscapePoster) Purge.posterById(prevLandscapePoster)
+    if (prevTrailerId) Purge.trailerById(prevTrailerId)
+    if (prevVideoUploadId) Purge.videoUploadById(prevVideoUploadId)
+
+    return vod
   }
 
   protected static _validateWithMovieAndPrevSeasonsAggrResult = (res: AddSeasonUtilAggrRes[]) => {

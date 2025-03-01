@@ -25,5 +25,10 @@ superAdminUploadsRouter.post(
   AdminUploadController.addSeason,
 )
 
-superAdminUploadsRouter.put('/edit/:id/:type', AdminUploadController.editVideo)
+superAdminUploadsRouter.put(
+  '/edit/:id',
+  Multer.adminUploadVideoConfig,
+  AdminUploadController.editVideo,
+)
+
 superAdminUploadsRouter.delete('/remove/:id/:type', AdminUploadController.deleteVideo)

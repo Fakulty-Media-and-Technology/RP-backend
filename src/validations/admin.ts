@@ -121,6 +121,32 @@ export const addMusicVideoSchema = Joi.object({
   .xor('trailerLink', 'trailer')
   .xor('video', 'videoLink')
 
+export const editVideoSchema = Joi.object({
+  title: STRING_SCHEMA,
+  pg: STRING_SCHEMA,
+  vidClass: VIDEO_CLASS_SCHEMA,
+  category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
+  releasedDate: ISO_STRING_SCHEMA,
+  runtime: STRING_SCHEMA,
+  defaultRating: STRING_SCHEMA.pattern(FLOATS_REG),
+  artistName: STRING_SCHEMA,
+  expiryDate: ISO_STRING_SCHEMA,
+
+  // files
+  landscapePoster: Joi.object(),
+  portraitPoster: Joi.object(),
+
+  video: Joi.object(), // file
+  videoLink: STRING_SCHEMA,
+
+  active: Joi.boolean(),
+  upcoming: Joi.boolean(),
+  showViews: Joi.boolean(),
+
+  trailerLink: STRING_SCHEMA, // file
+  trailer: Joi.object(),
+})
+
 export const addSubtitleSchema = Joi.object({
   parentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
   parentType: STRING_SCHEMA.valid('vod', 'episode').required(),

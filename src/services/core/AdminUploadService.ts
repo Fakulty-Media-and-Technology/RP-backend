@@ -16,6 +16,7 @@ import {
   AddSeasonParams,
   AddVideoParams,
   AllVideoTypes,
+  EditVideoParams,
   UploadMediaUtils,
 } from '../../utils/UploadMediaUtils'
 import { Purge } from '../../utils/Purge'
@@ -39,32 +40,8 @@ export class AdminUploadService extends UploadMediaUtils {
   static addEpisode = async (input: AddEpisodeInput) =>
     await withMongoDBSession(this._addEpisodesWithSession, input)
 
-  static editVideo = async ({ vidId, type, changes }: EditVideoInput) => {
-    const video = await VideoModel.findOne({ _id: vidId, type })
-
-    if (video == null) {
-      throw new OperationalError('video does not exist or does not exist as this type', 400)
-    }
-
-    delete changes['_id']
-
-    const updatedVid = await VideoModel.findOneAndUpdate(
-      {
-        _id: vidId,
-        type,
-      },
-      changes,
-      {
-        new: true,
-      },
-    )
-
-    if (updatedVid == null) {
-      throw new OperationalError('Could not update video or video does not exist', 404)
-    }
-
-    return updatedVid
-  }
+  static editVideo = async (input: EditVideoParams) =>
+    await withMongoDBSession(this._editVideoSession, input)
 
   static deleteVideo = async (vidId: string, type: AllVideoTypes) => {
     const deletedVid = await VideoModel.findOneAndDelete({ _id: vidId, type })

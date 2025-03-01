@@ -13,6 +13,7 @@ const videoupload_model_1 = require("../models/videoupload.model");
 const VideoRepo_1 = require("../repositories/VideoRepo");
 const admin_1 = require("../validations/admin");
 const requestValidator_1 = require("../middlewares/requestValidator");
+const Purge_1 = require("./Purge");
 class UploadMediaUtils {
 }
 exports.UploadMediaUtils = UploadMediaUtils;
@@ -139,8 +140,10 @@ UploadMediaUtils._uploadAndSavePostersToDB = async ({ landscapeFile, portraitFil
     }, session);
 };
 UploadMediaUtils._validateAddVideoFileTypes = (data) => {
-    _a._allowMimetype(data.portraitPoster, 'image', 'portraitPoster must be an image');
-    _a._allowMimetype(data.landscapePoster, 'image', 'landscapePoster must be an image');
+    data.portraitPoster &&
+        _a._allowMimetype(data.portraitPoster, 'image', 'portraitPoster must be an image');
+    data.landscapePoster &&
+        _a._allowMimetype(data.landscapePoster, 'image', 'landscapePoster must be an image');
     data.trailer && _a._allowMimetype(data.trailer, 'video', ' trailer must be a video file');
     data.video && _a._allowMimetype(data.video, 'video', 'video must be a video file');
 };
@@ -223,6 +226,94 @@ UploadMediaUtils._uploadVideoSession = async (params, session) => {
     videoDoc.portrait_photo = portrait._id;
     await videoDoc.save({ session });
     return videoDoc;
+};
+UploadMediaUtils._editVideoSession = async ({ data, adminId, videoId }, session) => {
+    _a._validateAddVideoFileTypes(data);
+    const vod = await videos_model_1.VideoModel.findById(videoId);
+    if (vod == null) {
+        throw new OperationalError_1.OperationalError('invalid video id', 404);
+    }
+    vod.upcoming = data.upcoming || vod.upcoming;
+    vod.admin_id = (0, VideoRepo_1.toObjectId)(adminId);
+    vod.description = data.description || vod.description;
+    vod.vid_class = data.vidClass || vod.vid_class;
+    vod.artist_name = data.artistName || vod.artist_name;
+    vod.pg = data.pg || vod.pg;
+    const addToSet = (prevs, additions) => {
+        if (!prevs)
+            return [...new Set(additions)].map(VideoRepo_1.toObjectId);
+        return [...new Set([...prevs.map(e => e.toString()), ...additions])].map(VideoRepo_1.toObjectId);
+    };
+    if (data.genre) {
+        vod.genre = addToSet(vod.genre, data.genre);
+    }
+    if (data.category) {
+        vod.category = addToSet(vod.category, data.category);
+    }
+    if (data.cast) {
+        vod.cast = addToSet(vod.cast, data.cast);
+    }
+    vod.default_rating = data.defaultRating ? Number(data.defaultRating) : vod.default_rating;
+    vod.released_date = data.releasedDate ? new Date(data.releasedDate) : vod.released_date;
+    vod.expiry_date = data.expiryDate ? new Date(data.expiryDate) : vod.expiry_date;
+    vod.videoLink = data.videoLink || vod.videoLink;
+    vod.trailerLink = data.trailerLink || vod.trailerLink;
+    vod.runtime = data.runtime || vod.runtime;
+    vod.active = data.active || vod.active;
+    vod.showViews = data.showViews || vod.showViews;
+    vod.upcoming = data.upcoming || vod.upcoming;
+    let prevTrailerId = null;
+    let prevPortraitPoster = null;
+    let prevLandscapePoster = null;
+    let prevVideoUploadId = null;
+    if (data.portraitPoster) {
+        const newPosterUpload = await media_management_1.MediaManagement.store({
+            file: data.portraitPoster,
+            expire: undefined,
+            baseDir: 'images',
+        });
+        const posterDoc = await new poster_model_1.PosterImageModel({
+            video_id: vod._id,
+            bucket: newPosterUpload.Bucket,
+            key: newPosterUpload.Key,
+            dimension: 'portrait',
+            parentType: 'vod',
+        }).save({ session });
+        prevPortraitPoster = vod.portrait_photo;
+        vod.portrait_photo = posterDoc._id;
+    }
+    if (data.landscapePoster) {
+        const newLandscapePoster = await media_management_1.MediaManagement.store({
+            file: data.landscapePoster,
+            expire: undefined,
+            baseDir: 'images',
+        });
+        const landscapeDoc = await new poster_model_1.PosterImageModel({
+            video_id: vod._id,
+            bucket: newLandscapePoster.Bucket,
+            key: newLandscapePoster.Key,
+            dimension: 'landscape',
+            parentType: 'vod',
+        }).save({ session });
+        prevLandscapePoster = vod.landscape_photo;
+        vod.landscape_photo = landscapeDoc._id;
+    }
+    if (data.video) {
+        prevVideoUploadId = vod.video_upload;
+    }
+    if (data.trailer) {
+        prevTrailerId = vod.trailer_upload;
+    }
+    await vod.save({ session });
+    if (prevPortraitPoster)
+        Purge_1.Purge.posterById(prevPortraitPoster);
+    if (prevLandscapePoster)
+        Purge_1.Purge.posterById(prevLandscapePoster);
+    if (prevTrailerId)
+        Purge_1.Purge.trailerById(prevTrailerId);
+    if (prevVideoUploadId)
+        Purge_1.Purge.videoUploadById(prevVideoUploadId);
+    return vod;
 };
 UploadMediaUtils._validateWithMovieAndPrevSeasonsAggrResult = (res) => {
     if (res.length === 0) {

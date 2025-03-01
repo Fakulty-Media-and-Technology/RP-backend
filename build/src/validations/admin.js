@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createAdSchema = exports.createClientSchema = exports.createAdminORSuperAdminSchema = exports.updateCategorySchema = exports.addCategorySchema = exports.addCastSchema = exports.addGenreSchema = exports.addFeaturedContentSchema = exports.updatePayOutReqStatusSchema = exports.createGiftCardSchema = exports.updateTrailerSchema = exports.createTrailerSchema = exports.updatePlanSchema = exports.createPlanSchema = exports.createUpcomingEventSchema = exports.addLiveSchema = exports.getPhotoURLSchema = exports.addSubtitleSchema = exports.addMusicVideoSchema = exports.addSeriesSchema = exports.addMovieOrSkitSchema = exports.createSeasonSchema = exports.addEpisodeSchema = void 0;
+exports.createAdSchema = exports.createClientSchema = exports.createAdminORSuperAdminSchema = exports.updateCategorySchema = exports.addCategorySchema = exports.addCastSchema = exports.addGenreSchema = exports.addFeaturedContentSchema = exports.updatePayOutReqStatusSchema = exports.createGiftCardSchema = exports.updateTrailerSchema = exports.createTrailerSchema = exports.updatePlanSchema = exports.createPlanSchema = exports.createUpcomingEventSchema = exports.addLiveSchema = exports.getPhotoURLSchema = exports.addSubtitleSchema = exports.editVideoSchema = exports.addMusicVideoSchema = exports.addSeriesSchema = exports.addMovieOrSkitSchema = exports.createSeasonSchema = exports.addEpisodeSchema = void 0;
 const joi_1 = __importDefault(require("joi"));
 const common_1 = require("./common");
 exports.addEpisodeSchema = joi_1.default.object({
@@ -92,6 +92,27 @@ exports.addMusicVideoSchema = joi_1.default.object({
 })
     .xor('trailerLink', 'trailer')
     .xor('video', 'videoLink');
+exports.editVideoSchema = joi_1.default.object({
+    title: common_1.STRING_SCHEMA,
+    pg: common_1.STRING_SCHEMA,
+    vidClass: common_1.VIDEO_CLASS_SCHEMA,
+    category: common_1.MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
+    releasedDate: common_1.ISO_STRING_SCHEMA,
+    runtime: common_1.STRING_SCHEMA,
+    defaultRating: common_1.STRING_SCHEMA.pattern(common_1.FLOATS_REG),
+    artistName: common_1.STRING_SCHEMA,
+    expiryDate: common_1.ISO_STRING_SCHEMA,
+    // files
+    landscapePoster: joi_1.default.object(),
+    portraitPoster: joi_1.default.object(),
+    video: joi_1.default.object(), // file
+    videoLink: common_1.STRING_SCHEMA,
+    active: joi_1.default.boolean(),
+    upcoming: joi_1.default.boolean(),
+    showViews: joi_1.default.boolean(),
+    trailerLink: common_1.STRING_SCHEMA, // file
+    trailer: joi_1.default.object(),
+});
 exports.addSubtitleSchema = joi_1.default.object({
     parentId: common_1.MONGO_DB_OBJECT_ID_SCHEMA.required(),
     parentType: common_1.STRING_SCHEMA.valid('vod', 'episode').required(),
