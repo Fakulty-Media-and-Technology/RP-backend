@@ -1,5 +1,5 @@
-import { boolean } from 'joi'
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { OperationalError } from '../utils/OperationalError'
 
 export const videoTypes = ['movie', 'series', 'music-video', 'skit'] as const
 
@@ -158,3 +158,15 @@ const schema = new Schema(
 export const VideoModel = model('videos', schema)
 export type VideoSchema = InferSchemaType<typeof schema>
 export type Video = HydratedDocumentFromSchema<typeof schema>
+
+schema.pre('save', function (next) {
+  if (this.videoLink && this.video_upload) {
+    throw new OperationalError('only a videoLink OR a videoUpload can be povided', 400)
+  }
+
+  if (this.trailerLink && this.trailer_upload) {
+    throw new OperationalError('only a trailerLink OR a trailerUpload can be povided', 400)
+  }
+
+  next()
+})

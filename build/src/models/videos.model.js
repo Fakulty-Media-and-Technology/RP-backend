@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoModel = exports.videoTypes = void 0;
 const mongoose_1 = require("mongoose");
+const OperationalError_1 = require("../utils/OperationalError");
 exports.videoTypes = ['movie', 'series', 'music-video', 'skit'];
 const schema = new mongoose_1.Schema({
     admin_id: {
@@ -126,3 +127,12 @@ const schema = new mongoose_1.Schema({
     timestamps: true,
 });
 exports.VideoModel = (0, mongoose_1.model)('videos', schema);
+schema.pre('save', function (next) {
+    if (this.videoLink && this.video_upload) {
+        throw new OperationalError_1.OperationalError('only a videoLink OR a videoUpload can be povided', 400);
+    }
+    if (this.trailerLink && this.trailer_upload) {
+        throw new OperationalError_1.OperationalError('only a trailerLink OR a trailerUpload can be povided', 400);
+    }
+    next();
+});
