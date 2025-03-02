@@ -91,18 +91,19 @@ AdminUploadController.addEpisode = Catch_1.Catch.async(async (req, res) => {
     });
 });
 AdminUploadController.editVideo = Catch_1.Catch.async(async ({ params, body, user, files: reqFiles }, res) => {
-    console.log({ body, reqFiles });
     if (body.data != null && typeof body.data !== 'string') {
         throw new OperationalError_1.OperationalError('optional formData.data must be a JSON serialized string', 400);
     }
     const files = _a._checkFiles(reqFiles);
     const data = {
-        ...JSON.parse(body.data),
         landscapePoster: files.landscapePoster?.[0],
         portraitPoster: files.portraitPoster?.[0],
         trailer: files.trailer?.[0],
         video: files.video?.[0],
     };
+    if (body.data) {
+        Object.assign(data, JSON.parse(body.data));
+    }
     (0, requestValidator_1.validate)(admin_1.editVideoSchema, data);
     const updatedVid = await AdminUploadService_1.AdminUploadService.editVideo({
         data,

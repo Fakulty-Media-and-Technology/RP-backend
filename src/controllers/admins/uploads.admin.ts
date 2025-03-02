@@ -121,11 +121,14 @@ export class AdminUploadController extends UploadMediaUtils {
     const files = this._checkFiles(reqFiles)
 
     const data: Partial<MovieData> = {
-      ...JSON.parse(body.data),
       landscapePoster: files.landscapePoster?.[0],
       portraitPoster: files.portraitPoster?.[0],
       trailer: files.trailer?.[0],
       video: files.video?.[0],
+    }
+
+    if (body.data) {
+      Object.assign(data, JSON.parse(body.data))
     }
 
     validate(editVideoSchema, data)
