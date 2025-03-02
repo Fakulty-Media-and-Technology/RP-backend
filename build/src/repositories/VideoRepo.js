@@ -190,6 +190,30 @@ VideoRepo.addEpisodeUtilAggr = async (seasonId) => {
     ]);
     return aggr;
 };
+VideoRepo.fetchUpcoming = async (page = 1, limit = 10) => {
+    return await _a.fetchVideoAggr({
+        prevStages: [
+            {
+                $match: { upcoming: true },
+            },
+        ],
+        sortStage: { $sort: { createdAt: -1 } },
+        page,
+        limit,
+    });
+};
+VideoRepo.fetchActiveUpcoming = async (page = 1, limit = 10) => {
+    return await _a.fetchVideoAggr({
+        prevStages: [
+            {
+                $match: { upcoming: true, active: true },
+            },
+        ],
+        sortStage: { $sort: { createdAt: -1 } },
+        page,
+        limit,
+    });
+};
 VideoRepo.searchTitleOrDescriptionByTextReg = async (textReg, page = 1, limit = 10) => {
     return await _a.fetchVideoAggr({
         prevStages: [

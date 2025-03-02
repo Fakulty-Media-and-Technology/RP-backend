@@ -117,6 +117,13 @@ const schema = new Schema(
       default: false,
     },
 
+    upcomingSubscribers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'users',
+      },
+    ],
+
     feat_expiry: {
       type: Date,
     },

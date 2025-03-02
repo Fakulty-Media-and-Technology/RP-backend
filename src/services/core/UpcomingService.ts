@@ -8,9 +8,10 @@ import { denyGuestUser } from '../../utils/denyGuestUser'
 import { ClientSession } from 'mongoose'
 import { AdminUploadService } from './AdminUploadService'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
-import { UpcomingRepo } from '../../repositories/UpcomingRepo'
-import { UpcomingMediaSourceUtils } from '../../utils/UpcomingMediaSourceUtils'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { VideoRepo } from '../../repositories/VideoRepo'
+import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
+import { VideoModel } from '../../models/videos.model'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
@@ -31,6 +32,10 @@ export class UpcomingService extends AdminUploadService {
     data: UpcomingData,
     session: ClientSession,
   ) => {
+    if (1) {
+      throw new OperationalError('decomissioned route', 400)
+    }
+
     if (data.trailer && data.trailerLink) {
       throw new OperationalError(
         'trailer and trailerLink are optional but only ONE MAY be provided',
@@ -95,54 +100,52 @@ export class UpcomingService extends AdminUploadService {
   }
 
   static adminFetch = async (query: Request['query']) => {
-    const upAggrRes = await UpcomingRepo.fetchAggr({
-      prevStages: [],
-      page: handleDefaultNumAndUnknown(query.page, 1),
-      limit: handleDefaultNumAndUnknown(query.limit, 10),
-    })
+    const vids = await VideoRepo.fetchUpcoming(
+      handleDefaultNumAndUnknown(query.page, 1),
+      handleDefaultNumAndUnknown(query.limit, 10),
+    )
 
-    return await UpcomingMediaSourceUtils.resolveSources(upAggrRes, '1080p')
+    return await MovieMediaSourcesUtils.resolveMediaSources(vids, true, '720p')
   }
 
   static customerFetch = async (query: Request['query'], currentUser: LoggedInUser) => {
-    const [vidQuality, upAggrRes] = await Promise.all([
+    const [vidQuality, vods] = await Promise.all([
       VidUploadUtils.getUserVideoQuality(currentUser._id.toString(), '480p'),
 
       //
-      await UpcomingRepo.fetchAggr({
-        prevStages: [{ $match: { active: true } }],
-        page: handleDefaultNumAndUnknown(query.page, 1),
-        limit: handleDefaultNumAndUnknown(query.limit, 10),
-      }),
+      VideoRepo.fetchActiveUpcoming(
+        handleDefaultNumAndUnknown(query.page, 1),
+        handleDefaultNumAndUnknown(query.limit, 10),
+      ),
     ])
 
-    return await UpcomingMediaSourceUtils.resolveSources(upAggrRes, vidQuality)
+    return await MovieMediaSourcesUtils.resolveMediaSources(vods, true, vidQuality)
   }
 
   static customerSubscription = async (
     currentUser: LoggedInUser,
-    upcomingId: string,
+    vidId: string,
     action: CustomerSubScriptionActionType,
   ) => {
     denyGuestUser(currentUser)
 
-    const upcoming = await UpcomingModel.findByIdAndUpdate(upcomingId, {
+    const upcoming = await VideoModel.findByIdAndUpdate(vidId, {
       [action === 'subscribe' ? '$addToSet' : '$pull']: {
-        reminder: currentUser._id,
+        upcomingSubscribers: currentUser._id,
       },
     })
 
     if (upcoming === null) {
-      throw new OperationalError('Upcoming not found', 404)
+      throw new OperationalError('upcoming not found', 404)
     }
   }
 
-  static customerIsSubscribed = async (currentUser: LoggedInUser, upcomingId: string) => {
+  static customerIsSubscribed = async (currentUser: LoggedInUser, vidId: string) => {
     denyGuestUser(currentUser)
 
-    const upcoming = await UpcomingModel.findOne({
-      _id: upcomingId,
-      reminder: currentUser.id,
+    const upcoming = await VideoModel.findOne({
+      _id: vidId,
+      upcomingSubscribers: currentUser.id,
     })
 
     return !!upcoming

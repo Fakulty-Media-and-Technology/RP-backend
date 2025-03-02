@@ -246,6 +246,32 @@ export class VideoRepo {
     return aggr as Array<AddEpisodeUtilAggrRes>
   }
 
+  static fetchUpcoming = async (page = 1, limit = 10) => {
+    return await this.fetchVideoAggr({
+      prevStages: [
+        {
+          $match: { upcoming: true },
+        },
+      ],
+      sortStage: { $sort: { createdAt: -1 } },
+      page,
+      limit,
+    })
+  }
+
+  static fetchActiveUpcoming = async (page = 1, limit = 10) => {
+    return await this.fetchVideoAggr({
+      prevStages: [
+        {
+          $match: { upcoming: true, active: true },
+        },
+      ],
+      sortStage: { $sort: { createdAt: -1 } },
+      page,
+      limit,
+    })
+  }
+
   static searchTitleOrDescriptionByTextReg = async (textReg: RegExp, page = 1, limit = 10) => {
     return await this.fetchVideoAggr({
       prevStages: [
@@ -301,7 +327,6 @@ export class VideoRepo {
   ]
 
   private static _episodesPipeline = [
-
     {
       $lookup: {
         from: 'video_uploads',
@@ -557,7 +582,6 @@ export class VideoRepo {
           pipeline: [enumsProjectShared],
         },
       },
-
 
       {
         $lookup: {
