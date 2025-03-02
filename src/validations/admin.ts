@@ -7,7 +7,6 @@ import {
   MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
   MONGO_DB_OBJECT_ID_SCHEMA,
   NUMERIC_REG,
-  PHOTO_SCHEMA_WITH_CONTENT_TYPE,
   PHOTO_SCHEMA,
   STRING_SCHEMA,
   VIDEO_CLASS_SCHEMA,
@@ -125,12 +124,16 @@ export const editVideoSchema = Joi.object({
   title: STRING_SCHEMA,
   pg: STRING_SCHEMA,
   vidClass: VIDEO_CLASS_SCHEMA,
-  category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
   releasedDate: ISO_STRING_SCHEMA,
   runtime: STRING_SCHEMA,
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG),
   artistName: STRING_SCHEMA,
   expiryDate: ISO_STRING_SCHEMA,
+  description: STRING_SCHEMA,
+
+  category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
+  genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
+  cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
 
   // files
   landscapePoster: Joi.object(),

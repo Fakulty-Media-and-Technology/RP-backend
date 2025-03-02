@@ -526,10 +526,52 @@ export class UploadMediaUtils {
 
     if (data.video) {
       prevVideoUploadId = vod.video_upload
+
+      const vidoeUpload = await MediaManagement.store({
+        file: data.video,
+        expire: vod.expiry_date ?? undefined,
+        baseDir: 'videos',
+      })
+
+      const vidUploadDoc = await new VideoUploadModel({
+        bucket: vidoeUpload.Bucket,
+        key: vidoeUpload.Key,
+        mimetype: vidoeUpload.mimetype,
+        size: vidoeUpload.size,
+        parentType: 'vod',
+        parentId: vod._id,
+      }).save({ session })
+
+      vod.videoLink = null as unknown as string
+      vod.video_upload = vidUploadDoc._id
     }
 
     if (data.trailer) {
       prevTrailerId = vod.trailer_upload
+
+      const trailerVideoUpload = await MediaManagement.store({
+        file: data.trailer,
+        expire:  undefined,
+        baseDir: 'videos',
+      })
+
+      const trailerDoc = new TrailerModel({
+        video_id: vod._id,
+        parentType: 'vod',
+      })
+
+      const trailerVideoUploadDoc = await new VideoUploadModel({
+        bucket: trailerVideoUpload.Bucket,
+        key: trailerVideoUpload.Key,
+        mimetype: trailerVideoUpload.mimetype,
+        size: trailerVideoUpload.size,
+        parentType: 'trailer',
+        parentId: trailerDoc._id,
+      }).save({ session })
+
+      trailerDoc.video_upload = trailerVideoUploadDoc._id
+      vod.trailerLink = null as unknown as string
+      await trailerDoc.save({ session })
     }
 
     await vod.save({ session })

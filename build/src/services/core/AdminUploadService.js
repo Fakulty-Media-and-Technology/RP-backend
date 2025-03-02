@@ -10,6 +10,11 @@ const MovieMediaSourcesUtils_1 = require("../../utils/MovieMediaSourcesUtils");
 const QueryParamsFeatures_1 = require("../../utils/QueryParamsFeatures");
 const UploadMediaUtils_1 = require("../../utils/UploadMediaUtils");
 const Purge_1 = require("../../utils/Purge");
+// type EditVideoInput = {
+//   vidId: string
+//   type: AllVideoTypes
+//   changes: Record<string, any>
+// }
 class AdminUploadService extends UploadMediaUtils_1.UploadMediaUtils {
 }
 exports.AdminUploadService = AdminUploadService;

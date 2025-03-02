@@ -21,11 +21,11 @@ import {
 } from '../../utils/UploadMediaUtils'
 import { Purge } from '../../utils/Purge'
 
-type EditVideoInput = {
-  vidId: string
-  type: AllVideoTypes
-  changes: Record<string, any>
-}
+// type EditVideoInput = {
+//   vidId: string
+//   type: AllVideoTypes
+//   changes: Record<string, any>
+// }
 
 export class AdminUploadService extends UploadMediaUtils {
   static resolveWithMediaSources = (queryParams: QueryParamsFeaturesOptions['queryParams']) =>
