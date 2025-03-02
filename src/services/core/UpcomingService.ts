@@ -32,10 +32,6 @@ export class UpcomingService extends AdminUploadService {
     data: UpcomingData,
     session: ClientSession,
   ) => {
-    if (1) {
-      throw new OperationalError('decomissioned route', 400)
-    }
-
     if (data.trailer && data.trailerLink) {
       throw new OperationalError(
         'trailer and trailerLink are optional but only ONE MAY be provided',

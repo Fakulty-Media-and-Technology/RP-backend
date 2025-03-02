@@ -4,6 +4,7 @@ exports.superAdminUpcomingRouter = void 0;
 const express_1 = require("express");
 const upcoming_admin_1 = require("../../controllers/admins/upcoming.admin");
 const Multer_1 = require("../../utils/Multer");
+const depricate_1 = require("../../middlewares/depricate");
 exports.superAdminUpcomingRouter = (0, express_1.Router)();
-exports.superAdminUpcomingRouter.post('/event/create', Multer_1.Multer.createUpcomingConfig, upcoming_admin_1.AdminUpcomingController.createUpcomingEvent);
+exports.superAdminUpcomingRouter.post('/event/create', depricate_1.throwDepricatedRoute, Multer_1.Multer.createUpcomingConfig, upcoming_admin_1.AdminUpcomingController.createUpcomingEvent);
 exports.superAdminUpcomingRouter.get('/event/getall', upcoming_admin_1.AdminUpcomingController.upcomingsAllGet);

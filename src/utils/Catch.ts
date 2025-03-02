@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 
 type AsyncHandler = (r: Request, re: Response, n: NextFunction) => Promise<void>
-type SyncHandler = (r: Request, re: Response, n: NextFunction) => void
+export type SyncHandler = (r: Request, re: Response, n: NextFunction) => void
 type NMSPrepublishHandler = (id: string, st: string) => Promise<void>
 
 export class Catch {

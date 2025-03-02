@@ -18,9 +18,6 @@ class UpcomingService extends AdminUploadService_1.AdminUploadService {
 exports.UpcomingService = UpcomingService;
 _a = UpcomingService;
 UpcomingService._createUpcomingWithSession = async (data, session) => {
-    if (1) {
-        throw new OperationalError_1.OperationalError('decomissioned route', 400);
-    }
     if (data.trailer && data.trailerLink) {
         throw new OperationalError_1.OperationalError('trailer and trailerLink are optional but only ONE MAY be provided', 400);
     }
