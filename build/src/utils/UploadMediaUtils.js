@@ -189,6 +189,9 @@ UploadMediaUtils._uploadVidAndTrailer = async ({ data, videoDoc }, session) => {
 UploadMediaUtils._uploadVideoSession = async (params, session) => {
     const { data, type, adminId } = params;
     _a._validateAddVideoFileTypes(data);
+    if (data.vidClass === 'exclusive' && data.amount == null) {
+        throw new OperationalError_1.OperationalError('amount is required when vid class is exclusive', 400);
+    }
     const videoDoc = new videos_model_1.VideoModel({
         type,
         admin_id: adminId,
@@ -197,6 +200,7 @@ UploadMediaUtils._uploadVideoSession = async (params, session) => {
         vid_class: data.vidClass,
         artist_name: data.artistName,
         pg: data.pg,
+        amount: data.amount,
         genre: data.genre ?? [],
         category: data.category ?? [],
         cast: data.cast ?? [],

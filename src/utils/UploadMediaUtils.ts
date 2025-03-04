@@ -55,7 +55,7 @@ export type MovieData = {
   title: string
   pg: string
   description: string
-  vidClass: string
+  vidClass: Video['vid_class']
 
   defaultRating?: string
   videoLink?: string
@@ -64,6 +64,8 @@ export type MovieData = {
   expiryDate?: string
   releasedDate: string
   artistName?: string
+
+  amount?: number
 
   active?: boolean
   showViews?: boolean
@@ -388,6 +390,10 @@ export class UploadMediaUtils {
 
     this._validateAddVideoFileTypes(data)
 
+    if (data.vidClass === 'exclusive' && data.amount == null) {
+      throw new OperationalError('amount is required when vid class is exclusive',400)
+    }
+
     const videoDoc = new VideoModel({
       type,
       admin_id: adminId,
@@ -396,6 +402,7 @@ export class UploadMediaUtils {
       vid_class: data.vidClass,
       artist_name: data.artistName,
       pg: data.pg,
+      amount: data.amount,
       genre: data.genre ?? [],
       category: data.category ?? [],
       cast: data.cast ?? [],
@@ -551,7 +558,7 @@ export class UploadMediaUtils {
 
       const trailerVideoUpload = await MediaManagement.store({
         file: data.trailer,
-        expire:  undefined,
+        expire: undefined,
         baseDir: 'videos',
       })
 

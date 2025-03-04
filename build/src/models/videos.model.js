@@ -53,6 +53,9 @@ const schema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
+    amount: {
+        type: Number,
+    },
     genre: [
         {
             type: mongoose_1.Schema.Types.ObjectId,

@@ -63,6 +63,10 @@ const schema = new Schema(
       required: true,
     },
 
+    amount: {
+      type: Number,
+    },
+
     genre: [
       {
         type: Schema.Types.ObjectId,

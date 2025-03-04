@@ -46,6 +46,7 @@ export const addMovieOrSkitSchema = Joi.object({
 
   // maps to details in UI
   description: STRING_SCHEMA.required(),
+  amount: Joi.number().strict(),
 
   runtime: STRING_SCHEMA,
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG),
@@ -79,6 +80,7 @@ export const addSeriesSchema = Joi.object({
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
 
   description: STRING_SCHEMA,
+  amount: Joi.number().strict(),
 
   // files
   landscapePoster: Joi.object().required(),
@@ -108,6 +110,7 @@ export const addMusicVideoSchema = Joi.object({
   expiryDate: ISO_STRING_SCHEMA,
 
   description: STRING_SCHEMA,
+  amount: Joi.number().strict(),
 
   // files
   landscapePoster: Joi.object().required(),
@@ -139,6 +142,8 @@ export const editVideoSchema = Joi.object({
   category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
   genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
   cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
+
+  amount: Joi.number().strict(),
 
   // files
   landscapePoster: Joi.object(),

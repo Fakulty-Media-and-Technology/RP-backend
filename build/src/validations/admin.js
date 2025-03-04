@@ -35,6 +35,7 @@ exports.addMovieOrSkitSchema = joi_1.default.object({
     cast: common_1.MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.max(10).required(),
     // maps to details in UI
     description: common_1.STRING_SCHEMA.required(),
+    amount: joi_1.default.number().strict(),
     runtime: common_1.STRING_SCHEMA,
     defaultRating: common_1.STRING_SCHEMA.pattern(common_1.FLOATS_REG),
     // files
@@ -60,6 +61,7 @@ exports.addSeriesSchema = joi_1.default.object({
     runtime: common_1.STRING_SCHEMA.required(),
     defaultRating: common_1.STRING_SCHEMA.pattern(common_1.FLOATS_REG).required(),
     description: common_1.STRING_SCHEMA,
+    amount: joi_1.default.number().strict(),
     // files
     landscapePoster: joi_1.default.object().required(),
     portraitPoster: joi_1.default.object().required(),
@@ -83,6 +85,7 @@ exports.addMusicVideoSchema = joi_1.default.object({
     artistName: common_1.STRING_SCHEMA.required(),
     expiryDate: common_1.ISO_STRING_SCHEMA,
     description: common_1.STRING_SCHEMA,
+    amount: joi_1.default.number().strict(),
     // files
     landscapePoster: joi_1.default.object().required(),
     portraitPoster: joi_1.default.object().required(),
@@ -108,6 +111,7 @@ exports.editVideoSchema = joi_1.default.object({
     category: common_1.MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
     genre: common_1.MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
     cast: common_1.MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
+    amount: joi_1.default.number().strict(),
     // files
     landscapePoster: joi_1.default.object(),
     portraitPoster: joi_1.default.object(),
