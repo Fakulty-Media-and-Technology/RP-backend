@@ -22,6 +22,10 @@ const schema = new mongoose_1.Schema({
         ref: 'trailers',
         default: null,
     },
+    description: {
+        type: String,
+        default: null,
+    },
     trailerLink: {
         type: String,
         default: null,

@@ -62,6 +62,7 @@ export class AdminUploadController extends UploadMediaUtils {
     const files = this._checkFiles(reqFiles)
 
     const _data = {
+      description: body.description,
       trailerLink: body.trailerLink,
       portraitPhoto: files['portraitPhoto']?.[0],
       landscapePhoto: files['landscapePhoto']?.[0],

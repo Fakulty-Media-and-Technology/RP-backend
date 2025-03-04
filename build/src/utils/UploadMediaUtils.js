@@ -384,6 +384,7 @@ UploadMediaUtils._addSeasonWithSession = async ({ videoId, adminId, ...params },
     const season = new seasons_model_1.SeasonModel({
         admin: adminId,
         video: videoId,
+        description: params.description,
         serial_number: aggrRes[0].totalPreviousSeasons + 1,
         trailerLink: params.trailerLink,
     });

@@ -85,6 +85,7 @@ export type AddSeasonParams = {
   adminId: string
   videoId: string
   trailerLink?: string
+  description?: string
   portraitPhoto?: MulterFile
   landscapePhoto?: MulterFile
   trailer?: MulterFile
@@ -391,7 +392,7 @@ export class UploadMediaUtils {
     this._validateAddVideoFileTypes(data)
 
     if (data.vidClass === 'exclusive' && data.amount == null) {
-      throw new OperationalError('amount is required when vid class is exclusive',400)
+      throw new OperationalError('amount is required when vid class is exclusive', 400)
     }
 
     const videoDoc = new VideoModel({
@@ -645,6 +646,7 @@ export class UploadMediaUtils {
     const season = new SeasonModel({
       admin: adminId,
       video: videoId,
+      description: params.description,
       serial_number: aggrRes[0].totalPreviousSeasons + 1,
       trailerLink: params.trailerLink,
     })

@@ -52,6 +52,7 @@ AdminUploadController.addVideo = Catch_1.Catch.async(async ({ files: reqFiles, b
 AdminUploadController.addSeason = Catch_1.Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
     const files = _a._checkFiles(reqFiles);
     const _data = {
+        description: body.description,
         trailerLink: body.trailerLink,
         portraitPhoto: files['portraitPhoto']?.[0],
         landscapePhoto: files['landscapePhoto']?.[0],

@@ -24,6 +24,11 @@ const schema = new Schema({
     default: null,
   },
 
+  description: {
+    type: String,
+    default: null,
+  },
+
   trailerLink: {
     type: String,
     default: null,
