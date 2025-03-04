@@ -28,6 +28,7 @@ export const createSeasonSchema = Joi.object({
   trailerLink: Joi.string(),
   portraitPhoto: Joi.object(),
   landscapePhoto: Joi.object(),
+  description: STRING_SCHEMA,
   trailer: Joi.object(),
 })
   .and('portraitPhoto', 'landscapePhoto')
@@ -77,6 +78,8 @@ export const addSeriesSchema = Joi.object({
   runtime: STRING_SCHEMA.required(),
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
 
+  description: STRING_SCHEMA,
+
   // files
   landscapePoster: Joi.object().required(),
   portraitPoster: Joi.object().required(),
@@ -103,6 +106,8 @@ export const addMusicVideoSchema = Joi.object({
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
   artistName: STRING_SCHEMA.required(),
   expiryDate: ISO_STRING_SCHEMA,
+
+  description: STRING_SCHEMA,
 
   // files
   landscapePoster: Joi.object().required(),

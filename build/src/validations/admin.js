@@ -20,6 +20,7 @@ exports.createSeasonSchema = joi_1.default.object({
     trailerLink: joi_1.default.string(),
     portraitPhoto: joi_1.default.object(),
     landscapePhoto: joi_1.default.object(),
+    description: common_1.STRING_SCHEMA,
     trailer: joi_1.default.object(),
 })
     .and('portraitPhoto', 'landscapePhoto')
@@ -58,6 +59,7 @@ exports.addSeriesSchema = joi_1.default.object({
     releasedDate: common_1.ISO_STRING_SCHEMA.required(),
     runtime: common_1.STRING_SCHEMA.required(),
     defaultRating: common_1.STRING_SCHEMA.pattern(common_1.FLOATS_REG).required(),
+    description: common_1.STRING_SCHEMA,
     // files
     landscapePoster: joi_1.default.object().required(),
     portraitPoster: joi_1.default.object().required(),
@@ -80,6 +82,7 @@ exports.addMusicVideoSchema = joi_1.default.object({
     defaultRating: common_1.STRING_SCHEMA.pattern(common_1.FLOATS_REG).required(),
     artistName: common_1.STRING_SCHEMA.required(),
     expiryDate: common_1.ISO_STRING_SCHEMA,
+    description: common_1.STRING_SCHEMA,
     // files
     landscapePoster: joi_1.default.object().required(),
     portraitPoster: joi_1.default.object().required(),
