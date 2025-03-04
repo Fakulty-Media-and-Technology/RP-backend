@@ -20,6 +20,7 @@ import {
   UploadMediaUtils,
 } from '../../utils/UploadMediaUtils'
 import { Purge } from '../../utils/Purge'
+import { SeasonModel } from '../../models/seasons.model'
 
 // type EditVideoInput = {
 //   vidId: string
@@ -34,8 +35,18 @@ export class AdminUploadService extends UploadMediaUtils {
   static addVideo = async (input: AddVideoParams) =>
     await withMongoDBSession(this._uploadVideoSession, input)
 
-  static addSeason = async (params: AddSeasonParams) =>
-    await withMongoDBSession(this._addSeasonWithSession, params)
+  static addSeason = async ({ videoId, adminId, description }: AddSeasonParams) => {
+    const aggrRes = await VideoRepo.addSeasonUtilAggr(videoId)
+
+    this._validateWithMovieAndPrevSeasonsAggrResult(aggrRes)
+
+    return await SeasonModel.create({
+      description,
+      admin: adminId,
+      video: videoId,
+      serial_number: aggrRes[0].totalPreviousSeasons + 1,
+    })
+  }
 
   static addEpisode = async (input: AddEpisodeInput) =>
     await withMongoDBSession(this._addEpisodesWithSession, input)

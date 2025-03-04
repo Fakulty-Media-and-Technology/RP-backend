@@ -8,7 +8,7 @@ import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 import { AllVideoTypes, MovieData, UploadMediaUtils } from '../../utils/UploadMediaUtils'
 
-import { addEpisodeSchema, createSeasonSchema, editVideoSchema } from '../../validations/admin'
+import { addEpisodeSchema, editVideoSchema } from '../../validations/admin'
 
 export class AdminUploadController extends UploadMediaUtils {
   private static _validateVideoType = (type: string) => {
@@ -58,25 +58,19 @@ export class AdminUploadController extends UploadMediaUtils {
     })
   })
 
-  static addSeason = Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
-    const files = this._checkFiles(reqFiles)
-
-    const _data = {
-      description: body.description,
-      trailerLink: body.trailerLink,
-      portraitPhoto: files['portraitPhoto']?.[0],
-      landscapePhoto: files['landscapePhoto']?.[0],
-      trailer: files['trailer']?.[0],
+  static addSeason = Catch.async(async ({ body, user, params }, res) => {
+    if (body.description && typeof body.description !== 'string') {
+      throw new OperationalError('optional body.description must be a string when provided', 400)
     }
-
-    validate(createSeasonSchema, _data)
-
-    const data = { ..._data, videoId: params.videoId, adminId: GetDefined.loggedInUser(user).id }
 
     sendResponse({
       res,
       message: `season added successfully`,
-      data: await AdminUploadService.addSeason(data),
+      data: await AdminUploadService.addSeason({
+        description: body.description,
+        videoId: params.videoId,
+        adminId: GetDefined.loggedInUser(user).id,
+      }),
     })
   })
 

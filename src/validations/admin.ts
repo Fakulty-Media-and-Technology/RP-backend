@@ -24,16 +24,6 @@ export const addEpisodeSchema = Joi.object({
   .xor('trailerLink', 'trailer')
   .xor('video', 'videoLink')
 
-export const createSeasonSchema = Joi.object({
-  trailerLink: Joi.string(),
-  portraitPhoto: Joi.object(),
-  landscapePhoto: Joi.object(),
-  description: STRING_SCHEMA,
-  trailer: Joi.object(),
-})
-  .and('portraitPhoto', 'landscapePhoto')
-  .xor('trailerLink', 'trailer')
-
 export const addMovieOrSkitSchema = Joi.object({
   title: STRING_SCHEMA.required(),
   pg: STRING_SCHEMA.required(),

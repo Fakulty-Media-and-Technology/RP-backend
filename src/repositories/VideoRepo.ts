@@ -19,8 +19,6 @@ export type AddSeasonUtilAggrRes = {
   totalPreviousSeasons: number
   totalEpisodesOfLastSeason: number
   movieExpiryDate: Date | undefined
-  movieTrailerLink: null | string
-  isMovieTrailerVidUploadTranscoded: boolean
 }
 
 export type AddEpisodeUtilAggrRes = {
@@ -76,33 +74,7 @@ export class VideoRepo {
         },
       },
 
-      {
-        $lookup: {
-          from: 'trailers',
-          localField: '_id',
-          foreignField: 'video_id',
-          as: 'trailers',
 
-          pipeline: [
-            {
-              $lookup: {
-                from: 'video_uploads',
-                localField: 'video_upload',
-                foreignField: '_id',
-                as: 'trailerVideUploads',
-              },
-            },
-
-            {
-              $addFields: {
-                isTrailerVidUploadTranscoded: {
-                  $ifNull: [{ $first: '$trailerVideUploads.isTranscoded' }, null],
-                },
-              },
-            },
-          ],
-        },
-      },
 
       {
         $project: {
@@ -110,10 +82,6 @@ export class VideoRepo {
           totalEpisodesOfLastSeason: { $size: { $ifNull: [{ $first: '$seasons.episodes' }, []] } },
           isMovieSeries: '$is_series',
           movieExpiryDate: { $ifNull: ['$expiry_date', undefined] },
-          movieTrailerLink: { $ifNull: ['$trailerLink', null] },
-          isMovieTrailerVidUploadTranscoded: {
-            $ifNull: [{ $first: '$trailers.isTrailerVidUploadTranscoded' }, null],
-          },
         },
       },
     ])

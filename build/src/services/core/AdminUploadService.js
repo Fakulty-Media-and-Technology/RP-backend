@@ -10,6 +10,7 @@ const MovieMediaSourcesUtils_1 = require("../../utils/MovieMediaSourcesUtils");
 const QueryParamsFeatures_1 = require("../../utils/QueryParamsFeatures");
 const UploadMediaUtils_1 = require("../../utils/UploadMediaUtils");
 const Purge_1 = require("../../utils/Purge");
+const seasons_model_1 = require("../../models/seasons.model");
 // type EditVideoInput = {
 //   vidId: string
 //   type: AllVideoTypes
@@ -21,7 +22,16 @@ exports.AdminUploadService = AdminUploadService;
 _a = AdminUploadService;
 AdminUploadService.resolveWithMediaSources = (queryParams) => queryParams.withMediaSources === 'true';
 AdminUploadService.addVideo = async (input) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._uploadVideoSession, input);
-AdminUploadService.addSeason = async (params) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._addSeasonWithSession, params);
+AdminUploadService.addSeason = async ({ videoId, adminId, description }) => {
+    const aggrRes = await VideoRepo_1.VideoRepo.addSeasonUtilAggr(videoId);
+    _a._validateWithMovieAndPrevSeasonsAggrResult(aggrRes);
+    return await seasons_model_1.SeasonModel.create({
+        description,
+        admin: adminId,
+        video: videoId,
+        serial_number: aggrRes[0].totalPreviousSeasons + 1,
+    });
+};
 AdminUploadService.addEpisode = async (input) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._addEpisodesWithSession, input);
 AdminUploadService.editVideo = async (input) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._editVideoSession, input);
 AdminUploadService.deleteVideo = async (vidId, type) => {

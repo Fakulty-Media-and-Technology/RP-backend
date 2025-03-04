@@ -84,11 +84,7 @@ export type MovieData = {
 export type AddSeasonParams = {
   adminId: string
   videoId: string
-  trailerLink?: string
   description?: string
-  portraitPhoto?: MulterFile
-  landscapePhoto?: MulterFile
-  trailer?: MulterFile
 }
 
 export type AddVideoParams = {
@@ -601,14 +597,8 @@ export class UploadMediaUtils {
       throw new OperationalError('invalid videoId', 404)
     }
 
-    const {
-      totalEpisodesOfLastSeason,
-      movieExpiryDate,
-      totalPreviousSeasons,
-      movieTrailerLink,
-      isMovieTrailerVidUploadTranscoded,
-      isMovieSeries,
-    } = res[0]
+    const { totalEpisodesOfLastSeason, movieExpiryDate, totalPreviousSeasons, isMovieSeries } =
+      res[0]
 
     if (!isMovieSeries) {
       throw new OperationalError('movie is not a series', 403)
@@ -621,79 +611,9 @@ export class UploadMediaUtils {
       )
     }
 
-    // Movie must not have a trailer but if it does and it is a trailer upload then season creation must wait for transcode to complete
-    if (movieTrailerLink == null && isMovieTrailerVidUploadTranscoded === false) {
-      throw new OperationalError('Movie trailer video upload has not finished transcoding', 403)
-    }
-
     if (movieExpiryDate && new Date() > movieExpiryDate) {
       throw new OperationalError('Movie has expired', 403)
     }
-  }
-
-  protected static _addSeasonWithSession = async (
-    { videoId, adminId, ...params }: AddSeasonParams,
-    session: ClientSession,
-  ) => {
-    params.trailer && this._allowMimetype(params.trailer, 'video', ' trailer must be a video file')
-
-    params.landscapePhoto &&
-      this._allowMimetype(params.landscapePhoto, 'image', ' landscapePhoto must be an image file')
-
-    params.portraitPhoto &&
-      this._allowMimetype(params.portraitPhoto, 'image', ' portraitPhoto must be an image file')
-
-    const aggrRes = await VideoRepo.addSeasonUtilAggr(videoId)
-
-    this._validateWithMovieAndPrevSeasonsAggrResult(aggrRes)
-
-    const season = new SeasonModel({
-      admin: adminId,
-      video: videoId,
-      description: params.description,
-      serial_number: aggrRes[0].totalPreviousSeasons + 1,
-      trailerLink: params.trailerLink,
-    })
-
-    if (params.landscapePhoto && params.portraitPhoto) {
-      const { landscape, portrait } = await this._uploadAndSavePostersToDB(
-        {
-          portraitFile: params.portraitPhoto,
-          landscapeFile: params.landscapePhoto,
-          videoId: season._id,
-          posterParentType: 'season',
-        },
-        session,
-      )
-
-      season.landscapePhoto = landscape._id
-      season.portraitPhoto = portrait.id
-    }
-
-    if (params.trailer) {
-      const trailerDoc = new TrailerModel({
-        video_id: season._id,
-        parentType: 'season',
-      })
-
-      const tVidUploadDoc = await this._getVideoUploadDoc(
-        {
-          file: params.trailer,
-
-          expire: aggrRes[0].movieExpiryDate,
-          parentId: trailerDoc._id,
-          parentType: 'trailer',
-        },
-        session,
-      )
-
-      trailerDoc.video_upload = tVidUploadDoc._id
-      season.trailer = trailerDoc._id
-      await trailerDoc.save({ session })
-    }
-
-    await season.save({ session })
-    return season
   }
 
   protected static _validateWithSeasonAndPrevEpisodes = (aggrRes: AddEpisodeUtilAggrRes[]) => {

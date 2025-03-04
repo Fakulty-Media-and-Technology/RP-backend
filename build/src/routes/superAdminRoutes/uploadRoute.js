@@ -9,6 +9,6 @@ exports.superAdminUploadsRouter.get('/fetch/:type', uploads_admin_1.AdminUploadC
 exports.superAdminUploadsRouter.get('/seasons/fetch/:vidId', uploads_admin_1.AdminUploadController.fetchSeasonsAndEpisodes);
 exports.superAdminUploadsRouter.post('/video/add/:type', Multer_1.Multer.adminUploadVideoConfig, uploads_admin_1.AdminUploadController.addVideo);
 exports.superAdminUploadsRouter.post('/episodes/add/:seasonId', Multer_1.Multer.adminUploadVideoConfig, uploads_admin_1.AdminUploadController.addEpisode);
-exports.superAdminUploadsRouter.post('/seasons/add/:videoId', Multer_1.Multer.adminUploadSeasonConfig, uploads_admin_1.AdminUploadController.addSeason);
+exports.superAdminUploadsRouter.post('/seasons/add/:videoId', uploads_admin_1.AdminUploadController.addSeason);
 exports.superAdminUploadsRouter.put('/edit/:id', Multer_1.Multer.adminUploadVideoConfig, uploads_admin_1.AdminUploadController.editVideo);
 exports.superAdminUploadsRouter.delete('/remove/:id/:type', uploads_admin_1.AdminUploadController.deleteVideo);

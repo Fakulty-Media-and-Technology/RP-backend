@@ -70,12 +70,6 @@ export class Multer {
     { name: 'portraitPoster', maxCount: 1 },
   ])
 
-  static adminUploadSeasonConfig = this._configs.multipleTypesConfig.fields([
-    { name: 'trailer', maxCount: 1 },
-    { name: 'portraitPhoto', maxCount: 1 },
-    { name: 'landscapePhoto', maxCount: 1 },
-  ])
-
   static createLiveConfig = this._configs.multipleTypesConfig.fields([
     { name: 'previewVideo', maxCount: 1 },
     { name: 'coverPhoto', maxCount: 1 },

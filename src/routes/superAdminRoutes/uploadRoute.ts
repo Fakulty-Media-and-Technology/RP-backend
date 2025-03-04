@@ -19,11 +19,7 @@ superAdminUploadsRouter.post(
   AdminUploadController.addEpisode,
 )
 
-superAdminUploadsRouter.post(
-  '/seasons/add/:videoId',
-  Multer.adminUploadSeasonConfig,
-  AdminUploadController.addSeason,
-)
+superAdminUploadsRouter.post('/seasons/add/:videoId', AdminUploadController.addSeason)
 
 superAdminUploadsRouter.put(
   '/edit/:id',

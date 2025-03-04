@@ -17,32 +17,10 @@ const schema = new mongoose_1.Schema({
         type: Number,
         required: true,
     },
-    trailer: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'trailers',
-        default: null,
-    },
     description: {
         type: String,
         default: null,
     },
-    trailerLink: {
-        type: String,
-        default: null,
-    },
-    landscapePhoto: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'poster_images',
-        default: null,
-        // required: true,
-    },
-    portraitPhoto: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'poster_images',
-        default: null,
-        // required: true,
-    },
-    // add other fields here as needed
 });
 schema.index({ video: 1, serial_number: 1 }, { unique: true });
 exports.SeasonModel = (0, mongoose_1.model)('seasons', schema);

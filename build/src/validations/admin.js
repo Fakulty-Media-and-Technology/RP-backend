@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createAdSchema = exports.createClientSchema = exports.createAdminORSuperAdminSchema = exports.updateCategorySchema = exports.addCategorySchema = exports.addCastSchema = exports.addGenreSchema = exports.addFeaturedContentSchema = exports.updatePayOutReqStatusSchema = exports.createGiftCardSchema = exports.updateTrailerSchema = exports.createTrailerSchema = exports.updatePlanSchema = exports.createPlanSchema = exports.createUpcomingEventSchema = exports.addLiveSchema = exports.getPhotoURLSchema = exports.addSubtitleSchema = exports.editVideoSchema = exports.addMusicVideoSchema = exports.addSeriesSchema = exports.addMovieOrSkitSchema = exports.createSeasonSchema = exports.addEpisodeSchema = void 0;
+exports.createAdSchema = exports.createClientSchema = exports.createAdminORSuperAdminSchema = exports.updateCategorySchema = exports.addCategorySchema = exports.addCastSchema = exports.addGenreSchema = exports.addFeaturedContentSchema = exports.updatePayOutReqStatusSchema = exports.createGiftCardSchema = exports.updateTrailerSchema = exports.createTrailerSchema = exports.updatePlanSchema = exports.createPlanSchema = exports.createUpcomingEventSchema = exports.addLiveSchema = exports.getPhotoURLSchema = exports.addSubtitleSchema = exports.editVideoSchema = exports.addMusicVideoSchema = exports.addSeriesSchema = exports.addMovieOrSkitSchema = exports.addEpisodeSchema = void 0;
 const joi_1 = __importDefault(require("joi"));
 const common_1 = require("./common");
 exports.addEpisodeSchema = joi_1.default.object({
@@ -16,15 +16,6 @@ exports.addEpisodeSchema = joi_1.default.object({
 })
     .xor('trailerLink', 'trailer')
     .xor('video', 'videoLink');
-exports.createSeasonSchema = joi_1.default.object({
-    trailerLink: joi_1.default.string(),
-    portraitPhoto: joi_1.default.object(),
-    landscapePhoto: joi_1.default.object(),
-    description: common_1.STRING_SCHEMA,
-    trailer: joi_1.default.object(),
-})
-    .and('portraitPhoto', 'landscapePhoto')
-    .xor('trailerLink', 'trailer');
 exports.addMovieOrSkitSchema = joi_1.default.object({
     title: common_1.STRING_SCHEMA.required(),
     pg: common_1.STRING_SCHEMA.required(),

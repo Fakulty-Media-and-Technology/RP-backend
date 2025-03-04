@@ -63,11 +63,6 @@ Multer.adminUploadVideoConfig = _a._configs.multipleTypesConfig.fields([
     { name: 'landscapePoster', maxCount: 1 },
     { name: 'portraitPoster', maxCount: 1 },
 ]);
-Multer.adminUploadSeasonConfig = _a._configs.multipleTypesConfig.fields([
-    { name: 'trailer', maxCount: 1 },
-    { name: 'portraitPhoto', maxCount: 1 },
-    { name: 'landscapePhoto', maxCount: 1 },
-]);
 Multer.createLiveConfig = _a._configs.multipleTypesConfig.fields([
     { name: 'previewVideo', maxCount: 1 },
     { name: 'coverPhoto', maxCount: 1 },

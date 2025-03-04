@@ -49,21 +49,18 @@ AdminUploadController.addVideo = Catch_1.Catch.async(async ({ files: reqFiles, b
         }),
     });
 });
-AdminUploadController.addSeason = Catch_1.Catch.async(async ({ files: reqFiles, body, user, params }, res) => {
-    const files = _a._checkFiles(reqFiles);
-    const _data = {
-        description: body.description,
-        trailerLink: body.trailerLink,
-        portraitPhoto: files['portraitPhoto']?.[0],
-        landscapePhoto: files['landscapePhoto']?.[0],
-        trailer: files['trailer']?.[0],
-    };
-    (0, requestValidator_1.validate)(admin_1.createSeasonSchema, _data);
-    const data = { ..._data, videoId: params.videoId, adminId: GetDefined_1.GetDefined.loggedInUser(user).id };
+AdminUploadController.addSeason = Catch_1.Catch.async(async ({ body, user, params }, res) => {
+    if (body.description && typeof body.description !== 'string') {
+        throw new OperationalError_1.OperationalError('optional body.description must be a string when provided', 400);
+    }
     (0, responder_1.sendResponse)({
         res,
         message: `season added successfully`,
-        data: await AdminUploadService_1.AdminUploadService.addSeason(data),
+        data: await AdminUploadService_1.AdminUploadService.addSeason({
+            description: body.description,
+            videoId: params.videoId,
+            adminId: GetDefined_1.GetDefined.loggedInUser(user).id,
+        }),
     });
 });
 AdminUploadController.addEpisode = Catch_1.Catch.async(async (req, res) => {

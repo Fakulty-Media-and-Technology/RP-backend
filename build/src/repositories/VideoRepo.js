@@ -43,40 +43,11 @@ VideoRepo.addSeasonUtilAggr = async (vidId) => {
             },
         },
         {
-            $lookup: {
-                from: 'trailers',
-                localField: '_id',
-                foreignField: 'video_id',
-                as: 'trailers',
-                pipeline: [
-                    {
-                        $lookup: {
-                            from: 'video_uploads',
-                            localField: 'video_upload',
-                            foreignField: '_id',
-                            as: 'trailerVideUploads',
-                        },
-                    },
-                    {
-                        $addFields: {
-                            isTrailerVidUploadTranscoded: {
-                                $ifNull: [{ $first: '$trailerVideUploads.isTranscoded' }, null],
-                            },
-                        },
-                    },
-                ],
-            },
-        },
-        {
             $project: {
                 totalPreviousSeasons: { $size: '$seasons' },
                 totalEpisodesOfLastSeason: { $size: { $ifNull: [{ $first: '$seasons.episodes' }, []] } },
                 isMovieSeries: '$is_series',
                 movieExpiryDate: { $ifNull: ['$expiry_date', undefined] },
-                movieTrailerLink: { $ifNull: ['$trailerLink', null] },
-                isMovieTrailerVidUploadTranscoded: {
-                    $ifNull: [{ $first: '$trailers.isTrailerVidUploadTranscoded' }, null],
-                },
             },
         },
     ]);

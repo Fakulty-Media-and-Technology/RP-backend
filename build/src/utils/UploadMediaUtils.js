@@ -5,7 +5,6 @@ exports.UploadMediaUtils = void 0;
 const poster_model_1 = require("../models/poster.model");
 const videos_model_1 = require("../models/videos.model");
 const OperationalError_1 = require("../utils/OperationalError");
-const seasons_model_1 = require("../models/seasons.model");
 const episodes_model_1 = require("../models/episodes.model");
 const media_management_1 = require("./../services/media-management");
 const trailer_model_1 = require("../models/trailer.model");
@@ -361,63 +360,16 @@ UploadMediaUtils._validateWithMovieAndPrevSeasonsAggrResult = (res) => {
     if (res.length === 0) {
         throw new OperationalError_1.OperationalError('invalid videoId', 404);
     }
-    const { totalEpisodesOfLastSeason, movieExpiryDate, totalPreviousSeasons, movieTrailerLink, isMovieTrailerVidUploadTranscoded, isMovieSeries, } = res[0];
+    const { totalEpisodesOfLastSeason, movieExpiryDate, totalPreviousSeasons, isMovieSeries } = res[0];
     if (!isMovieSeries) {
         throw new OperationalError_1.OperationalError('movie is not a series', 403);
     }
     if (totalPreviousSeasons > 0 && totalEpisodesOfLastSeason === 0) {
         throw new OperationalError_1.OperationalError('Creating a new season when the most recent season has no episodes is not allowed', 403);
     }
-    // Movie must not have a trailer but if it does and it is a trailer upload then season creation must wait for transcode to complete
-    if (movieTrailerLink == null && isMovieTrailerVidUploadTranscoded === false) {
-        throw new OperationalError_1.OperationalError('Movie trailer video upload has not finished transcoding', 403);
-    }
     if (movieExpiryDate && new Date() > movieExpiryDate) {
         throw new OperationalError_1.OperationalError('Movie has expired', 403);
     }
-};
-UploadMediaUtils._addSeasonWithSession = async ({ videoId, adminId, ...params }, session) => {
-    params.trailer && _a._allowMimetype(params.trailer, 'video', ' trailer must be a video file');
-    params.landscapePhoto &&
-        _a._allowMimetype(params.landscapePhoto, 'image', ' landscapePhoto must be an image file');
-    params.portraitPhoto &&
-        _a._allowMimetype(params.portraitPhoto, 'image', ' portraitPhoto must be an image file');
-    const aggrRes = await VideoRepo_1.VideoRepo.addSeasonUtilAggr(videoId);
-    _a._validateWithMovieAndPrevSeasonsAggrResult(aggrRes);
-    const season = new seasons_model_1.SeasonModel({
-        admin: adminId,
-        video: videoId,
-        description: params.description,
-        serial_number: aggrRes[0].totalPreviousSeasons + 1,
-        trailerLink: params.trailerLink,
-    });
-    if (params.landscapePhoto && params.portraitPhoto) {
-        const { landscape, portrait } = await _a._uploadAndSavePostersToDB({
-            portraitFile: params.portraitPhoto,
-            landscapeFile: params.landscapePhoto,
-            videoId: season._id,
-            posterParentType: 'season',
-        }, session);
-        season.landscapePhoto = landscape._id;
-        season.portraitPhoto = portrait.id;
-    }
-    if (params.trailer) {
-        const trailerDoc = new trailer_model_1.TrailerModel({
-            video_id: season._id,
-            parentType: 'season',
-        });
-        const tVidUploadDoc = await _a._getVideoUploadDoc({
-            file: params.trailer,
-            expire: aggrRes[0].movieExpiryDate,
-            parentId: trailerDoc._id,
-            parentType: 'trailer',
-        }, session);
-        trailerDoc.video_upload = tVidUploadDoc._id;
-        season.trailer = trailerDoc._id;
-        await trailerDoc.save({ session });
-    }
-    await season.save({ session });
-    return season;
 };
 UploadMediaUtils._validateWithSeasonAndPrevEpisodes = (aggrRes) => {
     if (aggrRes.length == 0) {
