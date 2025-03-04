@@ -237,6 +237,9 @@ UploadMediaUtils._editVideoSession = async ({ data, adminId, videoId }, session)
     if (vod == null) {
         throw new OperationalError_1.OperationalError('invalid video id', 404);
     }
+    vod.description = data.description || vod.description;
+    vod.amount = data.amount || vod.amount;
+    vod.title = data.title || vod.title;
     vod.upcoming = data.upcoming || vod.upcoming;
     vod.admin_id = (0, VideoRepo_1.toObjectId)(adminId);
     vod.description = data.description || vod.description;

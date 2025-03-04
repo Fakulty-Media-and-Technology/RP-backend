@@ -455,6 +455,10 @@ export class UploadMediaUtils {
       throw new OperationalError('invalid video id', 404)
     }
 
+    vod.description = data.description || vod.description
+    vod.amount = data.amount || vod.amount
+    vod.title = data.title || vod.title
+
     vod.upcoming = data.upcoming || vod.upcoming
     vod.admin_id = toObjectId(adminId)
     vod.description = data.description || vod.description
