@@ -45,11 +45,11 @@ Multer._configs = {
     }),
     subtitleConfig: (0, multer_1.default)({
         storage: multer_1.default.memoryStorage(),
-        fileFilter: (_, file, cb) => {
-            if (!file.mimetype.startsWith('text')) {
-                cb(new OperationalError_1.OperationalError('Only text file is allowed', 400));
-                return;
-            }
+        fileFilter: (_, __, cb) => {
+            // if (!file.mimetype.startsWith('text')) {
+            //   cb(new OperationalError('Only text file is allowed', 400))
+            //   return
+            // }
             cb(null, true);
         },
     }),

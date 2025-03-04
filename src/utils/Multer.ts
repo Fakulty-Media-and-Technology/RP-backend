@@ -48,11 +48,11 @@ export class Multer {
     subtitleConfig: multer({
       storage: multer.memoryStorage(),
 
-      fileFilter: (_, file, cb) => {
-        if (!file.mimetype.startsWith('text')) {
-          cb(new OperationalError('Only text file is allowed', 400))
-          return
-        }
+      fileFilter: (_, __, cb) => {
+        // if (!file.mimetype.startsWith('text')) {
+        //   cb(new OperationalError('Only text file is allowed', 400))
+        //   return
+        // }
 
         cb(null, true)
       },
