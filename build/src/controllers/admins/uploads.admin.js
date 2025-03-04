@@ -63,6 +63,22 @@ AdminUploadController.addSeason = Catch_1.Catch.async(async ({ body, user, param
         }),
     });
 });
+AdminUploadController.canAddSeason = Catch_1.Catch.async(async ({ params }, res) => {
+    await AdminUploadService_1.AdminUploadService.canAddSeason(params.videoId);
+    (0, responder_1.sendResponse)({
+        res,
+        message: 'Success',
+        data: { canAdd: true },
+    });
+});
+AdminUploadController.canAddEpisode = Catch_1.Catch.async(async ({ params }, res) => {
+    await AdminUploadService_1.AdminUploadService.canAddEpisode(params.seasonId);
+    (0, responder_1.sendResponse)({
+        res,
+        message: 'Success',
+        data: { canAdd: true },
+    });
+});
 AdminUploadController.addEpisode = Catch_1.Catch.async(async (req, res) => {
     if (req.body.data == null || typeof req.body.data !== 'string') {
         throw new OperationalError_1.OperationalError('formData.data is required and must be a JSON serialized string', 400);

@@ -74,6 +74,26 @@ export class AdminUploadController extends UploadMediaUtils {
     })
   })
 
+  static canAddSeason = Catch.async(async ({ params }, res) => {
+    await AdminUploadService.canAddSeason(params.videoId)
+
+    sendResponse({
+      res,
+      message: 'Success',
+      data: { canAdd: true },
+    })
+  })
+
+  static canAddEpisode = Catch.async(async ({ params }, res) => {
+    await AdminUploadService.canAddEpisode(params.seasonId)
+
+    sendResponse({
+      res,
+      message: 'Success',
+      data: { canAdd: true },
+    })
+  })
+
   static addEpisode = Catch.async(async (req, res) => {
     if (req.body.data == null || typeof req.body.data !== 'string') {
       throw new OperationalError(

@@ -13,6 +13,9 @@ superAdminUploadsRouter.post(
   AdminUploadController.addVideo,
 )
 
+superAdminUploadsRouter.get('/episodes/can-add/:seasonId', AdminUploadController.canAddEpisode)
+superAdminUploadsRouter.get('/seasons/can-add/:videoId', AdminUploadController.canAddSeason)
+
 superAdminUploadsRouter.post(
   '/episodes/add/:seasonId',
   Multer.adminUploadVideoConfig,

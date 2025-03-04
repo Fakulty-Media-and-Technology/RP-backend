@@ -48,6 +48,16 @@ export class AdminUploadService extends UploadMediaUtils {
     })
   }
 
+  static canAddSeason = async (videoId: string) => {
+    const aggrRes = await VideoRepo.addSeasonUtilAggr(videoId)
+    this._validateWithMovieAndPrevSeasonsAggrResult(aggrRes)
+  }
+
+  static canAddEpisode = async (seasonId: string) => {
+    const aggrUtilsRes = await VideoRepo.addEpisodeUtilAggr(seasonId)
+    this._validateWithSeasonAndPrevEpisodes(aggrUtilsRes)
+  }
+
   static addEpisode = async (input: AddEpisodeInput) =>
     await withMongoDBSession(this._addEpisodesWithSession, input)
 

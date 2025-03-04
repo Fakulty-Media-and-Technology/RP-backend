@@ -32,6 +32,14 @@ AdminUploadService.addSeason = async ({ videoId, adminId, description }) => {
         serial_number: aggrRes[0].totalPreviousSeasons + 1,
     });
 };
+AdminUploadService.canAddSeason = async (videoId) => {
+    const aggrRes = await VideoRepo_1.VideoRepo.addSeasonUtilAggr(videoId);
+    _a._validateWithMovieAndPrevSeasonsAggrResult(aggrRes);
+};
+AdminUploadService.canAddEpisode = async (seasonId) => {
+    const aggrUtilsRes = await VideoRepo_1.VideoRepo.addEpisodeUtilAggr(seasonId);
+    _a._validateWithSeasonAndPrevEpisodes(aggrUtilsRes);
+};
 AdminUploadService.addEpisode = async (input) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._addEpisodesWithSession, input);
 AdminUploadService.editVideo = async (input) => await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._editVideoSession, input);
 AdminUploadService.deleteVideo = async (vidId, type) => {
