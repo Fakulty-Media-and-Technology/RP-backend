@@ -1,7 +1,9 @@
-import { UpdateQuery, Types } from 'mongoose'
+import { UpdateQuery, Types, PipelineStage } from 'mongoose'
 import { UserModel, UserSchema, User } from '../models/users.model'
 import { StringOrObjectId } from '../types'
 import { Wallet } from '../models/wallet.model'
+import { skip } from '../utils/QueryParamsFeatures'
+import { toObjectId } from './VideoRepo'
 
 type UserRole = User['role']
 type UserRoles = Array<UserRole>
@@ -137,5 +139,55 @@ export class UserRepo {
         },
       },
     ])
+  }
+
+  private static _adminFetchUsers = async (
+    match: PipelineStage.Match,
+    page: number,
+    limit: number,
+  ) => {
+    const result = await UserModel.aggregate([
+      match,
+      {
+        $project: {
+          fullname: {
+            $concat: ['$first_name', ' ', '$last_name'],
+          },
+          mobile: true,
+          gender: true,
+          dob: true,
+          email: true,
+          totalSub: true,
+          joined: '$createdAt',
+          substatus: {
+            $cond: {
+              if: { $eq: ['$verified', true] },
+              then: 'Active',
+              else: 'Inactive',
+            },
+          },
+          verified: true,
+        },
+      },
+      { $skip: skip(page, limit) },
+      { $limit: limit },
+    ])
+
+    return result as Array<
+      Pick<User, 'email' | 'verified' | '_id' | 'mobile' | 'gender' | 'dob'> & {
+        joined: Date
+        fullname: string
+        substatus: 'Active' | 'Inactive'
+        totalSub: number | undefined | null
+      }
+    >
+  }
+
+  static adminFetchAllUsersAggr = async (page: number, limit: number) => {
+    return this._adminFetchUsers({ $match: {} }, page, limit)
+  }
+
+  static adminFetchSingleUserAggr = (userId: string) => {
+    return this._adminFetchUsers({ $match: { _id: toObjectId(userId) } }, 1, 1)
   }
 }

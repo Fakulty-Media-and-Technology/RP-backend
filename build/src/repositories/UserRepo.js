@@ -3,6 +3,8 @@ var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserRepo = void 0;
 const users_model_1 = require("../models/users.model");
+const QueryParamsFeatures_1 = require("../utils/QueryParamsFeatures");
+const VideoRepo_1 = require("./VideoRepo");
 class UserRepo {
 }
 exports.UserRepo = UserRepo;
@@ -125,4 +127,39 @@ UserRepo.getAClient = (clinetId) => {
             },
         },
     ]);
+};
+UserRepo._adminFetchUsers = async (match, page, limit) => {
+    const result = await users_model_1.UserModel.aggregate([
+        match,
+        {
+            $project: {
+                fullname: {
+                    $concat: ['$first_name', ' ', '$last_name'],
+                },
+                mobile: true,
+                gender: true,
+                dob: true,
+                email: true,
+                totalSub: true,
+                joined: '$createdAt',
+                substatus: {
+                    $cond: {
+                        if: { $eq: ['$verified', true] },
+                        then: 'Active',
+                        else: 'Inactive',
+                    },
+                },
+                verified: true,
+            },
+        },
+        { $skip: (0, QueryParamsFeatures_1.skip)(page, limit) },
+        { $limit: limit },
+    ]);
+    return result;
+};
+UserRepo.adminFetchAllUsersAggr = async (page, limit) => {
+    return _a._adminFetchUsers({ $match: {} }, page, limit);
+};
+UserRepo.adminFetchSingleUserAggr = (userId) => {
+    return _a._adminFetchUsers({ $match: { _id: (0, VideoRepo_1.toObjectId)(userId) } }, 1, 1);
 };

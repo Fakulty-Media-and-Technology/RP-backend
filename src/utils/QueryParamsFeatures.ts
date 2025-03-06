@@ -2,8 +2,10 @@ import { Query } from 'mongoose'
 import { Request } from 'express'
 import { OperationalError } from './OperationalError'
 
+export type ExpressRequestQuery = Request['query']
+
 export type QueryParamsFeaturesOptions = {
-  queryParams: Request['query']
+  queryParams: ExpressRequestQuery
   defaultPage?: number
   defaultLimit?: number
 }
@@ -13,17 +15,9 @@ export const handleDefaultNumAndUnknown = (val: unknown, defaultNum: number) => 
     return defaultNum
   }
 
-  if (/^[0-9]+$/.test(val) === false) {
-    return defaultNum
-  }
-
   const num = Number(val)
 
-  if (num <= 0) {
-    throw new OperationalError('pagination values cannot be less than or equal zero', 400)
-  }
-
-  return num
+  return Number.isNaN(num) || num <= 0 ? defaultNum : num
 }
 
 export const skip = (page: number, limit: number) => (page - 1) * limit

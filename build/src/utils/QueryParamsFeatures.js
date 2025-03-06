@@ -1,19 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueryParamsFeatures = exports.skip = exports.handleDefaultNumAndUnknown = void 0;
-const OperationalError_1 = require("./OperationalError");
 const handleDefaultNumAndUnknown = (val, defaultNum) => {
     if (typeof val !== 'string') {
         return defaultNum;
     }
-    if (/^[0-9]+$/.test(val) === false) {
-        return defaultNum;
-    }
     const num = Number(val);
-    if (num <= 0) {
-        throw new OperationalError_1.OperationalError('pagination values cannot be less than or equal zero', 400);
-    }
-    return num;
+    return Number.isNaN(num) || num <= 0 ? defaultNum : num;
 };
 exports.handleDefaultNumAndUnknown = handleDefaultNumAndUnknown;
 const skip = (page, limit) => (page - 1) * limit;
