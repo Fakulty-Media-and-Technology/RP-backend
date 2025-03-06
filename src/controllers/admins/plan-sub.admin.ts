@@ -1,26 +1,11 @@
-import { PlanModel } from '../../models/plans.model'
-import { SubscriptionModel } from '../../models/subscription.model'
+import { AdminPlanSubService } from '../../services/core/AdminPlanService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
-import { OperationalError } from '../../utils/OperationalError'
-import { handleDefaultNumAndUnknown, skip } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
-
-
 
 export class AdminPlanSubController {
   static createPlan = Catch.async(async (req, res) => {
-    const admin = GetDefined.loggedInUser(req.user)
-
-    const { title, months: months_duration, price, details } = req.body
-
-    await PlanModel.create({
-      title,
-      price,
-      details,
-      months_duration,
-      admin_id: admin._id,
-    })
+    await AdminPlanSubService.createPlan(GetDefined.loggedInUser(req.user), req.body)
 
     sendResponse({
       res,
@@ -29,16 +14,7 @@ export class AdminPlanSubController {
   })
 
   static updatePlan = Catch.async(async (req, res) => {
-    const planUpdate = await PlanModel.findOneAndUpdate(
-      {
-        _id: req.params.id,
-      },
-      { $set: req.body },
-    )
-
-    if (planUpdate == null) {
-      throw new OperationalError('invalid Plan ID', 400)
-    }
+    await AdminPlanSubService.updatePlan(req.params.id, req.body)
 
     sendResponse({
       res,
@@ -46,81 +22,24 @@ export class AdminPlanSubController {
     })
   })
 
-  static fetchPlans = Catch.async(async (_, res) => {
-    const plans = await PlanModel.find({ months_duration: { $gt: 0 } }).select('-__v')
-
+  static fetchPlans = Catch.async(async (req, res) => {
     sendResponse({
       res,
-      data: plans,
+      data: await AdminPlanSubService.fetchPlans(req.query),
       message: 'plan fetched',
     })
   })
 
   static fetchSubscriptions = Catch.async(async ({ query }, res) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 1)
-
-    const plans = await SubscriptionModel.aggregate([
-      {
-        $lookup: {
-          from: 'plans',
-          localField: 'plan_id',
-          foreignField: '_id',
-          as: 'planRef',
-
-          pipeline: [
-            {
-              $project: {
-                title: 1,
-                price: 1,
-                months_duration: 1,
-                description: 1,
-              },
-            },
-          ],
-        },
-      },
-      {
-        $set: {
-          plan: {
-            $first: '$planRef',
-          },
-        },
-      },
-      {
-        $sort: {
-          createdAt: -1,
-        },
-      },
-      {
-        $skip: skip(page, limit),
-      },
-      {
-        $limit: limit,
-      },
-      {
-        $project: {
-          planRef: 0,
-          __v: 0,
-        },
-      },
-    ])
-
     sendResponse({
       res,
-      data: plans,
-      message: 'plans fetched',
+      data: await AdminPlanSubService.fetchSubs(query),
+      message: 'plan subs fetched',
     })
   })
 
   static deletePlans = Catch.async(async (req, res) => {
-    const deletePlan = await PlanModel.findOneAndDelete({
-      _id: req.params.id,
-    })
-
-    if (deletePlan == null) {
-      throw new OperationalError('plan can not be deleted or not found', 400)
-    }
+    await AdminPlanSubService.deletePlan(req.params.id)
 
     sendResponse({
       res,
