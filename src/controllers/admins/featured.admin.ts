@@ -1,6 +1,5 @@
 import { FeaturedService } from '../../services/core/FeaturedService'
 import { Catch } from '../../utils/Catch'
-import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminFeaturedController {
