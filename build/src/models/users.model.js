@@ -93,6 +93,7 @@ const schema = new mongoose_1.Schema({
                 ...user,
                 auth_code: undefined,
                 auth_expiry: undefined,
+                verified: undefined,
                 approved: undefined,
                 suspended: undefined,
                 updatedAt: undefined,

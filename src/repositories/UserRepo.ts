@@ -1,6 +1,7 @@
-import { UpdateQuery } from 'mongoose'
+import { UpdateQuery, Types } from 'mongoose'
 import { UserModel, UserSchema, User } from '../models/users.model'
 import { StringOrObjectId } from '../types'
+import { Wallet } from '../models/wallet.model'
 
 type UserRole = User['role']
 type UserRoles = Array<UserRole>

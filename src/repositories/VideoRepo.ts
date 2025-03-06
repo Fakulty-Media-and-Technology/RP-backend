@@ -374,51 +374,6 @@ export class VideoRepo {
   private static _seasonPipeline: PipelineStage[] = [
     {
       $lookup: {
-        from: 'poster_images',
-        localField: '_id',
-        foreignField: 'video_id',
-        as: 'landscapePhoto',
-        pipeline: [
-          { $match: { dimension: 'landscape' } },
-          { $project: { key: true, bucket: true } },
-        ],
-      },
-    },
-    {
-      $lookup: {
-        from: 'poster_images',
-        localField: '_id',
-        foreignField: 'video_id',
-        as: 'portraitPhoto',
-        pipeline: [
-          { $match: { dimension: 'portrait' } },
-          { $project: { key: true, bucket: true } },
-        ],
-      },
-    },
-    {
-      $lookup: {
-        from: 'trailers',
-        localField: '_id',
-        foreignField: 'video_id',
-        as: 'trailer',
-        pipeline: [
-          {
-            $lookup: {
-              from: 'video_uploads',
-              localField: '_id',
-              foreignField: 'parentId',
-              as: 'trailerVideoUpload',
-              pipeline: [{ $project: { key: true, isTranscoded: true, resolutions: true } }],
-            },
-          },
-
-          { $addFields: { trailerVideoUpload: { $first: '$trailerVideoUpload' } } },
-        ],
-      },
-    },
-    {
-      $lookup: {
         from: 'episodes',
         localField: '_id',
         foreignField: 'season',
@@ -439,9 +394,6 @@ export class VideoRepo {
     {
       $addFields: {
         viewsCount: { $size: '$views' },
-        trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
-        portraitPhoto: { $first: '$portraitPhoto' },
-        landscapePhoto: { $first: '$landscapePhoto' },
       },
     },
 

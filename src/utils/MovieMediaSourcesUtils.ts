@@ -48,37 +48,13 @@ export class MovieMediaSourcesUtils {
   ) => {
     const seasonsWithSources = await Promise.all(
       seasons.map(async season => {
-        Object.assign(season, {
-          trailer: this._getMovieVideoSource(season, 'trailer', quality),
-
-          landscapePhoto: season.landscapePhoto
-            ? await MediaAccess.getSignedUrl(
-                season.landscapePhoto.bucket,
-                season.landscapePhoto.key,
-                'photo',
-              )
-            : null,
-
-          portraitPhoto: season.portraitPhoto
-            ? await MediaAccess.getSignedUrl(
-                season.portraitPhoto.bucket,
-                season.portraitPhoto.key,
-                'photo',
-              )
-            : null,
-
-          trailerVideoUpload: undefined,
-          trailerLink: undefined,
-        })
-
         if (episodesMediaResolver) {
           season.episodes = await episodesMediaResolver(season.episodes, withMediaSources, quality)
         }
-
         return season
       }),
     )
-
+    
     return seasonsWithSources as Season[]
   }
   public static resolveEpisodesMediaSources = async (
@@ -91,10 +67,10 @@ export class MovieMediaSourcesUtils {
         if (!withMediaSources) return
 
         Object.assign(episode, {
-          trailerVideoUpload: undefined,
-          videoUpload: undefined,
           video: this._getMovieVideoSource(episode, 'vid', quality),
           trailer: this._getMovieVideoSource(episode, 'trailer', quality),
+          trailerVideoUpload: undefined,
+          videoUpload: undefined,
           trailerLink: undefined,
           videoLink: undefined,
         })

@@ -3,4 +3,4 @@ import { ClientProfileController } from '../../controllers/clients/profile.clien
 
 export const router = Router()
 
-router.route('/').get(ClientProfileController.clientProfileFetch)
+router.route('/fetch').get(ClientProfileController.clientProfileFetch)
