@@ -9,15 +9,6 @@ const GetDefined_1 = require("../../utils/GetDefined");
 const OperationalError_1 = require("../../utils/OperationalError");
 const QueryParamsFeatures_1 = require("../../utils/QueryParamsFeatures");
 const responder_1 = require("../../utils/responder");
-// async function convertToLocalCurrency(usdAmount, userCurrency) {
-//   const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`)
-//   const data = await response.json()
-//   const rate = data.rates[userCurrency]
-//   if (!rate) {
-//     throw new Error('Currency not supported')
-//   }
-//   return (usdAmount * rate).toFixed(2)
-// }
 class AdminPlanSubController {
 }
 exports.AdminPlanSubController = AdminPlanSubController;
