@@ -20,6 +20,7 @@ import { superAdminTrailerRouter } from './trailerRoute'
 import { superAdminUpcomingRouter } from './upcomingRoute'
 import { superAdminUploadsRouter } from './uploadRoute'
 import { superAdminUsersRouter } from './userRouter'
+import { throwDepricatedRoute } from '../../middlewares/depricate'
 
 export const superAdminRouter = express.Router()
 const sharedRoutes = new SharedRoutes(superAdminRouter)
@@ -35,7 +36,7 @@ superAdminRouter.use('/enums', superAdminEnumsRouter)
 superAdminRouter.use('/media', superAdminMediaRouter)
 superAdminRouter.use('/lives', superAdminLivesRouter)
 superAdminRouter.use('/upcoming', superAdminUpcomingRouter)
-superAdminRouter.use('/trailer', superAdminTrailerRouter)
+superAdminRouter.use('/trailer', throwDepricatedRoute, superAdminTrailerRouter)
 superAdminRouter.use('/giftcard', superAdminGiftCardRouter)
 superAdminRouter.use('/payouts', superAdminPayoutsRouter)
 superAdminRouter.use('/suggestions', superAdminSuggestionsRouter)
@@ -45,7 +46,6 @@ superAdminRouter.use('/uploads', superAdminUploadsRouter)
 superAdminRouter.use('/user', superAdminUsersRouter)
 superAdminRouter.use('/dashboard', superAdminDashboardRouter)
 superAdminRouter.use('/ads', superAdminAdsRouter)
-
 
 superAdminRouter.post(
   '/create-super-admin',
