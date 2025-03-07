@@ -109,6 +109,18 @@ const schema = new Schema(
       default: false,
     },
 
+    upcoming: {
+      type: Boolean,
+      default: false,
+    },
+
+    upcomingSubscribers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'users',
+      },
+    ],
+
     featured: {
       type: Boolean,
       default: false,
