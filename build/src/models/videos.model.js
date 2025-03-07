@@ -100,12 +100,15 @@ const schema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
-    upcomingSubscribers: [
-        {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'users',
-        },
-    ],
+    upcomingSubscribers: {
+        type: [
+            {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'users',
+            },
+        ],
+        default: [],
+    },
     feat_expiry: {
         type: Date,
     },

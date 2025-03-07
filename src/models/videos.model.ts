@@ -1,5 +1,6 @@
-import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import mongoose, { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { OperationalError } from '../utils/OperationalError'
+import env from '../env'
 
 export const videoTypes = ['movie', 'series', 'music-video', 'skit'] as const
 
@@ -121,12 +122,15 @@ const schema = new Schema(
       default: false,
     },
 
-    upcomingSubscribers: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'users',
-      },
-    ],
+    upcomingSubscribers: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'users',
+        },
+      ],
+      default: [],
+    },
 
     feat_expiry: {
       type: Date,
