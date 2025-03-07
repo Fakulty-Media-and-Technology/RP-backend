@@ -107,6 +107,7 @@ MedaiService._createLiveSession = async (data, session) => {
         pg: data.pg,
         description: data.description,
         type: data.type,
+        upcoming: data.upcoming ?? false,
         start: new Date(data.start),
         expiry: new Date(data.expiry),
         sponsored: data.sponsored,

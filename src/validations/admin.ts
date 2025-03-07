@@ -176,6 +176,7 @@ export const addLiveSchema = Joi.object({
   vidClass: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
   type: LIVE_TYPE_SCHEMA.required(),
   sponsored: Joi.boolean(),
+  upcoming: Joi.boolean(),
   popular: Joi.boolean(),
   location: STRING_SCHEMA,
 })

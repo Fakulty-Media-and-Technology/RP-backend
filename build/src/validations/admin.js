@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createAdSchema = exports.createClientSchema = exports.createAdminORSuperAdminSchema = exports.updateCategorySchema = exports.addCategorySchema = exports.addCastSchema = exports.addGenreSchema = exports.addFeaturedContentSchema = exports.updatePayOutReqStatusSchema = exports.createGiftCardSchema = exports.updateTrailerSchema = exports.createTrailerSchema = exports.updatePlanSchema = exports.createPlanSchema = exports.createUpcomingEventSchema = exports.addLiveSchema = exports.getPhotoURLSchema = exports.addSubtitleSchema = exports.editVideoSchema = exports.addMusicVideoSchema = exports.addSeriesSchema = exports.addMovieOrSkitSchema = exports.addEpisodeSchema = void 0;
+exports.upcomingAllGetSchema = exports.createAdSchema = exports.createClientSchema = exports.createAdminORSuperAdminSchema = exports.updateCategorySchema = exports.addCategorySchema = exports.addCastSchema = exports.addGenreSchema = exports.addFeaturedContentSchema = exports.updatePayOutReqStatusSchema = exports.createGiftCardSchema = exports.updateTrailerSchema = exports.createTrailerSchema = exports.updatePlanSchema = exports.createPlanSchema = exports.createUpcomingEventSchema = exports.addLiveSchema = exports.getPhotoURLSchema = exports.addSubtitleSchema = exports.editVideoSchema = exports.addMusicVideoSchema = exports.addSeriesSchema = exports.addMovieOrSkitSchema = exports.addEpisodeSchema = void 0;
 const joi_1 = __importDefault(require("joi"));
 const common_1 = require("./common");
 exports.addEpisodeSchema = joi_1.default.object({
@@ -138,6 +138,7 @@ exports.addLiveSchema = joi_1.default.object({
     vidClass: common_1.STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
     type: common_1.LIVE_TYPE_SCHEMA.required(),
     sponsored: joi_1.default.boolean(),
+    upcoming: joi_1.default.boolean(),
     popular: joi_1.default.boolean(),
     location: common_1.STRING_SCHEMA,
 });
@@ -265,5 +266,12 @@ exports.createAdSchema = {
         start: common_1.STRING_SCHEMA.isoDate(),
         expiry: common_1.STRING_SCHEMA.isoDate(),
         active: joi_1.default.boolean(),
+    }),
+};
+exports.upcomingAllGetSchema = {
+    query: joi_1.default.object({
+        page: joi_1.default.number(),
+        limit: joi_1.default.number(),
+        contentType: common_1.STRING_SCHEMA.valid('live', 'vod').required(),
     }),
 };

@@ -30,6 +30,7 @@ export type CreateLiveData = {
   expiry: string
   description?: string
   location?: string
+  upcoming?: boolean
   coverPhoto: Express.Multer.File
   previewVideo?: Express.Multer.File
   sponsored?: boolean
@@ -189,6 +190,7 @@ export class MedaiService {
       pg: data.pg,
       description: data.description,
       type: data.type,
+      upcoming: data.upcoming ?? false,
       start: new Date(data.start),
       expiry: new Date(data.expiry),
       sponsored: data.sponsored,
