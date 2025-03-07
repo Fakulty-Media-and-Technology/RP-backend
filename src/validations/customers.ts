@@ -1,6 +1,23 @@
 import Joi from 'joi'
 import { MONGO_DB_OBJECT_ID_SCHEMA, STRING_SCHEMA } from './common'
 
+export const fetchUpcomingSchema = {
+  query: Joi.object({
+    page: Joi.number(),
+    limit: Joi.number(),
+    contentType: STRING_SCHEMA.valid('live', 'vod').required(),
+  }),
+}
+
+export const subscriptionSchema = {
+  params: Joi.object({
+    id: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    contentType: STRING_SCHEMA.valid('live', 'vod').required(),
+  }),
+}
+
+export const isSubscribedSchema = subscriptionSchema
+
 export const createCommentSchema = {
   body: Joi.object({
     message: STRING_SCHEMA.required(),

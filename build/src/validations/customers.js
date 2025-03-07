@@ -3,9 +3,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.viewContentSchema = exports.updateRatingSchema = exports.createRatingSchema = exports.updateCommentSchema = exports.createCommentSchema = void 0;
+exports.viewContentSchema = exports.updateRatingSchema = exports.createRatingSchema = exports.updateCommentSchema = exports.createCommentSchema = exports.isSubscribedSchema = exports.subscriptionSchema = exports.fetchUpcomingSchema = void 0;
 const joi_1 = __importDefault(require("joi"));
 const common_1 = require("./common");
+exports.fetchUpcomingSchema = {
+    query: joi_1.default.object({
+        page: joi_1.default.number(),
+        limit: joi_1.default.number(),
+        contentType: common_1.STRING_SCHEMA.valid('live', 'vod').required(),
+    }),
+};
+exports.subscriptionSchema = {
+    params: joi_1.default.object({
+        id: common_1.MONGO_DB_OBJECT_ID_SCHEMA.required(),
+        contentType: common_1.STRING_SCHEMA.valid('live', 'vod').required(),
+    }),
+};
+exports.isSubscribedSchema = exports.subscriptionSchema;
 exports.createCommentSchema = {
     body: joi_1.default.object({
         message: common_1.STRING_SCHEMA.required(),

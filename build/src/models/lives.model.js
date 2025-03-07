@@ -89,6 +89,16 @@ const schema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
+    upcoming: {
+        type: Boolean,
+        default: false,
+    },
+    upcomingSubscribers: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'users',
+        },
+    ],
     featured: {
         type: Boolean,
         default: false,

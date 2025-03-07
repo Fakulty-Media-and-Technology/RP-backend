@@ -16,6 +16,20 @@ LiveRepo.addFeatured = (id, expiry) => {
     });
 };
 LiveRepo.totalActiveLiveQuery = () => lives_model_1.LiveModel.find({ active: true });
+LiveRepo.fetchActiveUpcoming = async (page, limit) => {
+    return await _a.fetchLivesAggr({
+        prevStages: [{ $match: { upcoming: true, active: true } }],
+        page,
+        limit,
+    });
+};
+LiveRepo.fetchUpcoming = async (page, limit) => {
+    return await _a.fetchLivesAggr({
+        prevStages: [{ $match: { upcoming: true } }],
+        page,
+        limit,
+    });
+};
 LiveRepo.getByStreamKey = async (streamKey) => {
     return await _a.fetchLivesAggr({
         prevStages: [
@@ -101,9 +115,11 @@ LiveRepo.fetchLivesByType = async (type, page, limit) => {
     });
 };
 LiveRepo.fetchLivesAggr = async ({ prevStages, sortStage, page, limit }) => {
-    const sortPaginateStages = [{ $skip: (0, QueryParamsFeatures_1.skip)(page, limit) }, { $limit: limit }];
-    if (sortStage)
-        sortPaginateStages.unshift(sortStage);
+    const sortPaginateStages = [
+        sortStage ?? { $sort: { _id: -1 } },
+        { $skip: (0, QueryParamsFeatures_1.skip)(page, limit) },
+        { $limit: limit },
+    ];
     const aggr = await lives_model_1.LiveModel.aggregate([
         ...prevStages,
         {

@@ -11,20 +11,35 @@ class CustomerUpcomingController {
 exports.CustomerUpcomingController = CustomerUpcomingController;
 _a = CustomerUpcomingController;
 CustomerUpcomingController.fetch = Catch_1.Catch.async(async ({ query, user }, res) => {
+    const upcoming = await UpcomingService_1.UpcomingService.customerFetch({
+        contentType: query.contentType,
+        currentUser: GetDefined_1.GetDefined.loggedInUser(user),
+        page: query.page,
+        limit: query.limit,
+    });
     (0, responder_1.sendResponse)({
         res,
-        data: await UpcomingService_1.UpcomingService.customerFetch(query, GetDefined_1.GetDefined.loggedInUser(user)),
+        data: upcoming,
     });
 });
-CustomerUpcomingController.subscription = (type) => Catch_1.Catch.async(async ({ user, params: { id } }, res) => {
-    await UpcomingService_1.UpcomingService.customerSubscription(GetDefined_1.GetDefined.loggedInUser(user), id, type);
+CustomerUpcomingController.subscription = (action) => Catch_1.Catch.async(async ({ user, params: { id, contentType } }, res) => {
+    await UpcomingService_1.UpcomingService.customerSubscription({
+        action,
+        currentUser: GetDefined_1.GetDefined.loggedInUser(user),
+        contentId: id,
+        contentType: contentType,
+    });
     (0, responder_1.sendResponse)({
         res,
         message: 'subscription updated successfully',
     });
 });
-CustomerUpcomingController.isSubscribed = Catch_1.Catch.async(async ({ user, params: { id } }, res) => {
-    const user_subscribed = await UpcomingService_1.UpcomingService.customerIsSubscribed(GetDefined_1.GetDefined.loggedInUser(user), id);
+CustomerUpcomingController.isSubscribed = Catch_1.Catch.async(async ({ user, params: { id, contentType } }, res) => {
+    const user_subscribed = await UpcomingService_1.UpcomingService.customerIsSubscribed({
+        contentId: id,
+        contentType: contentType,
+        currentUser: GetDefined_1.GetDefined.loggedInUser(user),
+    });
     (0, responder_1.sendResponse)({
         res,
         data: { user_subscribed },

@@ -20,6 +20,22 @@ export class LiveRepo {
 
   static totalActiveLiveQuery = () => LiveModel.find({ active: true })
 
+  static fetchActiveUpcoming = async (page: number, limit: number) => {
+    return await this.fetchLivesAggr({
+      prevStages: [{ $match: { upcoming: true, active: true } }],
+      page,
+      limit,
+    })
+  }
+
+  static fetchUpcoming = async (page: number, limit: number) => {
+    return await this.fetchLivesAggr({
+      prevStages: [{ $match: { upcoming: true } }],
+      page,
+      limit,
+    })
+  }
+
   static getByStreamKey = async (streamKey: string) => {
     return await this.fetchLivesAggr({
       prevStages: [
@@ -113,9 +129,11 @@ export class LiveRepo {
   }
 
   static fetchLivesAggr = async ({ prevStages, sortStage, page, limit }: FetchLives) => {
-    const sortPaginateStages: PipelineStage[] = [{ $skip: skip(page, limit) }, { $limit: limit }]
-
-    if (sortStage) sortPaginateStages.unshift(sortStage)
+    const sortPaginateStages: PipelineStage[] = [
+      sortStage ?? { $sort: { _id: -1 } },
+      { $skip: skip(page, limit) },
+      { $limit: limit },
+    ]
 
     const aggr = await LiveModel.aggregate([
       ...prevStages,

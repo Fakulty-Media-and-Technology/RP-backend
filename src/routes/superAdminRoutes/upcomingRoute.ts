@@ -1,15 +1,12 @@
 import { Router } from 'express'
 import { AdminUpcomingController } from '../../controllers/admins/upcoming.admin'
-import { Multer } from '../../utils/Multer'
-import { throwDepricatedRoute } from '../../middlewares/depricate'
+import { requestValidator } from '../../middlewares/requestValidator'
+import { upcomingAllGetSchema } from '../../validations/admin'
 
 export const superAdminUpcomingRouter = Router()
 
-superAdminUpcomingRouter.post(
-  '/event/create',
-  throwDepricatedRoute,
-  Multer.createUpcomingConfig,
-  AdminUpcomingController.createUpcomingEvent,
+superAdminUpcomingRouter.get(
+  '/event/getall',
+  requestValidator(upcomingAllGetSchema),
+  AdminUpcomingController.upcomingsAllGet,
 )
-
-superAdminUpcomingRouter.get('/event/getall', AdminUpcomingController.upcomingsAllGet)

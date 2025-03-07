@@ -1,17 +1,16 @@
 import { Request } from 'express'
-import { TrailerModel } from '../../models/trailer.model'
-import { UpcomingModel } from '../../models/upcoming.model'
 import { OperationalError } from '../../utils/OperationalError'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { LoggedInUser } from '../../types'
 import { denyGuestUser } from '../../utils/denyGuestUser'
-import { ClientSession } from 'mongoose'
-import { AdminUploadService } from './AdminUploadService'
-import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 import { VideoRepo } from '../../repositories/VideoRepo'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
-import { VideoModel } from '../../models/videos.model'
+import { Video, VideoModel } from '../../models/videos.model'
+import { Live, LiveModel } from '../../models/lives.model'
+import { FilterQuery, UpdateQuery } from 'mongoose'
+import { LiveRepo } from '../../repositories/LiveRepo'
+import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
@@ -27,123 +26,119 @@ export type UpcomingData = {
   active?: boolean
 }
 
-export class UpcomingService extends AdminUploadService {
-  private static _createUpcomingWithSession = async (
-    data: UpcomingData,
-    session: ClientSession,
-  ) => {
-    if (data.trailer && data.trailerLink) {
-      throw new OperationalError(
-        'trailer and trailerLink are optional but only ONE MAY be provided',
-        400,
-      )
-    }
+type ContentType = 'live' | 'vod'
 
-    this._allowMimetype(data.landscapePhoto, 'image', 'landscapePhoto must be an image')
-    this._allowMimetype(data.portraitPhoto, 'image', 'portraitPhoto must be an image')
+type customerSubscriptionInput = {
+  currentUser: LoggedInUser
+  contentId: string
+  action: CustomerSubScriptionActionType
+  contentType: ContentType
+}
 
-    const upcoming = new UpcomingModel({
-      title: data.title,
-      type: data.type,
-      trailerLink: data.trailerLink,
-      details: data.details,
-      releaseDate: data.releaseDate,
-      active: data.active,
-    })
 
-    const photosDocs = await this._uploadAndSavePostersToDB(
-      {
-        landscapeFile: data.landscapePhoto,
-        portraitFile: data.portraitPhoto,
-        videoId: upcoming._id,
-        posterParentType: 'upcoming',
-      },
-      session,
-    )
+type AdminFetchInput = {
+  contentType: ContentType
+  page: unknown
+  limit: unknown
+}
 
-    upcoming.landscapePhoto = photosDocs.landscape._id
-    upcoming.portraitPhoto = photosDocs.portrait._id
+type CustomerFetchInput = AdminFetchInput & {
+  currentUser: LoggedInUser
+}
 
-    if (data.trailer) {
-      this._allowMimetype(data.trailer, 'video', 'trailer must be a video')
+type IsSubscribedInput = {
+  currentUser: LoggedInUser
+  contentId: string
+  contentType: ContentType
+}
 
-      const trailerDoc = new TrailerModel({
-        video_id: upcoming._id,
-        parentType: 'upcoming',
-      })
+export class UpcomingService {
+  static adminFetch = async ({ contentType, ...params }: AdminFetchInput) => {
+    const page = handleDefaultNumAndUnknown(params.page, 1)
+    const limit = handleDefaultNumAndUnknown(params.limit, 10)
 
-      const tVidUploadDoc = await this._getVideoUploadDoc(
-        {
-          file: data.trailer,
-          expire: undefined,
-          parentId: trailerDoc._id,
-          parentType: 'trailer',
-        },
-        session,
-      )
-
-      trailerDoc.video_upload = tVidUploadDoc._id
-      upcoming.peviewTrailer = trailerDoc._id
-      await trailerDoc.save({ session })
-    }
-
-    await upcoming.save({ session })
-    return upcoming
+    return contentType === 'vod'
+      ? await MovieMediaSourcesUtils.resolveMediaSources(
+          await VideoRepo.fetchUpcoming(page, limit),
+          true,
+          '720p',
+        )
+      : await LiveMediaSourcesUtils.resolveSources(
+          await LiveRepo.fetchUpcoming(page, limit),
+          '720p',
+        )
   }
 
-  static adminCreate = async (data: UpcomingData) => {
-    return withMongoDBSession(this._createUpcomingWithSession, data)
-  }
-
-  static adminFetch = async (query: Request['query']) => {
-    const vids = await VideoRepo.fetchUpcoming(
-      handleDefaultNumAndUnknown(query.page, 1),
-      handleDefaultNumAndUnknown(query.limit, 10),
-    )
-
-    return await MovieMediaSourcesUtils.resolveMediaSources(vids, true, '720p')
-  }
-
-  static customerFetch = async (query: Request['query'], currentUser: LoggedInUser) => {
-    const [vidQuality, vods] = await Promise.all([
-      VidUploadUtils.getUserVideoQuality(currentUser._id.toString(), '480p'),
-
-      //
-      VideoRepo.fetchActiveUpcoming(
-        handleDefaultNumAndUnknown(query.page, 1),
-        handleDefaultNumAndUnknown(query.limit, 10),
-      ),
-    ])
-
-    return await MovieMediaSourcesUtils.resolveMediaSources(vods, true, vidQuality)
-  }
-
-  static customerSubscription = async (
-    currentUser: LoggedInUser,
-    vidId: string,
-    action: CustomerSubScriptionActionType,
-  ) => {
+  static customerFetch = async ({ contentType, currentUser, ...params }: CustomerFetchInput) => {
     denyGuestUser(currentUser)
 
-    const upcoming = await VideoModel.findByIdAndUpdate(vidId, {
+    const page = handleDefaultNumAndUnknown(params.page, 1)
+    const limit = handleDefaultNumAndUnknown(params.limit, 10)
+
+    const videoQuality = await VidUploadUtils.getUserVideoQuality(
+      currentUser._id.toString(),
+      '480p',
+    )
+
+    return contentType === 'vod'
+      ? await MovieMediaSourcesUtils.resolveMediaSources(
+          await VideoRepo.fetchActiveUpcoming(page, limit),
+          true,
+          videoQuality,
+        )
+      : await LiveMediaSourcesUtils.resolveSources(
+          await LiveRepo.fetchActiveUpcoming(page, limit),
+          videoQuality,
+        )
+  }
+
+  static customerSubscription = async ({
+    currentUser,
+    action,
+    contentId,
+    contentType,
+  }: customerSubscriptionInput) => {
+    denyGuestUser(currentUser)
+
+    const sharedFilter: FilterQuery<Live | Video> = {
+      _id: contentId,
+      upcoming: true,
+    }
+
+    const sharedUpdate: UpdateQuery<Live | Video> = {
       [action === 'subscribe' ? '$addToSet' : '$pull']: {
         upcomingSubscribers: currentUser._id,
       },
-    })
+      new: true,
+    }
+
+    let upcoming: Live | Video | null
+
+    if (contentType === 'live') {
+      upcoming = await LiveModel.findOneAndUpdate(sharedFilter, sharedUpdate)
+    } else {
+      upcoming = await VideoModel.findOneAndUpdate(sharedFilter, sharedUpdate)
+    }
 
     if (upcoming === null) {
-      throw new OperationalError('upcoming not found', 404)
+      throw new OperationalError('content not found or is not an upcoming content ', 400)
     }
   }
 
-  static customerIsSubscribed = async (currentUser: LoggedInUser, vidId: string) => {
+  static customerIsSubscribed = async ({
+    currentUser,
+    contentType,
+    contentId,
+  }: IsSubscribedInput) => {
     denyGuestUser(currentUser)
 
-    const upcoming = await VideoModel.findOne({
-      _id: vidId,
-      upcomingSubscribers: currentUser.id,
-    })
+    const cond: FilterQuery<Live | Video> = {
+      _id: contentId,
+      upcomingSubscribers: currentUser._id,
+    }
 
-    return !!upcoming
+    return Boolean(
+      contentType === 'live' ? await LiveModel.findOne(cond) : await VideoModel.findOne(cond),
+    )
   }
 }

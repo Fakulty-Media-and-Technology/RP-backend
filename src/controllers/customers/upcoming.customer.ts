@@ -9,15 +9,28 @@ import { sendResponse } from '../../utils/responder'
 
 export class CustomerUpcomingController {
   static fetch = Catch.async(async ({ query, user }, res) => {
+
+    const upcoming = await UpcomingService.customerFetch({
+      contentType: query.contentType as any,
+      currentUser: GetDefined.loggedInUser(user),
+      page: query.page,
+      limit: query.limit,
+    })
+
     sendResponse({
       res,
-      data: await UpcomingService.customerFetch(query, GetDefined.loggedInUser(user)),
+      data: upcoming,
     })
   })
 
-  static subscription = (type: CustomerSubScriptionActionType) =>
-    Catch.async(async ({ user, params: { id } }, res) => {
-      await UpcomingService.customerSubscription(GetDefined.loggedInUser(user), id, type)
+  static subscription = (action: CustomerSubScriptionActionType) =>
+    Catch.async(async ({ user, params: { id, contentType } }, res) => {
+      await UpcomingService.customerSubscription({
+        action,
+        currentUser: GetDefined.loggedInUser(user),
+        contentId: id,
+        contentType: contentType as any,
+      })
 
       sendResponse({
         res,
@@ -25,11 +38,12 @@ export class CustomerUpcomingController {
       })
     })
 
-  static isSubscribed = Catch.async(async ({ user, params: { id } }, res) => {
-    const user_subscribed = await UpcomingService.customerIsSubscribed(
-      GetDefined.loggedInUser(user),
-      id,
-    )
+  static isSubscribed = Catch.async(async ({ user, params: { id, contentType } }, res) => {
+    const user_subscribed = await UpcomingService.customerIsSubscribed({
+      contentId: id,
+      contentType: contentType as any,
+      currentUser: GetDefined.loggedInUser(user),
+    })
 
     sendResponse({
       res,
