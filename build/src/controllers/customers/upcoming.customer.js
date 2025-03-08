@@ -12,7 +12,6 @@ exports.CustomerUpcomingController = CustomerUpcomingController;
 _a = CustomerUpcomingController;
 CustomerUpcomingController.fetch = Catch_1.Catch.async(async ({ query, user }, res) => {
     const upcoming = await UpcomingService_1.UpcomingService.customerFetch({
-        contentType: query.contentType,
         currentUser: GetDefined_1.GetDefined.loggedInUser(user),
         page: query.page,
         limit: query.limit,

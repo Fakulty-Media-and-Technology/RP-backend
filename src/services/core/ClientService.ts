@@ -1,7 +1,7 @@
 import { Request } from 'express'
 import { PaymentRepo } from '../../repositories/PaymentRepo'
 import { UserRepo } from '../../repositories/UserRepo'
-import { QueryParamsFeatures, handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { PhotoUtils } from '../../utils/photoUtils'
 import { OperationalError } from '../../utils/OperationalError'
@@ -30,7 +30,6 @@ export class ClientService {
   static clientDeposits = async (query: Request['query']) => {
     const page = handleDefaultNumAndUnknown(query.page, 1)
     const limit = handleDefaultNumAndUnknown(query.limt, 10)
-    const clients = await PaymentRepo.getDeposits(page, limit)
-    return clients
+    return await PaymentRepo.getDeposits(page, limit)
   }
 }

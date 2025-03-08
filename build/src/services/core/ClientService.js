@@ -28,6 +28,5 @@ ClientService.getOneById = async (clientId) => {
 ClientService.clientDeposits = async (query) => {
     const page = (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(query.page, 1);
     const limit = (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(query.limt, 10);
-    const clients = await PaymentRepo_1.PaymentRepo.getDeposits(page, limit);
-    return clients;
+    return await PaymentRepo_1.PaymentRepo.getDeposits(page, limit);
 };

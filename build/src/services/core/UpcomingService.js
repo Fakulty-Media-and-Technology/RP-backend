@@ -12,25 +12,36 @@ const videos_model_1 = require("../../models/videos.model");
 const lives_model_1 = require("../../models/lives.model");
 const LiveRepo_1 = require("../../repositories/LiveRepo");
 const LiveMediaSourcesUtils_1 = require("../../utils/LiveMediaSourcesUtils");
+const promises_1 = require("../../utils/promises");
 class UpcomingService {
 }
 exports.UpcomingService = UpcomingService;
 _a = UpcomingService;
-UpcomingService.adminFetch = async ({ contentType, ...params }) => {
+UpcomingService.adminFetch = async (params) => {
     const page = (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(params.page, 1);
     const limit = (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(params.limit, 10);
-    return contentType === 'vod'
-        ? await MovieMediaSourcesUtils_1.MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo_1.VideoRepo.fetchUpcoming(page, limit), true, '720p')
-        : await LiveMediaSourcesUtils_1.LiveMediaSourcesUtils.resolveSources(await LiveRepo_1.LiveRepo.fetchUpcoming(page, limit), '720p');
+    const [vods, lives] = (0, promises_1.getPromiseAllFulfilledResults)(await Promise.allSettled([
+        MovieMediaSourcesUtils_1.MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo_1.VideoRepo.fetchUpcoming(page, limit), true, '720p'),
+        LiveMediaSourcesUtils_1.LiveMediaSourcesUtils.resolveSources(await LiveRepo_1.LiveRepo.fetchUpcoming(page, limit), '720p'),
+    ]));
+    return {
+        vods: vods || [],
+        lives: lives || [],
+    };
 };
-UpcomingService.customerFetch = async ({ contentType, currentUser, ...params }) => {
+UpcomingService.customerFetch = async ({ currentUser, ...params }) => {
     (0, denyGuestUser_1.denyGuestUser)(currentUser);
+    const videoQuality = await VideoUploadUtils_1.VidUploadUtils.getUserVideoQuality(currentUser._id.toString(), '480p');
     const page = (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(params.page, 1);
     const limit = (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(params.limit, 10);
-    const videoQuality = await VideoUploadUtils_1.VidUploadUtils.getUserVideoQuality(currentUser._id.toString(), '480p');
-    return contentType === 'vod'
-        ? await MovieMediaSourcesUtils_1.MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo_1.VideoRepo.fetchActiveUpcoming(page, limit), true, videoQuality)
-        : await LiveMediaSourcesUtils_1.LiveMediaSourcesUtils.resolveSources(await LiveRepo_1.LiveRepo.fetchActiveUpcoming(page, limit), videoQuality);
+    const [vods, lives] = (0, promises_1.getPromiseAllFulfilledResults)(await Promise.allSettled([
+        MovieMediaSourcesUtils_1.MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo_1.VideoRepo.fetchActiveUpcoming(page, limit), true, videoQuality),
+        LiveMediaSourcesUtils_1.LiveMediaSourcesUtils.resolveSources(await LiveRepo_1.LiveRepo.fetchActiveUpcoming(page, limit), videoQuality),
+    ]));
+    return {
+        vods: vods || [],
+        lives: lives || [],
+    };
 };
 UpcomingService.customerSubscription = async ({ currentUser, action, contentId, contentType, }) => {
     (0, denyGuestUser_1.denyGuestUser)(currentUser);

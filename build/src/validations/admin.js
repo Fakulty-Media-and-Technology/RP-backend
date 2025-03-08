@@ -272,6 +272,5 @@ exports.upcomingAllGetSchema = {
     query: joi_1.default.object({
         page: joi_1.default.number(),
         limit: joi_1.default.number(),
-        contentType: common_1.STRING_SCHEMA.valid('live', 'vod').required(),
     }),
 };

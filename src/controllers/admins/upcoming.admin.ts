@@ -8,11 +8,10 @@ export class AdminUpcomingController {
     sendResponse({
       res,
       data: await UpcomingService.adminFetch({
-        contentType: query.contentType as any,
         page: query.page,
         limit: query.limit,
       }),
-      
+
       message: 'upcomings fetched',
     })
   })

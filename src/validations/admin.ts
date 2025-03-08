@@ -327,6 +327,5 @@ export const upcomingAllGetSchema = {
   query: Joi.object({
     page: Joi.number(),
     limit: Joi.number(),
-    contentType: STRING_SCHEMA.valid('live', 'vod').required(),
   }),
 }

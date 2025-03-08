@@ -13,7 +13,6 @@ AdminUpcomingController.upcomingsAllGet = Catch_1.Catch.async(async ({ query }, 
     (0, responder_1.sendResponse)({
         res,
         data: await UpcomingService_1.UpcomingService.adminFetch({
-            contentType: query.contentType,
             page: query.page,
             limit: query.limit,
         }),

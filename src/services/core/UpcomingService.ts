@@ -1,4 +1,3 @@
-import { Request } from 'express'
 import { OperationalError } from '../../utils/OperationalError'
 import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
 import { LoggedInUser } from '../../types'
@@ -11,6 +10,7 @@ import { Live, LiveModel } from '../../models/lives.model'
 import { FilterQuery, UpdateQuery } from 'mongoose'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
+import { getPromiseAllFulfilledResults } from '../../utils/promises'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
@@ -35,9 +35,7 @@ type customerSubscriptionInput = {
   contentType: ContentType
 }
 
-
 type AdminFetchInput = {
-  contentType: ContentType
   page: unknown
   limit: unknown
 }
@@ -53,43 +51,58 @@ type IsSubscribedInput = {
 }
 
 export class UpcomingService {
-  static adminFetch = async ({ contentType, ...params }: AdminFetchInput) => {
+  static adminFetch = async (params: AdminFetchInput) => {
     const page = handleDefaultNumAndUnknown(params.page, 1)
     const limit = handleDefaultNumAndUnknown(params.limit, 10)
 
-    return contentType === 'vod'
-      ? await MovieMediaSourcesUtils.resolveMediaSources(
+    const [vods, lives] = getPromiseAllFulfilledResults(
+      await Promise.allSettled([
+        MovieMediaSourcesUtils.resolveMediaSources(
           await VideoRepo.fetchUpcoming(page, limit),
           true,
           '720p',
-        )
-      : await LiveMediaSourcesUtils.resolveSources(
-          await LiveRepo.fetchUpcoming(page, limit),
-          '720p',
-        )
+        ),
+
+        LiveMediaSourcesUtils.resolveSources(await LiveRepo.fetchUpcoming(page, limit), '720p'),
+      ]),
+    )
+
+    return {
+      vods: vods || [],
+      lives: lives || [],
+    }
   }
 
-  static customerFetch = async ({ contentType, currentUser, ...params }: CustomerFetchInput) => {
+  static customerFetch = async ({ currentUser, ...params }: CustomerFetchInput) => {
     denyGuestUser(currentUser)
-
-    const page = handleDefaultNumAndUnknown(params.page, 1)
-    const limit = handleDefaultNumAndUnknown(params.limit, 10)
 
     const videoQuality = await VidUploadUtils.getUserVideoQuality(
       currentUser._id.toString(),
       '480p',
     )
 
-    return contentType === 'vod'
-      ? await MovieMediaSourcesUtils.resolveMediaSources(
+    const page = handleDefaultNumAndUnknown(params.page, 1)
+    const limit = handleDefaultNumAndUnknown(params.limit, 10)
+
+    const [vods, lives] = getPromiseAllFulfilledResults(
+      await Promise.allSettled([
+        MovieMediaSourcesUtils.resolveMediaSources(
           await VideoRepo.fetchActiveUpcoming(page, limit),
           true,
           videoQuality,
-        )
-      : await LiveMediaSourcesUtils.resolveSources(
+        ),
+
+        LiveMediaSourcesUtils.resolveSources(
           await LiveRepo.fetchActiveUpcoming(page, limit),
           videoQuality,
-        )
+        ),
+      ]),
+    )
+
+    return {
+      vods: vods || [],
+      lives: lives || [],
+    }
   }
 
   static customerSubscription = async ({
