@@ -178,9 +178,9 @@ UserRepo.adminFetchClientAggrById = async (clientId) => {
 UserRepo.adminFetchAllClientsAggr = async (page, limit) => {
     return _a._adminFetchUsers({ $match: { role: { $in: ['tvshow', 'channel', 'podcast', 'event'] } } }, page, limit);
 };
-UserRepo.adminFetchAllUsersAggr = async (page, limit) => {
-    return _a._adminFetchUsers({ $match: {} }, page, limit);
+UserRepo.adminFetchAllCustomersAggr = async (page, limit) => {
+    return _a._adminFetchUsers({ $match: { role: 'customer' } }, page, limit);
 };
-UserRepo.adminFetchSingleUserAggr = (userId) => {
-    return _a._adminFetchUsers({ $match: { _id: (0, VideoRepo_1.toObjectId)(userId) } }, 1, 1);
+UserRepo.adminFetchSingleCustomerAggr = (userId) => {
+    return _a._adminFetchUsers({ $match: { _id: (0, VideoRepo_1.toObjectId)(userId), role: 'customer' } }, 1, 1);
 };

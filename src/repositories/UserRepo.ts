@@ -222,11 +222,11 @@ export class UserRepo {
       limit,
     )
   }
-  static adminFetchAllUsersAggr = async (page: number, limit: number) => {
-    return this._adminFetchUsers({ $match: {} }, page, limit)
+  static adminFetchAllCustomersAggr = async (page: number, limit: number) => {
+    return this._adminFetchUsers({ $match: { role: 'customer' } }, page, limit)
   }
 
-  static adminFetchSingleUserAggr = (userId: string) => {
-    return this._adminFetchUsers({ $match: { _id: toObjectId(userId) } }, 1, 1)
+  static adminFetchSingleCustomerAggr = (userId: string) => {
+    return this._adminFetchUsers({ $match: { _id: toObjectId(userId), role: 'customer' } }, 1, 1)
   }
 }
