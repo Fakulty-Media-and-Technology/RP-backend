@@ -258,6 +258,9 @@ export class CustomerSharedController extends SharedController {
     })
 
   static bannerContents = Catch.async(async (req, res) => {
+    const page = handleDefaultNumAndUnknown(req.query.page, 1)
+    const limit = handleDefaultNumAndUnknown(req.query.limit, 1)
+
     const vidQuality = await VidUploadUtils.getUserVideoQuality(
       GetDefined.loggedInUser(req.user)._id.toString(),
     )
@@ -267,15 +270,24 @@ export class CustomerSharedController extends SharedController {
 
       //
     ;[lives, vods] = await Promise.all([
-      LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured(), vidQuality),
-      MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo.fetchFeatured(), true, vidQuality),
+      LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured(page, limit), vidQuality),
+
+      MovieMediaSourcesUtils.resolveMediaSources(
+        await VideoRepo.fetchFeatured(page, limit),
+        true,
+        vidQuality,
+      ),
     ])
 
     if (lives.length + vods.length < 10) {
       ;[lives, vods] = await Promise.all([
-        LiveMediaSourcesUtils.resolveSources(await LiveRepo.getMostEngaged(), vidQuality),
+        LiveMediaSourcesUtils.resolveSources(
+          await LiveRepo.getMostEngaged(page, limit),
+          vidQuality,
+        ),
+
         MovieMediaSourcesUtils.resolveMediaSources(
-          await VideoRepo.fetchMostEngaged(),
+          await VideoRepo.fetchMostEngaged(page, limit),
           true,
           vidQuality,
         ),

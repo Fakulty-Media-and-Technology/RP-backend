@@ -184,18 +184,20 @@ CustomerSharedController.getLiveEventsByType = (type) => Catch_1.Catch.async(asy
     });
 });
 CustomerSharedController.bannerContents = Catch_1.Catch.async(async (req, res) => {
+    const page = (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(req.query.page, 1);
+    const limit = (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(req.query.limit, 1);
     const vidQuality = await VideoUploadUtils_1.VidUploadUtils.getUserVideoQuality(GetDefined_1.GetDefined.loggedInUser(req.user)._id.toString());
     let lives;
     let vods;
     [lives, vods] = await Promise.all([
-        LiveMediaSourcesUtils_1.LiveMediaSourcesUtils.resolveSources(await LiveRepo_1.LiveRepo.getFeatured(), vidQuality),
-        MovieMediaSourcesUtils_1.MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo_1.VideoRepo.fetchFeatured(), true, vidQuality),
+        LiveMediaSourcesUtils_1.LiveMediaSourcesUtils.resolveSources(await LiveRepo_1.LiveRepo.getFeatured(page, limit), vidQuality),
+        MovieMediaSourcesUtils_1.MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo_1.VideoRepo.fetchFeatured(page, limit), true, vidQuality),
     ]);
     if (lives.length + vods.length < 10) {
         ;
         [lives, vods] = await Promise.all([
-            LiveMediaSourcesUtils_1.LiveMediaSourcesUtils.resolveSources(await LiveRepo_1.LiveRepo.getMostEngaged(), vidQuality),
-            MovieMediaSourcesUtils_1.MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo_1.VideoRepo.fetchMostEngaged(), true, vidQuality),
+            LiveMediaSourcesUtils_1.LiveMediaSourcesUtils.resolveSources(await LiveRepo_1.LiveRepo.getMostEngaged(page, limit), vidQuality),
+            MovieMediaSourcesUtils_1.MovieMediaSourcesUtils.resolveMediaSources(await VideoRepo_1.VideoRepo.fetchMostEngaged(page, limit), true, vidQuality),
         ]);
     }
     (0, responder_1.sendResponse)({

@@ -23,10 +23,10 @@ AdminFeaturedController.addFeatured = Catch_1.Catch.async(async ({ body: { type,
         message: 'Featured Added',
     });
 });
-AdminFeaturedController.getFeaturedContents = Catch_1.Catch.async(async (_, res) => {
+AdminFeaturedController.getFeaturedContents = Catch_1.Catch.async(async (req, res) => {
     (0, responder_1.sendResponse)({
         res,
-        data: await FeaturedService_1.FeaturedService.getFeaturedContents(),
+        data: await FeaturedService_1.FeaturedService.getFeaturedContents(req.query),
         message: 'contents fetched successful',
     });
 });

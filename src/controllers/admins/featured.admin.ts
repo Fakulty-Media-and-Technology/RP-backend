@@ -20,10 +20,10 @@ export class AdminFeaturedController {
     })
   })
 
-  static getFeaturedContents = Catch.async(async (_, res) => {
+  static getFeaturedContents = Catch.async(async (req, res) => {
     sendResponse({
       res,
-      data: await FeaturedService.getFeaturedContents(),
+      data: await FeaturedService.getFeaturedContents(req.query),
       message: 'contents fetched successful',
     })
   })
