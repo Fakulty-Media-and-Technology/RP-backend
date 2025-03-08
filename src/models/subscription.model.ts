@@ -20,14 +20,17 @@ const schema = new Schema(
       type: Date,
       required: true,
     },
+    
     payment_method: {
       type: String,
       required: true,
     },
+
     amount: {
       type: Number,
       required: true,
     },
+
     active: {
       type: Boolean,
       default: true,

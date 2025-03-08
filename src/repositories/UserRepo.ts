@@ -1,12 +1,30 @@
 import { UpdateQuery, Types, PipelineStage } from 'mongoose'
 import { UserModel, UserSchema, User } from '../models/users.model'
 import { StringOrObjectId } from '../types'
-import { Wallet } from '../models/wallet.model'
 import { skip } from '../utils/QueryParamsFeatures'
 import { toObjectId } from './VideoRepo'
 
 type UserRole = User['role']
 type UserRoles = Array<UserRole>
+
+export type FetchUserAggrRes = Pick<
+  User,
+  | 'email'
+  | 'verified'
+  | '_id'
+  | 'mobile'
+  | 'gender'
+  | 'dob'
+  | 'photo'
+  | 'country'
+  | 'country_code'
+  | 'role'
+> & {
+  joined: Date
+  fullname: string
+  substatus: 'Active' | 'Inactive'
+  totalSub: number | undefined | null
+}
 
 export class UserRepo {
   static getUserById = (userId: StringOrObjectId) => UserModel.findById(userId)
@@ -145,8 +163,9 @@ export class UserRepo {
     match: PipelineStage.Match,
     page: number,
     limit: number,
+    showPaymentHistory = false,
   ) => {
-    const result = await UserModel.aggregate([
+    const pipeline: PipelineStage[] = [
       match,
       {
         $project: {
@@ -154,8 +173,12 @@ export class UserRepo {
             $concat: ['$first_name', ' ', '$last_name'],
           },
           mobile: true,
+          country: true,
           gender: true,
           dob: true,
+          photo: true,
+          country_code: true,
+          role: true,
           email: true,
           totalSub: true,
           joined: '$createdAt',
@@ -171,18 +194,34 @@ export class UserRepo {
       },
       { $skip: skip(page, limit) },
       { $limit: limit },
-    ])
+    ]
 
-    return result as Array<
-      Pick<User, 'email' | 'verified' | '_id' | 'mobile' | 'gender' | 'dob'> & {
-        joined: Date
-        fullname: string
-        substatus: 'Active' | 'Inactive'
-        totalSub: number | undefined | null
-      }
-    >
+    if (showPaymentHistory) {
+      pipeline.push({
+        $lookup: {
+          from: 'payments',
+          localField: '_id',
+          foreignField: 'user_id',
+          as: 'payment history',
+        },
+      })
+    }
+
+    const result = (await UserModel.aggregate(pipeline)) as Array<FetchUserAggrRes>
+    return result
   }
 
+  static adminFetchClientAggrById = async (clientId: string) => {
+    return this._adminFetchUsers({ $match: { _id: toObjectId(clientId) } }, 1, 1, true)
+  }
+
+  static adminFetchAllClientsAggr = async (page: number, limit: number) => {
+    return this._adminFetchUsers(
+      { $match: { role: { $in: ['tvshow', 'channel', 'podcast', 'event'] } } },
+      page,
+      limit,
+    )
+  }
   static adminFetchAllUsersAggr = async (page: number, limit: number) => {
     return this._adminFetchUsers({ $match: {} }, page, limit)
   }

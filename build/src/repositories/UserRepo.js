@@ -128,8 +128,8 @@ UserRepo.getAClient = (clinetId) => {
         },
     ]);
 };
-UserRepo._adminFetchUsers = async (match, page, limit) => {
-    const result = await users_model_1.UserModel.aggregate([
+UserRepo._adminFetchUsers = async (match, page, limit, showPaymentHistory = false) => {
+    const pipeline = [
         match,
         {
             $project: {
@@ -137,8 +137,12 @@ UserRepo._adminFetchUsers = async (match, page, limit) => {
                     $concat: ['$first_name', ' ', '$last_name'],
                 },
                 mobile: true,
+                country: true,
                 gender: true,
                 dob: true,
+                photo: true,
+                country_code: true,
+                role: true,
                 email: true,
                 totalSub: true,
                 joined: '$createdAt',
@@ -154,8 +158,25 @@ UserRepo._adminFetchUsers = async (match, page, limit) => {
         },
         { $skip: (0, QueryParamsFeatures_1.skip)(page, limit) },
         { $limit: limit },
-    ]);
+    ];
+    if (showPaymentHistory) {
+        pipeline.push({
+            $lookup: {
+                from: 'payments',
+                localField: '_id',
+                foreignField: 'user_id',
+                as: 'payment history',
+            },
+        });
+    }
+    const result = (await users_model_1.UserModel.aggregate(pipeline));
     return result;
+};
+UserRepo.adminFetchClientAggrById = async (clientId) => {
+    return _a._adminFetchUsers({ $match: { _id: (0, VideoRepo_1.toObjectId)(clientId) } }, 1, 1, true);
+};
+UserRepo.adminFetchAllClientsAggr = async (page, limit) => {
+    return _a._adminFetchUsers({ $match: { role: { $in: ['tvshow', 'channel', 'podcast', 'event'] } } }, page, limit);
 };
 UserRepo.adminFetchAllUsersAggr = async (page, limit) => {
     return _a._adminFetchUsers({ $match: {} }, page, limit);
