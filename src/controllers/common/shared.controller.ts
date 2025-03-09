@@ -9,24 +9,25 @@ import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { AuthHeaderKey } from '../../middlewares/auth'
 
 export class SharedController extends UploadMediaUtils {
-  static updateProfile = (authType: AuthHeaderKey) => Catch.async(async (req, res) => {
-    if (Object.values(req.body).length === 0 && req.file == null) {
-      throw new OperationalError('Provide at least one property to update', 400)
-    }
+  static updateProfile = (authType: AuthHeaderKey) =>
+    Catch.async(async (req, res) => {
+      if (Object.values(req.body).length === 0 && req.file == null) {
+        throw new OperationalError('Provide at least one property to update', 400)
+      }
 
-    Object.assign(req.body, { userId: req.params.userId })
+      Object.assign(req.body, { userId: req.params.userId })
 
-    await MediaService.updateUserProfile({
-      imageFile: req.file,
-      data: req.body,
-      authType
+      await MediaService.updateUserProfile({
+        imageFile: req.file,
+        data: req.body,
+        authType,
+      })
+
+      sendResponse({
+        res,
+        message: 'Update successfull',
+      })
     })
-
-    sendResponse({
-      res,
-      message: 'Update successfull',
-    })
-  })
 
   static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
     Catch.async(async (req, res) => {
@@ -55,7 +56,7 @@ export class SharedController extends UploadMediaUtils {
       sendResponse({
         res,
         data: await MediaService.createLive(data),
-        message: 'live stream created, credentials are on attached user dashboard',
+        message: `Live will be attached to ${isAdmin ? 'client' : 'your'} dashboard after processing`,
       })
     })
 

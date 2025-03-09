@@ -56,7 +56,7 @@ UploadMediaUtils._allowMimetype = (file, type, msg) => {
 };
 UploadMediaUtils._uploadTrailerAndVideo = async (video, trailer, session) => {
     const files = [video, trailer];
-    const [videoUpload, trailerUpload] = await Promise.all(files.map(file => media_management_1.MediaManagement.uploadAndTransacodeVideo({
+    const [videoUpload, trailerUpload] = await Promise.all(files.map(file => media_management_1.MediaManagement.uploadAndInitiateMediaConvert({
         file: file.file,
         expire: file.expire,
     })));
@@ -83,7 +83,7 @@ UploadMediaUtils._uploadTrailerAndVideo = async (video, trailer, session) => {
     return { videoUploadDoc, trailerVidUploadDoc };
 };
 UploadMediaUtils._getVideoUploadDoc = async (params, session) => {
-    const res = await media_management_1.MediaManagement.uploadAndTransacodeVideo({
+    const res = await media_management_1.MediaManagement.uploadAndInitiateMediaConvert({
         file: params.file,
         expire: params.expire,
     });
@@ -371,6 +371,46 @@ UploadMediaUtils._validateWithMovieAndPrevSeasonsAggrResult = (res) => {
         throw new OperationalError_1.OperationalError('Movie has expired', 403);
     }
 };
+UploadMediaUtils._uploadEpisodeVideos = async ({ data, episode }, session) => {
+    if (data.trailer && data.video) {
+        const expire = undefined;
+        const trailerDoc = new trailer_model_1.TrailerModel({
+            video_id: episode._id,
+            parentType: 'episode',
+        });
+        const { videoUploadDoc, trailerVidUploadDoc } = await _a._uploadTrailerAndVideo({ file: data.video, expire, parentId: episode._id, parentType: 'episode' }, { file: data.trailer, expire, parentId: trailerDoc._id, parentType: 'trailer' }, session);
+        trailerDoc.video_upload = trailerVidUploadDoc._id;
+        episode.videoUpload = videoUploadDoc._id;
+        episode.trailerUpload = trailerDoc._id;
+        await trailerDoc.save({ session });
+        await episode.save({ session });
+        return;
+    }
+    if (data.trailer) {
+        const trailerDoc = new trailer_model_1.TrailerModel({
+            video_id: episode._id,
+            parentType: 'episode',
+        });
+        const tVidUploadDoc = await _a._getVideoUploadDoc({
+            file: data.trailer,
+            expire: undefined,
+            parentId: trailerDoc._id,
+            parentType: 'trailer',
+        }, session);
+        trailerDoc.video_upload = tVidUploadDoc._id;
+        episode.trailerUpload = trailerDoc._id;
+        await trailerDoc.save({ session });
+    }
+    if (data.video) {
+        const vidUploadDoc = await _a._getVideoUploadDoc({
+            file: data.video,
+            expire: undefined,
+            parentId: episode._id,
+            parentType: 'episode',
+        }, session);
+        episode.videoUpload = vidUploadDoc._id;
+    }
+};
 UploadMediaUtils._validateWithSeasonAndPrevEpisodes = (aggrRes) => {
     if (aggrRes.length == 0) {
         throw new OperationalError_1.OperationalError('invalid season Id', 404);
@@ -403,44 +443,7 @@ UploadMediaUtils._addEpisodesWithSession = async ({ seasonId, data, adminId }, s
         season: seasonId,
         admin: adminId,
     });
-    if (data.trailer && data.video) {
-        const expire = undefined;
-        const trailerDoc = new trailer_model_1.TrailerModel({
-            video_id: episode._id,
-            parentType: 'episode',
-        });
-        const { videoUploadDoc, trailerVidUploadDoc } = await _a._uploadTrailerAndVideo({ file: data.video, expire, parentId: episode._id, parentType: 'episode' }, { file: data.trailer, expire, parentId: trailerDoc._id, parentType: 'trailer' }, session);
-        trailerDoc.video_upload = trailerVidUploadDoc._id;
-        episode.videoUpload = videoUploadDoc._id;
-        episode.trailerUpload = trailerDoc._id;
-        await trailerDoc.save({ session });
-        await episode.save({ session });
-        return episode;
-    }
-    if (data.trailer) {
-        const trailerDoc = new trailer_model_1.TrailerModel({
-            video_id: episode._id,
-            parentType: 'episode',
-        });
-        const tVidUploadDoc = await _a._getVideoUploadDoc({
-            file: data.trailer,
-            expire: undefined,
-            parentId: trailerDoc._id,
-            parentType: 'trailer',
-        }, session);
-        trailerDoc.video_upload = tVidUploadDoc._id;
-        episode.trailerUpload = trailerDoc._id;
-        await trailerDoc.save({ session });
-    }
-    if (data.video) {
-        const vidUploadDoc = await _a._getVideoUploadDoc({
-            file: data.video,
-            expire: undefined,
-            parentId: episode._id,
-            parentType: 'episode',
-        }, session);
-        episode.videoUpload = vidUploadDoc._id;
-    }
+    await _a._uploadEpisodeVideos({ data, episode }, session);
     await episode.save({ session });
     return episode;
 };

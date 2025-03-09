@@ -29,19 +29,17 @@ MediaManagement._deleteFile = async (file) => {
         console.error('🛑 error deleting ', +file.filename, 'after upload');
     }
 };
-MediaManagement.uploadAndTransacodeVideo = async ({ file, expire }) => {
+MediaManagement.uploadAndInitiateMediaConvert = async ({ file, expire }) => {
     const video = await _a.store({
         file,
         expire: typeof expire === 'string' ? new Date(expire) : undefined,
         baseDir: 'videos',
     });
-    const response = {
+    await mediaConvert_1.MediaConvert.transcode(video.Key);
+    return {
         ...video,
         isTranscoded: false,
     };
-    const { Job } = await mediaConvert_1.MediaConvert.transcode(video.Key);
-    response.isTranscoded = await mediaConvert_1.MediaConvert.waitForJobCompletion(Job?.Id, 1);
-    return response;
 };
 MediaManagement.store = async ({ file, expire, baseDir }) => {
     let Body;

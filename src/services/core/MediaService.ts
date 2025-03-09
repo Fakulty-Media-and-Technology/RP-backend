@@ -67,7 +67,7 @@ export class MediaService {
   private static _uploadLivePreviewVideo: LiveFileUploader = async ({ data, live }, session) => {
     if (!data.previewVideo) return
 
-    const upload = await MediaManagement.uploadAndTransacodeVideo({
+    const upload = await MediaManagement.uploadAndInitiateMediaConvert({
       file: data.previewVideo,
       expire: undefined,
     })

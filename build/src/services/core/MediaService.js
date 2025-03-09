@@ -24,7 +24,7 @@ _a = MediaService;
 MediaService._uploadLivePreviewVideo = async ({ data, live }, session) => {
     if (!data.previewVideo)
         return;
-    const upload = await media_management_1.MediaManagement.uploadAndTransacodeVideo({
+    const upload = await media_management_1.MediaManagement.uploadAndInitiateMediaConvert({
         file: data.previewVideo,
         expire: undefined,
     });

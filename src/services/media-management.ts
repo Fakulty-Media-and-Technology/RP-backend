@@ -35,22 +35,19 @@ export class MediaManagement {
     }
   }
 
-  static uploadAndTransacodeVideo = async ({ file, expire }: UploadAndTranscodeConfig) => {
+  static uploadAndInitiateMediaConvert = async ({ file, expire }: UploadAndTranscodeConfig) => {
     const video = await this.store({
       file,
       expire: typeof expire === 'string' ? new Date(expire) : undefined,
       baseDir: 'videos',
     })
 
-    const response = {
+    await MediaConvert.transcode(video.Key)
+
+    return {
       ...video,
       isTranscoded: false,
     }
-
-    const { Job } = await MediaConvert.transcode(video.Key)
-    response.isTranscoded = await MediaConvert.waitForJobCompletion(Job?.Id, 1)
-
-    return response
   }
 
   static store = async ({ file, expire, baseDir }: StoreConfig) => {

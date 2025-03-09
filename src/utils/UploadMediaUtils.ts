@@ -4,7 +4,7 @@ import { Video, VideoModel, videoTypes } from '../models/videos.model'
 import { OperationalError } from '../utils/OperationalError'
 
 import { SeasonModel } from '../models/seasons.model'
-import { EpisodeModel } from '../models/episodes.model'
+import { Episode, EpisodeModel } from '../models/episodes.model'
 import { MediaManagement, UploadAndTranscodeConfig } from './../services/media-management'
 import { MulterFile, StringOrObjectId } from '../types'
 import { TrailerModel } from '../models/trailer.model'
@@ -127,6 +127,11 @@ export type UploadTrailerAndVIdeoInput = {
   parentType: (typeof videoUploadParents)[number]
 }
 
+type UploadEpisodeVideos = {
+  data: EpisodeReqData
+  episode: Episode
+}
+
 export class UploadMediaUtils {
   protected static _validateAddMovieData = (type: AllVideoTypes, data: MovieData, files: any) => {
     if (type === 'series') {
@@ -188,7 +193,7 @@ export class UploadMediaUtils {
 
     const [videoUpload, trailerUpload] = await Promise.all(
       files.map(file =>
-        MediaManagement.uploadAndTransacodeVideo({
+        MediaManagement.uploadAndInitiateMediaConvert({
           file: file.file,
           expire: file.expire,
         }),
@@ -224,7 +229,7 @@ export class UploadMediaUtils {
     params: GetVideoUploadDoc,
     session?: ClientSession,
   ) => {
-    const res = await MediaManagement.uploadAndTransacodeVideo({
+    const res = await MediaManagement.uploadAndInitiateMediaConvert({
       file: params.file,
       expire: params.expire,
     })
@@ -616,6 +621,69 @@ export class UploadMediaUtils {
     }
   }
 
+  private static _uploadEpisodeVideos = async (
+    { data, episode }: UploadEpisodeVideos,
+    session: ClientSession,
+  ) => {
+    if (data.trailer && data.video) {
+      const expire = undefined
+
+      const trailerDoc = new TrailerModel({
+        video_id: episode._id,
+        parentType: 'episode',
+      })
+
+      const { videoUploadDoc, trailerVidUploadDoc } = await this._uploadTrailerAndVideo(
+        { file: data.video, expire, parentId: episode._id, parentType: 'episode' },
+        { file: data.trailer, expire, parentId: trailerDoc._id, parentType: 'trailer' },
+        session,
+      )
+
+      trailerDoc.video_upload = trailerVidUploadDoc._id
+      episode.videoUpload = videoUploadDoc._id
+      episode.trailerUpload = trailerDoc._id
+
+      await trailerDoc.save({ session })
+      await episode.save({ session })
+      return
+    }
+
+    if (data.trailer) {
+      const trailerDoc = new TrailerModel({
+        video_id: episode._id,
+        parentType: 'episode',
+      })
+
+      const tVidUploadDoc = await this._getVideoUploadDoc(
+        {
+          file: data.trailer,
+          expire: undefined,
+          parentId: trailerDoc._id,
+          parentType: 'trailer',
+        },
+        session,
+      )
+
+      trailerDoc.video_upload = tVidUploadDoc._id
+      episode.trailerUpload = trailerDoc._id
+      await trailerDoc.save({ session })
+    }
+
+    if (data.video) {
+      const vidUploadDoc = await this._getVideoUploadDoc(
+        {
+          file: data.video,
+          expire: undefined,
+          parentId: episode._id,
+          parentType: 'episode',
+        },
+        session,
+      )
+
+      episode.videoUpload = vidUploadDoc._id
+    }
+  }
+
   protected static _validateWithSeasonAndPrevEpisodes = (aggrRes: AddEpisodeUtilAggrRes[]) => {
     if (aggrRes.length == 0) {
       throw new OperationalError('invalid season Id', 404)
@@ -657,7 +725,6 @@ export class UploadMediaUtils {
     data.video && this._allowMimetype(data.video, 'video', 'video must be a video file')
 
     const aggrUtilsRes = await VideoRepo.addEpisodeUtilAggr(seasonId)
-
     this._validateWithSeasonAndPrevEpisodes(aggrUtilsRes)
 
     const episode = new EpisodeModel({
@@ -670,64 +737,7 @@ export class UploadMediaUtils {
       admin: adminId,
     })
 
-    if (data.trailer && data.video) {
-      const expire = undefined
-
-      const trailerDoc = new TrailerModel({
-        video_id: episode._id,
-        parentType: 'episode',
-      })
-
-      const { videoUploadDoc, trailerVidUploadDoc } = await this._uploadTrailerAndVideo(
-        { file: data.video, expire, parentId: episode._id, parentType: 'episode' },
-        { file: data.trailer, expire, parentId: trailerDoc._id, parentType: 'trailer' },
-        session,
-      )
-
-      trailerDoc.video_upload = trailerVidUploadDoc._id
-      episode.videoUpload = videoUploadDoc._id
-      episode.trailerUpload = trailerDoc._id
-
-      await trailerDoc.save({ session })
-      await episode.save({ session })
-      return episode
-    }
-
-    if (data.trailer) {
-      const trailerDoc = new TrailerModel({
-        video_id: episode._id,
-        parentType: 'episode',
-      })
-
-      const tVidUploadDoc = await this._getVideoUploadDoc(
-        {
-          file: data.trailer,
-          expire: undefined,
-          parentId: trailerDoc._id,
-          parentType: 'trailer',
-        },
-        session,
-      )
-
-      trailerDoc.video_upload = tVidUploadDoc._id
-      episode.trailerUpload = trailerDoc._id
-      await trailerDoc.save({ session })
-    }
-
-    if (data.video) {
-      const vidUploadDoc = await this._getVideoUploadDoc(
-        {
-          file: data.video,
-          expire: undefined,
-          parentId: episode._id,
-          parentType: 'episode',
-        },
-        session,
-      )
-
-      episode.videoUpload = vidUploadDoc._id
-    }
-
+    await this._uploadEpisodeVideos({ data, episode }, session)
     await episode.save({ session })
     return episode
   }

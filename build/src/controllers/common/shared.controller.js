@@ -22,7 +22,7 @@ SharedController.updateProfile = (authType) => Catch_1.Catch.async(async (req, r
     await MediaService_1.MediaService.updateUserProfile({
         imageFile: req.file,
         data: req.body,
-        authType
+        authType,
     });
     (0, responder_1.sendResponse)({
         res,
@@ -47,7 +47,7 @@ SharedController.createLive = ({ isAdmin }) => Catch_1.Catch.async(async (req, r
     (0, responder_1.sendResponse)({
         res,
         data: await MediaService_1.MediaService.createLive(data),
-        message: 'live stream created, credentials are on attached user dashboard',
+        message: `Live will be attached to ${isAdmin ? 'client' : 'your'} dashboard after processing`,
     });
 });
 SharedController.adminGetPhotoUrl = Catch_1.Catch.async(async (req, res) => {
