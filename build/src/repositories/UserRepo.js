@@ -172,6 +172,18 @@ UserRepo._adminFetchUsers = async (match, page, limit, showPaymentHistory = fals
     const result = (await users_model_1.UserModel.aggregate(pipeline));
     return result;
 };
+UserRepo.adminFetchClientsBySearchAggr = async (searchReg, page, limit) => {
+    return _a._adminFetchUsers({
+        $match: {
+            role: { $in: ['channel', 'tvshow', 'event', 'podcast'] },
+            $or: [
+                { first_name: { $regex: searchReg } },
+                { last_name: { $regex: searchReg } },
+                { email: { $regex: searchReg } },
+            ],
+        },
+    }, page, limit);
+};
 UserRepo.adminFetchClientAggrById = async (clientId) => {
     return _a._adminFetchUsers({ $match: { _id: (0, VideoRepo_1.toObjectId)(clientId) } }, 1, 1, true);
 };

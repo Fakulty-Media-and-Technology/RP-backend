@@ -1,18 +1,17 @@
 import { Request } from 'express'
-import { ClientSession } from 'mongoose'
 
-import { LiveModel, LiveSchema } from '../../models/lives.model'
+import { LiveSchema } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { OperationalError } from '../../utils/OperationalError'
 import { handleDefaultNumAndUnknown, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
 import { UserRepo } from '../../repositories/UserRepo'
-import { getUniqueStreamKey } from '../../utils/live'
-import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { EpisodeModel } from '../../models/episodes.model'
 import { MediaManagement } from '../media-management'
+import { getPromiseAllFulfilledResults } from '../../utils/promises'
+import { PhotoUtils } from '../../utils/photoUtils'
 
 export type AddSubtitleData = {
   parentId: string
@@ -23,15 +22,15 @@ export type AddSubtitleData = {
 
 export class AdminManageMediaService {
   static searchClient = async (searchText: string, query: Request['query']) => {
-    const searchReg = new RegExp(searchText, 'i')
+    const response = await UserRepo.adminFetchClientsBySearchAggr(
+      new RegExp(searchText, 'i'),
+      handleDefaultNumAndUnknown(query.page, 1),
+      handleDefaultNumAndUnknown(query.limit, 10),
+    )
 
-    const features = new QueryParamsFeatures(UserRepo.searchUsersByRegexQuery(searchReg), {
-      defaultLimit: 200,
-      defaultPage: 1,
-      queryParams: query,
-    })
-
-    return await features.paginate().query
+    return getPromiseAllFulfilledResults(
+      await Promise.allSettled(response.map(PhotoUtils.fetchUserAggrResPhoto)),
+    )
   }
 
   static getLivesByType = async (type: string, query: Request['query']) => {

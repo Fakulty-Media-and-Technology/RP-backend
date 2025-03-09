@@ -211,6 +211,23 @@ export class UserRepo {
     return result
   }
 
+  static adminFetchClientsBySearchAggr = async (searchReg: RegExp, page: number, limit: number) => {
+    return this._adminFetchUsers(
+      {
+        $match: {
+          role: { $in: ['channel', 'tvshow', 'event', 'podcast'] },
+          $or: [
+            { first_name: { $regex: searchReg } },
+            { last_name: { $regex: searchReg } },
+            { email: { $regex: searchReg } },
+          ],
+        },
+      },
+      page,
+      limit,
+    )
+  }
+
   static adminFetchClientAggrById = async (clientId: string) => {
     return this._adminFetchUsers({ $match: { _id: toObjectId(clientId) } }, 1, 1, true)
   }

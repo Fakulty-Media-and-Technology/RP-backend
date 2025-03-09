@@ -11,18 +11,15 @@ const LiveRepo_1 = require("../../repositories/LiveRepo");
 const LiveMediaSourcesUtils_1 = require("../../utils/LiveMediaSourcesUtils");
 const episodes_model_1 = require("../../models/episodes.model");
 const media_management_1 = require("../media-management");
+const promises_1 = require("../../utils/promises");
+const photoUtils_1 = require("../../utils/photoUtils");
 class AdminManageMediaService {
 }
 exports.AdminManageMediaService = AdminManageMediaService;
 _a = AdminManageMediaService;
 AdminManageMediaService.searchClient = async (searchText, query) => {
-    const searchReg = new RegExp(searchText, 'i');
-    const features = new QueryParamsFeatures_1.QueryParamsFeatures(UserRepo_1.UserRepo.searchUsersByRegexQuery(searchReg), {
-        defaultLimit: 200,
-        defaultPage: 1,
-        queryParams: query,
-    });
-    return await features.paginate().query;
+    const response = await UserRepo_1.UserRepo.adminFetchClientsBySearchAggr(new RegExp(searchText, 'i'), (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(query.page, 1), (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(query.limit, 10));
+    return (0, promises_1.getPromiseAllFulfilledResults)(await Promise.allSettled(response.map(photoUtils_1.PhotoUtils.fetchUserAggrResPhoto)));
 };
 AdminManageMediaService.getLivesByType = async (type, query) => {
     const types = ['channel', 'event', 'podcast', 'sport', 'tvshow'];
