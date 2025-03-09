@@ -4,6 +4,4 @@ import { AdminManageSharedController } from '../../controllers/admins/managemedi
 export const superAdminLivesRouter = Router()
 
 superAdminLivesRouter.get('/search-clients', AdminManageSharedController.searchClient)
-superAdminLivesRouter.get('/all/channels', AdminManageSharedController.getLivesByType('channel'))
-superAdminLivesRouter.get('/all/events', AdminManageSharedController.getLivesByType('event'))
-superAdminLivesRouter.get('/all/tvshows', AdminManageSharedController.getLivesByType('tvshow'))
+superAdminLivesRouter.get('/all/:type', AdminManageSharedController.getLivesByType)

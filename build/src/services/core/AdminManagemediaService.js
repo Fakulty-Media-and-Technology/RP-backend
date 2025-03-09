@@ -28,6 +28,10 @@ AdminManageMediaService.searchClient = async (searchText, query) => {
     return await features.paginate().query;
 };
 AdminManageMediaService.getLivesByType = async (type, query) => {
+    const types = ['channel', 'event', 'podcast', 'sport', 'tvshow'];
+    if (!types.includes(type)) {
+        throw new OperationalError_1.OperationalError('invalid live type', 400);
+    }
     const lives = await LiveRepo_1.LiveRepo.fetchLivesByType(type, (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(query.page, 1), (0, QueryParamsFeatures_1.handleDefaultNumAndUnknown)(query.limit, 10));
     return await LiveMediaSourcesUtils_1.LiveMediaSourcesUtils.resolveSources(lives, '720p');
 };

@@ -34,9 +34,15 @@ export class AdminManageMediaService {
     return await features.paginate().query
   }
 
-  static getLivesByType = async (type: LiveSchema['type'], query: Request['query']) => {
+  static getLivesByType = async (type: string, query: Request['query']) => {
+    const types: LiveSchema['type'][] = ['channel', 'event', 'podcast', 'sport', 'tvshow']
+
+    if (!types.includes(type as any)) {
+      throw new OperationalError('invalid live type', 400)
+    }
+
     const lives = await LiveRepo.fetchLivesByType(
-      type,
+      type as LiveSchema['type'],
       handleDefaultNumAndUnknown(query.page, 1),
       handleDefaultNumAndUnknown(query.limit, 10),
     )

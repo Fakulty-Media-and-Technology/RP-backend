@@ -4,7 +4,6 @@ import { sendResponse } from '../../utils/responder'
 import { AdminManageMediaService } from '../../services/core/AdminManagemediaService'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
-import { LiveSchema } from '../../models/lives.model'
 import { SharedController } from '../common/shared.controller'
 import { validate } from '../../middlewares/requestValidator'
 import { addSubtitleSchema } from '../../validations/admin'
@@ -40,13 +39,12 @@ export class AdminManageSharedController extends SharedController {
     })
   })
 
-  static getLivesByType = (type: LiveSchema['type']) =>
-    Catch.async(async ({ query }, res) => {
-      sendResponse({
-        res,
-        data: await AdminManageMediaService.getLivesByType(type, query),
-      })
+  static getLivesByType = Catch.async(async ({ query, params: { type } }, res) => {
+    sendResponse({
+      res,
+      data: await AdminManageMediaService.getLivesByType(type, query),
     })
+  })
 
   //TODO delete and edit channel
   static addSubtitle = Catch.async(async (req, res) => {

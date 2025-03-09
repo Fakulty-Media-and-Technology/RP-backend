@@ -35,7 +35,7 @@ AdminManageSharedController.searchClient = Catch_1.Catch.async(async (req, res) 
         message: 'matched clients fetched',
     });
 });
-AdminManageSharedController.getLivesByType = (type) => Catch_1.Catch.async(async ({ query }, res) => {
+AdminManageSharedController.getLivesByType = Catch_1.Catch.async(async ({ query, params: { type } }, res) => {
     (0, responder_1.sendResponse)({
         res,
         data: await AdminManagemediaService_1.AdminManageMediaService.getLivesByType(type, query),
