@@ -1,7 +1,7 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MedaiService = void 0;
+exports.MediaService = void 0;
 const userSettings_model_1 = require("../../models/userSettings.model");
 const videoupload_model_1 = require("../../models/videoupload.model");
 const OperationalError_1 = require("../../utils/OperationalError");
@@ -17,13 +17,15 @@ const subtitle_model_1 = require("../../models/subtitle.model");
 const users_model_1 = require("../../models/users.model");
 const Password_1 = require("../../utils/Password");
 const s3_1 = require("../aws/s3");
-class MedaiService {
+class MediaService {
 }
-exports.MedaiService = MedaiService;
-_a = MedaiService;
-MedaiService._uploadPreviewVideo = async ({ liveId, file }, session) => {
+exports.MediaService = MediaService;
+_a = MediaService;
+MediaService._uploadLivePreviewVideo = async ({ data, live }, session) => {
+    if (!data.previewVideo)
+        return;
     const upload = await media_management_1.MediaManagement.uploadAndTransacodeVideo({
-        file,
+        file: data.previewVideo,
         expire: undefined,
     });
     const videoUploadDoc = await new videoupload_model_1.VideoUploadModel({
@@ -32,63 +34,50 @@ MedaiService._uploadPreviewVideo = async ({ liveId, file }, session) => {
         mimetype: upload.mimetype,
         size: upload.size,
         isTranscoded: upload.isTranscoded,
-        parentId: liveId,
+        parentId: live._id,
         parentType: 'live',
     }).save({ session });
-    return videoUploadDoc;
+    live.previewVideoUpload = videoUploadDoc._id;
 };
-MedaiService._uploadCreateLiveCoverPhoto = async ({ liveId, file }, session) => {
-    const upload = await media_management_1.MediaManagement.store({ expire: undefined, baseDir: 'images', file });
+MediaService._uploadLiveChannelLogo = async ({ data, live }, session) => {
+    if (!data.channelLogo)
+        return;
+    if (data.channelLogo && live.type !== 'channel') {
+        throw new OperationalError_1.OperationalError('Only channles can have a channelLogo', 400);
+    }
+    const logoUpload = await media_management_1.MediaManagement.store({
+        file: data.channelLogo,
+        expire: undefined,
+        baseDir: 'images',
+    });
+    const poster = new poster_model_1.PosterImageModel({
+        video_id: live._id,
+        key: logoUpload.Key,
+        bucket: logoUpload.Bucket,
+        dimension: 'channel-logo',
+        parentType: 'live',
+    });
+    live.channelLogo = poster._id;
+    await poster.save({ session });
+};
+MediaService._uploadLiveCoverPhoto = async ({ data, live }, session) => {
+    if (!data.coverPhoto) {
+        throw new OperationalError_1.OperationalError('cover photo is required', 400);
+    }
+    const upload = await media_management_1.MediaManagement.store({
+        expire: undefined,
+        baseDir: 'images',
+        file: data.coverPhoto,
+    });
     const coverPhoto = await new poster_model_1.PosterImageModel({
-        video_id: liveId,
+        video_id: live._id,
         bucket: upload.Bucket,
         key: upload.Key,
         parentType: 'live',
     }).save({ session });
-    return coverPhoto;
+    live.coverPhoto = coverPhoto._id;
 };
-MedaiService._processCreateLivePaymentPayment = async ({ paymentId, clientId, start, expiry }, session) => {
-    if (!paymentId) {
-        throw new OperationalError_1.OperationalError('PaymentId is required', 403);
-    }
-    const confirmPayment = await payments_model_1.PaymentModel.findOne({
-        _id: paymentId,
-        user_id: clientId,
-        status: 'success',
-        is_used: false,
-    });
-    if (!confirmPayment) {
-        throw new OperationalError_1.OperationalError('your payment is invalid', 400);
-    }
-    if (confirmPayment.amount !== (0, live_1.calcLiveCharges)(start, expiry)) {
-        throw new OperationalError_1.OperationalError('payment made does not match charges', 400);
-    }
-    const updatedPayment = await payments_model_1.PaymentModel.findByIdAndUpdate(confirmPayment._id, {
-        is_used: true,
-        use_case: 'live schedule',
-    }, { session });
-    if (updatedPayment == null) {
-        throw new OperationalError_1.OperationalError('could not update payment', 500);
-    }
-};
-MedaiService._createLiveSession = async (data, session) => {
-    const vclient_id = await UserRepo_1.UserRepo.getClientByRolesAndId(data.clientId, [
-        'channel',
-        'event',
-        'podcast',
-        'tvshow',
-    ]);
-    if (!vclient_id) {
-        throw new OperationalError_1.OperationalError('assigned user not found', 400);
-    }
-    if (data.creatorType === 'client') {
-        await _a._processCreateLivePaymentPayment({
-            paymentId: data.paymentId,
-            clientId: data.clientId,
-            start: data.start,
-            expiry: data.expiry,
-        }, session);
-    }
+MediaService._checkLiveOngoinStreams = async (data) => {
     const [streamOngoing, scheduledStream] = await Promise.all([
         lives_model_1.LiveModel.findOne({ client_id: data.clientId, active: true }),
         lives_model_1.LiveModel.findOne({ client_id: data.clientId, active: false, expired: false }),
@@ -99,15 +88,57 @@ MedaiService._createLiveSession = async (data, session) => {
     if (scheduledStream) {
         throw new OperationalError_1.OperationalError('client has a scheduled stream', 400);
     }
+};
+MediaService._checkLivePayments = async (data, session) => {
+    if (data.creatorType !== 'client')
+        return;
+    if (!data.paymentId) {
+        throw new OperationalError_1.OperationalError('PaymentId is required', 403);
+    }
+    const confirmPayment = await payments_model_1.PaymentModel.findOne({
+        _id: data.paymentId,
+        user_id: data.clientId,
+        status: 'success',
+        is_used: false,
+    });
+    if (!confirmPayment) {
+        throw new OperationalError_1.OperationalError('your payment is invalid', 400);
+    }
+    if (confirmPayment.amount !== (0, live_1.calcLiveCharges)(data.start, data.expiry)) {
+        throw new OperationalError_1.OperationalError('payment made does not match charges', 400);
+    }
+    const updatedPayment = await payments_model_1.PaymentModel.findByIdAndUpdate(confirmPayment._id, {
+        is_used: true,
+        use_case: 'live schedule',
+    }, { session });
+    if (updatedPayment == null) {
+        throw new OperationalError_1.OperationalError('could not update payment', 500);
+    }
+};
+MediaService._checkLiveClient = async (data) => {
+    const vclient_id = await UserRepo_1.UserRepo.getClientByRolesAndId(data.clientId, [
+        'channel',
+        'event',
+        'podcast',
+        'tvshow',
+    ]);
+    if (!vclient_id) {
+        throw new OperationalError_1.OperationalError('assigned user not found', 400);
+    }
+};
+MediaService._createLiveSession = async (data, session) => {
+    await _a._checkLiveClient(data);
+    await _a._checkLivePayments(data, session);
+    await _a._checkLiveOngoinStreams(data);
     const live = new lives_model_1.LiveModel({
-        client_id: vclient_id._id,
+        client_id: data.clientId,
         title: data.title,
         stream_key: await (0, live_1.getUniqueStreamKey)(),
         vid_class: data.vidClass,
         pg: data.pg,
         description: data.description,
         type: data.type,
-        upcoming: data.upcoming ?? false,
+        upcoming: data.upcoming,
         start: new Date(data.start),
         expiry: new Date(data.expiry),
         sponsored: data.sponsored,
@@ -115,20 +146,17 @@ MedaiService._createLiveSession = async (data, session) => {
         location: data.location,
         payment_id: data.paymentId,
     });
-    const liveId = live._id.toString();
-    const coverPhoto = await _a._uploadCreateLiveCoverPhoto({ liveId, file: data.coverPhoto }, session);
-    live.coverPhoto = coverPhoto._id;
-    if (data.previewVideo) {
-        const vidUploadDoc = await _a._uploadPreviewVideo({ liveId, file: data.previewVideo }, session);
-        live.previewVideoUpload = vidUploadDoc._id;
-    }
+    const uploaderParams = { data, live };
+    await _a._uploadLiveChannelLogo(uploaderParams, session);
+    await _a._uploadLivePreviewVideo(uploaderParams, session);
+    await _a._uploadLiveCoverPhoto(uploaderParams, session);
     await live.save({ session });
     return live;
 };
-MedaiService.createLive = async (data) => {
+MediaService.createLive = async (data) => {
     return await (0, mongoDbSessionRunner_1.withMongoDBSession)(_a._createLiveSession, data);
 };
-MedaiService.getVodStream = async (vidUploadId, currentUser) => {
+MediaService.getVodStream = async (vidUploadId, currentUser) => {
     const vidUpload = await videoupload_model_1.VideoUploadModel.findById(vidUploadId);
     if (vidUpload == null) {
         throw new OperationalError_1.OperationalError('Invalid video Upload Id', 404);
@@ -152,7 +180,7 @@ MedaiService.getVodStream = async (vidUploadId, currentUser) => {
     response.streamUrl = media_access_1.MediaAccess.getCloudFrontSignedUrl(vidUploadRes.key);
     return response;
 };
-MedaiService._updateUserEmail = async (email, user) => {
+MediaService._updateUserEmail = async (email, user) => {
     if (email === user.email)
         return;
     const existOnAnother = await users_model_1.UserModel.findOne({
@@ -164,7 +192,7 @@ MedaiService._updateUserEmail = async (email, user) => {
     // do other neccessary stuff like set auth pin and stuff
     user.email = email;
 };
-MedaiService._handleUpdateUserPassword = async (prevPass, newPass, user) => {
+MediaService._handleUpdateUserPassword = async (prevPass, newPass, user) => {
     if (!Password_1.Password.isStrong(newPass)) {
         throw new OperationalError_1.OperationalError('new password is not strong enough', 400);
     }
@@ -176,7 +204,7 @@ MedaiService._handleUpdateUserPassword = async (prevPass, newPass, user) => {
         return;
     user.password = await Password_1.Password.encrypt(newPass);
 };
-MedaiService._updateUserProfileImage = async (imageFile, user) => {
+MediaService._updateUserProfileImage = async (imageFile, user) => {
     let prevKey = null;
     let prevBucket = null;
     const { Bucket, Key, mimetype } = await media_management_1.MediaManagement.store({
@@ -199,7 +227,7 @@ MedaiService._updateUserProfileImage = async (imageFile, user) => {
         prevBucket,
     };
 };
-MedaiService.updateUserProfile = async ({ imageFile, data, authType }) => {
+MediaService.updateUserProfile = async ({ imageFile, data, authType }) => {
     if (data.role && authType !== 'admin-auth' && authType !== 'superadmin-auth') {
         throw new OperationalError_1.OperationalError('only admins can update role', 403);
     }
@@ -232,13 +260,13 @@ MedaiService.updateUserProfile = async ({ imageFile, data, authType }) => {
         });
     }
 };
-MedaiService.getPhotoUrl = async (bucket, key) => {
+MediaService.getPhotoUrl = async (bucket, key) => {
     return await media_access_1.MediaAccess.getSignedUrl(bucket, key, 'photo');
 };
-MedaiService.getSubtitleUrl = async (bucket, key) => {
+MediaService.getSubtitleUrl = async (bucket, key) => {
     return await media_access_1.MediaAccess.getSignedUrl(bucket, key, 'subtitle');
 };
-MedaiService.getSubtitles = async (parentId) => {
+MediaService.getSubtitles = async (parentId) => {
     const subtitles = await subtitle_model_1.SubtitleModel.find({ video_id: parentId });
     return await Promise.all(subtitles.map(async (subtitle) => {
         return {

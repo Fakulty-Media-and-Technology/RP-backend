@@ -14,11 +14,13 @@ export class LiveMediaSourcesUtils {
             quality,
           ),
 
-          coverPhoto: await MediaAccess.getSignedUrl(
-            live.coverPhoto.bucket,
-            live.coverPhoto.key,
-            'photo',
-          ),
+          coverPhoto: live.coverPhoto
+            ? await MediaAccess.getSignedUrl(live.coverPhoto.bucket, live.coverPhoto.key, 'photo')
+            : null,
+
+          channelLogo: live.channelLogo
+            ? await MediaAccess.getSignedUrl(live.channelLogo.bucket, live.channelLogo.key, 'photo')
+            : null,
 
           previewVideoUploadDoc: undefined,
         })

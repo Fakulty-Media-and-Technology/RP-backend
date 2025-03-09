@@ -5,7 +5,7 @@ import { OperationalError } from '../../utils/OperationalError'
 import { MediaAccess } from '../media-access'
 import { ClientSession } from 'mongoose'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
-import { LiveModel } from '../../models/lives.model'
+import { Live, LiveModel } from '../../models/lives.model'
 import { PaymentModel } from '../../models/payments.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { calcLiveCharges, getUniqueStreamKey } from '../../utils/live'
@@ -16,9 +16,6 @@ import { User, UserModel } from '../../models/users.model'
 import { Password } from '../../utils/Password'
 import { S3 } from '../aws/s3'
 import { AuthHeaderKey } from '../../middlewares/auth'
-// import { AuthHeaderKey } from '../../middlewares/auth'
-
-// type GetSubtitles = Pick<AddSubtitleData, 'parentId' | 'parentType'>
 
 export type CreateLiveData = {
   clientId: string
@@ -32,6 +29,7 @@ export type CreateLiveData = {
   location?: string
   upcoming?: boolean
   coverPhoto: Express.Multer.File
+  channelLogo?: Express.Multer.File
   previewVideo?: Express.Multer.File
   sponsored?: boolean
   popular?: boolean
@@ -55,27 +53,22 @@ type UserProfileUpdate = {
 }
 
 type UpdateUserProfileInput = {
-  // authType: AuthHeaderKey
   imageFile?: MulterFile
   data: UserProfileUpdate
   authType: AuthHeaderKey
 }
 
-type ProcessCreateLivePaymentParams = Pick<
-  CreateLiveData,
-  'paymentId' | 'clientId' | 'start' | 'expiry'
->
+type LiveFileUploader = (
+  params: { data: CreateLiveData; live: Live },
+  session: ClientSession,
+) => Promise<void>
 
-type CreateLiveCoverPhotoUploadParams = { liveId: string; file: CreateLiveData['coverPhoto'] }
-type UploadPreviewVideoParams = CreateLiveCoverPhotoUploadParams
+export class MediaService {
+  private static _uploadLivePreviewVideo: LiveFileUploader = async ({ data, live }, session) => {
+    if (!data.previewVideo) return
 
-export class MedaiService {
-  private static _uploadPreviewVideo = async (
-    { liveId, file }: UploadPreviewVideoParams,
-    session: ClientSession,
-  ) => {
     const upload = await MediaManagement.uploadAndTransacodeVideo({
-      file,
+      file: data.previewVideo,
       expire: undefined,
     })
 
@@ -85,40 +78,83 @@ export class MedaiService {
       mimetype: upload.mimetype,
       size: upload.size,
       isTranscoded: upload.isTranscoded,
-      parentId: liveId,
+      parentId: live._id,
       parentType: 'live',
     }).save({ session })
 
-    return videoUploadDoc
+    live.previewVideoUpload = videoUploadDoc._id
   }
 
-  private static _uploadCreateLiveCoverPhoto = async (
-    { liveId, file }: CreateLiveCoverPhotoUploadParams,
-    session: ClientSession,
-  ) => {
-    const upload = await MediaManagement.store({ expire: undefined, baseDir: 'images', file })
+  private static _uploadLiveChannelLogo: LiveFileUploader = async ({ data, live }, session) => {
+    if (!data.channelLogo) return
+
+    if (data.channelLogo && live.type !== 'channel') {
+      throw new OperationalError('Only channles can have a channelLogo', 400)
+    }
+
+    const logoUpload = await MediaManagement.store({
+      file: data.channelLogo,
+      expire: undefined,
+      baseDir: 'images',
+    })
+
+    const poster = new PosterImageModel({
+      video_id: live._id,
+      key: logoUpload.Key,
+      bucket: logoUpload.Bucket,
+      dimension: 'channel-logo',
+      parentType: 'live',
+    })
+
+    live.channelLogo = poster._id
+    await poster.save({ session })
+  }
+
+  private static _uploadLiveCoverPhoto: LiveFileUploader = async ({ data, live }, session) => {
+    if (!data.coverPhoto) {
+      throw new OperationalError('cover photo is required', 400)
+    }
+    const upload = await MediaManagement.store({
+      expire: undefined,
+      baseDir: 'images',
+      file: data.coverPhoto,
+    })
 
     const coverPhoto = await new PosterImageModel({
-      video_id: liveId,
+      video_id: live._id,
       bucket: upload.Bucket,
       key: upload.Key,
       parentType: 'live',
     }).save({ session })
 
-    return coverPhoto
+    live.coverPhoto = coverPhoto._id
   }
 
-  private static _processCreateLivePaymentPayment = async (
-    { paymentId, clientId, start, expiry }: ProcessCreateLivePaymentParams,
-    session: ClientSession,
-  ) => {
-    if (!paymentId) {
+  private static _checkLiveOngoinStreams = async (data: CreateLiveData) => {
+    const [streamOngoing, scheduledStream] = await Promise.all([
+      LiveModel.findOne({ client_id: data.clientId, active: true }),
+      LiveModel.findOne({ client_id: data.clientId, active: false, expired: false }),
+    ])
+
+    if (streamOngoing) {
+      throw new OperationalError('client has an ongoing stream', 400)
+    }
+
+    if (scheduledStream) {
+      throw new OperationalError('client has a scheduled stream', 400)
+    }
+  }
+
+  private static _checkLivePayments = async (data: CreateLiveData, session: ClientSession) => {
+    if (data.creatorType !== 'client') return
+
+    if (!data.paymentId) {
       throw new OperationalError('PaymentId is required', 403)
     }
 
     const confirmPayment = await PaymentModel.findOne({
-      _id: paymentId,
-      user_id: clientId,
+      _id: data.paymentId,
+      user_id: data.clientId,
       status: 'success',
       is_used: false,
     })
@@ -127,7 +163,7 @@ export class MedaiService {
       throw new OperationalError('your payment is invalid', 400)
     }
 
-    if (confirmPayment.amount !== calcLiveCharges(start, expiry)) {
+    if (confirmPayment.amount !== calcLiveCharges(data.start, data.expiry)) {
       throw new OperationalError('payment made does not match charges', 400)
     }
 
@@ -145,7 +181,7 @@ export class MedaiService {
     }
   }
 
-  private static _createLiveSession = async (data: CreateLiveData, session: ClientSession) => {
+  private static _checkLiveClient = async (data: CreateLiveData) => {
     const vclient_id = await UserRepo.getClientByRolesAndId(data.clientId, [
       'channel',
       'event',
@@ -156,41 +192,22 @@ export class MedaiService {
     if (!vclient_id) {
       throw new OperationalError('assigned user not found', 400)
     }
+  }
 
-    if (data.creatorType === 'client') {
-      await this._processCreateLivePaymentPayment(
-        {
-          paymentId: data.paymentId,
-          clientId: data.clientId,
-          start: data.start,
-          expiry: data.expiry,
-        },
-        session,
-      )
-    }
-
-    const [streamOngoing, scheduledStream] = await Promise.all([
-      LiveModel.findOne({ client_id: data.clientId, active: true }),
-      LiveModel.findOne({ client_id: data.clientId, active: false, expired: false }),
-    ])
-
-    if (streamOngoing) {
-      throw new OperationalError('client has an ongoing stream', 400)
-    }
-
-    if (scheduledStream) {
-      throw new OperationalError('client has a scheduled stream', 400)
-    }
+  private static _createLiveSession = async (data: CreateLiveData, session: ClientSession) => {
+    await this._checkLiveClient(data)
+    await this._checkLivePayments(data, session)
+    await this._checkLiveOngoinStreams(data)
 
     const live = new LiveModel({
-      client_id: vclient_id._id,
+      client_id: data.clientId,
       title: data.title,
       stream_key: await getUniqueStreamKey(),
       vid_class: data.vidClass,
       pg: data.pg,
       description: data.description,
       type: data.type,
-      upcoming: data.upcoming ?? false,
+      upcoming: data.upcoming,
       start: new Date(data.start),
       expiry: new Date(data.expiry),
       sponsored: data.sponsored,
@@ -199,24 +216,11 @@ export class MedaiService {
       payment_id: data.paymentId,
     })
 
-    const liveId = live._id.toString()
+    const uploaderParams = { data, live }
 
-    const coverPhoto = await this._uploadCreateLiveCoverPhoto(
-      { liveId, file: data.coverPhoto },
-      session,
-    )
-
-    live.coverPhoto = coverPhoto._id
-
-    if (data.previewVideo) {
-      const vidUploadDoc = await this._uploadPreviewVideo(
-        { liveId, file: data.previewVideo },
-        session,
-      )
-
-      live.previewVideoUpload = vidUploadDoc._id
-    }
-
+    await this._uploadLiveChannelLogo(uploaderParams, session)
+    await this._uploadLivePreviewVideo(uploaderParams, session)
+    await this._uploadLiveCoverPhoto(uploaderParams, session)
     await live.save({ session })
     return live
   }

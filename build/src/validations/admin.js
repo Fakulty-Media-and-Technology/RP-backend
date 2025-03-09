@@ -133,6 +133,7 @@ exports.addLiveSchema = joi_1.default.object({
     start: common_1.ISO_STRING_SCHEMA.required(),
     expiry: common_1.ISO_STRING_SCHEMA.required(),
     coverPhoto: joi_1.default.object().required(),
+    channelLogo: joi_1.default.object(),
     previewVideo: joi_1.default.object(),
     description: common_1.STRING_SCHEMA,
     vidClass: common_1.STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),

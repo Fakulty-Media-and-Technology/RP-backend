@@ -19,7 +19,7 @@ const posterSchema = new Schema(
 
     dimension: {
       type: String,
-      enum: ['landscape', 'portrait', null],
+      enum: ['landscape', 'portrait', 'channel-logo', null],
       default: null,
     },
 

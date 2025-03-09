@@ -16,6 +16,7 @@ export interface LiveAggrRes {
   popular: boolean
   featured: boolean
   coverPhoto: PreviewPhoto
+  channelLogo: PreviewPhoto | null
   previewVideoUploadDoc?: PreviewVideoUpload
   createdAt: string
   updatedAt: string

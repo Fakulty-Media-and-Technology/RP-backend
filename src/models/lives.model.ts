@@ -35,6 +35,12 @@ const schema = new Schema(
       required: true,
     },
 
+    channelLogo: {
+      type: Schema.Types.ObjectId,
+      ref: 'poster_images',
+      default: null,
+    },
+
     coverPhoto: {
       type: Schema.Types.ObjectId,
       ref: 'poster_images',

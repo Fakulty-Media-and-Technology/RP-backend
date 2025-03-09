@@ -29,6 +29,11 @@ const schema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
+    channelLogo: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'poster_images',
+        default: null,
+    },
     coverPhoto: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'poster_images',

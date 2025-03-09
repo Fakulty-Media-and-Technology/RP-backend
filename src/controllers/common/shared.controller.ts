@@ -1,4 +1,4 @@
-import { MedaiService, CreateLiveData } from '../../services/core/MediaService'
+import { MediaService, CreateLiveData } from '../../services/core/MediaService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
@@ -16,7 +16,7 @@ export class SharedController extends UploadMediaUtils {
 
     Object.assign(req.body, { userId: req.params.userId })
 
-    await MedaiService.updateUserProfile({
+    await MediaService.updateUserProfile({
       imageFile: req.file,
       data: req.body,
       authType
@@ -45,6 +45,7 @@ export class SharedController extends UploadMediaUtils {
       const data: CreateLiveData = {
         ...parsedData,
         previewVideo: files.previewVideo?.[0],
+        channelLogo: files.channelLogo?.[0],
         coverPhoto: files.coverPhoto?.[0],
         clientId: isAdmin ? parsedData.clientId : GetDefined.loggedInUser(req.user).id,
       }
@@ -53,25 +54,25 @@ export class SharedController extends UploadMediaUtils {
 
       sendResponse({
         res,
-        data: await MedaiService.createLive(data),
+        data: await MediaService.createLive(data),
         message: 'live stream created, credentials are on attached user dashboard',
       })
     })
 
   static adminGetPhotoUrl = Catch.async(async (req, res) => {
     const { bucket, key } = req.body
-    const image = await MedaiService.getPhotoUrl(bucket, key)
+    const image = await MediaService.getPhotoUrl(bucket, key)
     sendResponse({ res, data: image, message: 'image fetched' })
   })
 
   static adminGetSubtitleUrl = Catch.async(async (req, res) => {
     const { bucket, key } = req.body
-    const subtitle = await MedaiService.getSubtitleUrl(bucket, key)
+    const subtitle = await MediaService.getSubtitleUrl(bucket, key)
     sendResponse({ res, data: subtitle, message: 'subtitle fetched' })
   })
 
   static getVidoeUploadStream = Catch.async(async (req, res) => {
-    const _vodStream = await MedaiService.getVodStream(
+    const _vodStream = await MediaService.getVodStream(
       req.params.vidUploadId,
       GetDefined.loggedInUser(req.user),
     )
@@ -81,7 +82,7 @@ export class SharedController extends UploadMediaUtils {
   static getSubtitles = Catch.async(async (req, res) => {
     sendResponse({
       res,
-      data: await MedaiService.getSubtitles(req.params.parentId),
+      data: await MediaService.getSubtitles(req.params.parentId),
     })
   })
 }

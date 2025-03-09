@@ -11,9 +11,15 @@ exports.LiveMediaSourcesUtils = LiveMediaSourcesUtils;
 _a = LiveMediaSourcesUtils;
 LiveMediaSourcesUtils.resolveSources = async (lives, quality) => {
     const settled = await Promise.allSettled(lives.map(async (live) => {
+        console.log({ live });
         Object.assign(live, {
             previewVideoUploadDocSrc: VideoUploadUtils_1.VidUploadUtils.getResSourceUrl(live.previewVideoUploadDoc, quality),
-            coverPhoto: await media_access_1.MediaAccess.getSignedUrl(live.coverPhoto.bucket, live.coverPhoto.key, 'photo'),
+            coverPhoto: live.coverPhoto
+                ? await media_access_1.MediaAccess.getSignedUrl(live.coverPhoto.bucket, live.coverPhoto.key, 'photo')
+                : null,
+            channelLogo: live.channelLogo
+                ? await media_access_1.MediaAccess.getSignedUrl(live.channelLogo.bucket, live.channelLogo.key, 'photo')
+                : null,
             previewVideoUploadDoc: undefined,
         });
         return live;

@@ -66,6 +66,7 @@ Multer.adminUploadVideoConfig = _a._configs.multipleTypesConfig.fields([
 Multer.createLiveConfig = _a._configs.multipleTypesConfig.fields([
     { name: 'previewVideo', maxCount: 1 },
     { name: 'coverPhoto', maxCount: 1 },
+    { name: 'channelLogo', maxCount: 1 },
 ]);
 Multer.createUpcomingConfig = _a._configs.multipleTypesConfig.fields([
     { name: 'portraitPhoto', maxCount: 1 },

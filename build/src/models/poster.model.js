@@ -17,7 +17,7 @@ const posterSchema = new mongoose_1.Schema({
     },
     dimension: {
         type: String,
-        enum: ['landscape', 'portrait', null],
+        enum: ['landscape', 'portrait', 'channel-logo', null],
         default: null,
     },
     parentType: {

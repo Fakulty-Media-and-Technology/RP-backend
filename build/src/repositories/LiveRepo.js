@@ -125,9 +125,18 @@ LiveRepo.fetchLivesAggr = async ({ prevStages, sortStage, page, limit }) => {
         {
             $lookup: {
                 from: 'poster_images',
-                localField: '_id',
-                foreignField: 'video_id',
+                localField: 'coverPhoto',
+                foreignField: '_id',
                 as: 'coverPhoto',
+                pipeline: [{ $project: { key: true, bucket: true } }],
+            },
+        },
+        {
+            $lookup: {
+                from: 'poster_images',
+                localField: 'channelLogo',
+                foreignField: '_id',
+                as: 'channelLogo',
                 pipeline: [{ $project: { key: true, bucket: true } }],
             },
         },
@@ -157,6 +166,7 @@ LiveRepo.fetchLivesAggr = async ({ prevStages, sortStage, page, limit }) => {
                 streamKey: '$stream_key',
                 vidClass: '$vid_class',
                 coverPhoto: { $first: '$coverPhoto' },
+                channelLogo: { $ifNull: [{ $first: '$channelLogo' }, null] },
                 previewVideoUploadDoc: { $ifNull: [{ $first: '$previewVideoUploads' }, null] },
                 activeViews: '$active_views',
                 featExpiry: '$feat_expiry',

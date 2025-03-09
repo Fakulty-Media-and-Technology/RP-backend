@@ -171,6 +171,7 @@ export const addLiveSchema = Joi.object({
   start: ISO_STRING_SCHEMA.required(),
   expiry: ISO_STRING_SCHEMA.required(),
   coverPhoto: Joi.object().required(),
+  channelLogo: Joi.object(),
   previewVideo: Joi.object(),
   description: STRING_SCHEMA,
   vidClass: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
