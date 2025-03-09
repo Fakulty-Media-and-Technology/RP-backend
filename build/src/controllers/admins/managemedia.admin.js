@@ -5,8 +5,6 @@ exports.AdminManageSharedController = void 0;
 const Catch_1 = require("../../utils/Catch");
 const responder_1 = require("../../utils/responder");
 const AdminManagemediaService_1 = require("../../services/core/AdminManagemediaService");
-const GetDefined_1 = require("../../utils/GetDefined");
-const OperationalError_1 = require("../../utils/OperationalError");
 const shared_controller_1 = require("../common/shared.controller");
 const requestValidator_1 = require("../../middlewares/requestValidator");
 const admin_1 = require("../../validations/admin");
@@ -14,19 +12,6 @@ class AdminManageSharedController extends shared_controller_1.SharedController {
 }
 exports.AdminManageSharedController = AdminManageSharedController;
 _a = AdminManageSharedController;
-AdminManageSharedController.createLive = ({ isAdmin }) => Catch_1.Catch.async(async (req, res) => {
-    if (isAdmin && typeof req.body.client_id !== 'string') {
-        throw new OperationalError_1.OperationalError('/body.client_id is required/', 400);
-    }
-    if (!isAdmin) {
-        req.body.client_id = GetDefined_1.GetDefined.loggedInUser(req.user).id;
-    }
-    (0, responder_1.sendResponse)({
-        res,
-        data: await AdminManagemediaService_1.AdminManageMediaService.createLive(req.body),
-        message: 'live stream event scheduled, credentials are on attached user dashboard',
-    });
-});
 AdminManageSharedController.searchClient = Catch_1.Catch.async(async (req, res) => {
     const clients = await AdminManagemediaService_1.AdminManageMediaService.searchClient(req.query.search, req.query);
     (0, responder_1.sendResponse)({

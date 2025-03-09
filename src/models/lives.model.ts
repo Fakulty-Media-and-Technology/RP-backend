@@ -1,5 +1,4 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
-import { OperationalError } from '../utils/OperationalError'
 
 const schema = new Schema(
   {
@@ -22,6 +21,10 @@ const schema = new Schema(
     title: {
       type: String,
       required: true,
+    },
+
+    subTitle: {
+      type: String,
     },
 
     stream_key: {

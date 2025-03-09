@@ -133,6 +133,7 @@ MediaService._createLiveSession = async (data, session) => {
     const live = new lives_model_1.LiveModel({
         client_id: data.clientId,
         title: data.title,
+        subTitle: data.subTitle,
         stream_key: await (0, live_1.getUniqueStreamKey)(),
         vid_class: data.vidClass,
         pg: data.pg,

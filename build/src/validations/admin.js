@@ -129,6 +129,7 @@ exports.getPhotoURLSchema = {
 exports.addLiveSchema = joi_1.default.object({
     clientId: common_1.MONGO_DB_OBJECT_ID_SCHEMA.required(),
     title: common_1.STRING_SCHEMA.required(),
+    subTitle: common_1.STRING_SCHEMA.required(),
     pg: common_1.STRING_SCHEMA.required(),
     start: common_1.ISO_STRING_SCHEMA.required(),
     expiry: common_1.ISO_STRING_SCHEMA.required(),

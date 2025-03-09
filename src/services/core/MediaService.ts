@@ -20,6 +20,7 @@ import { AuthHeaderKey } from '../../middlewares/auth'
 export type CreateLiveData = {
   clientId: string
   title: string
+  subTitle?: string
   pg: string
   vidClass: string
   type: string
@@ -202,6 +203,7 @@ export class MediaService {
     const live = new LiveModel({
       client_id: data.clientId,
       title: data.title,
+      subTitle: data.subTitle,
       stream_key: await getUniqueStreamKey(),
       vid_class: data.vidClass,
       pg: data.pg,
