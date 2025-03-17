@@ -27,7 +27,6 @@ import { requestValidator } from '../../middlewares/requestValidator'
 import { viewContentSchema } from '../../validations/customers'
 
 export const customerRouter = Router()
-const sharedRoutes = new SharedRoutes(customerRouter)
 
 // onboarding
 customerRouter.post('/signup', OnboardingController.customerSignup)
@@ -45,7 +44,7 @@ customerRouter.post(
   CustomerSharedController.viewContent,
 )
 
-sharedRoutes.fetchSubtitles().updateUserProfile('customer-auth')
+new SharedRoutes(customerRouter).fetchSubtitles().updateUserProfile('customer-auth')
 
 customerRouter.use('/profile', ProfileRouter)
 customerRouter.use('/wallet', WalletRouter)

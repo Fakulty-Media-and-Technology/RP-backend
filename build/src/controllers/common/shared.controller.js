@@ -18,7 +18,7 @@ SharedController.updateProfile = (authType) => Catch_1.Catch.async(async (req, r
     if (Object.values(req.body).length === 0 && req.file == null) {
         throw new OperationalError_1.OperationalError('Provide at least one property to update', 400);
     }
-    Object.assign(req.body, { userId: req.params.userId });
+    Object.assign(req.body, req.params);
     await MediaService_1.MediaService.updateUserProfile({
         imageFile: req.file,
         data: req.body,

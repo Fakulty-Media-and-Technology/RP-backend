@@ -15,7 +15,7 @@ export class SharedController extends UploadMediaUtils {
         throw new OperationalError('Provide at least one property to update', 400)
       }
 
-      Object.assign(req.body, { userId: req.params.userId })
+      Object.assign(req.body, req.params)
 
       await MediaService.updateUserProfile({
         imageFile: req.file,
