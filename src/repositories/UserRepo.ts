@@ -23,7 +23,6 @@ export type FetchUserAggrRes = Pick<
   joined: Date
   fullname: string
   substatus: 'Active' | 'Inactive'
-  totalSub: number | undefined | null
 }
 
 export class UserRepo {
@@ -167,6 +166,53 @@ export class UserRepo {
   ) => {
     const pipeline: PipelineStage[] = [
       match,
+      { $skip: skip(page, limit) },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'subscriptions',
+          foreignField: 'user_id',
+          localField: '_id',
+          as: 'subs',
+
+          pipeline: [
+            {
+              $lookup: {
+                from: 'plans',
+                foreignField: '_id',
+                localField: 'plan_id',
+                as: 'plans',
+
+                pipeline: [
+                  {
+                    $project: { months_duration: true },
+                  },
+                  {
+                    $group: {
+                      _id: null,
+                      monthsDurationTotal: { $sum: '$months_duration' },
+                    },
+                  },
+                ],
+              },
+            },
+
+            {
+              $addFields: {
+                plansMonthDurationTotal: { $ifNull: [{ $first: '$plans.monthsDurationTotal' }, 0] },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                plansDuration: { $sum: '$plansMonthDurationTotal' },
+                totalSubs: { $sum: 1 },
+                totalAmount: { $sum: '$amount' },
+              },
+            },
+          ],
+        },
+      },
       {
         $project: {
           fullname: {
@@ -180,7 +226,6 @@ export class UserRepo {
           country_code: true,
           role: true,
           email: true,
-          totalSub: true,
           joined: '$createdAt',
           substatus: {
             $cond: {
@@ -190,10 +235,9 @@ export class UserRepo {
             },
           },
           verified: true,
+          subs: true,
         },
       },
-      { $skip: skip(page, limit) },
-      { $limit: limit },
     ]
 
     if (showPaymentHistory) {
@@ -207,8 +251,8 @@ export class UserRepo {
       })
     }
 
-    const result = (await UserModel.aggregate(pipeline)) as Array<FetchUserAggrRes>
-    return result
+    const result = await UserModel.aggregate(pipeline)
+    return result as Array<FetchUserAggrRes>
   }
 
   static adminFetchClientsBySearchAggr = async (searchReg: RegExp, page: number, limit: number) => {

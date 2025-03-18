@@ -131,6 +131,50 @@ UserRepo.getAClient = (clinetId) => {
 UserRepo._adminFetchUsers = async (match, page, limit, showPaymentHistory = false) => {
     const pipeline = [
         match,
+        { $skip: (0, QueryParamsFeatures_1.skip)(page, limit) },
+        { $limit: limit },
+        {
+            $lookup: {
+                from: 'subscriptions',
+                foreignField: 'user_id',
+                localField: '_id',
+                as: 'subs',
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: 'plans',
+                            foreignField: '_id',
+                            localField: 'plan_id',
+                            as: 'plans',
+                            pipeline: [
+                                {
+                                    $project: { months_duration: true },
+                                },
+                                {
+                                    $group: {
+                                        _id: null,
+                                        monthsDurationTotal: { $sum: '$months_duration' },
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    {
+                        $addFields: {
+                            plansMonthDurationTotal: { $ifNull: [{ $first: '$plans.monthsDurationTotal' }, 0] },
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            plansDuration: { $sum: '$plansMonthDurationTotal' },
+                            totalSubs: { $sum: 1 },
+                            totalAmount: { $sum: '$amount' },
+                        },
+                    },
+                ],
+            },
+        },
         {
             $project: {
                 fullname: {
@@ -144,7 +188,6 @@ UserRepo._adminFetchUsers = async (match, page, limit, showPaymentHistory = fals
                 country_code: true,
                 role: true,
                 email: true,
-                totalSub: true,
                 joined: '$createdAt',
                 substatus: {
                     $cond: {
@@ -154,10 +197,9 @@ UserRepo._adminFetchUsers = async (match, page, limit, showPaymentHistory = fals
                     },
                 },
                 verified: true,
+                subs: true,
             },
         },
-        { $skip: (0, QueryParamsFeatures_1.skip)(page, limit) },
-        { $limit: limit },
     ];
     if (showPaymentHistory) {
         pipeline.push({
@@ -169,7 +211,7 @@ UserRepo._adminFetchUsers = async (match, page, limit, showPaymentHistory = fals
             },
         });
     }
-    const result = (await users_model_1.UserModel.aggregate(pipeline));
+    const result = await users_model_1.UserModel.aggregate(pipeline);
     return result;
 };
 UserRepo.adminFetchClientsBySearchAggr = async (searchReg, page, limit) => {
