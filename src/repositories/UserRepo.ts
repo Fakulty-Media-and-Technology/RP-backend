@@ -1,4 +1,4 @@
-import { UpdateQuery, Types, PipelineStage } from 'mongoose'
+import { UpdateQuery, PipelineStage } from 'mongoose'
 import { UserModel, UserSchema, User } from '../models/users.model'
 import { StringOrObjectId } from '../types'
 import { skip } from '../utils/QueryParamsFeatures'
@@ -162,12 +162,42 @@ export class UserRepo {
     match: PipelineStage.Match,
     page: number,
     limit: number,
-    showPaymentHistory = false,
   ) => {
     const pipeline: PipelineStage[] = [
       match,
       { $skip: skip(page, limit) },
       { $limit: limit },
+      {
+        $lookup: {
+          from: 'wallets',
+          foreignField: 'user_id',
+          localField: '_id',
+          as: 'wallets',
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'payments',
+          localField: '_id',
+          foreignField: 'user_id',
+          as: 'paymentHistory',
+
+          pipeline: [
+            {
+              $project: {
+                amount: true,
+                reference: true,
+                status: true,
+                is_used: true,
+                createdAt: true,
+                updatedAt: true,
+
+              },
+            },
+          ],
+        },
+      },
       {
         $lookup: {
           from: 'subscriptions',
@@ -227,6 +257,8 @@ export class UserRepo {
           role: true,
           email: true,
           joined: '$createdAt',
+          walletBal: { $ifNull: [{ $first: '$wallets.balance' }, 0] },
+          paymentHistory: true,
           substatus: {
             $cond: {
               if: { $eq: ['$verified', true] },
@@ -239,17 +271,6 @@ export class UserRepo {
         },
       },
     ]
-
-    if (showPaymentHistory) {
-      pipeline.push({
-        $lookup: {
-          from: 'payments',
-          localField: '_id',
-          foreignField: 'user_id',
-          as: 'payment history',
-        },
-      })
-    }
 
     const result = await UserModel.aggregate(pipeline)
     return result as Array<FetchUserAggrRes>
@@ -273,7 +294,7 @@ export class UserRepo {
   }
 
   static adminFetchClientAggrById = async (clientId: string) => {
-    return this._adminFetchUsers({ $match: { _id: toObjectId(clientId) } }, 1, 1, true)
+    return this._adminFetchUsers({ $match: { _id: toObjectId(clientId) } }, 1, 1)
   }
 
   static adminFetchAllClientsAggr = async (page: number, limit: number) => {

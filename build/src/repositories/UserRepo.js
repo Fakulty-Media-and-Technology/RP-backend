@@ -128,11 +128,39 @@ UserRepo.getAClient = (clinetId) => {
         },
     ]);
 };
-UserRepo._adminFetchUsers = async (match, page, limit, showPaymentHistory = false) => {
+UserRepo._adminFetchUsers = async (match, page, limit) => {
     const pipeline = [
         match,
         { $skip: (0, QueryParamsFeatures_1.skip)(page, limit) },
         { $limit: limit },
+        {
+            $lookup: {
+                from: 'wallets',
+                foreignField: 'user_id',
+                localField: '_id',
+                as: 'wallets',
+            },
+        },
+        {
+            $lookup: {
+                from: 'payments',
+                localField: '_id',
+                foreignField: 'user_id',
+                as: 'paymentHistory',
+                pipeline: [
+                    {
+                        $project: {
+                            amount: true,
+                            reference: true,
+                            status: true,
+                            is_used: true,
+                            createdAt: true,
+                            updatedAt: true,
+                        },
+                    },
+                ],
+            },
+        },
         {
             $lookup: {
                 from: 'subscriptions',
@@ -189,6 +217,8 @@ UserRepo._adminFetchUsers = async (match, page, limit, showPaymentHistory = fals
                 role: true,
                 email: true,
                 joined: '$createdAt',
+                walletBal: { $ifNull: [{ $first: '$wallets.balance' }, 0] },
+                paymentHistory: true,
                 substatus: {
                     $cond: {
                         if: { $eq: ['$verified', true] },
@@ -201,16 +231,6 @@ UserRepo._adminFetchUsers = async (match, page, limit, showPaymentHistory = fals
             },
         },
     ];
-    if (showPaymentHistory) {
-        pipeline.push({
-            $lookup: {
-                from: 'payments',
-                localField: '_id',
-                foreignField: 'user_id',
-                as: 'payment history',
-            },
-        });
-    }
     const result = await users_model_1.UserModel.aggregate(pipeline);
     return result;
 };
@@ -227,7 +247,7 @@ UserRepo.adminFetchClientsBySearchAggr = async (searchReg, page, limit) => {
     }, page, limit);
 };
 UserRepo.adminFetchClientAggrById = async (clientId) => {
-    return _a._adminFetchUsers({ $match: { _id: (0, VideoRepo_1.toObjectId)(clientId) } }, 1, 1, true);
+    return _a._adminFetchUsers({ $match: { _id: (0, VideoRepo_1.toObjectId)(clientId) } }, 1, 1);
 };
 UserRepo.adminFetchAllClientsAggr = async (page, limit) => {
     return _a._adminFetchUsers({ $match: { role: { $in: ['tvshow', 'channel', 'podcast', 'event'] } } }, page, limit);
