@@ -17,53 +17,51 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-
-      # - name: Run Linter
-      #   run: npm run lint
-
-      # - name: Run Formatter
-      #   run: npm run format
+      - name: Download .env File from S3
+        run: |
+          curl -o env.txt https://reeplay.s3.us-east-1.amazonaws.com/env.txt
+          mv env.txt .env
+          ls -la  # Verify the file exists
 
       - name: Build the Project
         run: npm run build
 
       - name: Run Tests
         run: npm test
-
+        
   cd:
     needs: ci  # <- This ensures CD runs only if CI succeeds
     runs-on: ubuntu-latest
     steps:
-        - name: Checkout repository
-          uses: actions/checkout@v4 # Checks out the repository code.
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Checks out the repository code.
   
-        - name: Deploy to Server
-          uses: appleboy/ssh-action@master
-          with:
-            host: ${{ secrets.ssh_server }} # Your server IP or hostname, stored as a secret.
-            username: ${{ secrets.ssh_username }} # SSH username, stored as a secret.
-            password: ${{ secrets.ssh_password }} # SSH password, stored as a secret.
-            port: 22 # Optional. Default SSH port 22 is used unless changed.
-            script: |
-              echo "Deploying to ${{ github.ref_name }}..."
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.ssh_server }}
+          username: ${{ secrets.ssh_username }}
+          password: ${{ secrets.ssh_password }}
+          port: 22
+          script: |
+            echo "Deploying to ${{ github.ref_name }}..."
   
-              # Map branch to Docker container
-              if [ "${{ github.ref_name }}" = "typescript" ]; then
-                container_name="app2"
-                branch="typescript"
-              else
-                echo "Unknown branch. Exiting."
-                exit 1
-              fi
+            # Map branch to Docker container
+            if [ "${{ github.ref_name }}" = "typescript" ]; then
+              container_name="app2"
+              branch="typescript"
+            else
+              echo "Unknown branch. Exiting."
+              exit 1
+            fi
   
-              docker exec ${container_name} /bin/bash -c "
-                  git fetch origin && \
-                  git reset --hard HEAD && \
-                  git checkout ${branch} && \
-                  git reset --hard origin/${branch} && \
-                  git pull --rebase --no-edit
-              "
+            docker exec ${container_name} /bin/bash -c "
+                git fetch origin && \
+                git reset --hard HEAD && \
+                git checkout ${branch} && \
+                git reset --hard origin/${branch} && \
+                git pull --rebase --no-edit
+            "
   
-              # Restart the Docker container
-              docker restart ${container_name}
-  
+            # Restart the Docker container
+            docker restart ${container_name}
