@@ -1,4 +1,4 @@
-name: Deployment By Godwin-Incrisz
+name: Deployment 
 
 on:
   push:
