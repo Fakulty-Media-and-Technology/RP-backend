@@ -28,6 +28,9 @@ jobs:
 
       - name: Run Tests
         run: npm test
+
+    #   - name: Archive Build Artifact
+    #     run: tar -cvf build-artifact.tar build/
         
   cd:
     needs: ci  # <- This ensures CD runs only if CI succeeds
@@ -60,7 +63,9 @@ jobs:
                 git reset --hard HEAD && \
                 git checkout ${branch} && \
                 git reset --hard origin/${branch} && \
-                git pull --rebase --no-edit
+                git pull --rebase --no-edit && \
+                npm install && \
+                npm run build 
             "
   
             # Restart the Docker container
