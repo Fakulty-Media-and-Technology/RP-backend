@@ -1,11 +1,20 @@
+# packages folder
 node_modules
 
+# media storage
 tempMedia
 
+# 
 home
 
+# env files
 *.env
 
+# local 
 ./test.ts
 
+# media storage
 media
+
+# js build 
+build

@@ -39,6 +39,8 @@ export const env = getValidEnv({
   GUEST_TOKEN: process.env.GUEST_TOKEN,
   JWT_SECRET_REFRESH_TOKEN: process.env.JWT_SECRET_REFRESH_TOKEN,
 
+  
+
   // AWS
   S3REGION: process.env.S3REGION,
   S3SECRET_KEY: process.env.S3SECRET_KEY,
