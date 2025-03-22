@@ -47,6 +47,7 @@ jobs:
           password: ${{ secrets.ssh_password }}
           port: 22
           script: |
+            set -e  # Exit immediately if any command fails
             echo "Deploying to ${{ github.ref_name }}..."
   
             # Map branch to Docker container
@@ -59,6 +60,7 @@ jobs:
             fi
   
             docker exec ${container_name} /bin/bash -c "
+                set -e  # Exit immediately if any command fails
                 git fetch origin && \
                 git reset --hard HEAD && \
                 git checkout ${branch} && \
