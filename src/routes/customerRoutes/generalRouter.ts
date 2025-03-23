@@ -3,6 +3,6 @@ import { OnboardingController } from '../../controllers/customers/onboarding.cus
 
 export const router = Router()
 
-router.get('/general/validate-token', OnboardingController.authTokenValidity)
-router.get('/general/validate-reftoken', OnboardingController.refTokenValidity)
-router.get('/general/renew-accesstoken', OnboardingController.refreshAccessToken)
+router.get('/validate-token', OnboardingController.authTokenValidity)
+router.get('/validate-reftoken', OnboardingController.refTokenValidity)
+router.get('/renew-accesstoken', OnboardingController.refreshAccessToken)
