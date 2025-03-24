@@ -3,7 +3,6 @@ import { PosterImage, PosterImageModel } from '../models/poster.model'
 import { Video, VideoModel, videoTypes } from '../models/videos.model'
 import { OperationalError } from '../utils/OperationalError'
 
-import { SeasonModel } from '../models/seasons.model'
 import { Episode, EpisodeModel } from '../models/episodes.model'
 import { MediaManagement, UploadAndTranscodeConfig } from './../services/media-management'
 import { MulterFile, StringOrObjectId } from '../types'
@@ -56,6 +55,7 @@ export type MovieData = {
   pg: string
   description: string
   vidClass: Video['vid_class']
+  primaryColor: string
 
   defaultRating?: string
   videoLink?: string
@@ -400,6 +400,7 @@ export class UploadMediaUtils {
       type,
       admin_id: adminId,
       title: data.title,
+      primaryColor: data.primaryColor,
       description: data.description,
       vid_class: data.vidClass,
       artist_name: data.artistName,
@@ -444,6 +445,7 @@ export class UploadMediaUtils {
     await videoDoc.save({ session })
     return videoDoc
   }
+
   protected static _editVideoSession = async (
     { data, adminId, videoId }: EditVideoParams,
     session: ClientSession,
@@ -459,6 +461,7 @@ export class UploadMediaUtils {
     vod.description = data.description || vod.description
     vod.amount = data.amount || vod.amount
     vod.title = data.title || vod.title
+    vod.primaryColor = data.primaryColor || vod.primaryColor
 
     vod.upcoming = data.upcoming || vod.upcoming
     vod.admin_id = toObjectId(adminId)

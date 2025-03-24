@@ -53,6 +53,11 @@ const schema = new Schema(
       trim: true,
     },
 
+    primaryColor: {
+      type: String,
+      required: true,
+    },
+
     vid_class: {
       type: String,
       enum: ['free', 'ad', 'exclusive', 'premium'],

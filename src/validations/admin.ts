@@ -28,6 +28,7 @@ export const addMovieOrSkitSchema = Joi.object({
   title: STRING_SCHEMA.required(),
   pg: STRING_SCHEMA.required(),
   releasedDate: ISO_STRING_SCHEMA.required(),
+  primaryColor: STRING_SCHEMA.required(),
 
   // enums
   category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
@@ -67,6 +68,7 @@ export const addSeriesSchema = Joi.object({
   category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
   releasedDate: ISO_STRING_SCHEMA.required(),
   runtime: STRING_SCHEMA.required(),
+  primaryColor: STRING_SCHEMA.required(),
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
 
   description: STRING_SCHEMA,
@@ -98,6 +100,7 @@ export const addMusicVideoSchema = Joi.object({
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
   artistName: STRING_SCHEMA.required(),
   expiryDate: ISO_STRING_SCHEMA,
+  primaryColor: STRING_SCHEMA.required(),
 
   description: STRING_SCHEMA,
   amount: Joi.number().strict(),
@@ -128,6 +131,7 @@ export const editVideoSchema = Joi.object({
   artistName: STRING_SCHEMA,
   expiryDate: ISO_STRING_SCHEMA,
   description: STRING_SCHEMA,
+  primaryColor: STRING_SCHEMA,
 
   category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
   genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
