@@ -7,6 +7,8 @@ import { validate } from '../../middlewares/requestValidator'
 import { addLiveSchema } from '../../validations/admin'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { AuthHeaderKey } from '../../middlewares/auth'
+import { LiveService } from '../../services/core/LiveService'
+import { LiveStreamService } from '../../services/core/LiveStreamService'
 
 export class SharedController extends UploadMediaUtils {
   static updateProfile = (authType: AuthHeaderKey) =>
@@ -84,6 +86,16 @@ export class SharedController extends UploadMediaUtils {
     sendResponse({
       res,
       data: await MediaService.getSubtitles(req.params.parentId),
+    })
+  })
+
+  static deleteLiveById = Catch.async(async (req, res) => {
+    sendResponse({
+      res,
+      data: await LiveStreamService.deleteLive({
+        liveId: req.params.liveId,
+        currentUser: GetDefined.loggedInUser(req.user),
+      }),
     })
   })
 }

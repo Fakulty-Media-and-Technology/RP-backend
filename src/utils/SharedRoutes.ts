@@ -12,13 +12,18 @@ export class SharedRoutes {
     this._baseRouter = router
   }
 
-  livesRoutes(caller: 'Admin' | 'Client') {
+  createLive(caller: 'Admin' | 'Client') {
     this._baseRouter.post(
       '/lives/create',
       Multer.createLiveConfig,
       SharedController.createLive({ isAdmin: caller === 'Admin' }),
     )
 
+    return this
+  }
+
+  deleteLive() {
+    this._baseRouter.delete('/lives/delete/:liveId', SharedController.deleteLiveById)
     return this
   }
 

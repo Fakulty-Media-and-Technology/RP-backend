@@ -29,7 +29,7 @@ superAdminRouter.post('/admins-signin', AdminOnboardingController.adminSignIn)
 
 superAdminRouter.use(AuthMiddleware.authenticateRequest('superadmin-auth'))
 
-sharedRoutes.livesRoutes('Admin').fetchSubtitles().updateUserProfile('superadmin-auth')
+sharedRoutes.createLive('Admin').deleteLive().fetchSubtitles().updateUserProfile('superadmin-auth')
 
 superAdminRouter.use('/clients', superAdminClientsRouter)
 superAdminRouter.use('/enums', superAdminEnumsRouter)

@@ -15,7 +15,7 @@ const sharedRoutes = new SharedRoutes(clientsRouter)
 
 clientsRouter.use(AuthMiddleware.authenticateRequest('clients-auth'))
 
-sharedRoutes.livesRoutes('Client').updateUserProfile('clients-auth')
+sharedRoutes.createLive('Client').deleteLive().updateUserProfile('clients-auth')
 
 clientsRouter.use('/livestream', ClientsLiveStreamRouter)
 clientsRouter.use('/payouts', ClientPayoutRouter)

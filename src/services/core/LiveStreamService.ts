@@ -4,16 +4,22 @@ import { LiveModel } from '../../models/lives.model'
 import { PaymentModel } from '../../models/payments.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
-import { ClientSession } from 'mongoose'
+import { ClientSession, Types } from 'mongoose'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { calcLiveCharges, signCred } from '../../utils/live'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { Purge } from '../../utils/Purge'
 
 type CreateClientWithSessionInput = {
   currentUser: LoggedInUser
   data: Record<string, any>
+}
+
+type DeleteLiveInput = {
+  currentUser: LoggedInUser
+  liveId: string
 }
 
 type ExtendLiveEventWithSessionInput = CreateClientWithSessionInput
@@ -125,5 +131,47 @@ export class LiveStreamService {
       data,
       currentUser,
     })
+  }
+
+  private static _deleteLiveSession = async (
+    { currentUser, liveId }: DeleteLiveInput,
+    session: ClientSession,
+  ) => {
+    const isAdmin = ['admin', 'superadmin'].includes(currentUser.role)
+    const isClient = ['channel', 'tvshow', 'event', 'podcast'].includes(currentUser.role)
+
+    if (!isAdmin && !isClient) {
+      throw new OperationalError('only admins or a client can delete live', 403)
+    }
+
+    const deletedLive = await LiveModel.findByIdAndDelete(liveId, { session })
+
+    if (deletedLive == null) {
+      throw new OperationalError('invalid liveId', 404)
+    }
+
+    if (isClient && deletedLive.client_id.toString() !== currentUser._id.toString()) {
+      throw new OperationalError('You do not own this live', 403)
+    }
+
+    const payments: Types.ObjectId[] = []
+
+    Purge.subtitlesByParentId(deletedLive._id)
+    Purge.postersByParentId(deletedLive._id)
+    deletedLive.previewVideoUpload && Purge.videoUploadById(deletedLive.previewVideoUpload)
+    deletedLive.payment_id && payments.push(deletedLive.payment_id)
+    deletedLive.extpayment_id && payments.push(deletedLive.extpayment_id)
+
+    payments.forEach(async payment => {
+      try {
+        await PaymentModel.findByIdAndDelete(payment)
+      } catch (e) {
+        console.error(`Error deleting paymentId: ${payment} for deleted live ${deletedLive._id}`)
+      }
+    })
+  }
+
+  static deleteLive = async (input: DeleteLiveInput) => {
+    await withMongoDBSession(this._deleteLiveSession, input)
   }
 }
