@@ -26,6 +26,7 @@ export type CreateLiveData = {
   type: string
   start: string
   expiry: string
+  category?: string[]
   description?: string
   location?: string
   upcoming?: boolean
@@ -208,6 +209,7 @@ export class MediaService {
       vid_class: data.vidClass,
       pg: data.pg,
       description: data.description,
+      category: data.category || [],
       type: data.type,
       upcoming: data.upcoming,
       start: new Date(data.start),

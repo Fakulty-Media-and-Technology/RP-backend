@@ -172,6 +172,7 @@ export const addLiveSchema = Joi.object({
   start: ISO_STRING_SCHEMA.required(),
   expiry: ISO_STRING_SCHEMA.required(),
   coverPhoto: Joi.object().required(),
+  category: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
   channelLogo: Joi.object(),
   previewVideo: Joi.object(),
   description: STRING_SCHEMA,

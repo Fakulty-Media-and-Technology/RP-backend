@@ -123,6 +123,13 @@ const schema = new Schema(
       default: false,
     },
 
+    category: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'category_enums',
+      },
+    ],
+
     upcomingSubscribers: [
       {
         type: Schema.Types.ObjectId,

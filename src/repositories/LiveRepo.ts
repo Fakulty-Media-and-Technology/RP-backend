@@ -167,6 +167,19 @@ export class LiveRepo {
           ],
         },
       },
+      {
+        $lookup: {
+          from: 'category_enums',
+          foreignField: '_id',
+          localField: 'category',
+          as: 'category',
+          pipeline: [
+            {
+              $project: { __v: false, createdAt: false, updatedAt: false },
+            },
+          ],
+        },
+      },
 
       {
         $lookup: {
@@ -174,6 +187,22 @@ export class LiveRepo {
           foreignField: 'content',
           localField: '_id',
           as: 'views',
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'client_id',
+          foreignField: '_id',
+          as: 'clientDetails',
+
+          pipeline: [
+            {
+              $project: {
+                fullName: { $concat: ['$first_name', ' ', '$last_name'] },
+              },
+            },
+          ],
         },
       },
       {
@@ -186,7 +215,7 @@ export class LiveRepo {
           previewVideoUploadDoc: { $ifNull: [{ $first: '$previewVideoUploads' }, null] },
           activeViews: '$active_views',
           featExpiry: '$feat_expiry',
-          clientId: '$client_id',
+          clientDetails: { $first: '$clientDetails' },
         },
       },
 
