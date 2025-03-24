@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import { Types } from 'mongoose'
 import { PosterImageModel } from '../models/poster.model'
 import { SubtitleModel } from '../models/subtitle.model'
 import { TrailerModel } from '../models/trailer.model'
@@ -7,10 +7,30 @@ import { VideoUploadModel } from '../models/videoupload.model'
 import { S3 } from '../services/aws/s3'
 import { SeasonModel } from '../models/seasons.model'
 import { EpisodeModel } from '../models/episodes.model'
+import { Live } from '../models/lives.model'
+import { PaymentModel } from '../models/payments.model'
 
-type ObjectId = mongoose.Types.ObjectId
+type ObjectId = Types.ObjectId
 
 export class Purge {
+  static live = (live: Live) => {
+    const payments: ObjectId[] = []
+
+    Purge.subtitlesByParentId(live._id)
+    Purge.postersByParentId(live._id)
+    live.previewVideoUpload && Purge.videoUploadById(live.previewVideoUpload)
+    live.payment_id && payments.push(live.payment_id)
+    live.extpayment_id && payments.push(live.extpayment_id)
+
+    payments.forEach(async payment => {
+      try {
+        await PaymentModel.findByIdAndDelete(payment)
+      } catch (e) {
+        console.error(`Error deleting paymentId: ${payment} for deleted live ${live._id}`)
+      }
+    })
+  }
+
   static videoUploadById = async (vidUploadId: ObjectId) => {
     try {
       const vidUpload = await VideoUploadModel.findByIdAndDelete(vidUploadId)

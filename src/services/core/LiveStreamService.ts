@@ -154,21 +154,7 @@ export class LiveStreamService {
       throw new OperationalError('You do not own this live', 403)
     }
 
-    const payments: Types.ObjectId[] = []
-
-    Purge.subtitlesByParentId(deletedLive._id)
-    Purge.postersByParentId(deletedLive._id)
-    deletedLive.previewVideoUpload && Purge.videoUploadById(deletedLive.previewVideoUpload)
-    deletedLive.payment_id && payments.push(deletedLive.payment_id)
-    deletedLive.extpayment_id && payments.push(deletedLive.extpayment_id)
-
-    payments.forEach(async payment => {
-      try {
-        await PaymentModel.findByIdAndDelete(payment)
-      } catch (e) {
-        console.error(`Error deleting paymentId: ${payment} for deleted live ${deletedLive._id}`)
-      }
-    })
+    Purge.live(deletedLive)
   }
 
   static deleteLive = async (input: DeleteLiveInput) => {
