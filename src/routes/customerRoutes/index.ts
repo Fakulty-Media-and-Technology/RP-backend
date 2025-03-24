@@ -44,7 +44,10 @@ customerRouter.post(
   CustomerSharedController.viewContent,
 )
 
-new SharedRoutes(customerRouter).fetchSubtitles().updateUserProfile('customer-auth')
+new SharedRoutes(customerRouter)
+  .fetchSubtitles()
+  .updateUserProfile('customer-auth')
+  .paymentHistory({ caller: 'Others' })
 
 customerRouter.use('/profile', ProfileRouter)
 customerRouter.use('/wallet', WalletRouter)

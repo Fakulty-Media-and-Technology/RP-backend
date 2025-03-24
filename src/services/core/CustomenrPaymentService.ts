@@ -145,9 +145,10 @@ export class CustomerPaymentService {
     return response
   }
 
-  static getTransactionHistory = async (currentUser: LoggedInUser, query: ExpressRequestQuery) => {
+  // TODO: Modify to UI
+  static getTransactionHistory = async (userId: string, query: ExpressRequestQuery) => {
     const dbQuery = PaymentModel.find({
-      user_id: currentUser._id,
+      user_id: userId,
     })
       .select('-user_id -is_used -__v')
       .sort({ _id: -1 })

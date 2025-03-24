@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { SharedController } from '../controllers/common/shared.controller'
+import { PaymentHistoryCaller, SharedController } from '../controllers/common/shared.controller'
 import { Multer } from '../utils/Multer'
 import { requestValidator } from '../middlewares/requestValidator'
 import { updateUserProfileSchema } from '../validations/common'
@@ -27,9 +27,9 @@ export class SharedRoutes {
     return this
   }
 
-  // paymentHistory() {
-  //   this._baseRouter.get('/payment-history', SharedController.paymentHistory)
-  // }
+  paymentHistory(callerConfig: PaymentHistoryCaller) {
+    this._baseRouter.get('/trans/payment-history', SharedController.paymentHistory(callerConfig))
+  }
 
   fetchSubtitles() {
     this._baseRouter.get('/subtitles/fetch/:parentId', SharedController.getSubtitles)

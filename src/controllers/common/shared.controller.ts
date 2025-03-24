@@ -8,6 +8,11 @@ import { addLiveSchema } from '../../validations/admin'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { AuthHeaderKey } from '../../middlewares/auth'
 import { LiveStreamService } from '../../services/core/LiveStreamService'
+import { CustomerPaymentService } from '../../services/core/CustomenrPaymentService'
+
+export type PaymentHistoryCaller = {
+  caller: 'Admin' | 'Others'
+}
 
 export class SharedController extends UploadMediaUtils {
   static updateProfile = (authType: AuthHeaderKey) =>
@@ -98,13 +103,24 @@ export class SharedController extends UploadMediaUtils {
     })
   })
 
-  // static paymentHistory = Catch.async(async (req, res) => {
-  //   sendResponse({
-  //     res,
-  //     data: await CustomerPaymentService.getTransactionHistory(
-  //       GetDefined.loggedInUser(req.user),
-  //       req.query,
-  //     ),
-  //   })
-  // })
+  static paymentHistory = ({ caller }: PaymentHistoryCaller) =>
+    Catch.async(async (req, res) => {
+      const validUserId = () => {
+        const { userId } = req.query
+
+        if (typeof userId !== 'string') {
+          throw new OperationalError('query.userId is required', 400)
+        }
+
+        return userId
+      }
+
+      const userId =
+        caller === 'Admin' ? validUserId() : GetDefined.loggedInUser(req.user)._id.toString()
+
+      sendResponse({
+        res,
+        data: await CustomerPaymentService.getTransactionHistory(userId, req.query),
+      })
+    })
 }
