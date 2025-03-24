@@ -178,28 +178,6 @@ export class UserRepo {
 
       {
         $lookup: {
-          from: 'payments',
-          localField: '_id',
-          foreignField: 'user_id',
-          as: 'paymentHistory',
-
-          pipeline: [
-            {
-              $project: {
-                amount: true,
-                reference: true,
-                status: true,
-                is_used: true,
-                createdAt: true,
-                updatedAt: true,
-
-              },
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
           from: 'subscriptions',
           foreignField: 'user_id',
           localField: '_id',
@@ -258,7 +236,6 @@ export class UserRepo {
           email: true,
           joined: '$createdAt',
           walletBal: { $ifNull: [{ $first: '$wallets.balance' }, 0] },
-          paymentHistory: true,
           substatus: {
             $cond: {
               if: { $eq: ['$verified', true] },

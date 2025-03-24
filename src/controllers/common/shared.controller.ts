@@ -7,7 +7,6 @@ import { validate } from '../../middlewares/requestValidator'
 import { addLiveSchema } from '../../validations/admin'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { AuthHeaderKey } from '../../middlewares/auth'
-import { LiveService } from '../../services/core/LiveService'
 import { LiveStreamService } from '../../services/core/LiveStreamService'
 
 export class SharedController extends UploadMediaUtils {
