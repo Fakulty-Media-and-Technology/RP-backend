@@ -27,6 +27,10 @@ export class SharedRoutes {
     return this
   }
 
+  // paymentHistory() {
+  //   this._baseRouter.get('/payment-history', SharedController.paymentHistory)
+  // }
+
   fetchSubtitles() {
     this._baseRouter.get('/subtitles/fetch/:parentId', SharedController.getSubtitles)
     return this

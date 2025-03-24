@@ -145,12 +145,18 @@ export class CustomerPaymentService {
     return response
   }
 
-  static getTransactionHistory = async (currentUser: LoggedInUser) => {
-    const response = await PaymentModel.find({
+  static getTransactionHistory = async (currentUser: LoggedInUser, query: ExpressRequestQuery) => {
+    const dbQuery = PaymentModel.find({
       user_id: currentUser._id,
     })
       .select('-user_id -is_used -__v')
-      .sort({ createdAt: -1 })
+      .sort({ _id: -1 })
+
+    const response = await new QueryParamsFeatures(dbQuery, {
+      defaultLimit: 10,
+      defaultPage: 1,
+      queryParams: query,
+    }).paginate().query
 
     return response
   }

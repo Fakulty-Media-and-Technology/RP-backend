@@ -97,4 +97,14 @@ export class SharedController extends UploadMediaUtils {
       }),
     })
   })
+
+  // static paymentHistory = Catch.async(async (req, res) => {
+  //   sendResponse({
+  //     res,
+  //     data: await CustomerPaymentService.getTransactionHistory(
+  //       GetDefined.loggedInUser(req.user),
+  //       req.query,
+  //     ),
+  //   })
+  // })
 }

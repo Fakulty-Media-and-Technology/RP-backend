@@ -49,7 +49,10 @@ export class CustomerPaymentController {
   static transactionHistory = Catch.async(async (req, res) => {
     sendResponse({
       res,
-      data: await CustomerPaymentService.getTransactionHistory(GetDefined.loggedInUser(req.user)),
+      data: await CustomerPaymentService.getTransactionHistory(
+        GetDefined.loggedInUser(req.user),
+        req.query,
+      ),
       message: 'transaction history fetched',
     })
   })
