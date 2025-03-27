@@ -30,8 +30,7 @@ superAdminRouter.post('/admins-signin', AdminOnboardingController.adminSignIn)
 superAdminRouter.use(AuthMiddleware.authenticateRequest('superadmin-auth'))
 
 sharedRoutes
-  .createLive('Admin')
-  .deleteLive()
+  .lives('Admin')
   .fetchSubtitles()
   .updateUserProfile('superadmin-auth')
   .paymentHistory({ caller: 'Admin' })

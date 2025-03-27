@@ -4,6 +4,7 @@ import { Multer } from '../utils/Multer'
 import { requestValidator } from '../middlewares/requestValidator'
 import { updateUserProfileSchema } from '../validations/common'
 import { AuthHeaderKey } from '../middlewares/auth'
+import { ClientLiveStreamController } from '../controllers/clients/livestream.clients'
 
 export class SharedRoutes {
   private _baseRouter: Router
@@ -12,23 +13,22 @@ export class SharedRoutes {
     this._baseRouter = router
   }
 
-  createLive(caller: 'Admin' | 'Client') {
+  lives(caller: 'Admin' | 'Client') {
     this._baseRouter.post(
       '/lives/create',
       Multer.createLiveConfig,
       SharedController.createLive({ isAdmin: caller === 'Admin' }),
     )
 
-    return this
-  }
-
-  deleteLive() {
+    this._baseRouter.get('/lives/estimate', ClientLiveStreamController.calculateEventCharges)
     this._baseRouter.delete('/lives/delete/:liveId', SharedController.deleteLiveById)
+
     return this
   }
 
   paymentHistory(callerConfig: PaymentHistoryCaller) {
     this._baseRouter.get('/trans/payment-history', SharedController.paymentHistory(callerConfig))
+    return this
   }
 
   fetchSubtitles() {
