@@ -11,6 +11,7 @@ import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 import { Purge } from '../../utils/Purge'
+import { getPromiseAllFulfilledResults } from '../../utils/promises'
 
 type CreateClientWithSessionInput = {
   currentUser: LoggedInUser
@@ -111,19 +112,22 @@ export class LiveStreamService {
       vidQuality,
     )
 
-    return await Promise.all(
+    const creds = await Promise.allSettled(
       lives.map(async live => {
-        const signed = `?sign=${signCred(live.stream_key || '', live.expiry)}`
+        const { streamKey } = live
+        const signed = `?sign=${signCred(streamKey, live.expiry)}`
 
         Object.assign(live, {
           stream_server: env.RP_RTMP_URL,
-          stream_url: env.RP_HLS_URL + live.stream_key + '/index.m3u8' + signed,
-          stream_key: live.stream_key + signed,
+          stream_url: env.RP_HLS_URL + streamKey + '/index.m3u8' + signed,
+          stream_key: streamKey + signed,
         })
 
         return live
       }),
     )
+
+    return getPromiseAllFulfilledResults(creds)
   }
 
   static extendLiveEvent = async (currentUser: LoggedInUser, data: Record<string, any>) => {
