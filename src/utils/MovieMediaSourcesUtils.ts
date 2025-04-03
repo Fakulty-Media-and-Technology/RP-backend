@@ -54,7 +54,7 @@ export class MovieMediaSourcesUtils {
         return season
       }),
     )
-    
+
     return seasonsWithSources as Season[]
   }
   public static resolveEpisodesMediaSources = async (
@@ -91,12 +91,14 @@ export class MovieMediaSourcesUtils {
       vids.map(async vid => {
         const { landscapePhoto, portraitPhoto } = await this._getMoviePhotos(vid)
 
-        vid.seasons = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
-          vid.seasons,
-          withMediaSources,
-          quality,
-          MovieMediaSourcesUtils.resolveEpisodesMediaSources,
-        )
+        if (vid.seasons) {
+          vid.seasons = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
+            vid.seasons,
+            withMediaSources,
+            quality,
+            MovieMediaSourcesUtils.resolveEpisodesMediaSources,
+          )
+        }
 
         Object.assign(vid, {
           landscapePhoto,

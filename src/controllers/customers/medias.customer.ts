@@ -77,6 +77,7 @@ export class CustomerSharedController extends SharedController {
     const vidQuality = await VidUploadUtils.getUserVideoQuality(
       GetDefined.loggedInUser(user)._id.toString(),
     )
+    
     sendResponse({
       res,
       message: 'featured contents fetched successful',

@@ -9,6 +9,11 @@ import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { AuthHeaderKey } from '../../middlewares/auth'
 import { LiveStreamService } from '../../services/core/LiveStreamService'
 import { CustomerPaymentService } from '../../services/core/CustomenrPaymentService'
+import { LiveRepo } from '../../repositories/LiveRepo'
+import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
+import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { VideoService } from '../../services/core/VideoService'
 
 export type PaymentHistoryCaller = {
   caller: 'Admin' | 'Others'
@@ -123,4 +128,18 @@ export class SharedController extends UploadMediaUtils {
         data: await CustomerPaymentService.getTransactionHistory(userId, req.query),
       })
     })
+
+  static fetchVidsForCategory = Catch.async(async ({ query, user, params }, res) => {
+    const videos = await VideoService.getVodsForCategory({
+      categoryId: params.catId,
+      currentUser: GetDefined.loggedInUser(user),
+      query,
+    })
+
+    sendResponse({
+      res,
+      message: 'videos fetched succesfully',
+      data: videos,
+    })
+  })
 }

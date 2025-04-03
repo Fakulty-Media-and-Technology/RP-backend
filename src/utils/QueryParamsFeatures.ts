@@ -1,6 +1,5 @@
 import { Query } from 'mongoose'
 import { Request } from 'express'
-import { OperationalError } from './OperationalError'
 
 export type ExpressRequestQuery = Request['query']
 
@@ -38,5 +37,16 @@ export class QueryParamsFeatures<T, U> {
     const limit = handleDefaultNumAndUnknown(queryParams.limit, defaultLimit)
     this.query.skip(skip(page, limit)).limit(limit)
     return this
+  }
+
+  static paginagteParams = (queryParams: ExpressRequestQuery) => {
+    const page = handleDefaultNumAndUnknown(queryParams.page, 1)
+    const limit = handleDefaultNumAndUnknown(queryParams.limit, 10)
+
+    return {
+      page,
+      limit,
+      skip: skip(page, limit),
+    }
   }
 }

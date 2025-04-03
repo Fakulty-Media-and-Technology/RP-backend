@@ -48,6 +48,7 @@ new SharedRoutes(customerRouter)
   .fetchSubtitles()
   .updateUserProfile('customer-auth')
   .paymentHistory({ caller: 'Others' })
+  .vods()
 
 customerRouter.use('/profile', ProfileRouter)
 customerRouter.use('/wallet', WalletRouter)

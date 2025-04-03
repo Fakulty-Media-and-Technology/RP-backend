@@ -34,6 +34,7 @@ sharedRoutes
   .fetchSubtitles()
   .updateUserProfile('superadmin-auth')
   .paymentHistory({ caller: 'Admin' })
+  .vods()
 
 superAdminRouter.use('/clients', superAdminClientsRouter)
 superAdminRouter.use('/enums', superAdminEnumsRouter)

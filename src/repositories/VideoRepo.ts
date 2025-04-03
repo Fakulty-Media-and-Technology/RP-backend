@@ -9,6 +9,7 @@ export const toObjectId = (val: string) => new Types.ObjectId(val)
 export type FetchVideosParams = {
   prevStages: PipelineStage[]
   sortStage?: PipelineStage.Sort
+  fetchSeasons: boolean
   page: number
   limit: number
 }
@@ -73,8 +74,6 @@ export class VideoRepo {
           ],
         },
       },
-
-
 
       {
         $project: {
@@ -221,6 +220,7 @@ export class VideoRepo {
           $match: { upcoming: true },
         },
       ],
+      fetchSeasons: false,
       sortStage: { $sort: { createdAt: -1 } },
       page,
       limit,
@@ -234,6 +234,7 @@ export class VideoRepo {
           $match: { upcoming: true, active: true },
         },
       ],
+      fetchSeasons: false,
       sortStage: { $sort: { createdAt: -1 } },
       page,
       limit,
@@ -249,6 +250,7 @@ export class VideoRepo {
           },
         },
       ],
+      fetchSeasons: false,
       sortStage: { $sort: { createdAt: -1 } },
       page,
       limit,
@@ -425,7 +427,13 @@ export class VideoRepo {
     return aggr
   }
 
-  static fetchVideoAggr = async ({ prevStages, sortStage, page, limit }: FetchVideosParams) => {
+  static fetchVideoAggr = async ({
+    prevStages,
+    sortStage,
+    page,
+    limit,
+    fetchSeasons,
+  }: FetchVideosParams) => {
     const enumsProjectShared: PipelineStage.Project = {
       $project: { __v: false, createdAt: false, updatedAt: false },
     }
@@ -433,7 +441,7 @@ export class VideoRepo {
 
     if (sortStage) sortPaginateStages.unshift(sortStage)
 
-    const aggr = await VideoModel.aggregate([
+    const allStages: PipelineStage[] = [
       ...prevStages,
 
       {
@@ -591,18 +599,7 @@ export class VideoRepo {
           ],
         },
       },
-
       ...sortPaginateStages,
-
-      {
-        $lookup: {
-          from: 'seasons',
-          localField: '_id',
-          foreignField: 'video',
-          as: 'seasons',
-          pipeline: this._seasonPipeline as any,
-        },
-      },
       {
         $project: {
           expiry_date: false,
@@ -623,15 +620,39 @@ export class VideoRepo {
           updatedAt: false,
         },
       },
-    ])
+    ]
 
+    if (fetchSeasons) {
+      allStages.push({
+        $lookup: {
+          from: 'seasons',
+          localField: '_id',
+          foreignField: 'video',
+          as: 'seasons',
+          pipeline: this._seasonPipeline as any,
+        },
+      })
+    }
+
+    const aggr = await VideoModel.aggregate(allStages)
     return aggr
+  }
+
+  static fetchByCategory = async (catId: string, page: number, limit: number) => {
+    return await this.fetchVideoAggr({
+      prevStages: [{ $match: { category: toObjectId(catId) } }, ...this._mostEngagedPrevStages],
+      sortStage: { $sort: { _id: -1 } },
+      fetchSeasons: false,
+      page,
+      limit,
+    })
   }
 
   static fetchByType = async (type: AllVideoTypes, page = 1, limit = 20) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { type } }],
       sortStage: { $sort: { createdAt: -1 } },
+      fetchSeasons: true,
       page,
       limit,
     })
@@ -640,6 +661,7 @@ export class VideoRepo {
   static fetchById = async (id: string) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { _id: toObjectId(id) } }],
+      fetchSeasons: true,
       page: 1,
       limit: 1,
     })
@@ -648,7 +670,7 @@ export class VideoRepo {
   static fetchFeatured = async (page = 1, limit = 10) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { featured: true } }],
-      // sortStage: { $sort: { $natural: -1 } },
+      fetchSeasons: false,
       page,
       limit,
     })
@@ -658,6 +680,7 @@ export class VideoRepo {
     return await this.fetchVideoAggr({
       prevStages: this._mostEngagedPrevStages,
       sortStage: { $sort: { enagements: -1 } },
+      fetchSeasons: false,
       page,
       limit,
     })

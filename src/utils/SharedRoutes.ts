@@ -13,6 +13,10 @@ export class SharedRoutes {
     this._baseRouter = router
   }
 
+  vods() {
+    this._baseRouter.get('/vods/category/:catId', SharedController.fetchVidsForCategory)
+  }
+
   lives(caller: 'Admin' | 'Client') {
     this._baseRouter.post(
       '/lives/create',
