@@ -13,4 +13,3 @@ superAdminFeaturedRouter.post(
   requestValidator(addFeaturedContentSchema),
   AdminFeaturedController.addFeatured,
 )
-

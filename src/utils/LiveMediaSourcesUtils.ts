@@ -9,10 +9,7 @@ export class LiveMediaSourcesUtils {
     const settled = await Promise.allSettled(
       lives.map(async live => {
         Object.assign(live, {
-          previewVideo: VidUploadUtils.getResSourceUrl(
-            live.previewVideoUploadDoc,
-            quality,
-          ),
+          previewVideo: VidUploadUtils.getResSourceUrl(live.previewVideoUploadDoc, quality),
 
           coverPhoto: live.coverPhoto
             ? await MediaAccess.getSignedUrl(live.coverPhoto.bucket, live.coverPhoto.key, 'photo')

@@ -1,5 +1,5 @@
-import { Router } from "express";
-import { AdminSuggestionController } from "../../controllers/admins/suggestions.admin";
+import { Router } from 'express'
+import { AdminSuggestionController } from '../../controllers/admins/suggestions.admin'
 
 export const superAdminSuggestionsRouter = Router()
 

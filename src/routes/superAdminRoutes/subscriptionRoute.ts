@@ -21,4 +21,3 @@ superAdminSubscriptionRouter.put(
   requestValidator(updatePlanSchema),
   AdminPlanSubController.updatePlan,
 )
-

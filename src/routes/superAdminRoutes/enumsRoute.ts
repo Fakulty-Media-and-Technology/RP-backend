@@ -10,7 +10,6 @@ import {
 
 export const superAdminEnumsRouter = Router()
 
-
 // ** genre
 superAdminEnumsRouter.post(
   '/add-genre',
@@ -19,8 +18,6 @@ superAdminEnumsRouter.post(
 )
 superAdminEnumsRouter.get('/get-genres', AdminEnumController.getGenres)
 superAdminEnumsRouter.delete('/rem-genre/:id', AdminEnumController.remGenre)
-
-
 
 // *** category
 
@@ -38,7 +35,6 @@ superAdminEnumsRouter.put(
   requestValidator(updateCategorySchema),
   AdminEnumController.updateCategory,
 )
-
 
 // *** cast
 

@@ -1,8 +1,13 @@
-import { PlanModel } from "../../models/plans.model"
-import { SubscriptionModel } from "../../models/subscription.model"
-import { LoggedInUser } from "../../types"
-import { OperationalError } from "../../utils/OperationalError"
-import { ExpressRequestQuery, QueryParamsFeatures, handleDefaultNumAndUnknown, skip } from "../../utils/QueryParamsFeatures"
+import { PlanModel } from '../../models/plans.model'
+import { SubscriptionModel } from '../../models/subscription.model'
+import { LoggedInUser } from '../../types'
+import { OperationalError } from '../../utils/OperationalError'
+import {
+  ExpressRequestQuery,
+  QueryParamsFeatures,
+  handleDefaultNumAndUnknown,
+  skip,
+} from '../../utils/QueryParamsFeatures'
 
 export class AdminPlanSubService {
   static createPlan = async (admin: LoggedInUser, data: Record<string, any>) => {

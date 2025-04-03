@@ -8,7 +8,7 @@ export class GenreService {
   static create = async (name: string, position: number) => {
     await GenreRepo.create({
       name,
-      position
+      position,
     })
   }
 

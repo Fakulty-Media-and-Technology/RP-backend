@@ -6,7 +6,7 @@ import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 import { LiveService } from './LiveService'
 
 interface GetVodsByCategoryParams {
-  categoryId: string, 
+  categoryId: string
   query: ExpressRequestQuery
   currentUser: LoggedInUser
 }
@@ -21,16 +21,17 @@ export class VideoService {
 
   static getFeaturedVideos = async () => await VideoRepo.fetchFeatured()
 
-  static getVodsForCategory = async ({categoryId, query, currentUser}: GetVodsByCategoryParams) => {
+  static getVodsForCategory = async ({
+    categoryId,
+    query,
+    currentUser,
+  }: GetVodsByCategoryParams) => {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
     const vods = await VideoRepo.fetchByCategory(categoryId, page, limit)
-       const vidQuality = await VidUploadUtils.getUserVideoQuality(
-          currentUser._id.toString()
-        )
+    const vidQuality = await VidUploadUtils.getUserVideoQuality(currentUser._id.toString())
 
+    const parsedVods = await MovieMediaSourcesUtils.resolveMediaSources(vods, true, vidQuality)
 
-        const parsedVods = await MovieMediaSourcesUtils.resolveMediaSources(vods, true, vidQuality)
-
-        return parsedVods
+    return parsedVods
   }
 }

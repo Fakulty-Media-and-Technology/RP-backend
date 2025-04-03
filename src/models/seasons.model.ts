@@ -22,7 +22,6 @@ const schema = new Schema({
     type: String,
     default: null,
   },
-
 })
 
 schema.index({ video: 1, serial_number: 1 }, { unique: true })
