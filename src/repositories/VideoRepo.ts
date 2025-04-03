@@ -641,7 +641,7 @@ export class VideoRepo {
   static fetchByCategory = async (catId: string, page: number, limit: number) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { category: toObjectId(catId) } }, ...this._mostEngagedPrevStages],
-      sortStage: { $sort: { _id: -1 } },
+      sortStage: { $sort: { enagements: -1 } },
       fetchSeasons: false,
       page,
       limit,
