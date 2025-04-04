@@ -22,6 +22,7 @@ import { router as GeneralRouter } from './../customerRoutes/generalRouter'
 import { router as PasswordResetRouter } from './../customerRoutes/passwordResetRouter'
 import { router as WalletRouter } from './../customerRoutes/walletRouter'
 import { router as ProfileRouter } from './../customerRoutes/profileRouter'
+import { router as EnumsRouter } from './../customerRoutes/enumsRouter'
 import { SharedRoutes } from '../../utils/SharedRoutes'
 import { requestValidator } from '../../middlewares/requestValidator'
 import { viewContentSchema } from '../../validations/customers'
@@ -58,6 +59,7 @@ customerRouter.use('/settings', SettingsRouter)
 customerRouter.use('/ratings', RatingsRouter)
 customerRouter.use('/comments', CommentsRouter)
 customerRouter.use('/media', MediaRouter)
+customerRouter.use('/enums', EnumsRouter)
 customerRouter.use('/live/events', LivesRouter)
 customerRouter.use('/livestream', LivestreamRouter)
 customerRouter.use('/subscription', SubscriptionRuuter)

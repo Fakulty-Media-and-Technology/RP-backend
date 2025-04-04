@@ -7,8 +7,11 @@ import {
   addCastSchema,
   addGenreSchema,
 } from '../../validations/admin'
+import { SharedRoutes } from '../../utils/SharedRoutes'
 
 export const superAdminEnumsRouter = Router()
+
+new SharedRoutes(superAdminEnumsRouter).enums()
 
 // ** genre
 superAdminEnumsRouter.post(
@@ -16,18 +19,16 @@ superAdminEnumsRouter.post(
   requestValidator(addGenreSchema),
   AdminEnumController.addGenre,
 )
-superAdminEnumsRouter.get('/get-genres', AdminEnumController.getGenres)
+
 superAdminEnumsRouter.delete('/rem-genre/:id', AdminEnumController.remGenre)
 
 // *** category
-
 superAdminEnumsRouter.post(
   '/add-category',
   requestValidator(addCategorySchema),
   AdminEnumController.addCategory,
 )
 
-superAdminEnumsRouter.get('/get-categories', AdminEnumController.getCategory)
 superAdminEnumsRouter.delete('/rem-category/:id', AdminEnumController.remCategory)
 
 superAdminEnumsRouter.put(
@@ -44,5 +45,5 @@ superAdminEnumsRouter.post(
   AdminEnumController.addCast,
 )
 
-superAdminEnumsRouter.get('/get-cast', AdminEnumController.getCast)
+
 superAdminEnumsRouter.delete('/rem-cast/:id', AdminEnumController.remcast)

@@ -5,6 +5,7 @@ import { requestValidator } from '../middlewares/requestValidator'
 import { updateUserProfileSchema } from '../validations/common'
 import { AuthHeaderKey } from '../middlewares/auth'
 import { ClientLiveStreamController } from '../controllers/clients/livestream.clients'
+import { AdminEnumController } from '../controllers/admins/enums.admin'
 
 export class SharedRoutes {
   private _baseRouter: Router
@@ -15,6 +16,12 @@ export class SharedRoutes {
 
   vods() {
     this._baseRouter.get('/vods/category/:catId', SharedController.fetchVidsForCategory)
+  }
+
+  enums() {
+    this._baseRouter.get('/get-categories', AdminEnumController.getCategories)
+    this._baseRouter.get('/get-genres', AdminEnumController.getGenres)
+    this._baseRouter.get('/get-cast', AdminEnumController.getCast)
   }
 
   lives(caller: 'Admin' | 'Client') {

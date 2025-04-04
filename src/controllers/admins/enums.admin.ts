@@ -43,7 +43,7 @@ export class AdminEnumController {
     })
   })
 
-  static getCategory = Catch.async(async (req, res) => {
+  static getCategories = Catch.async(async (req, res) => {
     sendResponse({
       res,
       data: await CategoryEnumService.getCategories(req.query),
