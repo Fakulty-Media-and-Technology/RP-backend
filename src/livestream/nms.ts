@@ -2,9 +2,9 @@ import NodeMediaServer from 'node-media-server'
 import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg'
 
 import env from '../env'
-import { Catch } from '../utils/Catch'
 import { Assets } from '../utils/Assets'
-import { LiveModel } from '../models/lives.model'
+// import { Catch } from '../utils/Catch'
+// import { LiveModel } from '../models/lives.model'
 
 export class MediaStream {
   nms: NodeMediaServer
@@ -14,29 +14,29 @@ export class MediaStream {
   }
 
   initiate() {
-    this.nms.on(
-      'prePublish',
-      Catch.NMSPrePublishAsync(async (id, streamPath) => {
-        const session = this.nms.getSession(id)
-        const streamKey = streamPath.split('/').pop() as string
+    // this.nms.on(
+    //   'prePublish',
+    //   Catch.NMSPrePublishAsync(async (id, streamPath) => {
+    //     const session = this.nms.getSession(id)
+    //     const streamKey = streamPath.split('/').pop() as string
 
-        const live = await LiveModel.findOne({ stream_key: streamKey })
+    //     const live = await LiveModel.findOne({ stream_key: streamKey })
 
-        if (live === null || !live.active || live.expired) {
-          // @ts-ignore
-          session.sendStatusMessage(
-            // @ts-ignore
-            session.publishStreamId,
-            'error',
-            'NetStream.publish.Unauthorized',
-            'Publisehr: Authorization required.',
-          )
-          // @ts-ignore
-          session.reject()
-          return
-        }
-      }),
-    )
+    //     if (live === null || !live.active || live.expired) {
+    //       // @ts-ignore
+    //       session.sendStatusMessage(
+    //         // @ts-ignore
+    //         session.publishStreamId,
+    //         'error',
+    //         'NetStream.publish.Unauthorized',
+    //         'Publisehr: Authorization required.',
+    //       )
+    //       // @ts-ignore
+    //       session.reject()
+    //       return
+    //     }
+    //   }),
+    // )
 
     this.nms.run()
   }
