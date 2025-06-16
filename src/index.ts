@@ -12,12 +12,13 @@ import { FileHandler } from './utils/FileHandler'
 import { connectMongoDB } from './utils/connectDB'
 import { socketChat } from './socket/socketEvents'
 import { purgeOldTempMediaFiles } from './utils/purgeOldTempMediaFiles'
+import { WithWorkerThread } from './utils/WithWorkerThread'
 
 const { PORT } = env
 
 const app = reeplayApp()
 const server = createServer(app)
-const cronJobs = new CronTasks()
+// const cronJobs = new CronTasks()
 const mediaStream = new MediaStream()
 
 const io = new Server(server, {
@@ -37,7 +38,8 @@ connectMongoDB().then(conn => {
     console.log(`Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`)
 
     socketChat(io)
-    cronJobs.start()
+    // cronJobs.start()
+    WithWorkerThread.manageJobs('START')
     mediaStream.initiate()
 
     setInterval(() => purgeOldTempMediaFiles(), 600000) // every ten minutes
@@ -63,7 +65,8 @@ function shutdown(exception: string) {
     // *********** clean up
     io.close()
     console.log('IO Websocket closed')
-    cronJobs.stop()
+
+    await WithWorkerThread.manageJobs('STOP')
     mediaStream.close()
     await mongoose.connection.close(true)
     console.log('Mongoose connection closed')
