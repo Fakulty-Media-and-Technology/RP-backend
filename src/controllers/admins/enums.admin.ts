@@ -2,6 +2,7 @@ import { CastEnumService } from '../../services/core/CastEnumService'
 import { CategoryEnumService } from '../../services/core/CategoryEnumsService'
 import { GenreService } from '../../services/core/GenreService'
 import { Catch } from '../../utils/Catch'
+import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminEnumController {
@@ -70,12 +71,40 @@ export class AdminEnumController {
 
   // *************** Casts
 
-  static addCast = Catch.async(async ({ body: { name, title } }, res) => {
-    await CastEnumService.createCast(name, title)
+  static addCast = Catch.async(async ({ body, file }, res) => {
+    if (file == null || !file.mimetype.startsWith('image')) {
+      throw new OperationalError('Provide an image file', 400)
+    }
+
+    await CastEnumService.createCast({
+      title: body.title,
+      name: body.name,
+      link: body.link,
+      description: body.description,
+      selectButtonType: body.selectButtonType,
+      photoFile: file,
+    })
 
     sendResponse({
       res,
       message: 'new unique cast added',
+    })
+  })
+
+  static editCast = Catch.async(async ({ body, file, params }, res) => {
+    await CastEnumService.editCast({
+      castId: params.castId,
+      title: body.title,
+      name: body.name,
+      link: body.link,
+      description: body.description,
+      selectButtonType: body.selectButtonType,
+      photoFile: file,
+    })
+
+    sendResponse({
+      res,
+      message: 'cast updated successfully',
     })
   })
 

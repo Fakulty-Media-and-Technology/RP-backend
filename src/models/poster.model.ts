@@ -5,6 +5,7 @@ const posterSchema = new Schema(
     video_id: {
       type: Schema.Types.ObjectId,
       required: true,
+      index: true,
     },
 
     bucket: {
@@ -20,7 +21,7 @@ const posterSchema = new Schema(
     dimension: {
       type: String,
       enum: ['landscape', 'portrait', 'channel-logo', null],
-      default: null,
+      // default: null,
     },
 
     parentType: {

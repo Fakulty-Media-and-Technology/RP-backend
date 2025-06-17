@@ -86,11 +86,13 @@ export class MediaManagement {
   }
 
   static deleteObject = async (key: string, bucket: string) => {
-    const response = await S3.deleteObject(key, bucket)
-    const deleted = response.$metadata.httpStatusCode === 200
-
-    if (!deleted) console.error(`🛑🛑 S3 Object delete error. KEY: ${key} | BUCKET: ${bucket}`)
-
-    return deleted
+    try {
+      const response = await S3.deleteObject(key, bucket)
+      return response.$metadata.httpStatusCode === 200
+    } catch (e: any) {
+      console.error(`🛑🛑 S3 Object delete error. KEY: ${key} | BUCKET: ${bucket}`)
+      console.error('Reason', e.message || e)
+      return false
+    }
   }
 }

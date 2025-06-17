@@ -267,6 +267,19 @@ export const addCastSchema = {
   body: Joi.object({
     name: STRING_SCHEMA.required(),
     title: STRING_SCHEMA.required(),
+    description: STRING_SCHEMA.required(),
+    selectButtonType: STRING_SCHEMA.valid('book-now', 'fan-page'),
+    link: STRING_SCHEMA,
+  }),
+}
+
+export const editCastSchema = {
+  body: Joi.object({
+    name: STRING_SCHEMA,
+    title: STRING_SCHEMA,
+    description: STRING_SCHEMA,
+    selectButtonType: STRING_SCHEMA.valid('book-now', 'fan-page'),
+    link: STRING_SCHEMA,
   }),
 }
 

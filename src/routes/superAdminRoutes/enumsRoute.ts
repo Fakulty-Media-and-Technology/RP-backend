@@ -6,8 +6,10 @@ import {
   updateCategorySchema,
   addCastSchema,
   addGenreSchema,
+  editCastSchema,
 } from '../../validations/admin'
 import { SharedRoutes } from '../../utils/SharedRoutes'
+import { Multer } from '../../utils/Multer'
 
 export const superAdminEnumsRouter = Router()
 
@@ -41,9 +43,16 @@ superAdminEnumsRouter.put(
 
 superAdminEnumsRouter.post(
   '/add-cast',
+  Multer.uploadSingleImage,
   requestValidator(addCastSchema),
   AdminEnumController.addCast,
 )
 
+superAdminEnumsRouter.put(
+  '/edit-cast/:castId',
+  Multer.uploadSingleImage,
+  requestValidator(editCastSchema),
+  AdminEnumController.editCast,
+)
 
 superAdminEnumsRouter.delete('/rem-cast/:id', AdminEnumController.remcast)
