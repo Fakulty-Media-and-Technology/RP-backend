@@ -56,11 +56,11 @@ A robust Node.js backend service for video streaming and media management, built
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/reeplay-backend.git
-cd reeplay-backend
+git clone https://github.com/eddel/RP-backend.git
+cd RP-backend
 
-# if docker is installed uncomment
-#make start
+# comment " make start " if docker is not installed 
+make start
 ```
 
 2. Install dependencies:
