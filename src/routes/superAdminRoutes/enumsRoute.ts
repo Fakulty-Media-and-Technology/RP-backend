@@ -48,6 +48,8 @@ superAdminEnumsRouter.post(
   AdminEnumController.addCast,
 )
 
+superAdminEnumsRouter.get('/search-casts/:searchText', AdminEnumController.searchCasts)
+
 superAdminEnumsRouter.put(
   '/edit-cast/:castId',
   Multer.uploadSingleImage,
@@ -56,3 +58,4 @@ superAdminEnumsRouter.put(
 )
 
 superAdminEnumsRouter.delete('/rem-cast/:id', AdminEnumController.remcast)
+
