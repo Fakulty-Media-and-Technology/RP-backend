@@ -15,7 +15,7 @@ import { signCred } from '../../utils/live'
 import { VideoRepo } from '../../repositories/VideoRepo'
 import { SharedController } from '../common/shared.controller'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { handleDefaultNumAndUnknown, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { LiveAggrRes } from '../../types/Live'
 import { Movie } from '../../types/movie'
@@ -57,11 +57,10 @@ export class CustomerSharedController extends SharedController {
       GetDefined.loggedInUser(user)._id.toString(),
     )
 
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
+
     const vods = await MovieMediaSourcesUtils.resolveMediaSources(
-      await VideoRepo.fetchFeatured(
-        handleDefaultNumAndUnknown(query.page, 1),
-        handleDefaultNumAndUnknown(query.limit, 10),
-      ),
+      await VideoRepo.fetchFeatured(page, limit),
       true,
       vidQuality,
     )
@@ -70,6 +69,56 @@ export class CustomerSharedController extends SharedController {
       res,
       data: vods,
       message: 'featured contents fetched successful',
+    })
+  })
+
+  static getSimilarByCastId = Catch.async(async ({ query, user, params }, res) => {
+    const vidQuality = await VidUploadUtils.getUserVideoQuality(
+      GetDefined.loggedInUser(user)._id.toString(),
+    )
+
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
+
+    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
+      await VideoRepo.fetchByCastIdExcludingVodByVodId({
+        page,
+        limit,
+        castId: params.castId,
+        vodToExcludeId: params.vodId,
+      }),
+      true,
+      vidQuality,
+    )
+
+    sendResponse({
+      res,
+      data: vods,
+      message: '',
+    })
+  })
+
+  static getSimilarByGenreId = Catch.async(async ({ query, user, params }, res) => {
+    const vidQuality = await VidUploadUtils.getUserVideoQuality(
+      GetDefined.loggedInUser(user)._id.toString(),
+    )
+
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
+
+    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
+      await VideoRepo.fetchByGenreIdExcludingVodByVodId({
+        page,
+        limit,
+        genreId: params.genreId,
+        vodToExcludeId: params.vodId,
+      }),
+      true,
+      vidQuality,
+    )
+
+    sendResponse({
+      res,
+      data: vods,
+      message: '',
     })
   })
 

@@ -33,6 +33,20 @@ export type AddEpisodeUtilAggrRes = {
   totalPreviousEpisodes: number
 }
 
+type FetchByCastIdExcludingVodByVodIdParams = {
+  castId: string
+  vodToExcludeId: string
+  page: number
+  limit: number
+}
+
+type FetchByGenreIdExcludingVodByVodIdParams = {
+  genreId: string
+  vodToExcludeId: string
+  page: number
+  limit: number
+}
+
 export class VideoRepo {
   static addFeatured = (id: string, expiry: string) =>
     VideoModel.findByIdAndUpdate(id, {
@@ -638,6 +652,42 @@ export class VideoRepo {
     return aggr
   }
 
+  static fetchByCastIdExcludingVodByVodId = async ({
+    castId,
+    vodToExcludeId,
+    page,
+    limit,
+  }: FetchByCastIdExcludingVodByVodIdParams) => {
+    return await this.fetchVideoAggr({
+      prevStages: [
+        { $match: { cast: toObjectId(castId), _id: { $ne: toObjectId(vodToExcludeId) } } },
+        ...this._mostEngagedPrevStages,
+      ],
+      sortStage: { $sort: { enagements: -1 } },
+      fetchSeasons: false,
+      page,
+      limit,
+    })
+  }
+
+  static fetchByGenreIdExcludingVodByVodId = async ({
+    genreId,
+    vodToExcludeId,
+    page,
+    limit,
+  }: FetchByGenreIdExcludingVodByVodIdParams) => {
+    return await this.fetchVideoAggr({
+      prevStages: [
+        { $match: { genre: toObjectId(genreId), _id: { $ne: toObjectId(vodToExcludeId) } } },
+        ...this._mostEngagedPrevStages,
+      ],
+      sortStage: { $sort: { enagements: -1 } },
+      fetchSeasons: false,
+      page,
+      limit,
+    })
+  }
+
   static fetchByCategory = async (catId: string, page: number, limit: number) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { category: toObjectId(catId) } }, ...this._mostEngagedPrevStages],
@@ -686,5 +736,3 @@ export class VideoRepo {
     })
   }
 }
-
-

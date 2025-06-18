@@ -6,6 +6,7 @@ import { updateUserProfileSchema } from '../validations/common'
 import { AuthHeaderKey } from '../middlewares/auth'
 import { ClientLiveStreamController } from '../controllers/clients/livestream.clients'
 import { AdminEnumController } from '../controllers/admins/enums.admin'
+import { CustomerSharedController } from '../controllers/customers/medias.customer'
 
 export class SharedRoutes {
   private _baseRouter: Router
@@ -16,6 +17,17 @@ export class SharedRoutes {
 
   vods() {
     this._baseRouter.get('/vods/category/:catId', SharedController.fetchVidsForCategory)
+    
+    this._baseRouter.get(
+      '/vods/similar-by-cast/:castId/:vodId',
+      CustomerSharedController.getSimilarByCastId,
+    )
+    this._baseRouter.get(
+      '/vods/similar-by-genre/:genreId/:vodId',
+      CustomerSharedController.getSimilarByGenreId,
+    )
+
+    return this
   }
 
   enums() {
@@ -59,4 +71,3 @@ export class SharedRoutes {
     return this
   }
 }
-
