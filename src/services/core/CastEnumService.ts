@@ -1,9 +1,8 @@
-import { Request } from 'express'
 import { CastEnumRepo } from '../../repositories/CastEnumRepo'
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { MediaManagement } from '../media-management'
-import { CastEnumModel } from '../../models/castEnum.model'
+import { CastEnumDocument, CastEnumModel, CastEnumSchema } from '../../models/castEnum.model'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { PhotoUtils } from '../../utils/photoUtils'
 
@@ -90,6 +89,13 @@ export class CastEnumService {
     await cast.save()
   }
 
+   static setCastsWithPhotoUrl = async (casts: (CastEnumSchema | CastEnumDocument)[]) => {
+    const castsWithPhotoUrl = getPromiseAllFulfilledResults(
+      await Promise.allSettled(casts.map(PhotoUtils.setCastWithPhotoUrl)),
+    )
+    return castsWithPhotoUrl
+  }
+
   static searchCasts = async (searchText: string, query: ExpressRequestQuery) => {
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
@@ -99,21 +105,18 @@ export class CastEnumService {
       .skip(skip)
       .limit(limit)
 
-    const castsWithPhotoUrl = getPromiseAllFulfilledResults(
-      await Promise.allSettled(casts.map(PhotoUtils.setCastWithPhotoUrl)),
-    )
-
-    return castsWithPhotoUrl
+    return this.setCastsWithPhotoUrl(casts)
   }
 
-  static getCasts = async (query: Request['query']) => {
+  static getCasts = async (query: ExpressRequestQuery) => {
     const features = new QueryParamsFeatures(CastEnumRepo.getAllCasts(), {
-      defaultLimit: 300,
+      defaultLimit: 30,
       defaultPage: 1,
       queryParams: query,
     })
 
-    return await features.paginate().query
+    const casts = await features.paginate().query
+    return this.setCastsWithPhotoUrl(casts)
   }
 
   static deleteById = async (castId: string) => {
@@ -124,3 +127,4 @@ export class CastEnumService {
     }
   }
 }
+

@@ -5,6 +5,7 @@ import { getPromiseAllFulfilledResults } from './promises'
 import { VidUploadUtils, VidRes } from './VideoUploadUtils'
 
 import { UpcomingAggrRes } from '../types/upcoming'
+import { CastEnumService } from '../services/core/CastEnumService'
 
 export class MovieMediaSourcesUtils {
   protected static _getMoviePhotos = async (vid: Movie | UpcomingAggrRes) => {
@@ -89,7 +90,10 @@ export class MovieMediaSourcesUtils {
   ) => {
     const movies = await Promise.allSettled(
       vids.map(async vid => {
-        const { landscapePhoto, portraitPhoto } = await this._getMoviePhotos(vid)
+        const [{ landscapePhoto, portraitPhoto }, castsWithPhotoUrl] = await Promise.all([
+          this._getMoviePhotos(vid),
+          CastEnumService.setCastsWithPhotoUrl(vid.cast),
+        ])
 
         if (vid.seasons) {
           vid.seasons = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
@@ -103,6 +107,7 @@ export class MovieMediaSourcesUtils {
         Object.assign(vid, {
           landscapePhoto,
           portraitPhoto,
+          cast: castsWithPhotoUrl,
         })
 
         if (withMediaSources) {

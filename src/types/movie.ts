@@ -1,3 +1,5 @@
+import { CastEnumSchema } from "../models/castEnum.model"
+
 export interface Movie {
   _id: string
   admin_id: string
@@ -7,7 +9,7 @@ export interface Movie {
   pg: string
   genre: any[]
   category: any[]
-  cast: any[]
+  cast: CastEnumSchema[]
   released_date: string
   expiry_date: string
   likes: any[]
