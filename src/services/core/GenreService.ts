@@ -3,6 +3,7 @@ import { DeleteType, GenreRepo } from '../../repositories/GenreRepo'
 
 import { OperationalError } from '../../utils/OperationalError'
 import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { GenreEnumModel } from '../../models/genreEnum.model'
 
 export class GenreService {
   static create = async (name: string, position: number) => {
@@ -10,6 +11,16 @@ export class GenreService {
       name,
       position,
     })
+  }
+
+  static updateGenre = async (genreId: string, data: Record<string, any>) => {
+    const updatedGenre = await GenreEnumModel.findByIdAndUpdate(genreId, data, { new: true })
+
+    if (updatedGenre == null) {
+      throw new OperationalError('genre id is invalid', 404)
+    }
+
+    return updatedGenre
   }
 
   static getGenres = async (query: Request['query']) => {

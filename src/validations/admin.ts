@@ -297,6 +297,8 @@ export const updateCategorySchema = {
   }).or('name', 'position'),
 }
 
+export const updateGenreSchema = updateCategorySchema
+
 export const createAdminORSuperAdminSchema = {
   body: Joi.object({
     first_name: STRING_SCHEMA.required(),

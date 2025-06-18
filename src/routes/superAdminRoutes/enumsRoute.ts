@@ -7,7 +7,9 @@ import {
   addCastSchema,
   addGenreSchema,
   editCastSchema,
+  updateGenreSchema,
 } from '../../validations/admin'
+
 import { SharedRoutes } from '../../utils/SharedRoutes'
 import { Multer } from '../../utils/Multer'
 
@@ -23,6 +25,12 @@ superAdminEnumsRouter.post(
 )
 
 superAdminEnumsRouter.delete('/rem-genre/:id', AdminEnumController.remGenre)
+
+superAdminEnumsRouter.put(
+  '/update-genre/:genreId',
+  requestValidator(updateGenreSchema),
+  AdminEnumController.updateGenre,
+)
 
 // *** category
 superAdminEnumsRouter.post(
@@ -40,7 +48,6 @@ superAdminEnumsRouter.put(
 )
 
 // *** cast
-
 superAdminEnumsRouter.post(
   '/add-cast',
   Multer.uploadSingleImage,
@@ -58,4 +65,3 @@ superAdminEnumsRouter.put(
 )
 
 superAdminEnumsRouter.delete('/rem-cast/:id', AdminEnumController.remcast)
-

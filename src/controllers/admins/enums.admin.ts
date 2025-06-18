@@ -33,6 +33,14 @@ export class AdminEnumController {
     })
   })
 
+  static updateGenre = Catch.async(async (req, res) => {
+    sendResponse({
+      res,
+      data: await GenreService.updateGenre(req.params.genreId, req.body),
+      message: 'genre updated',
+    })
+  })
+
   // ********** Category *******
 
   static addCategory = Catch.async(async ({ body: { name, position } }, res) => {
@@ -108,7 +116,6 @@ export class AdminEnumController {
     })
   })
 
-
   static getCastById = Catch.async(async (req, res) => {
     sendResponse({
       res,
@@ -124,7 +131,6 @@ export class AdminEnumController {
       data: await CastEnumService.searchCasts(req.params.searchText, req.query),
     })
   })
-
 
   static getCast = Catch.async(async (req, res) => {
     sendResponse({
