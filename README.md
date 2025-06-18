@@ -60,6 +60,7 @@ git clone https://github.com/eddel/RP-backend.git
 cd RP-backend
 
 # comment " make start " if docker is not installed 
+git checkout typescript
 make start
 ```
 
