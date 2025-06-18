@@ -108,6 +108,15 @@ export class AdminEnumController {
     })
   })
 
+
+  static getCastById = Catch.async(async (req, res) => {
+    sendResponse({
+      res,
+      message: 'cast fetched',
+      data: await CastEnumService.getById(req.params.castId),
+    })
+  })
+
   static searchCasts = Catch.async(async (req, res) => {
     sendResponse({
       res,

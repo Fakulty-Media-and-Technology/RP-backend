@@ -89,11 +89,21 @@ export class CastEnumService {
     await cast.save()
   }
 
-   static setCastsWithPhotoUrl = async (casts: (CastEnumSchema | CastEnumDocument)[]) => {
+  static setCastsWithPhotoUrl = async (casts: (CastEnumSchema | CastEnumDocument)[]) => {
     const castsWithPhotoUrl = getPromiseAllFulfilledResults(
       await Promise.allSettled(casts.map(PhotoUtils.setCastWithPhotoUrl)),
     )
     return castsWithPhotoUrl
+  }
+
+  static getById = async (castId: string) => {
+    const cast = await CastEnumModel.findById(castId)
+
+    if (cast == null) {
+      throw new OperationalError('Invalid cast Id', 404)
+    }
+
+    return await PhotoUtils.setCastWithPhotoUrl(cast)
   }
 
   static searchCasts = async (searchText: string, query: ExpressRequestQuery) => {
@@ -127,4 +137,3 @@ export class CastEnumService {
     }
   }
 }
-

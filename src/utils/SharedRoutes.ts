@@ -22,6 +22,8 @@ export class SharedRoutes {
     this._baseRouter.get('/get-categories', AdminEnumController.getCategories)
     this._baseRouter.get('/get-genres', AdminEnumController.getGenres)
     this._baseRouter.get('/get-cast', AdminEnumController.getCast)
+    this._baseRouter.get('/casts/:castId', AdminEnumController.getCastById)
+    return this
   }
 
   lives(caller: 'Admin' | 'Client') {
@@ -33,7 +35,6 @@ export class SharedRoutes {
 
     this._baseRouter.get('/lives/estimate', ClientLiveStreamController.calculateEventCharges)
     this._baseRouter.delete('/lives/delete/:liveId', SharedController.deleteLiveById)
-
     return this
   }
 
@@ -58,3 +59,4 @@ export class SharedRoutes {
     return this
   }
 }
+
