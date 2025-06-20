@@ -45,17 +45,21 @@ interface RedeemGiftCardInput {
 }
 
 export class CustomerPaymentService {
-  static startPayment = async (currentUser: LoggedInUser, data: StartPaymentInput) => {
-    const { email, amount } = data
+  static startPayment = async (_: LoggedInUser, __: StartPaymentInput) => {
+    if (true) {
+      throw new OperationalError('Service is under review', 504)
+    }
 
-    const response = await PaymentServices.paystackStartPayment({
-      email,
-      amount,
-      user_id: currentUser.id,
-      full_name: `${currentUser.first_name} ${currentUser.last_name}`,
-    })
+    // const { email, amount } = data
 
-    return response
+    // const response = await PaymentServices.paystackStartPayment({
+    //   email,
+    //   amount,
+    //   user_id: currentUser.id,
+    //   full_name: `${currentUser.first_name} ${currentUser.last_name}`,
+    // })
+
+    // return response
   }
 
   static addPayment = async (currentUser: LoggedInUser, data: Partial<AddPaymentInput>) => {
@@ -78,42 +82,46 @@ export class CustomerPaymentService {
     )
   }
 
-  static authorizePayment = async (currentUser: LoggedInUser, chargeAmount: number) => {
-    const { id, first_name, last_name, email } = currentUser
-
-    const payAuth = await PaymentDetailRepo.findOneByUserId(id)
-
-    if (payAuth == null || payAuth.authorization_code == null) {
-      throw new OperationalError('payAuth or payAuth authorization code does not exist', 404)
+  static authorizePayment = async (_: LoggedInUser, __: number) => {
+    if (true) {
+      throw new OperationalError('Service is under review', 504)
     }
+
+    // const { id, first_name, last_name, email } = currentUser
+
+    // const payAuth = await PaymentDetailRepo.findOneByUserId(id)
+
+    // if (payAuth == null || payAuth.authorization_code == null) {
+    //   throw new OperationalError('payAuth or payAuth authorization code does not exist', 404)
+    // }
 
     // TODO: Use Session/transaction
 
-    const response = await PaymentServices.paystackAuthorizePayment({
-      authorization_code: payAuth.authorization_code,
-      email: email,
-      amount: chargeAmount,
-      user_id: id,
-      full_name: `${first_name} ${last_name}`,
-    })
+    // const response = await PaymentServices.paystackAuthorizePayment({
+    //   authorization_code: payAuth.authorization_code,
+    //   email: email,
+    //   amount: chargeAmount,
+    //   user_id: id,
+    //   full_name: `${first_name} ${last_name}`,
+    // })
 
-    const { status, amount, metadata, customer, reference } = response.data
+    // const { status, amount, metadata, customer, reference } = response.data
 
-    const newPayment = await PaymentModel.create({
-      reference,
-      status,
-      email: customer.email,
-      user_id: metadata.user_id,
-      full_name: metadata.full_name,
-      amount: convertKoboToNaira(amount),
-    })
+    // const newPayment = await PaymentModel.create({
+    //   reference,
+    //   status,
+    //   email: customer.email,
+    //   user_id: metadata.user_id,
+    //   full_name: metadata.full_name,
+    //   amount: convertKoboToNaira(amount),
+    // })
 
-    // ? Why is new Payment sent when status is failed?
-    if (status !== 'success') {
-      throw new OperationalError('authorize payment request unsuccessfull', 400, newPayment)
-    }
+    // // ? Why is new Payment sent when status is failed?
+    // if (status !== 'success') {
+    //   throw new OperationalError('authorize payment request unsuccessfull', 400, newPayment)
+    // }
 
-    return newPayment
+    // return newPayment
   }
 
   static createPayment = async (currentUser: LoggedInUser, data: CreatePaymentInput) => {

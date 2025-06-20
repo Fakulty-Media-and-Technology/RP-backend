@@ -40,6 +40,7 @@ export class PaymentService {
       amount,
     })
 
+    payment.reference = initPayResponseData.reference
     await payment.save()
 
     const response = {
