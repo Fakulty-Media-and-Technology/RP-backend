@@ -109,100 +109,103 @@ export class CronTaskHandlers {
             )
           }
 
-          if (cardDetails) {
-            const response = await PaymentServices.paystackAuthorizePayment({
-              authorization_code: cardDetails.authorization_code,
-              email: customerDetl.email,
-              amount: subPlan.price,
-              user_id: customerDetl.id,
-              full_name: `${customerDetl.first_name} ${customerDetl.last_name}`,
-            })
+          // TODO://
+          // if (cardDetails) {
+          //   const response = await PaymentServices.paystackAuthorizePayment({
+          //     authorization_code: cardDetails.authorization_code,
+          //     email: customerDetl.email,
+          //     amount: subPlan.price,
+          //     user_id: customerDetl.id,
+          //     full_name: `${customerDetl.first_name} ${customerDetl.last_name}`,
+          //   })
 
-            const { status, amount, metadata, customer, reference } = response.data
+          //   const { status, amount, metadata, customer, reference } = response.data
 
-            const nairaAmount = convertKoboToNaira(amount)
+          //   const nairaAmount = convertKoboToNaira(amount)
 
-            if (status !== 'success') {
-              const newPayment = new PaymentModel({
-                user_id: metadata.user_id,
-                full_name: metadata.full_name,
-                email: customer.email,
-                amount: nairaAmount,
-                reference,
-                status,
-              })
+          //   if (status !== 'success') {
+          //     const newPayment = new PaymentModel({
+          //       user_id: metadata.user_id,
+          //       full_name: metadata.full_name,
+          //       email: customer.email,
+          //       amount: nairaAmount,
+          //       reference,
+          //       status,
+          //     })
 
-              await newPayment.save()
+          //     await newPayment.save()
 
-              //TODO: send email and push notification here
-              const mailData = {
-                firstName: customerDetl.first_name,
-                lastName: customerDetl.last_name,
-                email: customerDetl.email,
-              }
+          //     //TODO: send email and push notification here
+          //     const mailData = {
+          //       firstName: customerDetl.first_name,
+          //       lastName: customerDetl.last_name,
+          //       email: customerDetl.email,
+          //     }
 
-              await new Email(mailData).sendAutoRenewFailure(
-                'unsuccessful attempt to charge your saved card details',
-              )
+          //     await new Email(mailData).sendAutoRenewFailure(
+          //       'unsuccessful attempt to charge your saved card details',
+          //     )
 
-              console.error(
-                'auto-renew subscription request unsuccessfull. Payment details:',
-                stringify(newPayment),
-              )
-              return
-            }
+          //     console.error(
+          //       'auto-renew subscription request unsuccessfull. Payment details:',
+          //       stringify(newPayment),
+          //     )
+          //     return
+          //   }
 
-            const newPayment = new PaymentModel({
-              user_id: metadata.user_id,
-              full_name: metadata.full_name,
-              email: customer.email,
-              amount: nairaAmount,
-              reference: reference,
-              status: status,
-            })
+          //   const newPayment = new PaymentModel({
+          //     user_id: metadata.user_id,
+          //     full_name: metadata.full_name,
+          //     email: customer.email,
+          //     amount: nairaAmount,
+          //     reference: reference,
+          //     status: status,
+          //   })
 
-            const nPayment = await newPayment.save()
+          //   const nPayment = await newPayment.save()
 
-            await new SubscriptionModel({
-              user_id: customerDetl._id,
-              plan_id: subPlan._id,
-              start_date: new Date(),
-              expiry_date: subPlan.getFutureDate(30),
-              payment_method: 'auto-renew',
-              amount: Number(subPlan.price),
-            }).save()
+          //   await new SubscriptionModel({
+          //     user_id: customerDetl._id,
+          //     plan_id: subPlan._id,
+          //     start_date: new Date(),
+          //     expiry_date: subPlan.getFutureDate(30),
+          //     payment_method: 'auto-renew',
+          //     amount: Number(subPlan.price),
+          //   }).save()
 
-            await PaymentModel.findOneAndUpdate(
-              {
-                _id: nPayment._id,
-                reference: nPayment.reference,
-              },
-              {
-                is_used: true,
-                use_case: 'subscription',
-              },
-              {
-                upsert: true,
-              },
-            )
+          //   await PaymentModel.findOneAndUpdate(
+          //     {
+          //       _id: nPayment._id,
+          //       reference: nPayment.reference,
+          //     },
+          //     {
+          //       is_used: true,
+          //       use_case: 'subscription',
+          //     },
+          //     {
+          //       upsert: true,
+          //     },
+          //   )
 
-            //TODO: send successful email and push notification here with reciept
-            const mailData = {
-              firstName: customerDetl.first_name,
-              lastName: customerDetl.last_name,
-              email: customerDetl.email,
-            }
+          //   //TODO: send successful email and push notification here with reciept
+          //   const mailData = {
+          //     firstName: customerDetl.first_name,
+          //     lastName: customerDetl.last_name,
+          //     email: customerDetl.email,
+          //   }
 
-            await new Email(mailData).sendAutoRenewSuccess('saved debit card details')
+          //   await new Email(mailData).sendAutoRenewSuccess('saved debit card details')
 
-            console.log(
-              'auto-renew subscription with card success. Payment details:',
-              stringify(nPayment),
-            )
-            return
-          }
+          //   console.log(
+          //     'auto-renew subscription with card success. Payment details:',
+          //     stringify(nPayment),
+          //   )
+          //   return
+          // }
 
           // user does not have card details here
+          
+          
           const cusWallet = await WalletModel.findOne({
             user_id: sub.user_id,
           })

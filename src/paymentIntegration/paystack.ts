@@ -1,12 +1,14 @@
 import { Paystack as Pk } from 'paystack-sdk'
 import { OperationalError } from '../utils/OperationalError'
 import env from '../env'
+import { ValidCurrency } from '../utils/currency'
 
 export interface IntitializePaymentInput {
   full_name: string
   user_id: string
   email: string
   amount: number
+  currency: ValidCurrency
 }
 
 export interface AuthorizePaymentInput extends IntitializePaymentInput {
@@ -20,6 +22,7 @@ export class Paystack {
     const response = await paystackClient.transaction.initialize({
       email: body.email,
       amount: (body.amount * 100).toString(),
+      currency: body.currency,
       metadata: {
         full_name: body.full_name,
         user_id: body.user_id,
@@ -31,36 +34,7 @@ export class Paystack {
       throw new OperationalError(response.message, 400)
     }
 
-    return response
-
-    // try {
-    //   const metd = JSON.stringify({
-    //     full_name: body.full_name,
-    //     user_id: body.user_id,
-    //   })
-
-    //   const options = {
-    //     method: 'POST',
-    //     url: 'https://api.paystack.co/transaction/initialize',
-    //     headers: {
-    //       Authorization: `Bearer ${paySecretKey}`,
-    //       'content-type': 'application/json',
-    //       'cache-control': 'no-cache',
-    //     },
-    //     data: {
-    //       email: body.email,
-    //       amount: body.amount * 100,
-    //       metadata: metd,
-    //     },
-    //   }
-
-    //   const response = await axios.request(options)
-
-    //   return response.data
-    // } catch (error) {
-    //   console.log(`Paystack Init Error: ${error}`)
-    //   return error.message
-    // }
+    return response.data
   }
 
   static async authorizePayment(body: AuthorizePaymentInput) {

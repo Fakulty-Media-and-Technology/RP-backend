@@ -10,12 +10,26 @@ import { AuthHeaderKey } from '../../middlewares/auth'
 import { LiveStreamService } from '../../services/core/LiveStreamService'
 import { CustomerPaymentService } from '../../services/core/CustomenrPaymentService'
 import { VideoService } from '../../services/core/VideoService'
+import { PaymentService } from '../../services/core/PaymentService'
 
 export type PaymentHistoryCaller = {
   caller: 'Admin' | 'Others'
 }
 
 export class SharedController extends UploadMediaUtils {
+  static startPayment = Catch.async(async (req, res) => {
+    const response = await PaymentService.initiatePayment({
+      currentUser: GetDefined.loggedInUser(req.user),
+      ...req.body, // validated by Joi at route level
+    })
+
+    sendResponse({
+      res,
+      message: 'Payment initated successfully',
+      data: response,
+    })
+  })
+
   static updateProfile = (authType: AuthHeaderKey) =>
     Catch.async(async (req, res) => {
       if (Object.values(req.body).length === 0 && req.file == null) {

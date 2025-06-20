@@ -48,6 +48,7 @@ customerRouter.post(
 new SharedRoutes(customerRouter)
   .fetchSubtitles()
   .updateUserProfile('customer-auth')
+  .paymentActions()
   .paymentHistory({ caller: 'Others' })
   .vods()
 

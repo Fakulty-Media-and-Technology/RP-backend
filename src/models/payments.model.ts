@@ -1,6 +1,17 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { validCurrencies } from '../utils/currency'
 
+const paymentUseCases = [
+  'subscription',
+  'topup',
+  'vote',
+  'donate',
+  'live schedule',
+  'live schedule ext',
+] as const
+
+export type PaymentUseCase = (typeof paymentUseCases)[number]
+
 const paymentSchema = new Schema(
   {
     user_id: {
@@ -13,7 +24,7 @@ const paymentSchema = new Schema(
     currency: {
       type: String,
       enum: validCurrencies,
-      default: ['NGN'],
+      required: true,
       index: true,
     },
 
@@ -34,6 +45,7 @@ const paymentSchema = new Schema(
       required: true,
     },
 
+    // query by reference in webhooks
     reference: {
       type: String,
       required: true,
@@ -42,6 +54,7 @@ const paymentSchema = new Schema(
 
     status: {
       type: String,
+      enum: ['success', 'pending', 'failed'],
       required: true,
       index: true,
     },
@@ -53,7 +66,7 @@ const paymentSchema = new Schema(
 
     use_case: {
       type: String,
-      enum: ['subscription', 'topup', 'vote', 'donate', 'live schedule', 'live schedule ext'],
+      enum: paymentUseCases,
       index: true,
     },
   },

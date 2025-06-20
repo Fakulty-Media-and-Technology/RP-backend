@@ -64,3 +64,20 @@ export const updateUserProfileSchema = {
     userId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
   }),
 }
+
+export const intitiatePaymentSchema = {
+  body: Joi.object({
+    amount: Joi.number().strict().required(),
+    currency: STRING_SCHEMA.valid('USD', 'NGN').required(),
+    fullName: STRING_SCHEMA,
+    email: STRING_SCHEMA.email(),
+    useCase: STRING_SCHEMA.valid(
+      'subscription',
+      'topup',
+      'vote',
+      'donate',
+      'live schedule',
+      'live schedule ext',
+    ).required(),
+  }),
+}

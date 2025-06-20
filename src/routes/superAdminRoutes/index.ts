@@ -34,6 +34,7 @@ sharedRoutes
   .lives('Admin')
   .fetchSubtitles()
   .updateUserProfile('superadmin-auth')
+  .paymentActions()
   .paymentHistory({ caller: 'Admin' })
   .vods()
 

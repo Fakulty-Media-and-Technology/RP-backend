@@ -7,18 +7,23 @@ const paymentDetailsSchema = new Schema(
       ref: 'User',
       required: true,
     },
+
     authorization_code: {
       type: String,
     },
+
     last4: {
       type: String,
     },
+
     exp_month: {
       type: String,
     },
+
     exp_year: {
       type: String,
     },
+    
     brand: {
       type: String,
     },

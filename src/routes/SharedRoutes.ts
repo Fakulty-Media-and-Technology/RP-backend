@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { PaymentHistoryCaller, SharedController } from '../controllers/common/shared.controller'
 import { Multer } from '../utils/Multer'
 import { requestValidator } from '../middlewares/requestValidator'
-import { updateUserProfileSchema } from '../validations/common'
+import { intitiatePaymentSchema, updateUserProfileSchema } from '../validations/common'
 import { AuthHeaderKey } from '../middlewares/auth'
 import { ClientLiveStreamController } from '../controllers/clients/livestream.clients'
 import { AdminEnumController } from '../controllers/admins/enums.admin'
@@ -17,7 +17,7 @@ export class SharedRoutes {
 
   vods() {
     this._baseRouter.get('/vods/category/:catId', SharedController.fetchVidsForCategory)
-    
+
     this._baseRouter.get(
       '/vods/similar-by-cast/:castId/:vodId',
       CustomerSharedController.getSimilarByCastId,
@@ -52,6 +52,16 @@ export class SharedRoutes {
 
   paymentHistory(callerConfig: PaymentHistoryCaller) {
     this._baseRouter.get('/trans/payment-history', SharedController.paymentHistory(callerConfig))
+    return this
+  }
+
+  paymentActions() {
+    this._baseRouter.post(
+      '/initiate-payment',
+      requestValidator(intitiatePaymentSchema),
+      SharedController.startPayment,
+    )
+
     return this
   }
 
