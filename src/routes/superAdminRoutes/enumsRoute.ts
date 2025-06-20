@@ -10,7 +10,7 @@ import {
   updateGenreSchema,
 } from '../../validations/admin'
 
-import { SharedRoutes } from '../../utils/SharedRoutes'
+import { SharedRoutes } from '../SharedRoutes'
 import { Multer } from '../../utils/Multer'
 
 export const superAdminEnumsRouter = Router()

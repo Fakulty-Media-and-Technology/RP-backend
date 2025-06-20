@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { SharedRoutes } from '../../utils/SharedRoutes'
+import { SharedRoutes } from '../SharedRoutes'
 
 export const router = Router()
 

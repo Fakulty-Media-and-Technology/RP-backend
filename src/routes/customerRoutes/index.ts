@@ -23,7 +23,7 @@ import { router as PasswordResetRouter } from './../customerRoutes/passwordReset
 import { router as WalletRouter } from './../customerRoutes/walletRouter'
 import { router as ProfileRouter } from './../customerRoutes/profileRouter'
 import { router as EnumsRouter } from './../customerRoutes/enumsRouter'
-import { SharedRoutes } from '../../utils/SharedRoutes'
+import { SharedRoutes } from '../SharedRoutes'
 import { requestValidator } from '../../middlewares/requestValidator'
 import { viewContentSchema } from '../../validations/customers'
 
