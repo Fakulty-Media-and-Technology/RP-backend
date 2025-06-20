@@ -6,3 +6,11 @@ export const getPromiseAllFulfilledResults = <T>(results: PromiseSettledResult<T
     return acc
   }, [])
 }
+
+export const throwReasonIfAny = (settledResults: PromiseSettledResult<any>[]) => {
+  settledResults.forEach(settledResult => {
+    if (settledResult.status === 'rejected') {
+      throw settledResult.reason
+    }
+  })
+}

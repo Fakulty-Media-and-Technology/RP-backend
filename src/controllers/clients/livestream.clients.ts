@@ -22,12 +22,12 @@ export class ClientLiveStreamController {
   })
 
   static calculateEventCharges = Catch.sync((req, res) => {
-    const { start, expiry } = req.query
+    const { start, expiry, currency } = req.query
 
     sendResponse({
       res,
       message: 'Cost for your event',
-      data: LiveStreamService.calcEventCharges(start, expiry),
+      data: LiveStreamService.calcEventCharges(start as any, expiry as any, currency as any),
     })
   })
 }

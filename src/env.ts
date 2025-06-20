@@ -1,9 +1,8 @@
 import 'dotenv/config'
-import e from 'express'
 
 const NUMERIC_REG = /^\d+$/
 
-const setWithDefault = (key: string, defaultNum: number) => {
+const setToNumberWithDefault = (key: string, defaultNum: number) => {
   const val = process.env[key]
   if (val == null) return defaultNum
 
@@ -25,7 +24,7 @@ const getValidEnv = <T extends Record<string, any>>(variables: Partial<T>) => {
 }
 
 export const env = getValidEnv({
-  // 
+  //
   PORT: process.env.PORT,
   MONGO_DB_URL: process.env.MONGO_DB_URL,
   NODE_ENV: process.env.NODE_ENV,
@@ -53,17 +52,20 @@ export const env = getValidEnv({
 
   // *** payments
   PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
-  EVENT_HOURLY_CHARGES: setWithDefault('EVENT_HOURLY_CHARGES', 10000),
-  WITHDRAWAL_PERCENT: setWithDefault('WITHDRAWAL_PERCENT', 15),
-  MIN_WITHDRAWAL_AMOUNT: setWithDefault('MIN_WITHDRAWAL_AMOUNT', 50000),
+
+  EVENT_HOURLY_CHARGES_NGN: setToNumberWithDefault('EVENT_HOURLY_CHARGES_NGN', 10000),
+  EVENT_HOURLY_CHARGES_USD: setToNumberWithDefault('EVENT_HOURLY_CHARGES_USD', 10),
+
+  WITHDRAWAL_PERCENT: setToNumberWithDefault('WITHDRAWAL_PERCENT', 15),
+  MIN_WITHDRAWAL_AMOUNT: setToNumberWithDefault('MIN_WITHDRAWAL_AMOUNT', 50000),
 
   // livestream
   RP_RTMP_APP_NAME: process.env.RP_RTMP_APP_NAME,
   RP_RTMP_BASE_URL: process.env.RP_RTMP_BASE_URL,
   RP_HLS_BASE_URL: process.env.RP_HLS_BASE_URL,
   RP_RMTP_AUTH_SECRET: process.env.RP_RMTP_AUTH_SECRET,
-  RP_HLS_HTTP_PORT: setWithDefault('RP_HLS_HTTP_PORT', 8888),
-  RP_RTMP_PORT: setWithDefault('RP_RTMP_PORT', 1935),
+  RP_HLS_HTTP_PORT: setToNumberWithDefault('RP_HLS_HTTP_PORT', 8888),
+  RP_RTMP_PORT: setToNumberWithDefault('RP_RTMP_PORT', 1935),
 
   get RP_RTMP_URL() {
     const baseURL = this.IS_PROD ? this.RP_RTMP_BASE_URL : `rmtp://localhost`

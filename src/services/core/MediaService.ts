@@ -16,6 +16,7 @@ import { User, UserModel } from '../../models/users.model'
 import { Password } from '../../utils/Password'
 import { S3 } from '../aws/s3'
 import { AuthHeaderKey } from '../../middlewares/auth'
+import { throwReasonIfAny } from '../../utils/promises'
 
 export type CreateLiveData = {
   clientId: string
@@ -133,18 +134,24 @@ export class MediaService {
   }
 
   private static _checkLiveOngoinStreams = async (data: CreateLiveData) => {
-    const [streamOngoing, scheduledStream] = await Promise.all([
-      LiveModel.findOne({ client_id: data.clientId, active: true }),
-      LiveModel.findOne({ client_id: data.clientId, active: false, expired: false }),
-    ])
+    const live = await LiveModel.findById(data.clientId)
 
-    if (streamOngoing) {
-      throw new OperationalError('client has an ongoing stream', 400)
+    if (live != null) {
+      throw new OperationalError('Already has a live', 403)
     }
 
-    if (scheduledStream) {
-      throw new OperationalError('client has a scheduled stream', 400)
-    }
+    // const [streamOngoing, scheduledStream] = await Promise.all([
+    //   LiveModel.findOne({ client_id: data.clientId, active: true }),
+    //   LiveModel.findOne({ client_id: data.clientId, active: false, expired: false }),
+    // ])
+
+    // if (streamOngoing) {
+    //   throw new OperationalError('client has an ongoing stream', 400)
+    // }
+
+    // if (scheduledStream) {
+    //   throw new OperationalError('client has a scheduled stream', 400)
+    // }
   }
 
   private static _checkLivePayments = async (data: CreateLiveData, session: ClientSession) => {
@@ -165,11 +172,17 @@ export class MediaService {
       throw new OperationalError('your payment is invalid', 400)
     }
 
-    if (confirmPayment.amount !== calcLiveCharges(data.start, data.expiry)) {
-      throw new OperationalError('payment made does not match charges', 400)
+    const charges = calcLiveCharges({
+      start: data.start,
+      expiry: data.expiry,
+      currency: confirmPayment.currency,
+    })
+
+    if (confirmPayment.amount !== charges) {
+      throw new OperationalError('amount must be the same as charge', 400)
     }
 
-    const updatedPayment = await PaymentModel.findByIdAndUpdate(
+    await PaymentModel.findByIdAndUpdate(
       confirmPayment._id,
       {
         is_used: true,
@@ -177,10 +190,6 @@ export class MediaService {
       },
       { session },
     )
-
-    if (updatedPayment == null) {
-      throw new OperationalError('could not update payment', 500)
-    }
   }
 
   private static _checkLiveClient = async (data: CreateLiveData) => {
@@ -197,9 +206,14 @@ export class MediaService {
   }
 
   private static _createLiveSession = async (data: CreateLiveData, session: ClientSession) => {
-    await this._checkLiveClient(data)
+    const settled = await Promise.allSettled([
+      this._checkLiveClient(data),
+      this._checkLiveOngoinStreams(data),
+    ])
+
+    throwReasonIfAny(settled)
+
     await this._checkLivePayments(data, session)
-    await this._checkLiveOngoinStreams(data)
 
     const live = new LiveModel({
       client_id: data.clientId,
@@ -226,7 +240,6 @@ export class MediaService {
     await this._uploadLivePreviewVideo(uploaderParams, session)
     await this._uploadLiveCoverPhoto(uploaderParams, session)
     await live.save({ session })
-    return live
   }
 
   static createLive = async (data: CreateLiveData) => {

@@ -75,6 +75,7 @@ export class Multer {
     { name: 'coverPhoto', maxCount: 1 },
     { name: 'channelLogo', maxCount: 1 },
   ])
+  
 
   static createUpcomingConfig = this._configs.multipleTypesConfig.fields([
     { name: 'portraitPhoto', maxCount: 1 },

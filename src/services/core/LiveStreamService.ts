@@ -4,7 +4,7 @@ import { LiveModel } from '../../models/lives.model'
 import { PaymentModel } from '../../models/payments.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
-import { ClientSession, Types } from 'mongoose'
+import { ClientSession } from 'mongoose'
 import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { calcLiveCharges, signCred } from '../../utils/live'
 import { LiveRepo } from '../../repositories/LiveRepo'
@@ -12,6 +12,7 @@ import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 import { Purge } from '../../utils/Purge'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
+import { ValidCurrency } from '../../utils/currency'
 
 type CreateClientWithSessionInput = {
   currentUser: LoggedInUser
@@ -62,7 +63,13 @@ export class LiveStreamService {
       throw new OperationalError('live event has no expiry', 400)
     }
 
-    if (confirmPayment.amount !== calcLiveCharges(liveEvent.expiry.toISOString(), new_expiry)) {
+    const charges = calcLiveCharges({
+      start: liveEvent.expiry.toISOString(),
+      expiry: new_expiry,
+      currency: confirmPayment.currency,
+    })
+
+    if (confirmPayment.amount !== charges) {
       throw new OperationalError('payment made does not match charges', 400)
     }
 
@@ -94,14 +101,18 @@ export class LiveStreamService {
 
   // ************** Public ************88
 
-  static calcEventCharges = (start: unknown, expiry: unknown) => {
+  static calcEventCharges = (start: string, expiry: string, currency: ValidCurrency) => {
     if (typeof start !== 'string' || typeof expiry !== 'string') {
       throw new OperationalError('start and expirey must be strings', 400)
     }
 
-    return {
-      estimated_cost: calcLiveCharges(start, expiry),
-    }
+    const charges = calcLiveCharges({
+      start,
+      expiry,
+      currency,
+    })
+
+    return { estimated_cost: charges }
   }
 
   static getLiveStreamCredentials = async (currentUser: LoggedInUser) => {

@@ -3,6 +3,13 @@ import crypto from 'node:crypto'
 import { LiveModel } from '../models/lives.model'
 import { OperationalError } from './OperationalError'
 import { genRandUniqId } from './strGen'
+import { validCurrencies, ValidCurrency } from './currency'
+
+interface CalculateEventChargesParams {
+  start: string
+  expiry: string
+  currency: ValidCurrency
+}
 
 export const getUniqueStreamKey = async (triesCount = 1): Promise<string> => {
   if (triesCount >= 5) {
@@ -22,11 +29,29 @@ export const getUniqueStreamKey = async (triesCount = 1): Promise<string> => {
   return streamId
 }
 
-export const calcLiveCharges = (start: string, expiry: string) => {
-  const startDate = new Date(start).getTime()
-  const expiryDate = new Date(expiry).getTime()
-  const hoursDifference = (expiryDate - startDate) / (60 * 60000)
-  return hoursDifference * env.EVENT_HOURLY_CHARGES
+export const getChargesFromEnv = (currency: ValidCurrency) => {
+  if (!validCurrencies.includes(currency)) {
+    throw new OperationalError(`Supported currencies are ${validCurrencies.join(' || ')}`, 400)
+  }
+
+  return currency === 'NGN' ? env.EVENT_HOURLY_CHARGES_NGN : env.EVENT_HOURLY_CHARGES_USD
+}
+
+export const calcLiveCharges = ({ start, expiry, currency }: CalculateEventChargesParams) => {
+  const startDate = new Date(start)
+  const expiryDate = new Date(expiry)
+
+  if (!(startDate instanceof Date)) {
+    throw new OperationalError('invalid start date string to calculate live charges', 400)
+  }
+
+  if (!(expiryDate instanceof Date)) {
+    throw new OperationalError('invalid expiry date string to calculate live charges', 400)
+  }
+
+  const hoursDifference = (expiryDate.getTime() - startDate.getTime()) / (60 * 60000)
+  const charge = hoursDifference * getChargesFromEnv(currency)
+  return charge
 }
 
 export const signCred = (streamKey: string, expiryDate: Date) => {

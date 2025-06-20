@@ -14,7 +14,6 @@ import Email from '../utils/emailer'
 import moment from 'moment'
 
 const stringify = (data: Object) => JSON.stringify(data, null, 2)
-
 const laterInMins = (mins: number) => moment().add(mins, 'minutes').toDate()
 
 export class CronTaskHandlers {

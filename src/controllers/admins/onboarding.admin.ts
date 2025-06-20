@@ -5,6 +5,7 @@ import { Catch } from '../../utils/Catch'
 import { TokenManager } from '../../utils/jwt'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
+import { throwReasonIfAny } from '../../utils/promises'
 import { sendResponse } from '../../utils/responder'
 
 type Role = User['role']
@@ -71,12 +72,7 @@ export class AdminOnboardingController {
     }
 
     const settled = await Promise.allSettled([handleAuthCreds(), handleImage()])
-
-    settled.forEach(s => {
-      if (s.status === 'rejected') {
-        throw s.reason
-      }
-    })
+    throwReasonIfAny(settled)
 
     await user.save()
   }
