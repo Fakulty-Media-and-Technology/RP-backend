@@ -330,6 +330,7 @@ export const createClientSchema = {
   }),
 }
 
+
 export const createAdSchema = {
   body: Joi.object({
     title: STRING_SCHEMA.required(),

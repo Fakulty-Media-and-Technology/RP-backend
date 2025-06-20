@@ -1,5 +1,6 @@
 import { User, UserModel } from '../../models/users.model'
 import { UserRepo } from '../../repositories/UserRepo'
+import { MediaManagement } from '../../services/media-management'
 import { Catch } from '../../utils/Catch'
 import { TokenManager } from '../../utils/jwt'
 import { OperationalError } from '../../utils/OperationalError'
@@ -8,27 +9,15 @@ import { sendResponse } from '../../utils/responder'
 
 type Role = User['role']
 
+interface CreateUserInput {
+  data: Record<string, any>
+  role: Role
+  image?: Express.Multer.File
+}
+
 export class AdminOnboardingController {
-  private static _createUser = async (data: Record<string, any>, role: Role) => {
+  private static _createUser = async ({ data, role, image }: CreateUserInput) => {
     const { first_name, last_name, email, password, cpassword, country_code, mobile } = data
-
-    if (
-      !first_name ||
-      !last_name ||
-      !email ||
-      !password ||
-      !cpassword ||
-      !country_code ||
-      !mobile
-    ) {
-      throw new OperationalError('all input are required', 400)
-    }
-
-    // ! email is a unique property. It will throw if it already exists. This check is wasting time
-    // const userExist = await UserRepo.getByEmail(email)
-    // if (userExist) {
-    //   throw new OperationalError('User with email already this exist', 400)
-    // }
 
     if (password !== cpassword) {
       throw new OperationalError('passwords do not match', 400)
@@ -36,22 +25,15 @@ export class AdminOnboardingController {
 
     if (!Password.isStrong(password)) {
       throw new OperationalError(
-        'password is too weak: use capital, small letter, interger and not less than 8 character',
+        'password is too weak: use capital letter, small letter, interger and not less than 8 character',
         400,
       )
     }
 
-    const [encPassword, encPin] = await Promise.all([
-      Password.encrypt(password),
-      Password.encrypt('1111'),
-    ])
-
-    const newUser = new UserModel({
+    const user = new UserModel({
       first_name: first_name,
       last_name: last_name,
       email: email,
-      password: encPassword,
-      pin: encPin,
       country_code,
       mobile,
       role,
@@ -59,27 +41,66 @@ export class AdminOnboardingController {
       approved: true,
     })
 
-    await newUser.save()
+    const handleAuthCreds = async () => {
+      const [encPassword, encPin] = await Promise.all([
+        Password.encrypt(password),
+        Password.encrypt('1111'),
+      ])
 
-    return newUser
+      user.password = encPassword
+      user.pin = encPin
+    }
+
+    const handleImage = async () => {
+      if (!image) return
+
+      const { Bucket, Key } = await MediaManagement.store({
+        file: image,
+        expire: undefined,
+        baseDir: 'images',
+      })
+
+      if (Bucket == null) {
+        throw new OperationalError('could not upload photo', 500)
+      }
+
+      user.photo = {
+        Bucket,
+        Key,
+      }
+    }
+
+    const settled = await Promise.allSettled([handleAuthCreds(), handleImage()])
+
+    settled.forEach(s => {
+      if (s.status === 'rejected') {
+        throw s.reason
+      }
+    })
+
+    await user.save()
   }
 
   static createAdminORSuperAdmin = (role: Extract<Role, 'superadmin' | 'admin'>) =>
     Catch.async(async (req, res) => {
-      await this._createUser(req.body, role)
+      await this._createUser({ data: req.body, role, image: req.file })
 
       sendResponse({
         res,
-        message: `New ${role} Account Created successfully`,
+        message: `New ${role} created`,
       })
     })
 
   static clientsSignup = Catch.async(async (req, res) => {
-    await this._createUser(req.body, req.body.client_type)
+    await this._createUser({
+      data: req.body,
+      role: req.body.client_type,
+      image: req.file,
+    })
 
     sendResponse({
       res,
-      message: 'New Client Account Created successfully',
+      message: 'New client created',
     })
   })
 

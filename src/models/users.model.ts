@@ -9,12 +9,14 @@ const schema = new Schema(
       trim: true,
       required: true,
     },
+
     last_name: {
       type: String,
       lowercase: true,
       trim: true,
       required: true,
     },
+
     email: {
       type: String,
       trim: true,
@@ -23,16 +25,19 @@ const schema = new Schema(
       unique: true,
       match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address'],
     },
+
     country_code: {
       type: String,
       trim: true,
       required: true,
     },
+
     mobile: {
       type: String,
       trim: true,
       required: true,
     },
+    
     password: {
       type: String,
       required: true,

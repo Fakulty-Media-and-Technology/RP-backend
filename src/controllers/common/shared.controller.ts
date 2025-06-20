@@ -9,10 +9,6 @@ import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { AuthHeaderKey } from '../../middlewares/auth'
 import { LiveStreamService } from '../../services/core/LiveStreamService'
 import { CustomerPaymentService } from '../../services/core/CustomenrPaymentService'
-import { LiveRepo } from '../../repositories/LiveRepo'
-import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
-import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 import { VideoService } from '../../services/core/VideoService'
 
 export type PaymentHistoryCaller = {
