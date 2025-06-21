@@ -309,6 +309,9 @@ export const createAdminORSuperAdminSchema = {
     cpassword: STRING_SCHEMA.required(),
     country_code: STRING_SCHEMA.required(),
     mobile: STRING_SCHEMA.required(),
+    gender: STRING_SCHEMA.valid('male', 'female', 'nil'),
+    dob: STRING_SCHEMA.isoDate(),
+    country: STRING_SCHEMA,
   }),
 }
 
@@ -323,14 +326,11 @@ export const createClientSchema = {
     mobile: STRING_SCHEMA.required(),
     verified: Joi.boolean().required(),
     client_type: STRING_SCHEMA.valid('channel', 'tvshow', 'event', 'podcast').required(),
-
-    photo: Joi.object({
-      Bucket: STRING_SCHEMA.required(),
-      Key: STRING_SCHEMA.required(),
-    }).optional(),
+    gender: STRING_SCHEMA.valid('male', 'female', 'nil'),
+    dob: STRING_SCHEMA.isoDate(),
+    country: STRING_SCHEMA,
   }),
 }
-
 
 export const createAdSchema = {
   body: Joi.object({

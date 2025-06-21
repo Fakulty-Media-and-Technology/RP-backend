@@ -23,6 +23,7 @@ import { router as PasswordResetRouter } from './../customerRoutes/passwordReset
 import { router as WalletRouter } from './../customerRoutes/walletRouter'
 import { router as ProfileRouter } from './../customerRoutes/profileRouter'
 import { router as EnumsRouter } from './../customerRoutes/enumsRouter'
+
 import { SharedRoutes } from '../SharedRoutes'
 import { requestValidator } from '../../middlewares/requestValidator'
 import { viewContentSchema } from '../../validations/customers'
@@ -66,6 +67,8 @@ customerRouter.use('/livestream', LivestreamRouter)
 customerRouter.use('/subscription', SubscriptionRuuter)
 customerRouter.use('/notification', PushNotificationRouter)
 customerRouter.use('/notifications', NotificationsRouter)
+
+
 customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.get('/banner/contents', CustomerSharedController.bannerContents)
 customerRouter.post('/signup/createpin', OnboardingController.createPin)

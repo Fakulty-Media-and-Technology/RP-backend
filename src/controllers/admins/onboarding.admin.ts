@@ -18,7 +18,7 @@ interface CreateUserInput {
 
 export class AdminOnboardingController {
   private static _createUser = async ({ data, role, image }: CreateUserInput) => {
-    const { first_name, last_name, email, password, cpassword, country_code, mobile } = data
+    const { first_name, last_name, email, password, cpassword, country_code, mobile, gender, country, dob } = data
 
     if (password !== cpassword) {
       throw new OperationalError('passwords do not match', 400)
@@ -38,6 +38,9 @@ export class AdminOnboardingController {
       country_code,
       mobile,
       role,
+      gender,
+      country,
+      dob,
       verified: true,
       approved: true,
     })
