@@ -116,12 +116,22 @@ export class LiveStreamService {
   }
 
   static getLiveStreamCredentials = async (currentUser: LoggedInUser) => {
-    const vidQuality = await VidUploadUtils.getUserVideoQuality(currentUser._id.toString(), '720p')
+    const [vidQualitySettled, liveSettled] = await Promise.allSettled([
+      VidUploadUtils.getUserVideoQuality(currentUser._id.toString(), '720p'),
+      LiveRepo.getValidClientLive(currentUser._id.toString()),
+    ])
 
-    const lives = await LiveMediaSourcesUtils.resolveSources(
-      await LiveRepo.getValidClientLive(currentUser._id.toString()),
-      vidQuality,
-    )
+    if (vidQualitySettled.status === 'rejected') {
+      throw vidQualitySettled.reason
+    }
+
+    if (liveSettled.status === 'rejected') {
+      throw liveSettled.reason
+    }
+
+    const vidQuality = vidQualitySettled.value
+    const liveAggrRes = liveSettled.value
+    const lives = await LiveMediaSourcesUtils.resolveSources(liveAggrRes, vidQuality)
 
     const creds = await Promise.allSettled(
       lives.map(async live => {
