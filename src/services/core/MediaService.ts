@@ -36,7 +36,7 @@ export type CreateLiveData = {
   previewVideo?: Express.Multer.File
   sponsored?: boolean
   popular?: boolean
-  paymentId?: string
+  paymentId: string
   creatorType: 'admin' | 'client'
 }
 
@@ -155,12 +155,6 @@ export class MediaService {
   }
 
   private static _checkLivePayments = async (data: CreateLiveData, session: ClientSession) => {
-    if (data.creatorType !== 'client') return
-
-    if (!data.paymentId) {
-      throw new OperationalError('PaymentId is required', 403)
-    }
-
     const confirmPayment = await PaymentModel.findOne({
       _id: data.paymentId,
       user_id: data.clientId,

@@ -170,6 +170,7 @@ export const getPhotoURLSchema = {
 
 export const addLiveSchema = Joi.object({
   clientId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+  paymentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
   title: STRING_SCHEMA.required(),
   subTitle: STRING_SCHEMA.required(),
   pg: STRING_SCHEMA.required(),
