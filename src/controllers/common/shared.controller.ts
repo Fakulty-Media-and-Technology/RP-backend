@@ -1,4 +1,4 @@
-import { MediaService, CreateLiveData } from '../../services/core/MediaService'
+import { MediaService } from '../../services/core/MediaService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
@@ -7,7 +7,7 @@ import { validate } from '../../middlewares/requestValidator'
 import { addLiveSchema } from '../../validations/admin'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { AuthHeaderKey } from '../../middlewares/auth'
-import { LiveStreamService } from '../../services/core/LiveStreamService'
+import { LiveStreamService, CreateLiveData } from '../../services/core/LiveStreamService'
 import { CustomerPaymentService } from '../../services/core/CustomenrPaymentService'
 import { VideoService } from '../../services/core/VideoService'
 import { PaymentService } from '../../services/core/PaymentService'
@@ -50,6 +50,33 @@ export class SharedController extends UploadMediaUtils {
       })
     })
 
+  static updateLiveMedia = Catch.async(async (req, res) => {
+    const files = this._checkFiles(req.files)
+
+    await LiveStreamService.editLiveMedia({
+      liveId: req.params.liveId,
+      coverPhotoFile: files.coverPhoto?.[0],
+      previewVideoFile: files.previewVideo?.[0],
+    })
+
+    sendResponse({
+      res,
+      message: 'update initiated.. See dashboard for live after update completion',
+    })
+  })
+
+  static updateLiveActiveStatus = Catch.async(async (req, res) => {
+    await LiveStreamService.updateLiveActiveState({
+      liveId: req.params.liveId,
+      active: req.body.active,
+    })
+
+    sendResponse({
+      res,
+      message: 'Update successfull',
+    })
+  })
+
   static createLive = ({ isAdmin }: { isAdmin: boolean }) =>
     Catch.async(async (req, res) => {
       const { data: _data } = req.body
@@ -67,7 +94,6 @@ export class SharedController extends UploadMediaUtils {
       const data: CreateLiveData = {
         ...parsedData,
         previewVideo: files.previewVideo?.[0],
-        channelLogo: files.channelLogo?.[0],
         coverPhoto: files.coverPhoto?.[0],
         clientId: isAdmin ? parsedData.clientId : GetDefined.loggedInUser(req.user).id,
       }
@@ -76,7 +102,7 @@ export class SharedController extends UploadMediaUtils {
 
       sendResponse({
         res,
-        data: await MediaService.createLive(data),
+        data: await LiveStreamService.createLive(data),
         message: `Live will be attached to ${isAdmin ? 'client' : 'your'} dashboard after processing`,
       })
     })

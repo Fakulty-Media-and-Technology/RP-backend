@@ -56,6 +56,13 @@ const schema = new Schema(
       default: null,
     },
 
+    categories: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'category_enums',
+      },
+    ],
+
     vid_class: {
       type: String,
       enum: ['free', 'ad', 'exclusive', 'premium'],
@@ -145,8 +152,6 @@ const schema = new Schema(
     feat_expiry: {
       type: Date,
     },
-
-
   },
   {
     timestamps: true,

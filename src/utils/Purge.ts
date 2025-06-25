@@ -1,4 +1,3 @@
-import { Types } from 'mongoose'
 import { PosterImageModel } from '../models/poster.model'
 import { SubtitleModel } from '../models/subtitle.model'
 import { TrailerModel } from '../models/trailer.model'
@@ -9,12 +8,11 @@ import { SeasonModel } from '../models/seasons.model'
 import { EpisodeModel } from '../models/episodes.model'
 import { Live } from '../models/lives.model'
 import { PaymentModel } from '../models/payments.model'
-
-type ObjectId = Types.ObjectId
+import { MongoDBObjectId } from '../types/general'
 
 export class Purge {
   static live = (live: Live) => {
-    const payments: ObjectId[] = []
+    const payments: MongoDBObjectId[] = []
 
     Purge.subtitlesByParentId(live._id)
     Purge.postersByParentId(live._id)
@@ -31,7 +29,7 @@ export class Purge {
     })
   }
 
-  static videoUploadById = async (vidUploadId: ObjectId) => {
+  static videoUploadById = async (vidUploadId: MongoDBObjectId) => {
     try {
       const vidUpload = await VideoUploadModel.findByIdAndDelete(vidUploadId)
 
@@ -55,7 +53,7 @@ export class Purge {
     }
   }
 
-  static posterById = async (posterId: ObjectId) => {
+  static posterById = async (posterId: MongoDBObjectId) => {
     try {
       const poster = await PosterImageModel.findByIdAndDelete(posterId)
       poster && (await S3.deleteObject(poster.key, poster.bucket))
@@ -64,7 +62,7 @@ export class Purge {
     }
   }
 
-  static postersByParentId = async (parentId: ObjectId) => {
+  static postersByParentId = async (parentId: MongoDBObjectId) => {
     try {
       const posters = await PosterImageModel.find({ video_id: parentId })
 
@@ -85,7 +83,7 @@ export class Purge {
     }
   }
 
-  static trailerByParentId = async (parentId: ObjectId) => {
+  static trailerByParentId = async (parentId: MongoDBObjectId) => {
     try {
       const trailer = await TrailerModel.findOneAndDelete({ video_id: parentId })
       trailer && this.videoUploadById(trailer.video_upload)
@@ -94,7 +92,7 @@ export class Purge {
     }
   }
 
-  static trailerById = async (trailerId: ObjectId) => {
+  static trailerById = async (trailerId: MongoDBObjectId) => {
     try {
       const trailer = await TrailerModel.findByIdAndDelete(trailerId)
       trailer && this.videoUploadById(trailer.video_upload)
@@ -103,7 +101,7 @@ export class Purge {
     }
   }
 
-  static subtitlesByParentId = async (parentId: ObjectId) => {
+  static subtitlesByParentId = async (parentId: MongoDBObjectId) => {
     try {
       const subtitles = await SubtitleModel.find({ video_id: parentId })
 
@@ -122,7 +120,7 @@ export class Purge {
     }
   }
 
-  static seasonsByVideoId = async (vodId: ObjectId) => {
+  static seasonsByVideoId = async (vodId: MongoDBObjectId) => {
     try {
       const seasons = await SeasonModel.find({ video: vodId })
 

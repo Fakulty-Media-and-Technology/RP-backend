@@ -45,6 +45,14 @@ export class SharedRoutes {
       SharedController.createLive({ isAdmin: caller === 'Admin' }),
     )
 
+    this._baseRouter.put(
+      '/lives/update-media/:liveId',
+      Multer.createLiveConfig,
+      SharedController.updateLiveMedia,
+    )
+
+    this._baseRouter.put('/lives/update-active/:liveId', SharedController.updateLiveActiveStatus)
+
     this._baseRouter.get('/lives/estimate', ClientLiveStreamController.calculateEventCharges)
     this._baseRouter.delete('/lives/delete/:liveId', SharedController.deleteLiveById)
     return this
@@ -81,4 +89,3 @@ export class SharedRoutes {
     return this
   }
 }
-

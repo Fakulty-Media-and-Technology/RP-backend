@@ -36,16 +36,16 @@ export class MediaManagement {
   }
 
   static uploadAndInitiateMediaConvert = async ({ file, expire }: UploadAndTranscodeConfig) => {
-    const video = await this.store({
+    const videoUpload = await this.store({
       file,
       expire: typeof expire === 'string' ? new Date(expire) : undefined,
       baseDir: 'videos',
     })
 
-    await MediaConvert.transcode(video.Key)
+    await MediaConvert.transcode(videoUpload.Key)
 
     return {
-      ...video,
+      ...videoUpload,
       isTranscoded: false,
     }
   }
@@ -63,7 +63,7 @@ export class MediaManagement {
       throw new OperationalError('file is improperly formatted', 500)
     }
 
-    const uploadRes = await S3.upload({
+    const { Key, Bucket, $metadata } = await S3.upload({
       Body,
       Bucket: AwsUtils.buckets.reeplay,
       Key: `${baseDir}/${this._genUniqueKey()}`,
@@ -71,15 +71,15 @@ export class MediaManagement {
       Expires: expire,
     })
 
-    await this._deleteFile(file)
+    this._deleteFile(file)
 
-    if (uploadRes.$metadata.httpStatusCode !== 200 || !uploadRes.Key) {
+    if ($metadata.httpStatusCode !== 200 || !Key || !Bucket) {
       throw new OperationalError('could not upload video. Please try again', 500)
     }
 
     return {
-      Bucket: uploadRes.Bucket,
-      Key: uploadRes.Key,
+      Bucket,
+      Key,
       mimetype: file.mimetype,
       size: file.size,
     }
