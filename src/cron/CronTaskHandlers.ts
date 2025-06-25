@@ -37,7 +37,7 @@ export class CronTaskHandlers {
           },
         )
 
-        vid && console.log(`✔VideoCover with ID: ${vid.id} updated in ${funcLoc}`)
+        vid && console.log(`✔Video upload with ID: ${vid.id} updated in ${funcLoc}`)
       } catch (e) {
         console.error(`🛑Error updating video with inputKey: ${pair.inputKey} in ${funcLoc}`)
         console.error('Error details', e)
@@ -277,56 +277,56 @@ export class CronTaskHandlers {
     }
   }
 
-  static activateLiveStream = async () => {
-    try {
-      const { modifiedCount } = await LiveModel.updateMany(
-        {
-          start: { $gte: laterInMins(30) },
-          active: false,
-          expired: false,
-        },
-        {
-          $set: { active: true },
-        },
-      )
+  // static activateLiveStream = async () => {
+  //   try {
+  //     const { modifiedCount } = await LiveModel.updateMany(
+  //       {
+  //         start: { $gte: laterInMins(30) },
+  //         active: false,
+  //         expired: false,
+  //       },
+  //       {
+  //         $set: { active: true },
+  //       },
+  //     )
 
-      if (modifiedCount === 0) {
-        console.log('No Livestream Time Elapse')
-        return
-      }
+  //     if (modifiedCount === 0) {
+  //       console.log('No Livestream Time Elapse')
+  //       return
+  //     }
 
-      console.log(modifiedCount, 'live documents made active')
-    } catch (error: any) {
-      console.log('Cron Error: activate livestream', error.message ?? error)
-    }
-  }
+  //     console.log(modifiedCount, 'live documents made active')
+  //   } catch (error: any) {
+  //     console.log('Cron Error: activate livestream', error.message ?? error)
+  //   }
+  // }
 
-  static deActivateLiveStream = async () => {
-    try {
-      const { modifiedCount } = await LiveModel.updateMany(
-        {
-          expiry: { $lte: new Date() },
-          active: true,
-          expired: false,
-        },
-        {
-          $set: {
-            active: false,
-            expired: true,
-          },
-        },
-      )
+  // static deActivateLiveStream = async () => {
+  //   try {
+  //     const { modifiedCount } = await LiveModel.updateMany(
+  //       {
+  //         expiry: { $lte: new Date() },
+  //         active: true,
+  //         expired: false,
+  //       },
+  //       {
+  //         $set: {
+  //           active: false,
+  //           expired: true,
+  //         },
+  //       },
+  //     )
 
-      if (modifiedCount === 0) {
-        console.log('No Expired Livestream')
-        return
-      }
+  //     if (modifiedCount === 0) {
+  //       console.log('No Expired Livestream')
+  //       return
+  //     }
 
-      console.log(modifiedCount, 'live documents Expired')
-    } catch (error: any) {
-      console.log('Cron Error: deactivate livestream', error.message ?? error)
-    }
-  }
+  //     console.log(modifiedCount, 'live documents Expired')
+  //   } catch (error: any) {
+  //     console.log('Cron Error: deactivate livestream', error.message ?? error)
+  //   }
+  // }
 
   static expireFeaturedContents = async () => {
     try {

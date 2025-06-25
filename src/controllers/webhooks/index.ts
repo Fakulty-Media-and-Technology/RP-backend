@@ -4,8 +4,8 @@ export class WebhooksController {
   static paystack = Catch.async(async (req, res) => {
     const event = req.body
 
-    console.log('event')
+    console.log('event', event)
 
-    res.send(200)
+    res.sendStatus(200)
   })
 }
