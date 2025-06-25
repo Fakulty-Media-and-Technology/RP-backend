@@ -18,7 +18,7 @@ const { PORT } = env
 
 const app = reeplayApp()
 const server = createServer(app)
-// const cronJobs = new CronTasks()
+const cronJobs = new CronTasks()
 const mediaStream = new MediaStream()
 
 const io = new Server(server, {
@@ -38,7 +38,7 @@ connectMongoDB().then(conn => {
     console.log(`Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`)
 
     socketChat(io)
-    // cronJobs.start()
+    cronJobs.start()
     WithWorkerThread.manageJobs('START')
     mediaStream.initiate()
 
@@ -60,6 +60,9 @@ function shutdown(exception: string) {
   return async (...args: any[]) => {
     setTimeout(() => process.exit(1), 400).unref()
     console.error('Server shutdown routine initiated for exception >>>> 🛑', exception)
+
+    args.forEach(arg => console.error(arg.message ?? arg))
+
     console.error('Reasons >>>> 🛑:', args.join(' | '))
 
     // *********** clean up
