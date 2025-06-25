@@ -36,18 +36,6 @@ export class LiveRepo {
     })
   }
 
-  static getByStreamKey = async (streamKey: string) => {
-    return await this.fetchLivesAggr({
-      prevStages: [
-        {
-          $match: { stream_key: streamKey },
-        },
-      ],
-      page: 1,
-      limit: 1,
-    })
-  }
-
   static getChannels = async (page = 1, limit = 10) => {
     return await this.fetchLivesAggr({
       prevStages: [
@@ -102,7 +90,7 @@ export class LiveRepo {
         {
           $match: {
             client_id: toObjectId(clientId),
-            expired: false,
+            expiry: { $gte: new Date() },
           },
         },
       ],
@@ -137,6 +125,7 @@ export class LiveRepo {
 
     const aggr = await LiveModel.aggregate([
       ...prevStages,
+
       {
         $lookup: {
           from: 'poster_images',
@@ -146,15 +135,39 @@ export class LiveRepo {
           pipeline: [{ $project: { key: true, bucket: true } }],
         },
       },
+
       {
         $lookup: {
-          from: 'poster_images',
-          localField: 'channelLogo',
+          from: 'users',
+          localField: 'client_id',
           foreignField: '_id',
           as: 'channelLogo',
-          pipeline: [{ $project: { key: true, bucket: true } }],
+          pipeline: [
+            {
+              $set: {
+                hasPhoto: {
+                  $cond: {
+                    if: { $eq: [{ $ifNull: ['$photo', null] }, null] },
+                    then: false,
+                    else: true,
+                  },
+                },
+              },
+            },
+
+            { $match: { $expr: { $eq: ['$hasPhoto', true] } } },
+
+            {
+              $project: {
+                key: '$photo.Key',
+                bucket: '$photo.Bucket',
+                _id: '$$REMOVE',
+              },
+            },
+          ],
         },
       },
+
       {
         $lookup: {
           from: 'video_uploads',
@@ -167,6 +180,7 @@ export class LiveRepo {
           ],
         },
       },
+
       {
         $lookup: {
           from: 'category_enums',

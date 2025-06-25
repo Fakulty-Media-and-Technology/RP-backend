@@ -28,7 +28,7 @@ export type CreateLiveData = {
   type: string
   start: string
   expiry: string
-  categories?: string[]
+  category?: string[]
   description?: string
   location?: string
   upcoming?: boolean
@@ -173,6 +173,7 @@ export class LiveStreamService {
 
     const vidQuality = vidQualitySettled.value
     const liveAggrRes = liveSettled.value
+
     const lives = await LiveMediaSourcesUtils.resolveSources(liveAggrRes, vidQuality)
 
     const creds = await Promise.allSettled(
@@ -343,7 +344,7 @@ export class LiveStreamService {
       vid_class: data.vidClass,
       pg: data.pg,
       description: data.description,
-      categories: data.categories || [],
+      category: data.category || [],
       type: data.type,
       upcoming: data.upcoming,
       start: new Date(data.start),
