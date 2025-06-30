@@ -1,5 +1,5 @@
 import { OperationalError } from '../../utils/OperationalError'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult } from '../../utils/QueryParamsFeatures'
 import { LoggedInUser } from '../../types'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
@@ -52,8 +52,8 @@ type IsSubscribedInput = {
 
 export class UpcomingService {
   static adminFetch = async (params: AdminFetchInput) => {
-    const page = handleDefaultNumAndUnknown(params.page, 1)
-    const limit = handleDefaultNumAndUnknown(params.limit, 10)
+    const page = guranteeNumericResult(params.page, 1)
+    const limit = guranteeNumericResult(params.limit, 10)
 
     const [vods, lives] = getPromiseAllFulfilledResults(
       await Promise.allSettled([
@@ -81,8 +81,8 @@ export class UpcomingService {
       '480p',
     )
 
-    const page = handleDefaultNumAndUnknown(params.page, 1)
-    const limit = handleDefaultNumAndUnknown(params.limit, 10)
+    const page = guranteeNumericResult(params.page, 1)
+    const limit = guranteeNumericResult(params.limit, 10)
 
     const [vods, lives] = getPromiseAllFulfilledResults(
       await Promise.allSettled([

@@ -1,7 +1,7 @@
 import { GiftCardService } from '../../services/core/GiftCardService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminGiftCardController {
@@ -14,8 +14,8 @@ export class AdminGiftCardController {
   })
 
   static fetchGiftCards = Catch.async(async ({ query }, res) => {
-    const page = handleDefaultNumAndUnknown(query.page, 1)
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
+    const page = guranteeNumericResult(query.page, 1)
+    const limit = guranteeNumericResult(query.limit, 10)
 
     sendResponse({
       res,

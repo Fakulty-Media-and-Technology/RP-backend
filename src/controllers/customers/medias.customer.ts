@@ -15,7 +15,7 @@ import { signCred } from '../../utils/live'
 import { VideoRepo } from '../../repositories/VideoRepo'
 import { SharedController } from '../common/shared.controller'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
-import { handleDefaultNumAndUnknown, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { LiveAggrRes } from '../../types/Live'
 import { Movie } from '../../types/movie'
@@ -132,8 +132,8 @@ export class CustomerSharedController extends SharedController {
       message: 'featured contents fetched successful',
       data: await LiveMediaSourcesUtils.resolveSources(
         await LiveRepo.getFeatured(
-          handleDefaultNumAndUnknown(query.page, 1),
-          handleDefaultNumAndUnknown(query.limit, 10),
+          guranteeNumericResult(query.page, 1),
+          guranteeNumericResult(query.limit, 10),
         ),
         vidQuality,
       ),
@@ -294,8 +294,8 @@ export class CustomerSharedController extends SharedController {
       const liveEvents = await LiveMediaSourcesUtils.resolveSources(
         await LiveRepo.getSelectedLive(
           filter,
-          handleDefaultNumAndUnknown(req.query.page, 1),
-          handleDefaultNumAndUnknown(req.query.limit, 10),
+          guranteeNumericResult(req.query.page, 1),
+          guranteeNumericResult(req.query.limit, 10),
         ),
         vidQuality,
       )
@@ -308,8 +308,8 @@ export class CustomerSharedController extends SharedController {
     })
 
   static bannerContents = Catch.async(async (req, res) => {
-    const page = handleDefaultNumAndUnknown(req.query.page, 1)
-    const limit = handleDefaultNumAndUnknown(req.query.limit, 1)
+    const page = guranteeNumericResult(req.query.page, 1)
+    const limit = guranteeNumericResult(req.query.limit, 1)
 
     const vidQuality = await VidUploadUtils.getUserVideoQuality(
       GetDefined.loggedInUser(req.user)._id.toString(),

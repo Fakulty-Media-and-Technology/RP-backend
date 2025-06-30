@@ -1,15 +1,15 @@
 import { NotificationService } from '../../services/core/NotificationService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
-import { handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
 export class CustomerNotificationController {
   static getNotifications = Catch.async(async ({ user, query }, res) => {
     const data = await NotificationService.getNotifications({
       currentUser: GetDefined.loggedInUser(user),
-      page: handleDefaultNumAndUnknown(query.page, 1),
-      limit: handleDefaultNumAndUnknown(query.limit, 20),
+      page: guranteeNumericResult(query.page, 1),
+      limit: guranteeNumericResult(query.limit, 20),
     })
 
     sendResponse({

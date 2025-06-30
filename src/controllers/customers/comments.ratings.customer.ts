@@ -21,6 +21,22 @@ export class CustomerCommentsRatingsController {
     })
   })
 
+  static addReply = Catch.async(async (req, res) => {
+    const user = GetDefined.loggedInUser(req.user)
+    denyGuestUser(user)
+
+    const reply = await CustomerCommentsRatingsService.addReply({
+      ...req.body,
+      authorId: user._id.toString(),
+    })
+
+    sendResponse({
+      res,
+      data: reply,
+      message: 'reply created successfully',
+    })
+  })
+
   static getComments = Catch.async(async (req, res) => {
     const comments = await CustomerCommentsRatingsService.getComments(req.params.parentId)
 

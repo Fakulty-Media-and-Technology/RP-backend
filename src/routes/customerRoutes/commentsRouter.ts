@@ -1,7 +1,11 @@
 import { Router } from 'express'
 import { CustomerCommentsRatingsController } from '../../controllers/customers/comments.ratings.customer'
 import { requestValidator } from '../../middlewares/requestValidator'
-import { createCommentSchema, updateCommentSchema } from '../../validations/customers'
+import {
+  createCommentSchema,
+  createReplySchema,
+  updateCommentSchema,
+} from '../../validations/customers'
 
 export const router = Router()
 
@@ -10,6 +14,13 @@ router.post(
   requestValidator(createCommentSchema),
   CustomerCommentsRatingsController.addComment,
 )
+
+router.post(
+  '/create/reply',
+  requestValidator(createReplySchema),
+  CustomerCommentsRatingsController.addReply,
+)
+
 router.get('/fetch/:parentId', CustomerCommentsRatingsController.getComments)
 
 router

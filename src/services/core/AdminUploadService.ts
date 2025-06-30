@@ -7,7 +7,7 @@ import { Season } from '../../types/movie'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 
 import {
-  handleDefaultNumAndUnknown,
+  guranteeNumericResult,
   QueryParamsFeaturesOptions,
 } from '../../utils/QueryParamsFeatures'
 
@@ -82,8 +82,8 @@ export class AdminUploadService extends UploadMediaUtils {
   ) => {
     const vids = await VideoRepo.fetchByType(
       type,
-      handleDefaultNumAndUnknown(queryParams.page, 1),
-      handleDefaultNumAndUnknown(queryParams.limit, 1),
+      guranteeNumericResult(queryParams.page, 1),
+      guranteeNumericResult(queryParams.limit, 1),
     )
 
     const vidsWithSources = await MovieMediaSourcesUtils.resolveMediaSources(
@@ -109,8 +109,8 @@ export class AdminUploadService extends UploadMediaUtils {
       throw new OperationalError('video is not a series', 400)
     }
 
-    const page = handleDefaultNumAndUnknown(queryParams.page, 1)
-    const limit = handleDefaultNumAndUnknown(queryParams.limit, 10)
+    const page = guranteeNumericResult(queryParams.page, 1)
+    const limit = guranteeNumericResult(queryParams.limit, 10)
     const seasons = (await VideoRepo.fetchSeasonsAndEpisodes(vidSeriesId, page, limit)) as Season[]
 
     const seasonsWithMediaSources = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(

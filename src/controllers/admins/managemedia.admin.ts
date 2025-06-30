@@ -2,8 +2,6 @@ import { Catch } from '../../utils/Catch'
 import { sendResponse } from '../../utils/responder'
 
 import { AdminManageMediaService } from '../../services/core/AdminManagemediaService'
-import { GetDefined } from '../../utils/GetDefined'
-import { OperationalError } from '../../utils/OperationalError'
 import { SharedController } from '../common/shared.controller'
 import { validate } from '../../middlewares/requestValidator'
 import { addSubtitleSchema } from '../../validations/admin'

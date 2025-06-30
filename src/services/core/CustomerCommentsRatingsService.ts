@@ -9,10 +9,36 @@ type UpdateRatingInput = {
   rate?: number
 }
 
+type AddReplyInput = {
+  parentCommentId: string
+  message: string
+  authorId: string
+  parentType: string
+  parentId: string
+}
+
 export class CustomerCommentsRatingsService {
   static addComment = async (input: Record<string, any>) => {
     const comment = await CommentModel.create(input)
     return comment
+  }
+
+  static addReply = async ({
+    parentCommentId,
+    message,
+    authorId,
+    parentType,
+    parentId,
+  }: AddReplyInput) => {
+    const reply = await CommentModel.create({
+      userId: authorId,
+      message,
+      parentCommentId,
+      parentId,
+      parentType,
+    })
+
+    return reply
   }
 
   static updateComment = async (commentId: string, message: string) => {

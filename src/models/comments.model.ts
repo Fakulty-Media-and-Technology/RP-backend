@@ -13,6 +13,12 @@ const commentSchema = new Schema(
       type: String,
     },
 
+    parentCommentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'comments',
+      required: true,
+    },
+
     parentType: {
       type: String,
       enum: assets,

@@ -9,7 +9,7 @@ export type QueryParamsFeaturesOptions = {
   defaultLimit?: number
 }
 
-export const handleDefaultNumAndUnknown = (val: unknown, defaultNum: number) => {
+export const guranteeNumericResult = (val: unknown, defaultNum: number) => {
   if (typeof val !== 'string') {
     return defaultNum
   }
@@ -33,15 +33,15 @@ export class QueryParamsFeatures<T, U> {
   paginate() {
     const { queryParams, defaultPage = 1, defaultLimit = 50 } = this._options
 
-    const page = handleDefaultNumAndUnknown(queryParams.page, defaultPage)
-    const limit = handleDefaultNumAndUnknown(queryParams.limit, defaultLimit)
+    const page = guranteeNumericResult(queryParams.page, defaultPage)
+    const limit = guranteeNumericResult(queryParams.limit, defaultLimit)
     this.query.skip(skip(page, limit)).limit(limit)
     return this
   }
 
   static paginagteParams = (queryParams: ExpressRequestQuery) => {
-    const page = handleDefaultNumAndUnknown(queryParams.page, 1)
-    const limit = handleDefaultNumAndUnknown(queryParams.limit, 10)
+    const page = guranteeNumericResult(queryParams.page, 1)
+    const limit = guranteeNumericResult(queryParams.limit, 10)
 
     return {
       page,

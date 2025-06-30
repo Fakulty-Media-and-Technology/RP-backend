@@ -25,6 +25,15 @@ export const createCommentSchema = {
   }),
 }
 
+export const createReplySchema = {
+  body: Joi.object({
+    message: STRING_SCHEMA.required(),
+    parentType: STRING_SCHEMA.valid('vod', 'episode').required(),
+    parentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    parentCommentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+  }),
+}
+
 export const updateCommentSchema = {
   body: Joi.object({
     message: STRING_SCHEMA.required(),

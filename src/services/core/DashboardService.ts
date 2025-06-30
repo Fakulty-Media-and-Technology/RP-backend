@@ -8,7 +8,7 @@ import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
 
 import {
-  handleDefaultNumAndUnknown,
+  guranteeNumericResult,
   QueryParamsFeaturesOptions,
 } from '../../utils/QueryParamsFeatures'
 
@@ -77,8 +77,8 @@ export class DashboardService {
 
     const vids = await VideoRepo.fetchByType(
       type as any,
-      handleDefaultNumAndUnknown(queryParams.page, 1),
-      handleDefaultNumAndUnknown(queryParams.limit, 10),
+      guranteeNumericResult(queryParams.page, 1),
+      guranteeNumericResult(queryParams.limit, 10),
     )
 
     return await MovieMediaSourcesUtils.resolveMediaSources(
@@ -90,8 +90,8 @@ export class DashboardService {
 
   static fetchChannels = async (query: QueryParamsFeaturesOptions['queryParams']) => {
     return await LiveRepo.getChannels(
-      handleDefaultNumAndUnknown(query.page, 1),
-      handleDefaultNumAndUnknown(query.limit, 10),
+      guranteeNumericResult(query.page, 1),
+      guranteeNumericResult(query.limit, 10),
     )
   }
 

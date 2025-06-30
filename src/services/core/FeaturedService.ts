@@ -3,7 +3,7 @@ import { VideoRepo } from '../../repositories/VideoRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { OperationalError } from '../../utils/OperationalError'
-import { ExpressRequestQuery, handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { ExpressRequestQuery, guranteeNumericResult } from '../../utils/QueryParamsFeatures'
 import { VideoService } from './VideoService'
 
 type AddFeaturedInput = {
@@ -41,8 +41,8 @@ export class FeaturedService {
   }
 
   static getFeaturedContents = async (query: ExpressRequestQuery) => {
-    const page = handleDefaultNumAndUnknown(query.page, 1)
-    const limit = handleDefaultNumAndUnknown(query.limit, 1)
+    const page = guranteeNumericResult(query.page, 1)
+    const limit = guranteeNumericResult(query.limit, 1)
 
     const [vods, events] = await Promise.all([
       MovieMediaSourcesUtils.resolveMediaSources(

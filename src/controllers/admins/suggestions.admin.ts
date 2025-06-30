@@ -1,13 +1,13 @@
 import { SuggestionModel } from '../../models/suggestions.model'
 import { Catch } from '../../utils/Catch'
 import { OperationalError } from '../../utils/OperationalError'
-import { handleDefaultNumAndUnknown, skip } from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult, skip } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminSuggestionController {
   static suggestionsAll = Catch.async(async ({ query }, res) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 1)
+    const limit = guranteeNumericResult(query.limit, 10)
+    const page = guranteeNumericResult(query.page, 1)
 
     const suggestions = await SuggestionModel.aggregate([
       {

@@ -2,14 +2,14 @@ import { S3 } from '../aws/s3'
 import { UserModel } from '../../models/users.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { OperationalError } from '../../utils/OperationalError'
-import { ExpressRequestQuery, handleDefaultNumAndUnknown } from '../../utils/QueryParamsFeatures'
+import { ExpressRequestQuery, guranteeNumericResult } from '../../utils/QueryParamsFeatures'
 import { PhotoUtils } from '../../utils/photoUtils'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
 
 export class AdminUsersService {
   static fetchAll = async (query: ExpressRequestQuery) => {
-    const page = handleDefaultNumAndUnknown(query.page, 1)
-    const limit = handleDefaultNumAndUnknown(query.limit, 50)
+    const page = guranteeNumericResult(query.page, 1)
+    const limit = guranteeNumericResult(query.limit, 50)
     const users = await UserRepo.adminFetchAllCustomersAggr(page, limit)
 
     return getPromiseAllFulfilledResults(

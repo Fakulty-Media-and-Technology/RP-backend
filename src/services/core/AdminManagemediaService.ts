@@ -3,7 +3,7 @@ import { Request } from 'express'
 import { LiveSchema } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { OperationalError } from '../../utils/OperationalError'
-import { handleDefaultNumAndUnknown, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { LiveRepo } from '../../repositories/LiveRepo'
@@ -24,8 +24,8 @@ export class AdminManageMediaService {
   static searchClient = async (searchText: string, query: Request['query']) => {
     const response = await UserRepo.adminFetchClientsBySearchAggr(
       new RegExp(searchText, 'i'),
-      handleDefaultNumAndUnknown(query.page, 1),
-      handleDefaultNumAndUnknown(query.limit, 10),
+      guranteeNumericResult(query.page, 1),
+      guranteeNumericResult(query.limit, 10),
     )
 
     return getPromiseAllFulfilledResults(
@@ -42,8 +42,8 @@ export class AdminManageMediaService {
 
     const lives = await LiveRepo.fetchLivesByType(
       type as LiveSchema['type'],
-      handleDefaultNumAndUnknown(query.page, 1),
-      handleDefaultNumAndUnknown(query.limit, 10),
+      guranteeNumericResult(query.page, 1),
+      guranteeNumericResult(query.limit, 10),
     )
 
     return await LiveMediaSourcesUtils.resolveSources(lives, '720p')

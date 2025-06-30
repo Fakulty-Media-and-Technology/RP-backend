@@ -5,7 +5,7 @@ import { OperationalError } from '../../utils/OperationalError'
 import {
   ExpressRequestQuery,
   QueryParamsFeatures,
-  handleDefaultNumAndUnknown,
+  guranteeNumericResult,
   skip,
 } from '../../utils/QueryParamsFeatures'
 
@@ -41,8 +41,8 @@ export class AdminPlanSubService {
   }
 
   static fetchSubs = async (query: ExpressRequestQuery) => {
-    const limit = handleDefaultNumAndUnknown(query.limit, 10)
-    const page = handleDefaultNumAndUnknown(query.page, 1)
+    const limit = guranteeNumericResult(query.limit, 10)
+    const page = guranteeNumericResult(query.page, 1)
 
     const plans = await SubscriptionModel.aggregate([
       {
