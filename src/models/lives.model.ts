@@ -152,6 +152,11 @@ const schema = new Schema(
     feat_expiry: {
       type: Date,
     },
+
+    commentsCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

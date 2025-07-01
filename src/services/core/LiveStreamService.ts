@@ -5,7 +5,7 @@ import { PaymentModel } from '../../models/payments.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { ClientSession } from 'mongoose'
-import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { calcLiveCharges, signCred, getUniqueStreamKey } from '../../utils/live'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
@@ -42,7 +42,7 @@ export type CreateLiveData = {
 
 type LiveFileUploader = (
   params: { data: CreateLiveData; live: Live },
-  session: ClientSession,
+  session: MaybeSession,
 ) => Promise<void>
 
 type CreateClientWithSessionInput = {
@@ -71,7 +71,7 @@ type ExtendLiveEventWithSessionInput = CreateClientWithSessionInput
 export class LiveStreamService {
   private static _extendLiveEventWithSession = async (
     { currentUser, data }: ExtendLiveEventWithSessionInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const { id: client_id } = currentUser
     const { live_id, new_expiry, payment_id } = data
@@ -203,7 +203,7 @@ export class LiveStreamService {
 
   private static _deleteLiveSession = async (
     { currentUser, liveId }: DeleteLiveInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const isAdmin = ['admin', 'superadmin'].includes(currentUser.role)
     const isClient = ['channel', 'tvshow', 'event', 'podcast'].includes(currentUser.role)
@@ -281,7 +281,7 @@ export class LiveStreamService {
     }
   }
 
-  private static _checkLivePayments = async (data: CreateLiveData, session: ClientSession) => {
+  private static _checkLivePayments = async (data: CreateLiveData, session: MaybeSession) => {
     const confirmPayment = await PaymentModel.findOne({
       _id: data.paymentId,
       user_id: data.clientId,
@@ -326,7 +326,7 @@ export class LiveStreamService {
     }
   }
 
-  private static _createLiveSession = async (data: CreateLiveData, session: ClientSession) => {
+  private static _createLiveSession = async (data: CreateLiveData, session: MaybeSession) => {
     const settled = await Promise.allSettled([
       this._checkLiveClient(data),
       this._checkLiveOngoinStreams(data),
@@ -364,7 +364,7 @@ export class LiveStreamService {
 
   protected static _editLiveMedia = async (
     { previewVideoFile, coverPhotoFile, liveId }: EditLiveInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     if (previewVideoFile == null && coverPhotoFile == null) {
       throw new OperationalError('upload at least one file', 400)

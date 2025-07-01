@@ -1,5 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
-import { assets } from './assets'
+import { commentsParent } from './assets'
 
 const commentSchema = new Schema(
   {
@@ -21,7 +21,7 @@ const commentSchema = new Schema(
 
     parentType: {
       type: String,
-      enum: assets,
+      enum: commentsParent,
       required: [true, 'A comment must have a type'],
     },
 

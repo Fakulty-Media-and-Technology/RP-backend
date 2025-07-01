@@ -39,7 +39,7 @@ export class CustomerCommentsRatingsController {
 
     await CustomerCommentsRatingsService.addComment({
       ...req.body,
-      userId: user.id,
+      authorId: user.id,
     })
 
     sendResponse({
@@ -64,12 +64,25 @@ export class CustomerCommentsRatingsController {
   })
 
   static getComments = Catch.async(async (req, res) => {
-    const comments = await CustomerCommentsRatingsService.getComments(req.params.parentId)
+    const comments = await CustomerCommentsRatingsService.getComments(
+      req.params.parentId,
+      req.query,
+    )
 
     sendResponse({
       res,
       data: comments,
       message: 'comments fetched successfully',
+    })
+  })
+
+  static getReplies = Catch.async(async (req, res) => {
+    const replies = await CustomerCommentsRatingsService.getReplies(req.params.commentId, req.query)
+
+    sendResponse({
+      res,
+      data: replies,
+      message: 'replies fetched successfully',
     })
   })
 

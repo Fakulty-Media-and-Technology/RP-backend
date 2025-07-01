@@ -1,8 +1,19 @@
-import { CommentModel } from '../../models/comments.model'
+import { ClientSession, QueryOptions, UpdateQuery } from 'mongoose'
+import { Comment, CommentModel } from '../../models/comments.model'
 import { RatingModel } from '../../models/rating.model'
 import { ReactionModel } from '../../models/reaction.model'
 import { toObjectId } from '../../repositories/VideoRepo'
 import { OperationalError } from '../../utils/OperationalError'
+import { VideoModel } from '../../models/videos.model'
+import { EpisodeModel } from '../../models/episodes.model'
+import { LiveModel } from '../../models/lives.model'
+import { SeasonModel } from '../../models/seasons.model'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { commentsParent } from '../../models/assets'
+import { CommentsRepo, GetCommentsResponse } from '../../repositories/CommentsRepo'
+import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { MediaAccess } from '../media-access'
+import { getPromiseAllFulfilledResults } from '../../utils/promises'
 
 type UpdateRatingInput = {
   ratingId: string
@@ -10,18 +21,26 @@ type UpdateRatingInput = {
   rate?: number
 }
 
-type AddReplyInput = {
-  parentCommentId: string
+type AddCommentInput = {
   message: string
   authorId: string
   parentType: string
   parentId: string
 }
 
+type AddReplyInput = { parentCommentId: string } & AddCommentInput
+
 type AddReaction = {
   commentId: string
   reaction: string
   authorId: string
+}
+
+type IncCommentsCountInput = {
+  comment: Comment
+  session: MaybeSession
+  action: 'CREATE' | 'DELETE'
+  incCount: number
 }
 
 export class CustomerCommentsRatingsService {
@@ -40,25 +59,94 @@ export class CustomerCommentsRatingsService {
     await ReactionModel.findByIdAndDelete(reactionId)
   }
 
-  static addComment = async (input: Record<string, any>) => {
-    const comment = await CommentModel.create(input)
-    return comment
+  protected static _incParentCommentsCount = async ({
+    comment,
+    session,
+    action,
+    incCount,
+  }: IncCommentsCountInput) => {
+    const parentId = comment.parentId
+    const isCreateAction = action === 'CREATE'
+    const options: QueryOptions = { session }
+    const update: UpdateQuery<any> = {
+      $inc: { commentsCount: incCount },
+    }
+
+    let parent: any = null
+
+    switch (comment.parentType) {
+      case 'vod':
+        parent = await VideoModel.findByIdAndUpdate(parentId, update, options)
+        break
+
+      case 'episode':
+        parent = await EpisodeModel.findByIdAndUpdate(parentId, update, options)
+        break
+
+      case 'live':
+        parent = await LiveModel.findByIdAndUpdate(parentId, update, options)
+        break
+
+      case 'season':
+        parent = await SeasonModel.findByIdAndUpdate(parentId, update, options)
+        break
+      default:
+        if (isCreateAction) {
+          throw new OperationalError(`Allowed parents type are ${commentsParent.join(' - ')}`, 400)
+        }
+        break
+    }
+
+    if (isCreateAction && parent == null) {
+      throw new OperationalError('invalid parentId or parentType pair', 404)
+    }
   }
 
-  static addReply = async ({
-    parentCommentId,
-    message,
-    authorId,
-    parentType,
-    parentId,
-  }: AddReplyInput) => {
-    const reply = await CommentModel.create({
+  protected static _addCommentTransaction = async (
+    { message, parentId, parentType, authorId }: AddCommentInput,
+    session: MaybeSession,
+  ) => {
+    const comment = await new CommentModel({
+      userId: authorId,
+      message,
+      parentType,
+      parentId,
+    }).save({ session })
+
+    await this._incParentCommentsCount({
+      comment,
+      session,
+      action: 'CREATE',
+      incCount: 1,
+    })
+  }
+
+  static addComment = async (input: AddCommentInput) => {
+    await withMongoDBSession(this._addCommentTransaction, input)
+  }
+
+  static _addReplyTransaction = async (
+    { parentCommentId, message, authorId, parentType, parentId }: AddReplyInput,
+    session: MaybeSession,
+  ) => {
+    const reply = await new CommentModel({
       userId: authorId,
       message,
       parentCommentId,
       parentId,
       parentType,
+    }).save({ session })
+
+    await this._incParentCommentsCount({
+      comment: reply,
+      session,
+      action: 'CREATE',
+      incCount: 1,
     })
+  }
+
+  static addReply = async (input: AddReplyInput) => {
+    await withMongoDBSession(this._addReplyTransaction, input)
   }
 
   static updateComment = async (commentId: string, message: string) => {
@@ -71,32 +159,93 @@ export class CustomerCommentsRatingsService {
     return comment
   }
 
-  static deleteComment = async (commentId: string) => {
-    const deletedComment = await CommentModel.findByIdAndDelete(commentId)
-
-    if (deletedComment == null) {
-      throw new OperationalError('Invalid comment ID', 400)
-    }
-  }
-
-  static getComments = async (parentId: string) => {
-    const comments = await CommentModel.aggregate([
-      {
-        $match: {
-          parentId: toObjectId(parentId),
-        },
-      },
-
-      {
-        $group: {
-          _id: null,
-          totalComments: { $sum: 1 },
-          comments: { $push: '$$ROOT' },
-        },
-      },
+  protected static _deleteCommentTransaction = async (commentId: string, session: MaybeSession) => {
+    const [totalRepliesResult, deleteCommentResult] = await Promise.allSettled([
+      CommentsRepo.fetchTotalRepliesCountByCommentId(commentId),
+      CommentModel.findByIdAndDelete(commentId, { session }),
     ])
 
-    return comments
+    if (totalRepliesResult.status === 'rejected') {
+      throw totalRepliesResult.reason
+    }
+
+    if (deleteCommentResult.status === 'rejected') {
+      throw deleteCommentResult.reason
+    }
+
+    const deletedComment = deleteCommentResult.value
+    const [repliesCount] = totalRepliesResult.value
+
+    if (deletedComment === null) {
+      throw new OperationalError('Invalid comment ID', 400)
+    }
+
+    // delete replies
+    await CommentModel.deleteMany({ parentCommentId: deletedComment._id }, { session })
+
+    const totalReplies = repliesCount?.totalReplies || 0
+    const totalDeletedComments = totalReplies + 1
+
+    await this._incParentCommentsCount({
+      comment: deletedComment,
+      session,
+      action: 'DELETE',
+      incCount: -Number(totalDeletedComments),
+    })
+  }
+
+  static deleteComment = async (commentId: string) => {
+    await withMongoDBSession(this._deleteCommentTransaction, commentId)
+  }
+
+  protected static _attachAuthorPhoto = async (comments: GetCommentsResponse[]) => {
+    const withAuthorPhotosResults = await Promise.allSettled(
+      comments.map(async comment => {
+        const bucket = comment.author.photoBucket
+        const key = comment.author.photoKey
+
+        let photoUrl: string | null = null
+
+        if (bucket && key) {
+          photoUrl = await MediaAccess.getSignedUrl(bucket, key, 'photo')
+        }
+
+        return Object.assign(comment, {
+          author: {
+            ...comment.author,
+            photoBucket: undefined,
+            photoKey: undefined,
+            photoUrl,
+          },
+        })
+      }),
+    )
+
+    return getPromiseAllFulfilledResults(withAuthorPhotosResults)
+  }
+
+  static getComments = async (parentId: string, query: ExpressRequestQuery) => {
+    const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
+
+    const comments = await CommentsRepo.getComments({
+      parentId,
+      skip,
+      limit,
+    })
+
+    return await this._attachAuthorPhoto(comments)
+  }
+
+  static getReplies = async (commentId: string, query: ExpressRequestQuery) => {
+    const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
+
+    const replies = await CommentsRepo.getReplies({
+      parentCommentId: commentId,
+      skip,
+      limit,
+    })
+
+    return await this._attachAuthorPhoto(replies)
   }
 
   // ********* Ratings

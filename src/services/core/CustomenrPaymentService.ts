@@ -10,7 +10,7 @@ import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParam
 import { SubscriptionModel } from '../../models/subscription.model'
 import { WalletModel } from '../../models/wallet.model'
 import { SubscriptionRepo } from '../../repositories/SubscriptionRepo'
-import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { GiftCardModel } from '../../models/giftcard.model'
 
 interface StartPaymentInput {
@@ -186,7 +186,7 @@ export class CustomerPaymentService {
 
   private static _createSubSession = async (
     { user, data }: CreateSubInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const { source, plan_id, reference } = data
 
@@ -305,7 +305,7 @@ export class CustomerPaymentService {
 
   private static _topUpWalletSession = async (
     { user, reference }: TopUpWalletInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const paymentVerif = await PaymentModel.findOne({
       reference: reference,
@@ -358,7 +358,7 @@ export class CustomerPaymentService {
 
   private static _redeemGiftCardSession = async (
     { user, giftCode }: RedeemGiftCardInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const giftCard = await GiftCardModel.findOne({
       code: giftCode,

@@ -2,7 +2,7 @@ import { ClientSession } from 'mongoose'
 import { PayoutModel } from '../../models/payouts.model'
 import { WalletModel } from '../../models/wallet.model'
 import { toObjectId } from '../../repositories/VideoRepo'
-import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 
@@ -91,7 +91,7 @@ export class AdminPayoutService {
 
   private static _updatePayoutStatusWithSession = async (
     { payStatus, payId, adminId }: UpdatePayoutStatusWithSessionInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     if (payStatus === 'completed') {
       const payout = await PayoutModel.findById(payId)

@@ -1,12 +1,12 @@
-import { ClientSession } from 'mongoose'
 import { VideoUpload, VideoUploadModel } from '../models/videoupload.model'
 import { OperationalError } from '../utils/OperationalError'
+import { MaybeSession } from '../utils/mongoDbSessionRunner'
 
 type UpdateWithParentInput = {
   id: string
   parentId: string
   parentType: VideoUpload['parentType']
-  session?: ClientSession
+  session: MaybeSession
 }
 
 export class VideoUploadRepo {

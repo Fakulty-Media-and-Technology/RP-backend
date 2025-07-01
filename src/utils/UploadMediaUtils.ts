@@ -18,6 +18,7 @@ import {
 import { addSeriesSchema, addMovieOrSkitSchema, addMusicVideoSchema } from '../validations/admin'
 import { validate } from '../middlewares/requestValidator'
 import { Purge } from './Purge'
+import { MaybeSession } from './mongoDbSessionRunner'
 
 type RequestFiles =
   | {
@@ -187,7 +188,7 @@ export class UploadMediaUtils {
   protected static _uploadTrailerAndVideo = async (
     video: UploadTrailerAndVIdeoInput,
     trailer: UploadTrailerAndVIdeoInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const files = [video, trailer]
 
@@ -227,7 +228,7 @@ export class UploadMediaUtils {
 
   protected static _getVideoUploadDoc = async (
     params: GetVideoUploadDoc,
-    session?: ClientSession,
+    session: MaybeSession,
   ) => {
     const res = await MediaManagement.uploadAndInitiateMediaConvert({
       file: params.file,
@@ -270,7 +271,7 @@ export class UploadMediaUtils {
       videoId,
       posterParentType,
     }: SavePostersUploadToDBParams,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     // save portrait
     const portrait = await new PosterImageModel({
@@ -295,7 +296,7 @@ export class UploadMediaUtils {
 
   protected static _uploadAndSavePostersToDB = async (
     { landscapeFile, portraitFile, videoId, posterParentType }: UploadAndSavePostersToDBParams,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const { portraitUpload, landscapeUpload } = await this._uploadVideoPosters(
       portraitFile,
@@ -327,7 +328,7 @@ export class UploadMediaUtils {
 
   protected static _uploadVidAndTrailer = async (
     { data, videoDoc }: UploadVideoAndTrailerInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const expire = videoDoc.expiry_date ?? undefined
 
@@ -387,7 +388,7 @@ export class UploadMediaUtils {
     }
   }
 
-  protected static _uploadVideoSession = async (params: AddVideoParams, session: ClientSession) => {
+  protected static _uploadVideoSession = async (params: AddVideoParams, session: MaybeSession) => {
     const { data, type, adminId } = params
 
     this._validateAddVideoFileTypes(data)
@@ -448,7 +449,7 @@ export class UploadMediaUtils {
 
   protected static _editVideoSession = async (
     { data, adminId, videoId }: EditVideoParams,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     this._validateAddVideoFileTypes(data)
 
@@ -626,7 +627,7 @@ export class UploadMediaUtils {
 
   private static _uploadEpisodeVideos = async (
     { data, episode }: UploadEpisodeVideos,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     if (data.trailer && data.video) {
       const expire = undefined
@@ -721,7 +722,7 @@ export class UploadMediaUtils {
 
   protected static _addEpisodesWithSession = async (
     { seasonId, data, adminId }: AddEpisodeInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     data.subTitle && this._allowMimetype(data.subTitle, 'text', 'subTitle must be a text file')
     data.trailer && this._allowMimetype(data.trailer, 'video', ' trailer must be a video file')

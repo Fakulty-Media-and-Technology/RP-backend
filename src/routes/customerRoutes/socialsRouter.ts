@@ -28,9 +28,10 @@ router.post(
   CustomerCommentsRatingsController.addReply,
 )
 
-router.get('/fetch/:parentId', CustomerCommentsRatingsController.getComments)
+router.get('/fetch/comments/:parentId', CustomerCommentsRatingsController.getComments)
+router.get('/fetch/replies/:commentId', CustomerCommentsRatingsController.getReplies)
 
 router
-  .route('/:commentId')
+  .route('/comments/:commentId')
   .put(requestValidator(updateCommentSchema), CustomerCommentsRatingsController.updateComment)
   .delete(CustomerCommentsRatingsController.deleteComment)

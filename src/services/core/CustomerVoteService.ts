@@ -11,7 +11,7 @@ import { WalletModel } from '../../models/wallet.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { VoteService } from './VoteService'
-import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 
 type CreateVoteWithSessionInput = {
   currentUser: LoggedInUser
@@ -23,7 +23,7 @@ type DonateFundWithSessionInput = CreateVoteWithSessionInput
 export class CustomerVoteService {
   private static _createVoteWithSession = async (
     { currentUser, data }: CreateVoteWithSessionInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const { live_id, contestant_id, payment_id, pay_ref } = data
 
@@ -117,7 +117,7 @@ export class CustomerVoteService {
 
   private static _donateFundWithSession = async (
     { currentUser, data }: DonateFundWithSessionInput,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const { live_id, payment_id, pay_ref } = data
 

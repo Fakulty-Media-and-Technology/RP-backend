@@ -169,6 +169,11 @@ const schema = new Schema(
       type: Boolean,
       default: true,
     },
+
+    commentsCount: {
+      type: Number,
+      defut: 0,
+    },
   },
   {
     timestamps: true,

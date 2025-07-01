@@ -7,13 +7,13 @@ import { TokenManager } from '../../utils/jwt'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
 import { ClientSession } from 'mongoose'
-import { withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import env from '../../env'
 
 export class OnboardingService {
   private static _createCustomerWithSession = async (
     data: Record<string, any>,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const { first_name, last_name, email, password, cpassword, country_code, mobile } = data
 
@@ -66,7 +66,7 @@ export class OnboardingService {
     return newUser
   }
 
-  private static _changePasswordWithSession = async (email: string, session: ClientSession) => {
+  private static _changePasswordWithSession = async (email: string, session: MaybeSession) => {
     // if the sendResetPasswordToken fails, updated to user will rollback. NEAT TRICK
     const emailUser = await UserRepo.getByEmail(email)
 
@@ -102,7 +102,7 @@ export class OnboardingService {
 
   private static _getVerificationTokenWithSession = async (
     email: string,
-    session: ClientSession,
+    session: MaybeSession,
   ) => {
     const pin = authCode(6)
     const pinExpiry = Date.now() + 1000 * 60 * 5

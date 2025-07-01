@@ -48,6 +48,11 @@ const schema = new Schema(
       ref: 'video_uploads',
       default: null,
     },
+
+    commentsCount: {
+      type: Number,
+      default: 0
+    },
   },
   { timestamps: true },
 )
