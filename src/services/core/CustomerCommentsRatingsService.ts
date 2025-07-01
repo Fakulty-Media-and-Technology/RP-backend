@@ -1,5 +1,6 @@
 import { CommentModel } from '../../models/comments.model'
 import { RatingModel } from '../../models/rating.model'
+import { ReactionModel } from '../../models/reaction.model'
 import { toObjectId } from '../../repositories/VideoRepo'
 import { OperationalError } from '../../utils/OperationalError'
 
@@ -17,7 +18,28 @@ type AddReplyInput = {
   parentId: string
 }
 
+type AddReaction = {
+  commentId: string
+  reaction: string
+  authorId: string
+}
+
 export class CustomerCommentsRatingsService {
+  static CUReaction = async ({ commentId, reaction, authorId }: AddReaction) => {
+    await ReactionModel.findOneAndUpdate(
+      {
+        userId: authorId,
+        commentId,
+      },
+      { reaction },
+      { upsert: true },
+    )
+  }
+
+  static deleteReaction = async (reactionId: string) => {
+    await ReactionModel.findByIdAndDelete(reactionId)
+  }
+
   static addComment = async (input: Record<string, any>) => {
     const comment = await CommentModel.create(input)
     return comment
@@ -37,8 +59,6 @@ export class CustomerCommentsRatingsService {
       parentId,
       parentType,
     })
-
-    return reply
   }
 
   static updateComment = async (commentId: string, message: string) => {

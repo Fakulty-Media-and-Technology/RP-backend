@@ -5,18 +5,45 @@ import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 export class CustomerCommentsRatingsController {
+  static deleteReaction = Catch.async(async (req, res) => {
+    const user = GetDefined.loggedInUser(req.user)
+    denyGuestUser(user)
+
+    await CustomerCommentsRatingsService.deleteReaction(req.params.reactionId)
+
+    sendResponse({
+      res,
+      message: 'reaction deleted successfully',
+    })
+  })
+
+  static createUpdateReaction = Catch.async(async (req, res) => {
+    const user = GetDefined.loggedInUser(req.user)
+    denyGuestUser(user)
+
+    await CustomerCommentsRatingsService.CUReaction({
+      commentId: req.params.commentId,
+      reaction: req.params.reaction,
+      authorId: user.id,
+    })
+
+    sendResponse({
+      res,
+      message: 'reaction created successfully',
+    })
+  })
+
   static addComment = Catch.async(async (req, res) => {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    const comment = await CustomerCommentsRatingsService.addComment({
+    await CustomerCommentsRatingsService.addComment({
       ...req.body,
       userId: user.id,
     })
 
     sendResponse({
       res,
-      data: comment,
       message: 'comment created successfully',
     })
   })
@@ -25,14 +52,13 @@ export class CustomerCommentsRatingsController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    const reply = await CustomerCommentsRatingsService.addReply({
+    await CustomerCommentsRatingsService.addReply({
       ...req.body,
       authorId: user._id.toString(),
     })
 
     sendResponse({
       res,
-      data: reply,
       message: 'reply created successfully',
     })
   })
@@ -48,6 +74,7 @@ export class CustomerCommentsRatingsController {
   })
 
   static updateComment = Catch.async(async (req, res) => {
+    denyGuestUser(GetDefined.loggedInUser(req.user))
     const comment = await CustomerCommentsRatingsService.updateComment(
       req.params.commentId,
       req.body.message,
@@ -61,6 +88,7 @@ export class CustomerCommentsRatingsController {
   })
 
   static deleteComment = Catch.async(async (req, res) => {
+    denyGuestUser(GetDefined.loggedInUser(req.user))
     await CustomerCommentsRatingsService.deleteComment(req.params.commentId)
 
     sendResponse({

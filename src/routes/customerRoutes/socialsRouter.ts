@@ -9,8 +9,15 @@ import {
 
 export const router = Router()
 
+router.put(
+  '/create-update/reaction/:commentId/:reaction',
+  CustomerCommentsRatingsController.createUpdateReaction,
+)
+
+router.delete('/delete/reaction/:reactionId', CustomerCommentsRatingsController.deleteReaction)
+
 router.post(
-  '/create',
+  '/create/comment',
   requestValidator(createCommentSchema),
   CustomerCommentsRatingsController.addComment,
 )

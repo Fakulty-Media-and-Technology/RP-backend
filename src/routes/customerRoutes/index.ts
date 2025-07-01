@@ -10,7 +10,7 @@ import { AuthMiddleware } from '../../middlewares/auth'
 import { router as LivesRouter } from './../customerRoutes/livesRouter'
 import { router as MediaRouter } from './../customerRoutes/mediaRouter'
 import { router as RatingsRouter } from './../customerRoutes/ratingsRouter'
-import { router as CommentsRouter } from './../customerRoutes/commentsRouter'
+import { router as SocialsRouter } from './socialsRouter'
 import { router as SettingsRouter } from './../customerRoutes/settingRouter'
 import { router as UpcomingRouter } from './../customerRoutes/upcomingRouter'
 import { router as PaymentRouter } from './../customerRoutes/paymentRouter'
@@ -59,7 +59,7 @@ customerRouter.use('/payment', PaymentRouter)
 customerRouter.use('/upcoming', UpcomingRouter)
 customerRouter.use('/settings', SettingsRouter)
 customerRouter.use('/ratings', RatingsRouter)
-customerRouter.use('/comments', CommentsRouter)
+customerRouter.use('/socials', SocialsRouter)
 customerRouter.use('/media', MediaRouter)
 customerRouter.use('/enums', EnumsRouter)
 customerRouter.use('/live/events', LivesRouter)
@@ -67,7 +67,6 @@ customerRouter.use('/livestream', LivestreamRouter)
 customerRouter.use('/subscription', SubscriptionRuuter)
 customerRouter.use('/notification', PushNotificationRouter)
 customerRouter.use('/notifications', NotificationsRouter)
-
 
 customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.get('/banner/contents', CustomerSharedController.bannerContents)
