@@ -1,6 +1,5 @@
-import { CustomerVoteService } from '../../services/core/CustomerVoteService'
+import { VoteService } from '../../services/core/VoteService'
 import { Catch } from '../../utils/Catch'
-import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 
@@ -8,7 +7,7 @@ export class CustomerVoteController {
   static fetchVoteInfo = Catch.async(async ({ query }, res) => {
     sendResponse({
       res,
-      data: await CustomerVoteService.fetchVoteInfoByLiveId(query.live_id),
+      data: await VoteService.fetchVoteInfoByLiveId(query.live_id as string, query),
     })
   })
 
@@ -19,25 +18,7 @@ export class CustomerVoteController {
 
     sendResponse({
       res,
-      data: await CustomerVoteService.fetchVoteContestantsByLiveId(live_id),
-    })
-  })
-
-  static createVote = Catch.async(async ({ user, body }, res) => {
-    await CustomerVoteService.createVote(GetDefined.loggedInUser(user), body)
-
-    sendResponse({
-      res,
-      message: 'vote created',
-    })
-  })
-
-  static donateFund = Catch.async(async ({ user, body }, res) => {
-    await CustomerVoteService.donateFund(GetDefined.loggedInUser(user), body)
-
-    sendResponse({
-      res,
-      message: 'fund donated',
+      data: await VoteService.fetchVoteContestants(live_id),
     })
   })
 }

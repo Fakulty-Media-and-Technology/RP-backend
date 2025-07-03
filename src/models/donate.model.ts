@@ -2,20 +2,24 @@ import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mong
 
 const donateSchema = new Schema(
   {
-    live_id: {
+    liveId: {
       type: Schema.Types.ObjectId,
       ref: 'Live',
       required: true,
+      index: true
     },
-    customer_id: {
+
+    customerId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    payment_id: {
+
+    paymentId: {
       type: Schema.Types.ObjectId,
       ref: 'Payment',
       required: true,
+      unique: true,
     },
   },
   {

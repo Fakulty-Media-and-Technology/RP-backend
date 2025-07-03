@@ -2,13 +2,19 @@ import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mong
 
 const walletSchema = new Schema(
   {
-    user_id: {
+    userId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'users',
       required: true,
       unique: true,
     },
-    balance: {
+
+    NGNBalance: {
+      type: Number,
+      default: 0,
+    },
+
+    USDBalance: {
       type: Number,
       default: 0,
     },
@@ -20,4 +26,4 @@ const walletSchema = new Schema(
 
 export const WalletModel = model('wallets', walletSchema)
 export type WalletSchema = InferSchemaType<typeof walletSchema>
-export type Wallet = HydratedDocumentFromSchema<typeof walletSchema>
+export type WalletDocument = HydratedDocumentFromSchema<typeof walletSchema>

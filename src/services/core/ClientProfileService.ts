@@ -21,7 +21,7 @@ export class ClientProfileService {
 
     const wallet = await WalletModel.findOne({ user_id: currentUser._id }).select('balance')
 
-    Object.assign(profile, { wallet_bal: wallet?.balance ?? 0 })
+    // Object.assign(profile, { wallet_bal: wallet?.balance ?? 0 })
 
     return {
       profile,

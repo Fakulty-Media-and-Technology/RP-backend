@@ -24,7 +24,7 @@ export const PaymentServices = {
       reference,
       status,
       authorization: { authorization_code, last4, brand, exp_month, exp_year, channel },
-    } = payment.data
+    } = payment
 
     // TODO: Use Session
 
@@ -51,9 +51,9 @@ export const PaymentServices = {
 
     if (status !== 'success') {
       const newPayment = new PaymentModel({
-        user_id: payment.data.metadata.user_id,
-        full_name: payment.data.metadata.full_name,
-        email: payment.data.customer.email,
+        user_id: payment.metadata.user_id,
+        full_name: payment.metadata.full_name,
+        email: payment.customer.email,
         amount: nairaAmount,
         reference: reference,
         status: status,
@@ -65,9 +65,9 @@ export const PaymentServices = {
     }
 
     const newPayment = new PaymentModel({
-      user_id: payment.data.metadata.user_id,
-      full_name: payment.data.metadata.full_name,
-      email: payment.data.customer.email,
+      user_id: payment.metadata.user_id,
+      full_name: payment.metadata.full_name,
+      email: payment.customer.email,
       amount: nairaAmount,
       reference: reference,
       status: status,

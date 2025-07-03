@@ -6,16 +6,21 @@ const schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'users',
       required: true,
+      index: true,
     },
+
     plan_id: {
       type: Schema.Types.ObjectId,
       ref: 'plans',
       required: true,
+      index: true,
     },
+
     start_date: {
       type: Date,
       required: true,
     },
+
     expiry_date: {
       type: Date,
       required: true,

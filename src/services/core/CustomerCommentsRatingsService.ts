@@ -1,4 +1,4 @@
-import { ClientSession, QueryOptions, UpdateQuery } from 'mongoose'
+import {  QueryOptions, UpdateQuery } from 'mongoose'
 import { Comment, CommentModel } from '../../models/comments.model'
 import { RatingModel } from '../../models/rating.model'
 import { ReactionModel } from '../../models/reaction.model'
@@ -267,9 +267,10 @@ export class CustomerCommentsRatingsService {
           _id: null,
           totalRatings: { $sum: 1 },
           averageRatings: { $avg: '$rate' },
-          ratings: { $push: '$$ROOT' },
         },
       },
+
+      { $set: { _id: '$$REMOVE' } },
     ])
 
     return ratings
@@ -284,7 +285,6 @@ export class CustomerCommentsRatingsService {
 
     rating.comment = comment ? comment : rating.comment
     rating.rate = rate ? rate : rating.rate
-
     await rating.save()
   }
 

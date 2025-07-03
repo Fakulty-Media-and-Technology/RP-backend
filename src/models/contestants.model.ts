@@ -2,31 +2,38 @@ import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mong
 
 const contestantSchema = new Schema(
   {
-    live_id: {
+    liveId: {
       type: Schema.Types.ObjectId,
       ref: 'Live',
       required: true,
+      index: true,
     },
+
     names: {
       type: String,
       required: true,
     },
+
     photo: {
       type: Object,
       required: true,
     },
+
     occupation: {
       type: String,
       required: true,
     },
+
     bio: {
       type: String,
       required: true,
     },
+
     contact: {
       type: String,
       required: true,
     },
+    
     votes: {
       type: Number,
       default: 0,

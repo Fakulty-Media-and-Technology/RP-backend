@@ -1,72 +1,92 @@
 import { MediaAccess } from '../../../src/services/media-access'
 import { ContestantsModel } from '../../models/contestants.model'
+import { LiveModel } from '../../models/lives.model'
 import { VoteInfoModel } from '../../models/voteInfo.model'
 import { LoggedInUser } from '../../types'
+import { ValidCurrency } from '../../utils/currency'
 import { OperationalError } from '../../utils/OperationalError'
+import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+
+interface CreateVoteInfoInput {
+  liveId: string
+  price: number
+  currency: ValidCurrency
+  currentUser: LoggedInUser
+  status?: boolean
+}
+
+interface UpdateVoteInfoInput extends Partial<Omit<CreateVoteInfoInput, 'currentUser' | 'liveId'>> {
+  currentUser: LoggedInUser
+  liveId: string
+}
 
 export class VoteService {
-  static fetchVoteInfoByLiveId = async (liveId: unknown) => {
-    if (typeof liveId !== 'string') {
-      throw new OperationalError('required liveId must be a string', 400)
-    }
+  static fetchVoteInfoByLiveId = async (liveId: string, query: ExpressRequestQuery) => {
+    const info = await new QueryParamsFeatures(VoteInfoModel.find({ liveId }), {
+      defaultLimit: 10,
+      defaultPage: 0,
+      queryParams: query,
+    }).paginate().query
 
-    return await VoteInfoModel.find({ live_id: liveId })
+    return info
   }
 
-  static createVoteInfo = async (currentUser: LoggedInUser, data: Record<string, any>) => {
+  protected static throwIllegalLive = async (liveId: string, currentUser: LoggedInUser) => {
     if (currentUser.role !== 'tvshow') {
-      throw new OperationalError('this feature is not available to you', 400)
+      throw new OperationalError('Only tvShows have allow this feature', 403)
     }
 
-    const { live_id, price, status } = data
+    const live = await LiveModel.findById(liveId)
 
-    if (!live_id || !price || !status) {
-      throw new OperationalError('all inputs are required', 400)
+    if (live == null) {
+      throw new OperationalError('invalid live id', 404)
     }
 
-    const voteExits = await VoteInfoModel.findOne({
-      live_id: live_id,
-    })
+    if (live.client_id.toString() !== currentUser._id.toString()) {
+      throw new OperationalError('Only owner can perform this operation', 403)
+    }
+  }
 
-    if (voteExits) {
+  static createVoteInfo = async ({
+    currentUser,
+    liveId,
+    price,
+    status,
+    currency,
+  }: CreateVoteInfoInput) => {
+    const [voteInfoResult] = await Promise.allSettled([
+      VoteInfoModel.findOne({ liveId }),
+      this.throwIllegalLive(liveId, currentUser),
+    ])
+
+    if (voteInfoResult.status === 'rejected') {
+      throw voteInfoResult.reason
+    }
+
+    if (voteInfoResult.value) {
       throw new OperationalError('vote poll has already been created for this live event', 400)
     }
 
     await VoteInfoModel.create({
-      live_id: live_id,
-      client_id: currentUser._id,
-      price: Number(price),
-      status: status,
+      liveId,
+      price,
+      currency,
+      status,
     })
   }
 
-  static updateVoteInfo = async (currentUser: LoggedInUser, data: Record<string, any>) => {
-    const { live_id, price, status } = data
+  static updateVoteInfo = async ({ liveId, price, currency, status }: UpdateVoteInfoInput) => {
+    const voteInfo = await VoteInfoModel.findOne({ liveId })
 
-    const { id: client_id } = currentUser
-
-    const voteEx = await VoteInfoModel.findOne({
-      client_id,
-      live_id: live_id,
-    })
-
-    if (!voteEx) {
-      throw new OperationalError('cannot find your live voting instance', 404)
+    if (voteInfo == null) {
+      throw new OperationalError('could not find vote info', 404)
     }
 
-    await VoteInfoModel.findOneAndUpdate(
-      {
-        client_id,
-        live_id: live_id,
-      },
-      {
-        price: price ? Number(price) : voteEx.price,
-        status: status ? status : voteEx.status,
-      },
-      {
-        upsert: true,
-      },
-    )
+    voteInfo.price = price ?? voteInfo.price
+    voteInfo.status = status ?? voteInfo.status
+    voteInfo.currency = currency ?? voteInfo.currency
+    voteInfo.status = status ?? voteInfo.status
+    await voteInfo.save()
   }
 
   static addVoteContestant = async (currentUser: LoggedInUser, data: Record<string, any>) => {
@@ -126,16 +146,21 @@ export class VoteService {
       _id: data.contestantId,
     })
 
-    if (deletedContestant) {
-      throw new OperationalError('contestant could not be deleted', 404)
+    if (deletedContestant == null) {
+      throw new OperationalError('invalid contestant Id', 404)
     }
   }
 
-  static fetchVoteContestants = (currentUser: LoggedInUser | undefined, liveId: string) => {
-    if (currentUser && currentUser.role !== 'tvshow') {
-      throw new OperationalError('this feature is not available to you', 400)
-    }
+  static fetchVoteContestants = async (liveId: string) => {
+    const contestants = await ContestantsModel.find({ live_id: liveId }).sort({ name: 1 })
 
-    return ContestantsModel.find({ live_id: liveId })
+    return await Promise.all(
+      contestants.map(async event => {
+        return {
+          ...event.toObject(),
+          photo_url: await MediaAccess.getSignedUrl(event.photo.Bucket, event.photo.Key, 'photo'),
+        }
+      }),
+    )
   }
 }

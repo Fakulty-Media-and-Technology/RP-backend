@@ -2,25 +2,37 @@ import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mong
 
 const voteSchema = new Schema(
   {
-    live_id: {
+    liveId: {
       type: Schema.Types.ObjectId,
       ref: 'Live',
       required: true,
+      index: true,
     },
-    voter_id: {
+
+    voterId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
-    contestant_id: {
+
+    contestantId: {
       type: Schema.Types.ObjectId,
       ref: 'Contestant',
       required: true,
+      index: true,
     },
-    payment_id: {
+
+    paymentId: {
       type: Schema.Types.ObjectId,
       ref: 'Payment',
       required: true,
+      index: true,
+    },
+
+    isDone: {
+      type: Boolean,
+      default: false,
     },
   },
   {

@@ -1,4 +1,4 @@
-import { User, UserModel } from '../../models/users.model'
+import { UserSchema, UserModel } from '../../models/users.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { MediaManagement } from '../../services/media-management'
 import { Catch } from '../../utils/Catch'
@@ -8,7 +8,7 @@ import { Password } from '../../utils/Password'
 import { throwReasonIfAny } from '../../utils/promises'
 import { sendResponse } from '../../utils/responder'
 
-type Role = User['role']
+type Role = UserSchema['role']
 
 interface CreateUserInput {
   data: Record<string, any>

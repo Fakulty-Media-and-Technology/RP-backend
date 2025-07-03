@@ -1,21 +1,26 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { validCurrencies } from '../utils/currency'
 
 const voteinfoSchema = new Schema(
   {
-    live_id: {
+    liveId: {
       type: Schema.Types.ObjectId,
       ref: 'Live',
       required: true,
+      index: true,
     },
-    client_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
+
     price: {
       type: Number,
       required: true,
     },
+
+    currency: {
+      type: String,
+      enum: validCurrencies,
+      reuired: true,
+    },
+
     status: {
       type: Boolean,
     },

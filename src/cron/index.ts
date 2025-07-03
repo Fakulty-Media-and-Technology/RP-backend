@@ -4,7 +4,7 @@ import { CronTaskHandlers } from './CronTaskHandlers'
 export class CronTasks {
   private _nodeCronTasks: ScheduledTask[] = [
     // schedule('*/5 * * * *', this._handleLiveStream),
-    schedule('0 0 * * *', CronTaskHandlers.autoRenewSubscriptions),
+    // schedule('0 0 * * *', CronTaskHandlers.autoRenewSubscriptions),
     schedule('*/10 * * * *', CronTaskHandlers.expireFeaturedContents),
     schedule('*/2 * * * *', CronTaskHandlers.updateVidUploadsResolutions),
   ]

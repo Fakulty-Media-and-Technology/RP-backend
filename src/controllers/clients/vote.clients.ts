@@ -5,7 +5,10 @@ import { sendResponse } from '../../utils/responder'
 
 export class ClientVoteController {
   static createVoteInfo = Catch.async(async ({ user, body }, res) => {
-    await VoteService.createVoteInfo(GetDefined.loggedInUser(user), body)
+    await VoteService.createVoteInfo({
+      currentUser: GetDefined.loggedInUser(user),
+      ...body,
+    })
 
     sendResponse({
       res,
@@ -14,7 +17,7 @@ export class ClientVoteController {
   })
 
   static updateVoteInfo = Catch.async(async ({ user, body }, res) => {
-    await VoteService.updateVoteInfo(GetDefined.loggedInUser(user), body)
+    await VoteService.updateVoteInfo({ currentUser: GetDefined.loggedInUser(user), ...body })
 
     sendResponse({
       res,
@@ -51,14 +54,11 @@ export class ClientVoteController {
     })
   })
 
-  static fetchVoteContestants = Catch.async(async ({ user, query: { live_id } }, res) => {
+  static fetchVoteContestants = Catch.async(async ({ query: { live_id } }, res) => {
     sendResponse({
       res,
       message: 'vote contestants',
-      data: await VoteService.fetchVoteContestants(
-        GetDefined.loggedInUser(user),
-        live_id as string,
-      ),
+      data: await VoteService.fetchVoteContestants(live_id as string),
     })
   })
 }

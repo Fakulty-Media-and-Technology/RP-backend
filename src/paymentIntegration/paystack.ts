@@ -4,11 +4,10 @@ import env from '../env'
 import { ValidCurrency } from '../utils/currency'
 
 export interface IntitializePaymentInput {
-  full_name: string
-  user_id: string
   email: string
   amount: number
   currency: ValidCurrency
+  metadata?: Record<string, any>
 }
 
 export interface AuthorizePaymentInput extends IntitializePaymentInput {
@@ -18,15 +17,12 @@ export interface AuthorizePaymentInput extends IntitializePaymentInput {
 const paystackClient = new Pk(env.PAYSTACK_SECRET_KEY)
 
 export class Paystack {
-  static async initializePayment(body: IntitializePaymentInput) {
+  static async initializePayment(details: IntitializePaymentInput) {
     const response = await paystackClient.transaction.initialize({
-      email: body.email,
-      amount: (body.amount * 100).toString(),
-      currency: body.currency,
-      metadata: {
-        full_name: body.full_name,
-        user_id: body.user_id,
-      },
+      email: details.email,
+      amount: (details.amount * 100).toString(),
+      currency: details.currency,
+      metadata: details.metadata ?? {},
     })
 
     if (response.data == null || !response.status) {
@@ -60,7 +56,7 @@ export class Paystack {
       throw new OperationalError(response.message, 400)
     }
 
-    return response
+    return response.data
   }
 }
 

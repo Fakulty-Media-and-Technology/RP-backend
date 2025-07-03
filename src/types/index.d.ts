@@ -1,10 +1,10 @@
 import { Types } from 'mongoose'
-import { User } from '../models/users.model'
+import { UserDocument } from '../models/users.model'
 
 export type MulterFile = Express.Multer.File
 
-export type LoggedInUser = Omit<User, 'role'> & {
-  role: User['role'] | 'guest'
+export type LoggedInUser = Omit<UserDocument, 'role'> & {
+  role: UserDocument['role'] | 'guest'
 }
 
 export type StringOrObjectId = Types.ObjectId | string

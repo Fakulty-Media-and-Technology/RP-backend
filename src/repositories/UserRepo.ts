@@ -1,14 +1,14 @@
 import { UpdateQuery, PipelineStage } from 'mongoose'
-import { UserModel, UserSchema, User } from '../models/users.model'
+import { UserModel, UserSchema, UserDocument } from '../models/users.model'
 import { StringOrObjectId } from '../types'
 import { skip } from '../utils/QueryParamsFeatures'
 import { toObjectId } from './VideoRepo'
 
-type UserRole = User['role']
+type UserRole = UserSchema['role']
 type UserRoles = Array<UserRole>
 
 export type FetchUserAggrRes = Pick<
-  User,
+  UserDocument,
   | 'email'
   | 'verified'
   | '_id'

@@ -217,9 +217,9 @@ export class CustomerPaymentService {
         throw new OperationalError('wallet not found for user', 404)
       }
 
-      if (plan.price > cusWallet.balance) {
-        throw new OperationalError('insufficient balance', 400)
-      }
+      // if (plan.price > cusWallet.balance) {
+      //   throw new OperationalError('insufficient balance', 400)
+      // }
 
       await new SubscriptionModel({
         user_id: user._id,

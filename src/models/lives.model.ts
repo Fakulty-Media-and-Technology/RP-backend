@@ -11,12 +11,12 @@ const schema = new Schema(
     payment_id: {
       type: Schema.Types.ObjectId,
       ref: 'payments',
+      required: true,
+      index: true,
     },
 
-    extpayment_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'payments',
-    },
+    paymentExtentions: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
+    donationPayments: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
 
     title: {
       type: String,
@@ -162,6 +162,11 @@ const schema = new Schema(
     timestamps: true,
   },
 )
+
+schema.index({ paymentExtentions: 1 })
+schema.index({ donationPayments: 1 })
+schema.index({ category: 1 })
+schema.index({ views: 1 })
 
 export const LiveModel = model('lives', schema)
 export type LiveSchema = InferSchemaType<typeof schema>

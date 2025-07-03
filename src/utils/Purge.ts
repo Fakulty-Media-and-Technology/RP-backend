@@ -17,8 +17,8 @@ export class Purge {
     Purge.subtitlesByParentId(live._id)
     Purge.postersByParentId(live._id)
     live.previewVideoUpload && Purge.videoUploadById(live.previewVideoUpload)
-    live.payment_id && payments.push(live.payment_id)
-    live.extpayment_id && payments.push(live.extpayment_id)
+    // live.payment_id && payments.push(live.payment_id)
+    // live.extpayment_id && payments.push(live.extpayment_id)
 
     payments.forEach(async payment => {
       try {

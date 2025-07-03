@@ -45,237 +45,237 @@ export class CronTaskHandlers {
     })
   }
 
-  static autoRenewSubscriptions = async () => {
-    try {
-      const now = new Date()
+  // static autoRenewSubscriptions = async () => {
+  //   try {
+  //     const now = new Date()
 
-      const updatedExpiredSubsResult = await SubscriptionModel.updateMany(
-        {
-          active: true,
-          expiry_date: { $lte: now },
-        },
-        {
-          $set: { active: false },
-        },
-      )
+  //     const updatedExpiredSubsResult = await SubscriptionModel.updateMany(
+  //       {
+  //         active: true,
+  //         expiry_date: { $lte: now },
+  //       },
+  //       {
+  //         $set: { active: false },
+  //       },
+  //     )
 
-      if (updatedExpiredSubsResult.modifiedCount === 0) {
-        console.log('AUTO-RENEW: No Expired Sub')
-        return 'no expired sub'
-      }
+  //     if (updatedExpiredSubsResult.modifiedCount === 0) {
+  //       console.log('AUTO-RENEW: No Expired Sub')
+  //       return 'no expired sub'
+  //     }
 
-      const expiredSubs = await SubscriptionModel.find({
-        active: false,
-        expiry_date: { $lte: now },
-        updatedAt: { $gte: now }, // this gives the most recently updated subs
-      })
+  //     const expiredSubs = await SubscriptionModel.find({
+  //       active: false,
+  //       expiry_date: { $lte: now },
+  //       updatedAt: { $gte: now }, // this gives the most recently updated subs
+  //     })
 
-      if (expiredSubs.length !== updatedExpiredSubsResult.modifiedCount) {
-        console.error('AUTO-RENEW: Logical Dev Error in autoRenewSubscription')
-        return
-      }
+  //     if (expiredSubs.length !== updatedExpiredSubsResult.modifiedCount) {
+  //       console.error('AUTO-RENEW: Logical Dev Error in autoRenewSubscription')
+  //       return
+  //     }
 
-      expiredSubs.forEach(async sub => {
-        try {
-          const customerDetl = await UserRepo.getUserById(sub.user_id)
+  //     expiredSubs.forEach(async sub => {
+  //       try {
+  //         const customerDetl = await UserRepo.getUserById(sub.user_id)
 
-          if (customerDetl === null) {
-            throw new Error(
-              `${sub.user_id} could not be found in autoRenewSubscription cronjob for sub: ${stringify(sub)}`,
-            )
-          }
+  //         if (customerDetl === null) {
+  //           throw new Error(
+  //             `${sub.user_id} could not be found in autoRenewSubscription cronjob for sub: ${stringify(sub)}`,
+  //           )
+  //         }
 
-          const subPlan = await PlanModel.findById(sub.plan_id)
+  //         const subPlan = await PlanModel.findById(sub.plan_id)
 
-          if (subPlan === null) {
-            throw new Error(
-              `${sub.plan_id} could not be found in autoRenewSubscription cronjob for sub: ${stringify(sub)}`,
-            )
-          }
+  //         if (subPlan === null) {
+  //           throw new Error(
+  //             `${sub.plan_id} could not be found in autoRenewSubscription cronjob for sub: ${stringify(sub)}`,
+  //           )
+  //         }
 
-          const cardDetails = await PaymentDetailModel.findOne({
-            user_id: customerDetl._id,
-          })
+  //         const cardDetails = await PaymentDetailModel.findOne({
+  //           user_id: customerDetl._id,
+  //         })
 
-          if (cardDetails === null) {
-            throw new Error(
-              `card details could not be found in autoRenewSubscription cronjob for customer: ${stringify(customerDetl)}`,
-            )
-          }
+  //         if (cardDetails === null) {
+  //           throw new Error(
+  //             `card details could not be found in autoRenewSubscription cronjob for customer: ${stringify(customerDetl)}`,
+  //           )
+  //         }
 
-          if (cardDetails.authorization_code == null) {
-            throw new Error(
-              `card detials does not have authorization_code in autoRenewSubscription cronjob for. Crad details ${stringify(cardDetails)}`,
-            )
-          }
+  //         if (cardDetails.authorization_code == null) {
+  //           throw new Error(
+  //             `card detials does not have authorization_code in autoRenewSubscription cronjob for. Crad details ${stringify(cardDetails)}`,
+  //           )
+  //         }
 
-          // TODO://
-          // if (cardDetails) {
-          //   const response = await PaymentServices.paystackAuthorizePayment({
-          //     authorization_code: cardDetails.authorization_code,
-          //     email: customerDetl.email,
-          //     amount: subPlan.price,
-          //     user_id: customerDetl.id,
-          //     full_name: `${customerDetl.first_name} ${customerDetl.last_name}`,
-          //   })
+  //         // TODO://
+  //         // if (cardDetails) {
+  //         //   const response = await PaymentServices.paystackAuthorizePayment({
+  //         //     authorization_code: cardDetails.authorization_code,
+  //         //     email: customerDetl.email,
+  //         //     amount: subPlan.price,
+  //         //     user_id: customerDetl.id,
+  //         //     full_name: `${customerDetl.first_name} ${customerDetl.last_name}`,
+  //         //   })
 
-          //   const { status, amount, metadata, customer, reference } = response.data
+  //         //   const { status, amount, metadata, customer, reference } = response.data
 
-          //   const nairaAmount = convertKoboToNaira(amount)
+  //         //   const nairaAmount = convertKoboToNaira(amount)
 
-          //   if (status !== 'success') {
-          //     const newPayment = new PaymentModel({
-          //       user_id: metadata.user_id,
-          //       full_name: metadata.full_name,
-          //       email: customer.email,
-          //       amount: nairaAmount,
-          //       reference,
-          //       status,
-          //     })
+  //         //   if (status !== 'success') {
+  //         //     const newPayment = new PaymentModel({
+  //         //       user_id: metadata.user_id,
+  //         //       full_name: metadata.full_name,
+  //         //       email: customer.email,
+  //         //       amount: nairaAmount,
+  //         //       reference,
+  //         //       status,
+  //         //     })
 
-          //     await newPayment.save()
+  //         //     await newPayment.save()
 
-          //     //TODO: send email and push notification here
-          //     const mailData = {
-          //       firstName: customerDetl.first_name,
-          //       lastName: customerDetl.last_name,
-          //       email: customerDetl.email,
-          //     }
+  //         //     //TODO: send email and push notification here
+  //         //     const mailData = {
+  //         //       firstName: customerDetl.first_name,
+  //         //       lastName: customerDetl.last_name,
+  //         //       email: customerDetl.email,
+  //         //     }
 
-          //     await new Email(mailData).sendAutoRenewFailure(
-          //       'unsuccessful attempt to charge your saved card details',
-          //     )
+  //         //     await new Email(mailData).sendAutoRenewFailure(
+  //         //       'unsuccessful attempt to charge your saved card details',
+  //         //     )
 
-          //     console.error(
-          //       'auto-renew subscription request unsuccessfull. Payment details:',
-          //       stringify(newPayment),
-          //     )
-          //     return
-          //   }
+  //         //     console.error(
+  //         //       'auto-renew subscription request unsuccessfull. Payment details:',
+  //         //       stringify(newPayment),
+  //         //     )
+  //         //     return
+  //         //   }
 
-          //   const newPayment = new PaymentModel({
-          //     user_id: metadata.user_id,
-          //     full_name: metadata.full_name,
-          //     email: customer.email,
-          //     amount: nairaAmount,
-          //     reference: reference,
-          //     status: status,
-          //   })
+  //         //   const newPayment = new PaymentModel({
+  //         //     user_id: metadata.user_id,
+  //         //     full_name: metadata.full_name,
+  //         //     email: customer.email,
+  //         //     amount: nairaAmount,
+  //         //     reference: reference,
+  //         //     status: status,
+  //         //   })
 
-          //   const nPayment = await newPayment.save()
+  //         //   const nPayment = await newPayment.save()
 
-          //   await new SubscriptionModel({
-          //     user_id: customerDetl._id,
-          //     plan_id: subPlan._id,
-          //     start_date: new Date(),
-          //     expiry_date: subPlan.getFutureDate(30),
-          //     payment_method: 'auto-renew',
-          //     amount: Number(subPlan.price),
-          //   }).save()
+  //         //   await new SubscriptionModel({
+  //         //     user_id: customerDetl._id,
+  //         //     plan_id: subPlan._id,
+  //         //     start_date: new Date(),
+  //         //     expiry_date: subPlan.getFutureDate(30),
+  //         //     payment_method: 'auto-renew',
+  //         //     amount: Number(subPlan.price),
+  //         //   }).save()
 
-          //   await PaymentModel.findOneAndUpdate(
-          //     {
-          //       _id: nPayment._id,
-          //       reference: nPayment.reference,
-          //     },
-          //     {
-          //       is_used: true,
-          //       use_case: 'subscription',
-          //     },
-          //     {
-          //       upsert: true,
-          //     },
-          //   )
+  //         //   await PaymentModel.findOneAndUpdate(
+  //         //     {
+  //         //       _id: nPayment._id,
+  //         //       reference: nPayment.reference,
+  //         //     },
+  //         //     {
+  //         //       is_used: true,
+  //         //       use_case: 'subscription',
+  //         //     },
+  //         //     {
+  //         //       upsert: true,
+  //         //     },
+  //         //   )
 
-          //   //TODO: send successful email and push notification here with reciept
-          //   const mailData = {
-          //     firstName: customerDetl.first_name,
-          //     lastName: customerDetl.last_name,
-          //     email: customerDetl.email,
-          //   }
+  //         //   //TODO: send successful email and push notification here with reciept
+  //         //   const mailData = {
+  //         //     firstName: customerDetl.first_name,
+  //         //     lastName: customerDetl.last_name,
+  //         //     email: customerDetl.email,
+  //         //   }
 
-          //   await new Email(mailData).sendAutoRenewSuccess('saved debit card details')
+  //         //   await new Email(mailData).sendAutoRenewSuccess('saved debit card details')
 
-          //   console.log(
-          //     'auto-renew subscription with card success. Payment details:',
-          //     stringify(nPayment),
-          //   )
-          //   return
-          // }
+  //         //   console.log(
+  //         //     'auto-renew subscription with card success. Payment details:',
+  //         //     stringify(nPayment),
+  //         //   )
+  //         //   return
+  //         // }
 
-          // user does not have card details here
+  //         // user does not have card details here
           
           
-          const cusWallet = await WalletModel.findOne({
-            user_id: sub.user_id,
-          })
+  //         const cusWallet = await WalletModel.findOne({
+  //           user_id: sub.user_id,
+  //         })
 
-          if (cusWallet == null) {
-            throw new Error(
-              `auto-renew: Customer does not have a wallet: ${stringify(customerDetl)}`,
-            )
-          }
+  //         if (cusWallet == null) {
+  //           throw new Error(
+  //             `auto-renew: Customer does not have a wallet: ${stringify(customerDetl)}`,
+  //           )
+  //         }
 
-          if (cusWallet.balance < subPlan.price) {
-            //TODO: send email and push
-            const mailData = {
-              firstName: customerDetl.first_name,
-              lastName: customerDetl.last_name,
-              email: customerDetl.email,
-            }
+  //         if (cusWallet.balance < subPlan.price) {
+  //           //TODO: send email and push
+  //           const mailData = {
+  //             firstName: customerDetl.first_name,
+  //             lastName: customerDetl.last_name,
+  //             email: customerDetl.email,
+  //           }
 
-            await new Email(mailData).sendAutoRenewFailure('insufficient wallet balance')
+  //           await new Email(mailData).sendAutoRenewFailure('insufficient wallet balance')
 
-            console.error(
-              `auto-renew: customer has insufficent balance in wallet: ${stringify(cusWallet)}: sub-plan: ${stringify(subPlan)}`,
-            )
+  //           console.error(
+  //             `auto-renew: customer has insufficent balance in wallet: ${stringify(cusWallet)}: sub-plan: ${stringify(subPlan)}`,
+  //           )
 
-            return
-          }
+  //           return
+  //         }
 
-          await new SubscriptionModel({
-            user_id: customerDetl._id,
-            plan_id: subPlan._id,
-            start_date: new Date(),
-            expiry_date: subPlan.getFutureDate(30),
-            payment_method: 'auto-renew',
-            amount: Number(subPlan.price),
-          }).save()
+  //         await new SubscriptionModel({
+  //           user_id: customerDetl._id,
+  //           plan_id: subPlan._id,
+  //           start_date: new Date(),
+  //           expiry_date: subPlan.getFutureDate(30),
+  //           payment_method: 'auto-renew',
+  //           amount: Number(subPlan.price),
+  //         }).save()
 
-          await WalletModel.findOneAndUpdate(
-            {
-              _id: cusWallet._id,
-              user_id: customerDetl._id,
-            },
-            {
-              $inc: {
-                balance: -Number(subPlan.price),
-              },
-            },
-            {
-              upsert: true,
-            },
-          )
+  //         await WalletModel.findOneAndUpdate(
+  //           {
+  //             _id: cusWallet._id,
+  //             user_id: customerDetl._id,
+  //           },
+  //           {
+  //             $inc: {
+  //               balance: -Number(subPlan.price),
+  //             },
+  //           },
+  //           {
+  //             upsert: true,
+  //           },
+  //         )
 
-          //TODO: send email and push
-          const mailData = {
-            firstName: customerDetl.first_name,
-            lastName: customerDetl.last_name,
-            email: customerDetl.email,
-          }
+  //         //TODO: send email and push
+  //         const mailData = {
+  //           firstName: customerDetl.first_name,
+  //           lastName: customerDetl.last_name,
+  //           email: customerDetl.email,
+  //         }
 
-          await new Email(mailData).sendAutoRenewSuccess('wallet balance')
+  //         await new Email(mailData).sendAutoRenewSuccess('wallet balance')
 
-          console.log('sub renewed for customer', stringify(customerDetl))
-        } catch (e: any) {
-          console.error('Error auto renewing subscription for', stringify(sub))
-          console.error('Error details:', e.message ?? e)
-        }
-      })
-    } catch (error) {
-      console.log('Cron Error: auto-renew', error)
-    }
-  }
+  //         console.log('sub renewed for customer', stringify(customerDetl))
+  //       } catch (e: any) {
+  //         console.error('Error auto renewing subscription for', stringify(sub))
+  //         console.error('Error details:', e.message ?? e)
+  //       }
+  //     })
+  //   } catch (error) {
+  //     console.log('Cron Error: auto-renew', error)
+  //   }
+  // }
 
   // static activateLiveStream = async () => {
   //   try {

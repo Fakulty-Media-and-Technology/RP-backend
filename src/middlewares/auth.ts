@@ -1,5 +1,5 @@
 import env from '../env'
-import { User } from '../models/users.model'
+import { UserDocument, UserSchema } from '../models/users.model'
 import { UserRepo } from '../repositories/UserRepo'
 import { LoggedInUser } from '../types'
 import { Catch } from '../utils/Catch'
@@ -9,10 +9,10 @@ import { OperationalError } from '../utils/OperationalError'
 export type AuthHeaderKey = 'superadmin-auth' | 'customer-auth' | 'clients-auth' | 'admin-auth'
 
 export class AuthMiddleware {
-  private static _checkRolePermission = (authHeaderType: AuthHeaderKey, user: User) => {
+  private static _checkRolePermission = (authHeaderType: AuthHeaderKey, user: UserDocument) => {
     switch (authHeaderType) {
       case 'clients-auth':
-        const permittedRoles: User['role'][] = ['channel', 'tvshow', 'event', 'podcast']
+        const permittedRoles: UserSchema['role'][] = ['channel', 'tvshow', 'event', 'podcast']
 
         if (!permittedRoles.includes(user.role)) {
           throw new OperationalError('Access Denied, clients Route', 403)

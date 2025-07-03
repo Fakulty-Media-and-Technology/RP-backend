@@ -1,8 +1,35 @@
-import { PaymentModel, PaymentUseCase } from '../../models/payments.model'
-import Paystack from '../../paymentIntegration/paystack'
-import { LoggedInUser } from '../../types'
-import { ValidCurrency } from '../../utils/currency'
+import { ContestantsModel } from '../../models/contestants.model'
+import { DonateModel } from '../../models/donate.model'
+import { LiveModel, LiveSchema } from '../../models/lives.model'
+import { PaymentDetailModel } from '../../models/paymentDetails.model'
 
+import {
+  PaymentDocument,
+  PaymentModel,
+  PaymentSchema,
+  PaymentUseCase,
+} from '../../models/payments.model'
+
+import { UserModel } from '../../models/users.model'
+import { VoteInfoModel } from '../../models/voteInfo.model'
+import { VoteModel } from '../../models/votes.model'
+import Paystack from '../../paymentIntegration/paystack'
+import { PaymentRepo } from '../../repositories/PaymentRepo'
+import { WalletRepo, type WalletCurrencyKey } from '../../repositories/WalletRepo'
+import { LoggedInUser, StringOrObjectId } from '../../types'
+import { CalcUtils } from '../../utils/Calc'
+import { ValidCurrency } from '../../utils/currency'
+import { addHours } from '../../utils/date'
+import { denyGuestUser } from '../../utils/denyGuestUser'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { OperationalError } from '../../utils/OperationalError'
+
+type PaystackTransaction = Awaited<ReturnType<typeof Paystack.verifyPayment>>
+type PaymentStatus = PaymentSchema['status']
+type PaymentCurrency = PaymentSchema['currency']
+
+type UserRole = LoggedInUser['role']
+/**Includes dynamic Parameters depending on payment useCase */
 interface InitiatePaymentInput {
   amount: number
   currency: ValidCurrency
@@ -10,43 +37,487 @@ interface InitiatePaymentInput {
   fullName?: string
   email?: string
   useCase: PaymentUseCase
+
+  /**Required for live extention donations */
+  liveId?: string
+
+  /**Required for vote */
+  voteInfoId?: string
+  contestantId?: string
 }
 
+interface PostPaymentActionsInput {
+  transaction: PaystackTransaction
+  payment: PaymentDocument
+  session: MaybeSession
+}
+
+interface AssingLivePaymentUserIdInput {
+  currentUserRole: UserRole
+  email?: string
+  useCase: Extract<PaymentUseCase, 'live schedule' | 'live schedule ext'>
+  payment: PaymentDocument
+}
+
+interface RegisterWithLiveByLiveIdInput {
+  liveId?: string
+  payment: PaymentDocument
+  session: MaybeSession
+  useCase: Extract<PaymentUseCase, 'live schedule ext'>
+}
+
+interface PrePaymentOperationsInput
+  extends Pick<
+    InitiatePaymentInput,
+    'contestantId' | 'voteInfoId' | 'useCase' | 'email' | 'liveId'
+  > {
+  currentUserRole: LoggedInUser['role']
+  currentUserId: StringOrObjectId
+  payment: PaymentDocument
+  session: MaybeSession
+}
+
+type ProcessVoteInput = Pick<InitiatePaymentInput, 'voteInfoId' | 'contestantId'> &
+  Pick<PrePaymentOperationsInput, 'currentUserId' | 'payment' | 'session'>
+
+type PostPaymentUsecaseHandlerInput = Pick<PostPaymentActionsInput, 'session' | 'payment'>
+
+type GetStatusFromTransaction = (t: PaystackTransaction) => PaymentStatus
+
 export class PaymentService {
-  static initiatePayment = async ({
-    currency,
-    currentUser,
+  protected static _fetchVotePredicateDocumentsWithSharedLiveId = async ({
+    voteInfoId,
+    contestantId,
+  }: Required<Pick<InitiatePaymentInput, 'voteInfoId' | 'contestantId'>>) => {
+    const [voteInfoResult, contestantResult] = await Promise.allSettled([
+      VoteInfoModel.findById(voteInfoId),
+      ContestantsModel.findById(contestantId),
+    ])
+
+    if (voteInfoResult.status === 'rejected') {
+      throw voteInfoResult.reason
+    }
+
+    if (contestantResult.status === 'rejected') {
+      throw contestantResult.reason
+    }
+
+    const voteInfoDocument = voteInfoResult.value
+    const contestantDocument = contestantResult.value
+
+    if (voteInfoDocument == null) {
+      throw new OperationalError('invalid voteinfoId', 404)
+    }
+
+    if (contestantDocument == null) {
+      throw new OperationalError('invalid contestantId', 404)
+    }
+
+    if (contestantDocument.liveId.toString() !== voteInfoDocument.liveId.toString()) {
+      throw new OperationalError('live Id mismatch', 403)
+    }
+
+    return { contestantDocument, voteInfoDocument }
+  }
+
+  protected static _processVote = async ({
+    voteInfoId,
+    contestantId,
+    session,
+    payment,
+    currentUserId,
+  }: ProcessVoteInput) => {
+    if (voteInfoId == null || contestantId == null) {
+      throw new OperationalError('voteinfoId and contestantId are required', 400)
+    }
+
+    const { voteInfoDocument } = await this._fetchVotePredicateDocumentsWithSharedLiveId({
+      voteInfoId,
+      contestantId,
+    })
+
+    await new VoteModel({
+      contestantId,
+      liveId: voteInfoDocument.liveId,
+      voterId: currentUserId,
+      paymentId: payment._id,
+    }).save({ session })
+  }
+
+  protected static _prePaymentOperations = async ({
+    currentUserRole,
+    currentUserId,
+    liveId,
+    voteInfoId,
+    contestantId,
     email,
-    amount,
     useCase,
-    fullName,
-  }: InitiatePaymentInput) => {
-    const payment = new PaymentModel({
-      user_id: currentUser._id,
+    payment,
+    session,
+  }: PrePaymentOperationsInput) => {
+    switch (useCase) {
+      case 'live schedule':
+        await this._registerLiveClientByEmailAddr({
+          currentUserRole: currentUserRole,
+          email,
+          useCase,
+          payment,
+        })
+        break
+
+      case 'live schedule ext':
+        await this._registerLiveClientByEmailAddr({
+          currentUserRole,
+          email,
+          useCase,
+          payment,
+        })
+
+        await this._registerPaymentExtentions({
+          useCase,
+          session,
+          payment,
+          liveId,
+        })
+        break
+
+      case 'donate':
+        await new DonateModel({
+          liveId,
+          customerId: currentUserId,
+          paymentId: payment._id,
+        }).save({ session })
+        break
+
+      case 'vote':
+        await this._processVote({
+          currentUserId,
+          payment,
+          session,
+          contestantId,
+          voteInfoId,
+        })
+        break
+
+      // handled by postOperations
+      case 'topup':
+        break
+      case 'subscription':
+        break
+      default:
+        throw new OperationalError('unkown use case detected', 403)
+    }
+  }
+
+  protected static _postPaymentOperationsOnSuccess = async (params: PostPaymentActionsInput) => {
+    // this._registerPaymentCardDetails(params)
+
+    switch (params.payment.useCase) {
+      case 'topup':
+        await this._topUpWallet(params)
+        break
+
+      case 'live schedule ext':
+        await this._extendLive(params)
+        break
+
+      case 'donate':
+        await this._topUpClientsWallet(params)
+        break
+
+      case 'vote':
+        await this._updateVote(params)
+
+        break
+
+      case 'live schedule':
+        break
+
+      case 'subscription':
+        break
+
+      default:
+        break
+    }
+  }
+
+  protected static _updateVote = async ({ session, payment }: PostPaymentUsecaseHandlerInput) => {
+    const vote = await VoteModel.findOneAndUpdate(
+      { paymentId: payment._id },
+      { $set: { isDone: true } },
+      { session },
+    )
+
+    if (vote == null) {
+      throw new OperationalError('vote not found for payment: ' + payment._id, 404)
+    }
+  }
+
+  protected static _registerPaymentCardDetails = async ({
+    transaction: { authorization, channel },
+    payment,
+    session,
+  }: PostPaymentActionsInput) => {
+    if (payment.status !== 'success' || channel !== 'card') {
+      return
+    }
+
+    try {
+      await new PaymentDetailModel({
+        userId: payment.userId,
+        paymentId: payment._id,
+        authorization_code: authorization.authorization_code,
+        last4: authorization.last4,
+        exp_month: authorization.exp_month,
+        exp_year: authorization.exp_year,
+        brand: authorization.brand,
+        reusable: !authorization.reusable,
+      }).save({ session })
+    } catch (e: any) {
+      console.error('_registerPaymentCardDetails error:', e.message || e)
+    }
+  }
+
+  protected static _getStatusFromTransaction: GetStatusFromTransaction = ({ status }) => {
+    if (status === 'success') {
+      return 'success'
+    }
+
+    if (status === 'reversed') {
+      return 'reversed'
+    }
+
+    if (status === 'abandoned') {
+      return 'abandoned'
+    }
+
+    if (status === 'processing' || status === 'pending' || status === 'queued') {
+      console.log('Paystack is triggering webhooks for pending transactions. Status', status)
+      return 'pending'
+    }
+
+    return 'failed'
+  }
+
+  protected static _getWalletCurrencyKey = (currency: ValidCurrency) => {
+    const walletBalanceKeysToPaymentCurrencyMap: Record<PaymentCurrency, WalletCurrencyKey> = {
+      NGN: 'NGNBalance',
+      USD: 'USDBalance',
+    }
+
+    const currencyKey = walletBalanceKeysToPaymentCurrencyMap[currency]
+
+    if (currencyKey == null) {
+      throw new OperationalError(`${currency} invalid wallet currency in Payments`, 400)
+    }
+
+    return currencyKey
+  }
+
+  protected static _topUpWallet = async ({ payment, session }: PostPaymentUsecaseHandlerInput) => {
+    await WalletRepo.updateBalance({
+      session,
+      currencyKey: this._getWalletCurrencyKey(payment.currency),
+      topUpAmount: payment.amount,
+      userId: payment.userId,
+    })
+  }
+
+  protected static _extendLive = async ({ session, payment }: PostPaymentUsecaseHandlerInput) => {
+    const live = await LiveModel.findOne({ paymentExtentions: payment._id })
+
+    if (live == null) {
+      throw new OperationalError('Could not retrive live for paymentId: ' + payment._id, 400)
+    }
+
+    const extendedHours = CalcUtils.liveExtentionFromChargeAndCurrency(
+      payment.amount,
+      payment.currency,
+    )
+
+    addHours(live.expiry, extendedHours)
+    await live.save({ session })
+  }
+
+  protected static _topUpClientsWallet = async ({
+    session,
+    payment,
+  }: PostPaymentUsecaseHandlerInput) => {
+    const donationDocument = await DonateModel.findOne({ paymentId: payment._id })
+
+    if (donationDocument == null) {
+      throw new OperationalError('Could not retrive donation', 400)
+    }
+
+    const liveDocument = await LiveModel.findById(donationDocument.liveId)
+
+    if (liveDocument == null) {
+      throw new OperationalError('Could not retrive live document', 400)
+    }
+
+    await WalletRepo.updateBalance({
+      session,
+      currencyKey: this._getWalletCurrencyKey(payment.currency),
+      topUpAmount: payment.amount,
+      userId: liveDocument.client_id,
+    })
+  }
+
+  protected static _handleWebhookEventTransaction = async (
+    reference: string,
+    session: MaybeSession,
+  ) => {
+    const transaction = await Paystack.verifyPayment(reference)
+
+    const payment = await PaymentRepo.updateStatusByReference({
+      reference,
+      session,
+      status: this._getStatusFromTransaction(transaction),
+    })
+
+    if (payment === null) {
+      throw new OperationalError(`Could not find payment for ref: ${reference}`, 400)
+    }
+
+    switch (payment.status) {
+      case 'success':
+        await this._postPaymentOperationsOnSuccess({
+          session,
+          transaction,
+          payment,
+        })
+        break
+      default:
+        throw new OperationalError(
+          'Unsuccessfull payment recieved on webhook. Id: ' + payment._id,
+          400,
+        )
+    }
+  }
+
+  static handleWebookEvent = async (reference: string) => {
+    try {
+      await withMongoDBSession(this._handleWebhookEventTransaction, reference)
+    } catch (e: any) {
+      console.error('PaymentService.handleWebookEvent error', e.message || e)
+    }
+  }
+
+  protected static _isAdminRole = (role: UserRole) => {
+    const adminRoles: UserRole[] = ['admin', 'superadmin']
+    return adminRoles.includes(role)
+  }
+
+  protected static _isClientRole = (role: UserRole) => {
+    const clientRoles: UserRole[] = ['channel', 'event', 'podcast', 'tvshow']
+    return clientRoles.includes(role)
+  }
+
+  protected static _registerLiveClientByEmailAddr = async ({
+    currentUserRole,
+    email,
+    payment,
+  }: AssingLivePaymentUserIdInput) => {
+    if (!email) {
+      throw new OperationalError('Email is required for a live payment', 400)
+    }
+
+    if (!this._isAdminRole(currentUserRole) && !this._isClientRole(currentUserRole)) {
+      throw new OperationalError('only an admin or a client can perform this operation', 403)
+    }
+
+    const client = await UserModel.findOne({ email })
+
+    if (client == null) {
+      throw new OperationalError('Email is not associated with any user', 404)
+    }
+
+    if (!this._isClientRole(client.role)) {
+      throw new OperationalError('email must be associated with a client', 403)
+    }
+
+    payment.userId = client._id
+  }
+
+  static initiatePayment = async (params: InitiatePaymentInput) => {
+    return await withMongoDBSession(this._initiatePaymentTransaction, params)
+  }
+
+  protected static _registerPaymentExtentions = async ({
+    liveId,
+    payment,
+    session,
+    useCase,
+  }: RegisterWithLiveByLiveIdInput) => {
+    if (liveId == null) {
+      throw new OperationalError(`liveId is required for  ${useCase} payment`, 400)
+    }
+
+    const live = await LiveModel.findByIdAndUpdate(
+      liveId,
+      {
+        $addToSet: { paymentExtentions: payment._id },
+      },
+      { session },
+    )
+
+    if (live == null) {
+      throw new OperationalError('invalid live id', 404)
+    }
+  }
+
+  protected static _initiatePaymentTransaction = async (
+    {
       currency,
-      full_name: fullName ?? `${currentUser.first_name} ${currentUser.last_name}`,
-      email: email ?? currentUser.email,
+      currentUser,
+      email,
       amount,
-      use_case: useCase,
-      status: 'success', // TODO: change to pending after webhooks setup
-      is_used: false,
+      useCase,
+      fullName,
+      liveId,
+      voteInfoId,
+      contestantId,
+    }: InitiatePaymentInput,
+    session: MaybeSession,
+  ) => {
+    denyGuestUser(currentUser)
+
+    const clientFullName = fullName ?? `${currentUser.first_name} ${currentUser.last_name}`
+    const clientEmail = email?.toLowerCase() ?? currentUser.email
+
+    const payment = new PaymentModel({
+      userId: currentUser._id,
+      currency,
+      fullName: clientFullName,
+      email: clientEmail,
+      amount,
+      useCase,
+    })
+
+    await this._prePaymentOperations({
+      session,
+      email,
+      liveId,
+      voteInfoId,
+      contestantId,
+      currentUserRole: currentUser.role,
+      currentUserId: currentUser._id,
+      payment,
+      useCase,
     })
 
     const initPayResponseData = await Paystack.initializePayment({
-      full_name: payment.full_name,
-      user_id: currentUser._id.toString(),
       email: payment.email,
       currency,
       amount,
     })
 
     payment.reference = initPayResponseData.reference
-    await payment.save()
+    await payment.save({ session })
 
-    const response = {
-      ...initPayResponseData,
+    const response = Object.assign(initPayResponseData, {
       paymentId: payment._id,
-    }
+    })
 
     return response
   }

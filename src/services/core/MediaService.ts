@@ -6,7 +6,7 @@ import { MediaAccess } from '../media-access'
 
 import { MediaManagement } from '../media-management'
 import { SubtitleModel } from '../../models/subtitle.model'
-import { User, UserModel } from '../../models/users.model'
+import { UserSchema, UserModel, UserDocument } from '../../models/users.model'
 import { Password } from '../../utils/Password'
 import { S3 } from '../aws/s3'
 import { AuthHeaderKey } from '../../middlewares/auth'
@@ -67,7 +67,7 @@ export class MediaService {
     return response
   }
 
-  private static _updateUserEmail = async (email: string, user: User) => {
+  private static _updateUserEmail = async (email: string, user: UserDocument) => {
     if (email === user.email) return
 
     const existOnAnother = await UserModel.findOne({
@@ -86,7 +86,7 @@ export class MediaService {
   private static _handleUpdateUserPassword = async (
     prevPass: string,
     newPass: string,
-    user: User,
+    user: UserSchema,
   ) => {
     if (!Password.isStrong(newPass)) {
       throw new OperationalError('new password is not strong enough', 400)
@@ -103,7 +103,7 @@ export class MediaService {
     user.password = await Password.encrypt(newPass)
   }
 
-  private static _updateUserProfileImage = async (imageFile: MulterFile, user: User) => {
+  private static _updateUserProfileImage = async (imageFile: MulterFile, user: UserSchema) => {
     let prevKey: string | null | undefined = null
     let prevBucket: string | null | undefined = null
 

@@ -4,7 +4,7 @@ import { validCurrencies } from '../utils/currency'
 const paymentUseCases = [
   'subscription',
   'topup',
-  'vote',
+  'vote', 
   'donate',
   'live schedule',
   'live schedule ext',
@@ -14,7 +14,7 @@ export type PaymentUseCase = (typeof paymentUseCases)[number]
 
 const paymentSchema = new Schema(
   {
-    user_id: {
+    userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -24,18 +24,6 @@ const paymentSchema = new Schema(
     currency: {
       type: String,
       enum: validCurrencies,
-      required: true,
-      index: true,
-    },
-
-    full_name: {
-      type: String,
-      required: true,
-      index: true,
-    },
-
-    email: {
-      type: String,
       required: true,
       index: true,
     },
@@ -52,19 +40,33 @@ const paymentSchema = new Schema(
       index: true,
     },
 
+    fullName: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+
     status: {
       type: String,
-      enum: ['success', 'pending', 'failed'],
-      required: true,
+      enum: ['success', 'pending', 'failed', 'reversed', 'abandoned'],
+      default: 'pending',
       index: true,
     },
 
-    is_used: {
+    isUsed: {
       type: Boolean,
       default: false,
     },
 
-    use_case: {
+    useCase: {
       type: String,
       enum: paymentUseCases,
       index: true,
@@ -77,4 +79,4 @@ const paymentSchema = new Schema(
 
 export const PaymentModel = model('payments', paymentSchema)
 export type PaymentSchema = InferSchemaType<typeof paymentSchema>
-export type Payment = HydratedDocumentFromSchema<typeof paymentSchema>
+export type PaymentDocument = HydratedDocumentFromSchema<typeof paymentSchema>

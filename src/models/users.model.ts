@@ -37,7 +37,7 @@ const schema = new Schema(
       trim: true,
       required: true,
     },
-    
+
     password: {
       type: String,
       required: true,
@@ -127,5 +127,7 @@ const schema = new Schema(
 schema.index({ country_code: 1, mobile: 1 }, { unique: true })
 
 export const UserModel = model('users', schema)
+
 export type UserSchema = InferSchemaType<typeof schema>
-export type User = HydratedDocumentFromSchema<typeof schema>
+export type UserDocument = HydratedDocumentFromSchema<typeof schema>
+export type UserRole = UserSchema['role']

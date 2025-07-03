@@ -27,9 +27,9 @@ export class WithdrawalService {
       throw new OperationalError('Account balance does not exist', 404)
     }
 
-    if (Number(amount) > accBal.balance) {
-      throw new OperationalError('insufficient balance', 404)
-    }
+    // if (Number(amount) > accBal.balance) {
+    //   throw new OperationalError('insufficient balance', 404)
+    // }
 
     //check minimum withdrawal
     if (Number(amount) < env.MIN_WITHDRAWAL_AMOUNT) {
@@ -75,9 +75,9 @@ export class WithdrawalService {
 
     const accBal = await WalletModel.findOne({ user_id: currentUser._id })
 
-    if (Number(amount) > Number(accBal?.balance)) {
-      throw new OperationalError('insufficient balance', 400)
-    }
+    // if (Number(amount) > Number(accBal?.balance)) {
+    //   throw new OperationalError('insufficient balance', 400)
+    // }
 
     if (Number(amount) < env.MIN_WITHDRAWAL_AMOUNT) {
       throw new OperationalError(

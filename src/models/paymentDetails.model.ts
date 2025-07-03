@@ -2,10 +2,18 @@ import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mong
 
 const paymentDetailsSchema = new Schema(
   {
-    user_id: {
+    userId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'users',
       required: true,
+      index: true,
+    },
+
+    paymentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'payments',
+      required: true,
+      index: true,
     },
 
     authorization_code: {
@@ -23,9 +31,14 @@ const paymentDetailsSchema = new Schema(
     exp_year: {
       type: String,
     },
-    
+
     brand: {
       type: String,
+    },
+
+    reusable: {
+      type: Boolean,
+      default: false,
     },
   },
   {
