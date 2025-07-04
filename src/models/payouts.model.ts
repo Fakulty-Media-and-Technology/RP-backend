@@ -1,4 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { validCurrencies } from '../utils/currency'
 
 const payoutSchema = new Schema(
   {
@@ -6,30 +7,44 @@ const payoutSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'users',
       required: true,
+      index: true,
     },
-    processed_by: {
+
+    processedBy: {
       type: [Schema.Types.ObjectId],
       ref: 'users',
     },
+
     amount: {
       type: Number,
       required: true,
     },
+
     charges: {
       type: Number,
     },
-    account_number: {
+
+    currency: {
+      type: String,
+      enum: validCurrencies,
+      requireD: true,
+    },
+
+    accountNumber: {
       type: String,
       required: true,
     },
-    account_name: {
+
+    accountName: {
       type: String,
       required: true,
     },
-    bank_name: {
+
+    bankName: {
       type: String,
       required: true,
     },
+
     status: {
       type: String,
       enum: ['pending', 'processing', 'reversed', 'rejected', 'completed'],

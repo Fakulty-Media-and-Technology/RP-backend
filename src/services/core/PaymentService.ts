@@ -230,6 +230,7 @@ export class PaymentService {
 
         break
 
+        // status already updated by the caller
       case 'live schedule':
         break
 
@@ -363,7 +364,7 @@ export class PaymentService {
     })
   }
 
-  protected static _handleWebhookEventTransaction = async (
+  protected static _handleWebhookEventByReferenceTransaction = async (
     reference: string,
     session: MaybeSession,
   ) => {
@@ -395,11 +396,11 @@ export class PaymentService {
     }
   }
 
-  static handleWebookEvent = async (reference: string) => {
+  static handleWebookEventByReference = async (reference: string) => {
     try {
-      await withMongoDBSession(this._handleWebhookEventTransaction, reference)
+      await withMongoDBSession(this._handleWebhookEventByReferenceTransaction, reference)
     } catch (e: any) {
-      console.error('PaymentService.handleWebookEvent error', e.message || e)
+      console.error('PaymentService.handleWebookEventByReference error', e.message || e)
     }
   }
 

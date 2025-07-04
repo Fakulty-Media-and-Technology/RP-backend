@@ -3,7 +3,7 @@ import { ClientWithdrawalController } from '../../controllers/clients/withdrawal
 
 export const router = Router()
 
+// router.put('/payment/request/ed/:id', ClientWithdrawalController.reqPayoutEdit)
 router.post('/payment/request', ClientWithdrawalController.reqPayout)
-router.put('/payment/request/ed/:id', ClientWithdrawalController.reqPayoutEdit)
 router.get('/payment/request/his', ClientWithdrawalController.payoutReqInfoAll)
 router.get('/payment/request/group', ClientWithdrawalController.payoutReqInfoGroup)

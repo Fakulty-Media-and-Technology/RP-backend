@@ -5,7 +5,10 @@ import { sendResponse } from '../../utils/responder'
 
 export class ClientWithdrawalController {
   static reqPayout = Catch.async(async (req, res) => {
-    await WithdrawalService.requestPayout(GetDefined.loggedInUser(req.user), req.body)
+    await WithdrawalService.requestPayout({
+      ...req.body,
+      currentUser: GetDefined.loggedInUser(req.user),
+    })
 
     sendResponse({
       res,
@@ -13,20 +16,20 @@ export class ClientWithdrawalController {
     })
   })
 
-  static reqPayoutEdit = Catch.async(async ({ user, params, body }, res) => {
-    await WithdrawalService.editPayout(GetDefined.loggedInUser(user), params.id, body)
+  // static reqPayoutEdit = Catch.async(async ({ user, params, body }, res) => {
+  //   await WithdrawalService.editPayout(GetDefined.loggedInUser(user), params.id, body)
 
-    sendResponse({
-      res,
-      message: 'Payout edited',
-    })
-  })
+  //   sendResponse({
+  //     res,
+  //     message: 'Payout edited',
+  //   })
+  // })
 
-  static payoutReqInfoAll = Catch.async(async ({ user }, res) => {
+  static payoutReqInfoAll = Catch.async(async ({ user, query }, res) => {
     sendResponse({
       res,
       message: 'payout requests all history',
-      data: await WithdrawalService.requestAllPayoutInfo(GetDefined.loggedInUser(user)),
+      data: await WithdrawalService.requestAllPayoutInfo(GetDefined.loggedInUser(user), query),
     })
   })
 
