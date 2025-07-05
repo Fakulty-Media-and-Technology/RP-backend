@@ -1,6 +1,5 @@
 import { Router } from 'express'
 
-import { CustomerSharedController } from '../../controllers/customers/medias.customer'
 import { OnboardingController } from '../../controllers/customers/onboarding.customer'
 import { CustomerPaymentController } from '../../controllers/customers/payment.customer'
 import { CustomerProfileController } from '../../controllers/customers/profile.customer'
@@ -25,6 +24,7 @@ import { router as EnumsRouter } from './../customerRoutes/enumsRouter'
 import { SharedRoutes } from '../SharedRoutes'
 import { requestValidator } from '../../middlewares/requestValidator'
 import { viewContentSchema } from '../../validations/customers'
+import { SharedController } from '../../controllers/common/shared.controller'
 
 export const customerRouter = Router()
 
@@ -41,7 +41,7 @@ customerRouter.use(AuthMiddleware.authenticateRequest('customer-auth'))
 customerRouter.post(
   '/view/content',
   requestValidator(viewContentSchema),
-  CustomerSharedController.viewContent,
+  SharedController.viewContent,
 )
 
 new SharedRoutes(customerRouter)
@@ -65,6 +65,6 @@ customerRouter.use('/notification', PushNotificationRouter)
 customerRouter.use('/notifications', NotificationsRouter)
 
 customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
-customerRouter.get('/banner/contents', CustomerSharedController.bannerContents)
+customerRouter.get('/banner/contents', SharedController.bannerContents)
 customerRouter.post('/signup/createpin', OnboardingController.createPin)
 customerRouter.post('/suggestion/create', CustomerProfileController.createSuggestion)

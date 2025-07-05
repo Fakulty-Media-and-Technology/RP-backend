@@ -1,5 +1,4 @@
 import { GiftCardModel } from '../../models/giftcard.model'
-import { WalletModel } from '../../models/wallet.model'
 import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
 import { ValidCurrency } from '../../utils/currency'
@@ -61,7 +60,7 @@ export class GiftCardService {
       },
       {
         $addFields: {
-          serial_number: {
+          serialNumber: {
             $concat: [
               'SN',
               {

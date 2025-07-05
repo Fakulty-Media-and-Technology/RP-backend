@@ -1,12 +1,12 @@
 import { Router } from 'express'
-import { CustomerSharedController } from '../../controllers/customers/medias.customer'
+import { SharedController } from '../../controllers/common/shared.controller'
 
 export const router = Router()
 
-router.post('/upload-photo', CustomerSharedController.uploadImageRoute)
-router.post('/vod-streaming/:vidUploadId', CustomerSharedController.getVidoeUploadStream)
-router.get('/vod/fetch/featured', CustomerSharedController.getFeaturedVods)
-router.post('/vod/like/:id', CustomerSharedController.likeVideo)
+router.post('/upload-photo', SharedController.uploadImageRoute)
+router.post('/vod-streaming/:vidUploadId', SharedController.getVidoeUploadStream)
+router.get('/vod/fetch/featured', SharedController.getFeaturedVods)
+router.post('/vod/like/:id', SharedController.likeVideo)
 
-router.get('/vod/userliked/:id', CustomerSharedController.userLikedVideo)
-router.post('/vod/unlike/:id', CustomerSharedController.unLikeVideo)
+router.get('/vod/userliked/:id', SharedController.userLikedVideo)
+router.post('/vod/unlike/:id', SharedController.unLikeVideo)

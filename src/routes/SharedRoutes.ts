@@ -6,65 +6,57 @@ import { intitiatePaymentSchema, updateUserProfileSchema } from '../validations/
 import { AuthHeaderKey } from '../middlewares/auth'
 import { ClientLiveStreamController } from '../controllers/clients/livestream.clients'
 import { AdminEnumController } from '../controllers/admins/enums.admin'
-import { CustomerSharedController } from '../controllers/customers/medias.customer'
 
 export class SharedRoutes {
-  private _baseRouter: Router
+  private _router: Router
 
   constructor(router: Router) {
-    this._baseRouter = router
+    this._router = Router()
+    router.use('/shared', this._router)
   }
 
   vods() {
-    this._baseRouter.get('/vods/category/:catId', SharedController.fetchVidsForCategory)
-
-    this._baseRouter.get(
-      '/vods/similar-by-cast/:castId/:vodId',
-      CustomerSharedController.getSimilarByCastId,
-    )
-    this._baseRouter.get(
-      '/vods/similar-by-genre/:genreId/:vodId',
-      CustomerSharedController.getSimilarByGenreId,
-    )
-
+    this._router.get('/vods/category/:catId', SharedController.fetchVidsForCategory)
+    this._router.get('/vods/similar-by-cast/:castId/:vodId', SharedController.getSimilarByCastId)
+    this._router.get('/vods/similar-by-genre/:genreId/:vodId', SharedController.getSimilarByGenreId)
     return this
   }
 
   enums() {
-    this._baseRouter.get('/get-categories', AdminEnumController.getCategories)
-    this._baseRouter.get('/get-genres', AdminEnumController.getGenres)
-    this._baseRouter.get('/get-cast', AdminEnumController.getCast)
-    this._baseRouter.get('/casts/:castId', AdminEnumController.getCastById)
+    this._router.get('/get-categories', AdminEnumController.getCategories)
+    this._router.get('/get-genres', AdminEnumController.getGenres)
+    this._router.get('/get-cast', AdminEnumController.getCast)
+    this._router.get('/casts/:castId', AdminEnumController.getCastById)
     return this
   }
 
   lives(caller: 'Admin' | 'Client') {
-    this._baseRouter.post(
+    this._router.post(
       '/lives/create',
       Multer.createLiveConfig,
       SharedController.createLive({ isAdmin: caller === 'Admin' }),
     )
 
-    this._baseRouter.put(
+    this._router.put(
       '/lives/update-media/:liveId',
       Multer.createLiveConfig,
       SharedController.updateLiveMedia,
     )
 
-    this._baseRouter.put('/lives/update-active/:liveId', SharedController.updateLiveActiveStatus)
-    this._baseRouter.get('/lives/estimate', ClientLiveStreamController.calculateEventCharges)
-    this._baseRouter.delete('/lives/delete/:liveId', SharedController.deleteLiveById)
+    this._router.put('/lives/update-active/:liveId', SharedController.updateLiveActiveStatus)
+    this._router.get('/lives/estimate', ClientLiveStreamController.calculateEventCharges)
+    this._router.delete('/lives/delete/:liveId', SharedController.deleteLiveById)
     return this
   }
 
   paymentHistory(callerConfig: PaymentHistoryCaller) {
-    this._baseRouter.get('/trans/payment-history', SharedController.paymentHistory(callerConfig))
-    this._baseRouter.get('/wallet', SharedController.fetchWallet)
+    this._router.get('/trans/payment-history', SharedController.paymentHistory(callerConfig))
+    this._router.get('/wallet', SharedController.fetchWallet)
     return this
   }
 
   paymentActions() {
-    this._baseRouter.post(
+    this._router.post(
       '/initiate-payment',
       requestValidator(intitiatePaymentSchema),
       SharedController.startPayment,
@@ -74,13 +66,13 @@ export class SharedRoutes {
   }
 
   fetchSubtitles() {
-    this._baseRouter.get('/subtitles/fetch/:parentId', SharedController.getSubtitles)
+    this._router.get('/subtitles/fetch/:parentId', SharedController.getSubtitles)
     return this
   }
 
   updateUserProfile(authType: AuthHeaderKey) {
-    this._baseRouter.put(
-      '/user-profile/shared/update/:userId',
+    this._router.put(
+      '/user-profile/update/:userId',
       Multer.uploadSingleImage,
       requestValidator(updateUserProfileSchema),
       SharedController.updateProfile(authType),
