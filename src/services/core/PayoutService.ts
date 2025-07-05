@@ -20,7 +20,7 @@ interface RequestPayoutInput {
   currentUser: LoggedInUser
 }
 
-interface HandleWebhookEventByReferenceInput {
+interface HandleWebhookOperationsInput {
   reference: string
   status: PayoutSchema['status']
 }
@@ -61,12 +61,10 @@ export class PayoutService {
       throw new OperationalError('insufficient funds', 400)
     }
 
-    //remove board charges
-    const percent = 15 //todo, admin can always modify
-    const charges = this._calcPercentOff(amount, percent)
+    const charges = this._calcPercentOff(amount, env.PAYOUT_SERVICE_CHARGE)
     const earnings = amount - charges
 
-    const payout = await new PayoutModel({
+    const payout = new PayoutModel({
       client_id: currentUser._id,
       amount: earnings,
       currency,
@@ -74,7 +72,7 @@ export class PayoutService {
       accountNumber,
       accountName,
       bankName,
-    }).save({ session })
+    })
 
     switch (currency) {
       case 'NGN':
@@ -87,8 +85,6 @@ export class PayoutService {
         break
     }
 
-    await wallet.save({ session })
-
     await Paystack.initiateTransfer({
       reference: payout._id.toString(),
       amount: earnings,
@@ -98,6 +94,9 @@ export class PayoutService {
       currency,
       bankType,
     })
+
+    await payout.save({ session })
+    await wallet.save({ session })
   }
 
   static requestPayout = async (params: RequestPayoutInput) => {
@@ -194,8 +193,8 @@ export class PayoutService {
     })
   }
 
-  static _handleWebhookEventByReferenceTransaction = async (
-    { reference, status }: HandleWebhookEventByReferenceInput,
+  static _handleWebhookOperationsTransaction = async (
+    { reference, status }: HandleWebhookOperationsInput,
     session: MaybeSession,
   ) => {
     const payout = await PayoutModel.findByIdAndUpdate(reference, { $set: { status } }, { session })
@@ -228,11 +227,11 @@ export class PayoutService {
     }
   }
 
-  static handleWebhookEventByReference = async (params: HandleWebhookEventByReferenceInput) => {
+  static handleWebhookOperations = async (params: HandleWebhookOperationsInput) => {
     try {
-      await withMongoDBSession(this._handleWebhookEventByReferenceTransaction, params)
+      await withMongoDBSession(this._handleWebhookOperationsTransaction, params)
     } catch (e: any) {
-      console.error('PayoutService.handleWebhookEventByReference error', e.message || e)
+      console.error('PayoutService.handleWebhookOperations error', e.message || e)
     }
   }
 }

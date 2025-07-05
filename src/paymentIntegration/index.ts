@@ -7,7 +7,7 @@ export const convertKoboToNaira = (kobo: number) => {
   return naira.toFixed(2)
 }
 
-export const PaymentServices = {
+export const PaymentIntegrationWrapper = {
   async paystackStartPayment(data: IntitializePaymentInput) {
     return await Paystack.initializePayment(data)
   },
@@ -85,5 +85,3 @@ export const PaymentServices = {
     return reciept
   },
 }
-
-export default PaymentServices

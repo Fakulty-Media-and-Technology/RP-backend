@@ -1,26 +1,30 @@
 import { GiftCardService } from '../../services/core/GiftCardService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
-import { guranteeNumericResult } from '../../utils/QueryParamsFeatures'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminGiftCardController {
-  static createGiftCard = Catch.async(async ({ body: { amount }, user }, res) => {
+  static createGiftCard = Catch.async(async ({ body: { amount, currency }, user }, res) => {
+    const card = await GiftCardService.createGiftCard({
+      currentAdmin: GetDefined.loggedInUser(user),
+      currency,
+      amount,
+    })
+
     sendResponse({
       res,
       message: 'gift card created',
-      data: await GiftCardService.createGiftCard(GetDefined.loggedInUser(user), amount),
+      data: card,
     })
   })
 
   static fetchGiftCards = Catch.async(async ({ query }, res) => {
-    const page = guranteeNumericResult(query.page, 1)
-    const limit = guranteeNumericResult(query.limit, 10)
+    const cards = await GiftCardService.fetchGiftCards(query)
 
     sendResponse({
       res,
       message: 'gift cards fetched successfully',
-      data: await GiftCardService.fetchGiftCards(page, limit),
+      data: cards,
     })
   })
 }

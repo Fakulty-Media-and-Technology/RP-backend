@@ -13,14 +13,12 @@ import { router as RatingsRouter } from './../customerRoutes/ratingsRouter'
 import { router as SocialsRouter } from './socialsRouter'
 import { router as SettingsRouter } from './../customerRoutes/settingRouter'
 import { router as UpcomingRouter } from './../customerRoutes/upcomingRouter'
-import { router as PaymentRouter } from './../customerRoutes/paymentRouter'
 import { router as LivestreamRouter } from './../customerRoutes/livestreamRouter'
 import { router as SubscriptionRuuter } from './../customerRoutes/subscriptionRouter'
 import { router as PushNotificationRouter } from './../customerRoutes/pushNotificationRouter'
 import { router as NotificationsRouter } from './../customerRoutes/notificationsRouter'
 import { router as GeneralRouter } from './../customerRoutes/generalRouter'
 import { router as PasswordResetRouter } from './../customerRoutes/passwordResetRouter'
-import { router as WalletRouter } from './../customerRoutes/walletRouter'
 import { router as ProfileRouter } from './../customerRoutes/profileRouter'
 import { router as EnumsRouter } from './../customerRoutes/enumsRouter'
 
@@ -54,8 +52,6 @@ new SharedRoutes(customerRouter)
   .vods()
 
 customerRouter.use('/profile', ProfileRouter)
-customerRouter.use('/wallet', WalletRouter)
-customerRouter.use('/payment', PaymentRouter)
 customerRouter.use('/upcoming', UpcomingRouter)
 customerRouter.use('/settings', SettingsRouter)
 customerRouter.use('/ratings', RatingsRouter)

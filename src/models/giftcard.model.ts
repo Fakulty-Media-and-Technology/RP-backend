@@ -1,4 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { validCurrencies } from '../utils/currency'
 
 const giftcardVideosSchema = new Schema(
   {
@@ -8,7 +9,7 @@ const giftcardVideosSchema = new Schema(
       required: true,
     },
 
-    serial_number: {
+    serialNumber: {
       type: Number,
       unique: true,
       default: 0,
@@ -16,6 +17,12 @@ const giftcardVideosSchema = new Schema(
 
     amount: {
       type: Number,
+      required: true,
+    },
+
+    currency: {
+      type: String,
+      enum: validCurrencies,
       required: true,
     },
 

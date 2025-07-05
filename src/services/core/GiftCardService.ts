@@ -1,53 +1,62 @@
 import { GiftCardModel } from '../../models/giftcard.model'
+import { WalletModel } from '../../models/wallet.model'
+import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
+import { ValidCurrency } from '../../utils/currency'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { OperationalError } from '../../utils/OperationalError'
-import { skip } from '../../utils/QueryParamsFeatures'
+import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { genRandUniqId } from '../../utils/strGen'
 
-const getUniqueGiftCode = async (triesCount = 1) => {
-  if (triesCount >= 5) {
-    throw new OperationalError('Cannot generate giftCode, please try again', 500)
-  }
+interface CreateGiftCardInput {
+  currentAdmin: LoggedInUser
+  amount: number
+  currency: ValidCurrency
+}
 
-  const uniq_code = genRandUniqId(12).toUpperCase()
-
-  // TODO: this can be optimized
-  const giftCard = await GiftCardModel.findOne({
-    code: uniq_code,
-  })
-
-  if (giftCard) {
-    return await getUniqueGiftCode(++triesCount)
-  }
-
-  return uniq_code
+interface RedeemGiftCardInput {
+  user: LoggedInUser
+  giftCode: string
 }
 
 export class GiftCardService {
-  static createGiftCard = async (currentAdmin: LoggedInUser, amount: number) => {
-    const giftCards = await GiftCardModel.find({}).sort({
-      createdAt: -1,
-      serial_number: -1,
+  protected static _getUniqueGiftCode = async (triesCount = 1): Promise<string> => {
+    if (triesCount >= 5) {
+      throw new OperationalError('Cannot generate giftCode, please try again', 500)
+    }
+
+    const uniq_code = genRandUniqId(11 + triesCount).toUpperCase()
+
+    const giftCard = await GiftCardModel.findOne({
+      code: uniq_code,
     })
 
-    const serialN = giftCards.length > 0 ? giftCards[0].serial_number : 0
+    return giftCard == null ? uniq_code : await this._getUniqueGiftCode(++triesCount)
+  }
+
+  static createGiftCard = async ({ currentAdmin, amount, currency }: CreateGiftCardInput) => {
+    const giftCards = await GiftCardModel.find({}).sort({ _id: -1 }).limit(1)
+
+    const serialN = giftCards.length > 0 ? giftCards[0].serialNumber : 0
 
     const newGiftCard = await GiftCardModel.create({
       admin_id: currentAdmin._id,
       serial_number: serialN + 1,
-      code: await getUniqueGiftCode(),
+      code: await this._getUniqueGiftCode(),
+      currency,
       amount,
     })
 
     return newGiftCard
   }
 
-  static fetchGiftCards = async (page: number, limit: number) => {
+  static fetchGiftCards = async (query: ExpressRequestQuery) => {
+    const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
+
     const cards = await GiftCardModel.aggregate([
       {
         $sort: {
-          createdAt: -1,
-          serial_number: -1,
+          _id: -1,
         },
       },
       {
@@ -56,14 +65,14 @@ export class GiftCardService {
             $concat: [
               'SN',
               {
-                $toString: '$serial_number',
+                $toString: '$serialNumber',
               },
             ],
           },
         },
       },
       {
-        $skip: skip(page, limit),
+        $skip: skip,
       },
       {
         $limit: limit,
@@ -72,4 +81,34 @@ export class GiftCardService {
 
     return cards
   }
+
+  private static _redeemGiftCardSession = async (
+    { user, giftCode }: RedeemGiftCardInput,
+    session: MaybeSession,
+  ) => {
+    const card = await GiftCardModel.findOne({
+      code: giftCode,
+    })
+
+    if (!card) {
+      throw new OperationalError('invalid gift code entered', 404)
+    }
+
+    if (card.used) {
+      throw new OperationalError('Oops, voucher has been used', 400)
+    }
+
+    await WalletRepo.updateBalance({
+      currency: card.currency,
+      topUpAmount: card.amount,
+      userId: user._id,
+      session,
+    })
+
+    card.used = true
+    await card.save({ session })
+  }
+
+  static redeem = async (input: RedeemGiftCardInput) =>
+    await withMongoDBSession(this._redeemGiftCardSession, input)
 }

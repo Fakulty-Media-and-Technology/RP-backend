@@ -7,6 +7,7 @@ export const FLOATS_REG = /[-+]?[0-9]*\.?[0-9]+/
 export const STRING_SCHEMA = Joi.string()
 export const MONGO_DB_OBJECT_ID_SCHEMA = Joi.string().pattern(MONGO_DB_OBJECT_ID_REG)
 export const MONGO_DB_OBJECT_ID_ARRAY_SCHEMA = Joi.array().items(MONGO_DB_OBJECT_ID_SCHEMA)
+export const CURRENCY_SCHEMA = STRING_SCHEMA.valid('USD', 'NGN')
 
 export const PHOTO_SCHEMA_WITH_CONTENT_TYPE = Joi.object({
   Bucket: STRING_SCHEMA.required(),
@@ -68,7 +69,7 @@ export const updateUserProfileSchema = {
 export const intitiatePaymentSchema = {
   body: Joi.object({
     amount: Joi.number().strict().required(),
-    currency: STRING_SCHEMA.valid('USD', 'NGN').required(),
+    currency: CURRENCY_SCHEMA.required(),
     fullName: STRING_SCHEMA,
     useCase: STRING_SCHEMA.valid(
       'subscription',

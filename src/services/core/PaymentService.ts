@@ -13,6 +13,7 @@ import {
 import { UserModel } from '../../models/users.model'
 import { VoteInfoModel } from '../../models/voteInfo.model'
 import { VoteModel } from '../../models/votes.model'
+import { WalletModel } from '../../models/wallet.model'
 import Paystack from '../../paymentIntegration/paystack'
 import { PaymentRepo } from '../../repositories/PaymentRepo'
 import { WalletRepo, type WalletCurrencyKey } from '../../repositories/WalletRepo'
@@ -23,6 +24,7 @@ import { addHours } from '../../utils/date'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { OperationalError } from '../../utils/OperationalError'
+import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 
 type PaystackTransaction = Awaited<ReturnType<typeof Paystack.verifyPayment>>
 type PaymentStatus = PaymentSchema['status']
@@ -120,7 +122,7 @@ export class PaymentService {
     return { contestantDocument, voteInfoDocument }
   }
 
-  protected static _processVote = async ({
+  protected static _registerVote = async ({
     voteInfoId,
     contestantId,
     session,
@@ -135,6 +137,10 @@ export class PaymentService {
       voteInfoId,
       contestantId,
     })
+
+    if (payment.amount !== voteInfoDocument.price) {
+      throw new OperationalError('vote info price must be equal to payment amount', 400)
+    }
 
     await new VoteModel({
       contestantId,
@@ -190,7 +196,7 @@ export class PaymentService {
         break
 
       case 'vote':
-        await this._processVote({
+        await this._registerVote({
           currentUserId,
           payment,
           session,
@@ -202,6 +208,8 @@ export class PaymentService {
       // handled by postOperations
       case 'topup':
         break
+
+      // currently suspended feature
       case 'subscription':
         break
       default:
@@ -227,7 +235,6 @@ export class PaymentService {
 
       case 'vote':
         await this._updateVote(params)
-
         break
 
       // status already updated by the caller
@@ -293,26 +300,11 @@ export class PaymentService {
     }
 
     if (status === 'processing' || status === 'pending' || status === 'queued') {
-      console.log('Paystack is triggering webhooks for pending transactions. Status', status)
+      console.error('Paystack is triggering webhooks for pending transactions. Status', status)
       return 'pending'
     }
 
     return 'failed'
-  }
-
-  protected static _getWalletCurrencyKey = (currency: ValidCurrency) => {
-    const walletBalanceKeysToPaymentCurrencyMap: Record<PaymentCurrency, WalletCurrencyKey> = {
-      NGN: 'NGNBalance',
-      USD: 'USDBalance',
-    }
-
-    const currencyKey = walletBalanceKeysToPaymentCurrencyMap[currency]
-
-    if (currencyKey == null) {
-      throw new OperationalError(`${currency} invalid wallet currency in Payments`, 400)
-    }
-
-    return currencyKey
   }
 
   protected static _topUpWallet = async ({ payment, session }: PostPaymentUsecaseHandlerInput) => {
@@ -347,7 +339,7 @@ export class PaymentService {
     const donationDocument = await DonateModel.findOne({ paymentId: payment._id })
 
     if (donationDocument == null) {
-      throw new OperationalError('Could not retrive donation', 400)
+      throw new OperationalError('Could not retrive donation document', 400)
     }
 
     const liveDocument = await LiveModel.findById(donationDocument.liveId)
@@ -437,6 +429,7 @@ export class PaymentService {
       throw new OperationalError('email must be associated with a client', 403)
     }
 
+    // override initiating userId
     payment.userId = client._id
   }
 
@@ -507,19 +500,40 @@ export class PaymentService {
       useCase,
     })
 
-    const initPayResponseData = await Paystack.initializePayment({
+    const initPaymentResponse = await Paystack.initializePayment({
       email: payment.email,
       currency,
       amount,
+      reference: payment._id.toString(),
     })
 
-    payment.reference = initPayResponseData.reference
     await payment.save({ session })
 
-    const response = Object.assign(initPayResponseData, {
+    const response = Object.assign(initPaymentResponse, {
       paymentId: payment._id,
     })
 
     return response
+  }
+
+  static getHistory = async (userId: string, query: ExpressRequestQuery) => {
+    const dbQuery = PaymentModel.find({
+      user_id: userId,
+    })
+      .select('-user_id -is_used -__v')
+      .sort({ _id: -1 })
+
+    const response = await new QueryParamsFeatures(dbQuery, {
+      defaultLimit: 10,
+      defaultPage: 1,
+      queryParams: query,
+    }).paginate().query
+
+    return response
+  }
+
+  static fetchWallet = async (user: LoggedInUser) => {
+    const custBalance = await WalletModel.find({ user_id: user._id }).select('-__v')
+    return custBalance
   }
 }

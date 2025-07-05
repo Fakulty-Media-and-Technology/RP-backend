@@ -59,6 +59,7 @@ export class SharedRoutes {
 
   paymentHistory(callerConfig: PaymentHistoryCaller) {
     this._baseRouter.get('/trans/payment-history', SharedController.paymentHistory(callerConfig))
+    this._baseRouter.get('/wallet', SharedController.fetchWallet)
     return this
   }
 

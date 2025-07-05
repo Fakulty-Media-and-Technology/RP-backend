@@ -146,7 +146,7 @@ export class SharedController extends UploadMediaUtils {
 
   static paymentHistory = ({ caller }: PaymentHistoryCaller) =>
     Catch.async(async (req, res) => {
-      const validUserId = () => {
+      const getQueryUserId = () => {
         const { userId } = req.query
 
         if (typeof userId !== 'string') {
@@ -157,11 +157,11 @@ export class SharedController extends UploadMediaUtils {
       }
 
       const userId =
-        caller === 'Admin' ? validUserId() : GetDefined.loggedInUser(req.user)._id.toString()
+        caller === 'Admin' ? getQueryUserId() : GetDefined.loggedInUser(req.user)._id.toString()
 
       sendResponse({
         res,
-        data: await CustomerPaymentService.getTransactionHistory(userId, req.query),
+        data: await PaymentService.getHistory(userId, req.query),
       })
     })
 
@@ -178,6 +178,12 @@ export class SharedController extends UploadMediaUtils {
       data: videos,
     })
   })
+
+  static fetchWallet = Catch.async(async (req, res) => {
+    sendResponse({
+      res,
+      data: await PaymentService.fetchWallet(GetDefined.loggedInUser(req.user)),
+      message: 'user wallet info',
+    })
+  })
 }
-
-

@@ -1,60 +1,11 @@
 import { CustomerPaymentService } from '../../services/core/CustomenrPaymentService'
+import { GiftCardService } from '../../services/core/GiftCardService'
+import { PaymentService } from '../../services/core/PaymentService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
-import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 
 export class CustomerPaymentController {
-  static startPayment = Catch.async(async ({ user, body }, res) => {
-    sendResponse({
-      res,
-      data: await CustomerPaymentService.startPayment(GetDefined.loggedInUser(user), body),
-      message: 'payment initiated',
-    })
-  })
-
-  static authorizePayment = Catch.async(async ({ user, body: { amount_charge } }, res) => {
-    sendResponse({
-      res,
-      message: 'payment authorization successfull',
-      data: await CustomerPaymentService.authorizePayment(
-        GetDefined.loggedInUser(user),
-        amount_charge,
-      ),
-    })
-  })
-
-  static createPayment = Catch.async(async ({ user, body }, res) => {
-    sendResponse({
-      res,
-      message: 'payment created and authorization activated',
-      data: await CustomerPaymentService.createPayment(GetDefined.loggedInUser(user), body),
-    })
-  })
-
-  static getPaymentReceipt = Catch.async(async (req, res) => {
-    const { reference } = req.query
-
-    if (typeof reference !== 'string') {
-      throw new OperationalError('required query.reference must be a string', 400)
-    }
-
-    sendResponse({
-      res,
-      data: await CustomerPaymentService.getPaymentRecepit(reference),
-      message: 'Payment initiated',
-    })
-  })
-
-  static addPayment = Catch.async(async ({ user, body }, res) => {
-    await CustomerPaymentService.addPayment(GetDefined.loggedInUser(user), body)
-
-    sendResponse({
-      res,
-      message: 'Payment added successfully',
-    })
-  })
-
   static fetchPlans = Catch.async(async (req, res) => {
     sendResponse({
       res,
@@ -81,28 +32,16 @@ export class CustomerPaymentController {
     })
   })
 
-  static topupWallet = Catch.async(async (req, res) => {
-    await CustomerPaymentService.topUpWallet({
-      user: GetDefined.loggedInUser(req.user),
-      reference: req.body.reference,
-    })
-
-    sendResponse({
-      res,
-      message: 'top up successful',
-    })
-  })
-
   static fetchWallet = Catch.async(async (req, res) => {
     sendResponse({
       res,
-      data: await CustomerPaymentService.fetchWallet(GetDefined.loggedInUser(req.user)),
-      message: 'user allet info',
+      data: await PaymentService.fetchWallet(GetDefined.loggedInUser(req.user)),
+      message: 'user wallet info',
     })
   })
 
   static redeemGiftCard = Catch.async(async (req, res) => {
-    await CustomerPaymentService.redeemGiftCard({
+    await GiftCardService.redeem({
       user: GetDefined.loggedInUser(req.user),
       giftCode: req.query.gift_code as string,
     })

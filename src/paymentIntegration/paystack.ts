@@ -21,6 +21,7 @@ export interface IntitializePaymentInput {
   amount: number
   currency: ValidCurrency
   metadata?: Record<string, any>
+  reference: string
 }
 
 export interface AuthorizePaymentInput extends IntitializePaymentInput {
@@ -36,6 +37,7 @@ export class Paystack {
       amount: (details.amount * 100).toString(),
       currency: details.currency,
       metadata: details.metadata ?? {},
+      reference: details.reference
     })
 
     if (response.data == null || !response.status) {

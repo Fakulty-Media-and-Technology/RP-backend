@@ -53,11 +53,12 @@ export const env = getValidEnv({
   // *** payments
   PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
 
+  // *** charges
   EVENT_HOURLY_CHARGES_NGN: setToNumberWithDefault('EVENT_HOURLY_CHARGES_NGN', 10000),
   EVENT_HOURLY_CHARGES_USD: setToNumberWithDefault('EVENT_HOURLY_CHARGES_USD', 10),
 
-  WITHDRAWAL_PERCENT: setToNumberWithDefault('WITHDRAWAL_PERCENT', 15),
   MIN_WITHDRAWAL_AMOUNT: setToNumberWithDefault('MIN_WITHDRAWAL_AMOUNT', 50000),
+  PAYOUT_SERVICE_CHARGE: setToNumberWithDefault('PAYOUT_SERVICE_CHARGE', 15),
 
   // livestream
   RP_RTMP_APP_NAME: process.env.RP_RTMP_APP_NAME,
