@@ -1,5 +1,6 @@
 import { WalletModel, WalletSchema } from '../models/wallet.model'
 import { StringOrObjectId } from '../types'
+import { getWalletCurrencyKey, ValidCurrency } from '../utils/currency'
 import { MaybeSession } from '../utils/mongoDbSessionRunner'
 
 export type WalletCurrencyKey = keyof Pick<WalletSchema, 'NGNBalance' | 'USDBalance'>
@@ -7,16 +8,16 @@ export type WalletCurrencyKey = keyof Pick<WalletSchema, 'NGNBalance' | 'USDBala
 interface UpdateBalanceInput {
   userId: StringOrObjectId
   topUpAmount: number
-  currencyKey: WalletCurrencyKey
+  currency: ValidCurrency
   session: MaybeSession
 }
 
 export class WalletRepo {
-  static updateBalance = ({ userId, topUpAmount, currencyKey, session }: UpdateBalanceInput) =>
+  static updateBalance = ({ userId, topUpAmount, currency, session }: UpdateBalanceInput) =>
     WalletModel.findOneAndUpdate(
       { userId },
       {
-        $inc: { [currencyKey]: topUpAmount },
+        $inc: { [getWalletCurrencyKey(currency)]: topUpAmount },
       },
       { upsert: true, session },
     )

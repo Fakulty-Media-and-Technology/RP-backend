@@ -230,7 +230,7 @@ export class PaymentService {
 
         break
 
-        // status already updated by the caller
+      // status already updated by the caller
       case 'live schedule':
         break
 
@@ -318,7 +318,7 @@ export class PaymentService {
   protected static _topUpWallet = async ({ payment, session }: PostPaymentUsecaseHandlerInput) => {
     await WalletRepo.updateBalance({
       session,
-      currencyKey: this._getWalletCurrencyKey(payment.currency),
+      currency: payment.currency,
       topUpAmount: payment.amount,
       userId: payment.userId,
     })
@@ -358,7 +358,7 @@ export class PaymentService {
 
     await WalletRepo.updateBalance({
       session,
-      currencyKey: this._getWalletCurrencyKey(payment.currency),
+      currency: payment.currency,
       topUpAmount: payment.amount,
       userId: liveDocument.client_id,
     })

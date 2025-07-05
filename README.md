@@ -280,7 +280,7 @@ src
  ┃ ┃ ┣ PushNotificationService.ts
  ┃ ┃ ┣ VideoService.ts
  ┃ ┃ ┣ VoteService.ts
- ┃ ┃ ┗ WithdrawalService.ts
+ ┃ ┃ ┗ PayoutService.ts
  ┃ ┣ media-access.ts
  ┃ ┣ media-management.ts
  ┃ ┣ notification.service.ts

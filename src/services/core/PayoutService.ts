@@ -1,9 +1,9 @@
 import env from '../../env'
-import { PayoutModel, PayoutSchema } from '../../models/payouts.model'
+import { PayoutDocument, PayoutModel, PayoutSchema } from '../../models/payouts.model'
 import { WalletModel } from '../../models/wallet.model'
 import Paystack from '../../paymentIntegration/paystack'
+import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
-import { PaystackTransferWebhooksData } from '../../types/webhooks'
 import { ValidCurrency } from '../../utils/currency'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { OperationalError } from '../../utils/OperationalError'
@@ -25,7 +25,7 @@ interface HandleWebhookEventByReferenceInput {
   status: PayoutSchema['status']
 }
 
-export class WithdrawalService {
+export class PayoutService {
   protected static _calcPercentOff = (amount: number, percent: number) => (amount * percent) / 100
 
   protected static _reqPayoutTransaction = async (
@@ -41,21 +41,6 @@ export class WithdrawalService {
     }: RequestPayoutInput,
     session: MaybeSession,
   ) => {
-    const unresolvedPay = await PayoutModel.findOne({
-      client_id: currentUser.id,
-      status: { $in: ['pending', 'processing'] },
-    })
-
-    if (unresolvedPay !== null) {
-      throw new OperationalError("you've already requested for an unresolved payout request", 400)
-    }
-
-    const accBal = await WalletModel.findOne({ user_id: currentUser._id })
-
-    if (accBal === null) {
-      throw new OperationalError('Account balance does not exist', 404)
-    }
-
     if (amount < env.MIN_WITHDRAWAL_AMOUNT) {
       throw new OperationalError(
         'requested amount is below limit of ' + env.MIN_WITHDRAWAL_AMOUNT,
@@ -63,9 +48,15 @@ export class WithdrawalService {
       )
     }
 
+    const wallet = await WalletModel.findOne({ user_id: currentUser._id })
+
+    if (wallet == null) {
+      throw new OperationalError('Wallet does not exist', 404)
+    }
+
     if (
-      (currency === 'NGN' && amount < accBal.NGNBalance) ||
-      (currency === 'USD' && amount < accBal.USDBalance)
+      (currency === 'NGN' && amount > wallet.NGNBalance) ||
+      (currency === 'USD' && amount > wallet.USDBalance)
     ) {
       throw new OperationalError('insufficient funds', 400)
     }
@@ -85,8 +76,21 @@ export class WithdrawalService {
       bankName,
     }).save({ session })
 
+    switch (currency) {
+      case 'NGN':
+        wallet.NGNBalance = wallet.NGNBalance - amount
+        break
+      case 'USD':
+        wallet.USDBalance = wallet.USDBalance - amount
+        break
+      default:
+        break
+    }
+
+    await wallet.save({ session })
+
     await Paystack.initiateTransfer({
-      payoutId: payout._id.toString(),
+      reference: payout._id.toString(),
       amount: earnings,
       fullName: `${currentUser.first_name} ${currentUser.last_name}`,
       bankCode,
@@ -153,11 +157,14 @@ export class WithdrawalService {
   // }
 
   static requestAllPayoutInfo = async (currentUser: LoggedInUser, query: ExpressRequestQuery) => {
-    const payouts = await new QueryParamsFeatures(PayoutModel.find({ client_id: currentUser.id }), {
-      defaultLimit: 200,
-      defaultPage: 0,
-      queryParams: query,
-    }).paginate().query
+    const payouts = await new QueryParamsFeatures(
+      PayoutModel.find({ client_id: currentUser.id }).sort({ _id: -1 }),
+      {
+        defaultLimit: 200,
+        defaultPage: 0,
+        queryParams: query,
+      },
+    ).paginate().query
 
     return payouts
   }
@@ -176,6 +183,15 @@ export class WithdrawalService {
         },
       },
     ])
+  }
+
+  protected static _refundWallet = async (payout: PayoutDocument, session: MaybeSession) => {
+    await WalletRepo.updateBalance({
+      userId: payout.client_id,
+      topUpAmount: payout.amount + payout.charges,
+      currency: payout.currency,
+      session,
+    })
   }
 
   static _handleWebhookEventByReferenceTransaction = async (
@@ -200,13 +216,15 @@ export class WithdrawalService {
         break
 
       case 'rejected':
+        await this._refundWallet(payout, session)
         break
 
       case 'reversed':
+        await this._refundWallet(payout, session)
         break
 
       default:
-        break
+        throw new OperationalError(`UNKOWNK PAYOUT STATUS: ${status}`, 400)
     }
   }
 
@@ -214,7 +232,7 @@ export class WithdrawalService {
     try {
       await withMongoDBSession(this._handleWebhookEventByReferenceTransaction, params)
     } catch (e: any) {
-      console.error('WithdrawalService.handleWebhookEventByReference error', e.message || e)
+      console.error('PayoutService.handleWebhookEventByReference error', e.message || e)
     }
   }
 }

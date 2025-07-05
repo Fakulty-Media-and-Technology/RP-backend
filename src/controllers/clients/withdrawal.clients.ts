@@ -1,11 +1,11 @@
-import { WithdrawalService } from '../../services/core/WithdrawalService'
+import { PayoutService } from '../../services/core/PayoutService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 export class ClientWithdrawalController {
   static reqPayout = Catch.async(async (req, res) => {
-    await WithdrawalService.requestPayout({
+    await PayoutService.requestPayout({
       ...req.body,
       currentUser: GetDefined.loggedInUser(req.user),
     })
@@ -17,7 +17,7 @@ export class ClientWithdrawalController {
   })
 
   // static reqPayoutEdit = Catch.async(async ({ user, params, body }, res) => {
-  //   await WithdrawalService.editPayout(GetDefined.loggedInUser(user), params.id, body)
+  //   await PayoutService.editPayout(GetDefined.loggedInUser(user), params.id, body)
 
   //   sendResponse({
   //     res,
@@ -29,7 +29,7 @@ export class ClientWithdrawalController {
     sendResponse({
       res,
       message: 'payout requests all history',
-      data: await WithdrawalService.requestAllPayoutInfo(GetDefined.loggedInUser(user), query),
+      data: await PayoutService.requestAllPayoutInfo(GetDefined.loggedInUser(user), query),
     })
   })
 
@@ -37,7 +37,7 @@ export class ClientWithdrawalController {
     sendResponse({
       res,
       message: 'payout requests all grouped',
-      data: await WithdrawalService.requestPayoutInfoGroups(GetDefined.loggedInUser(user)),
+      data: await PayoutService.requestPayoutInfoGroups(GetDefined.loggedInUser(user)),
     })
   })
 }

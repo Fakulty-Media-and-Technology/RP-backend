@@ -22,12 +22,13 @@ const payoutSchema = new Schema(
 
     charges: {
       type: Number,
+      required: true,
     },
 
     currency: {
       type: String,
       enum: validCurrencies,
-      requireD: true,
+      required: true,
     },
 
     accountNumber: {
@@ -58,4 +59,4 @@ const payoutSchema = new Schema(
 
 export const PayoutModel = model('payouts', payoutSchema)
 export type PayoutSchema = InferSchemaType<typeof payoutSchema>
-export type Payout = HydratedDocumentFromSchema<typeof payoutSchema>
+export type PayoutDocument = HydratedDocumentFromSchema<typeof payoutSchema>

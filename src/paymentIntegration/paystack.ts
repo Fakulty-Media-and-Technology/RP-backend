@@ -13,7 +13,7 @@ interface CreateTransaferRecipiantInput {
 
 interface InitiateTransferInput extends CreateTransaferRecipiantInput {
   amount: number
-  payoutId: string
+  reference: string
 }
 
 export interface IntitializePaymentInput {
@@ -92,7 +92,7 @@ export class Paystack {
   }
 
   static initiateTransfer = async ({
-    payoutId,
+    reference,
     amount,
     ...createRecipiantInput
   }: InitiateTransferInput) => {
@@ -101,7 +101,7 @@ export class Paystack {
     const response = await paystackClient.transfer.initiate({
       source: 'wallet',
       amount: amount * 100,
-      reference: payoutId,
+      reference,
       recipient: recepiantDetails.recipient_code,
     })
 
