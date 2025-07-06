@@ -48,7 +48,7 @@ export class PayoutService {
       )
     }
 
-    const wallet = await WalletModel.findOne({ user_id: currentUser._id })
+    const wallet = await WalletModel.findOne({ userId: currentUser._id })
 
     if (wallet == null) {
       throw new OperationalError('Wallet does not exist', 404)

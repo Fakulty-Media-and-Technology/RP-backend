@@ -1,3 +1,4 @@
+import env from '../../env'
 import { GiftCardModel } from '../../models/giftcard.model'
 import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
@@ -33,14 +34,14 @@ export class GiftCardService {
     return giftCard == null ? uniq_code : await this._getUniqueGiftCode(++triesCount)
   }
 
-  static createGiftCard = async ({ currentAdmin, amount, currency }: CreateGiftCardInput) => {
-    const giftCards = await GiftCardModel.find({}).sort({ _id: -1 }).limit(1)
+  static create = async ({ currentAdmin, amount, currency }: CreateGiftCardInput) => {
+    const [lastGiftCard] = await GiftCardModel.find({}).sort({ serialNumber: -1 }).limit(1)
 
-    const serialN = giftCards.length > 0 ? giftCards[0].serialNumber : 0
+    const lastSerialNumber = lastGiftCard?.serialNumber ?? 0
 
     const newGiftCard = await GiftCardModel.create({
       admin_id: currentAdmin._id,
-      serial_number: serialN + 1,
+      serialNumber: lastSerialNumber + 1,
       code: await this._getUniqueGiftCode(),
       currency,
       amount,
@@ -49,7 +50,30 @@ export class GiftCardService {
     return newGiftCard
   }
 
-  static fetchGiftCards = async (query: ExpressRequestQuery) => {
+  static activate = async (code: string, adminAuthToken: string) => {
+    if (adminAuthToken !== env.GIFT_CARD_AUTHORIZATION_TOKEN) {
+      throw new OperationalError('Invalid auth code', 403)
+    }
+
+    const card = await GiftCardModel.findOne({ code })
+
+    if (!card) {
+      throw new OperationalError('card not found', 404)
+    }
+
+    if (card.status === 'used') {
+      throw new OperationalError('card is used', 403)
+    }
+
+    if (card.status === 'active') {
+      throw new OperationalError('card is already active', 403)
+    }
+
+    card.status = 'active'
+    await card.save()
+  }
+
+  static fetch = async (query: ExpressRequestQuery) => {
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const cards = await GiftCardModel.aggregate([
@@ -93,8 +117,12 @@ export class GiftCardService {
       throw new OperationalError('invalid gift code entered', 404)
     }
 
-    if (card.used) {
-      throw new OperationalError('Oops, voucher has been used', 400)
+    if (card.status == 'used') {
+      throw new OperationalError('Oops, voucher has been used', 403)
+    }
+
+    if (card.status == 'inactive') {
+      throw new OperationalError('Voucher can not be used', 403)
     }
 
     await WalletRepo.updateBalance({
@@ -104,7 +132,7 @@ export class GiftCardService {
       session,
     })
 
-    card.used = true
+    card.status = 'used'
     await card.save({ session })
   }
 

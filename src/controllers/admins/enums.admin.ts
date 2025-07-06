@@ -132,7 +132,7 @@ export class AdminEnumController {
     })
   })
 
-  static getCast = Catch.async(async (req, res) => {
+  static getCasts = Catch.async(async (req, res) => {
     sendResponse({
       res,
       message: 'casts fetched',

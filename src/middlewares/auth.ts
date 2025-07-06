@@ -60,6 +60,7 @@ export class AuthMiddleware {
           last_name: 'user',
           role: 'guest',
         } as unknown as LoggedInUser
+        return next()
       }
 
       // this throws and is handled at the app layer

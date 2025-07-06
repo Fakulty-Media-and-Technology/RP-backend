@@ -211,9 +211,12 @@ export class SharedController extends UploadMediaUtils {
   })
 
   static fetchWallet = Catch.async(async (req, res) => {
+
+    const wallet = await PaymentService.fetchWallet(GetDefined.loggedInUser(req.user))
+
     sendResponse({
       res,
-      data: await PaymentService.fetchWallet(GetDefined.loggedInUser(req.user)),
+      data: wallet,
       message: 'user wallet info',
     })
   })

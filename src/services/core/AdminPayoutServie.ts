@@ -5,6 +5,7 @@ import { toObjectId } from '../../repositories/VideoRepo'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { MediaAccess } from '../media-access'
 
 type UpdatePayoutStatusWithSessionInput = {
   payStatus: string
@@ -14,20 +15,17 @@ type UpdatePayoutStatusWithSessionInput = {
 
 export class AdminPayoutService {
   static payOutRequests = async (query: ExpressRequestQuery) => {
-    const payoutQuery = PayoutModel.find({}).sort({ updatedAt: -1 }).populate({
-      path: 'processed_by',
-      select: 'first_name last_name email',
-    })
-
-    return await new QueryParamsFeatures(payoutQuery, {
+    const payouts = await new QueryParamsFeatures(PayoutModel.find({}).sort({ updatedAt: -1 }), {
       defaultLimit: 10,
       defaultPage: 1,
       queryParams: query,
     }).paginate().query
+
+    return payouts
   }
 
   static payoutById = async (payoutId: string) => {
-    const payout = await PayoutModel.aggregate([
+    const [payout] = await PayoutModel.aggregate([
       {
         $match: { _id: toObjectId(payoutId) },
       },
@@ -51,26 +49,27 @@ export class AdminPayoutService {
           ],
         },
       },
-      {
-        $set: {
-          user: {
-            $first: '$user',
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'processed_by',
-          foreignField: '_id',
-          as: 'processed_by',
 
-          pipeline: [{ $project: { first_name: 1, last_name: 1, email: 1 } }],
-        },
-      },
+      { $set: { user: { $first: '$user' }, __v: false } },
     ])
 
-    return payout
+    if (payout == null) {
+      throw new OperationalError('invalid payout Id', 404)
+    }
+
+    let photoUrl: string | null = null
+
+    if (payout.user?.photo?.Bucket && payout.user?.photo?.Key) {
+      photoUrl = await MediaAccess.getSignedUrl(
+        payout.user.photo.Bucket,
+        payout.user.photo.Key,
+        'photo',
+      )
+    }
+
+    return Object.assign(payout, {
+      photoUrl,
+    })
   }
 
   static payoutGroups = async () => {
@@ -127,4 +126,27 @@ export class AdminPayoutService {
       { upsert: true, session },
     )
   }
+}
+
+
+interface Response {
+  status: number;
+  message: string;
+  data: Data;
+}
+
+interface Data {
+  _id: string;
+  client_id: string;
+  amount: number;
+  charges: number;
+  account_number: string;
+  account_name: string;
+  bank_name: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: boolean;
+  processed_by: string[];
+  photoUrl: null;
 }

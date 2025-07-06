@@ -1,10 +1,11 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { validCurrencies } from '../utils/currency'
+import env from '../env'
 
 const paymentUseCases = [
   'subscription',
   'topup',
-  'vote', 
+  'vote',
   'donate',
   'live schedule',
   'live schedule ext',
@@ -57,7 +58,7 @@ const paymentSchema = new Schema(
     status: {
       type: String,
       enum: ['success', 'pending', 'failed', 'reversed', 'abandoned'],
-      default: 'pending',
+      default: env.IS_PROD ? 'pending' : 'success',
       index: true,
     },
 

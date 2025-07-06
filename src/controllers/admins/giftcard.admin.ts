@@ -4,8 +4,8 @@ import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminGiftCardController {
-  static createGiftCard = Catch.async(async ({ body: { amount, currency }, user }, res) => {
-    const card = await GiftCardService.createGiftCard({
+  static create = Catch.async(async ({ body: { amount, currency }, user }, res) => {
+    const card = await GiftCardService.create({
       currentAdmin: GetDefined.loggedInUser(user),
       currency,
       amount,
@@ -18,13 +18,22 @@ export class AdminGiftCardController {
     })
   })
 
-  static fetchGiftCards = Catch.async(async ({ query }, res) => {
-    const cards = await GiftCardService.fetchGiftCards(query)
+  static fetch = Catch.async(async ({ query }, res) => {
+    const cards = await GiftCardService.fetch(query)
 
     sendResponse({
       res,
       message: 'gift cards fetched successfully',
       data: cards,
+    })
+  })
+
+  static activate = Catch.async(async ({ params }, res) => {
+    await GiftCardService.activate(params.code, params.token)
+
+    sendResponse({
+      res,
+      message: 'activated',
     })
   })
 }

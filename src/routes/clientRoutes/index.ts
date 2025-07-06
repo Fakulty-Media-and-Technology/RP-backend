@@ -1,7 +1,6 @@
 import express from 'express'
 
 import { ClientProfileController } from '../../controllers/clients/profile.clients'
-import { CustomerPaymentController } from '../../controllers/customers/payment.customer'
 import { AuthMiddleware } from '../../middlewares/auth'
 
 import { router as ClientsLiveStreamRouter } from './../clientRoutes/clientsLivestreamRouter'
@@ -11,11 +10,10 @@ import { router as ClientProfileRouter } from './../clientRoutes/clientProfileRo
 import { SharedRoutes } from '../SharedRoutes'
 
 export const clientsRouter = express.Router()
-const sharedRoutes = new SharedRoutes(clientsRouter)
 
 clientsRouter.use(AuthMiddleware.authenticateRequest('clients-auth'))
 
-sharedRoutes
+new SharedRoutes(clientsRouter)
   .lives('Client')
   .updateUserProfile('clients-auth')
   .paymentHistory({ caller: 'Others' })
@@ -27,3 +25,5 @@ clientsRouter.use('/payouts', ClientPayoutRouter)
 clientsRouter.use('/event', ClientEventRouter)
 clientsRouter.use('/profile', ClientProfileRouter)
 clientsRouter.get('/history/payment/fetch', ClientProfileController.clientsPaymentHis)
+
+

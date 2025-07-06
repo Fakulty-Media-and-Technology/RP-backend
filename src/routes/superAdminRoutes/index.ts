@@ -24,19 +24,18 @@ import { throwDepricatedRoute } from '../../middlewares/depricate'
 import { Multer } from '../../utils/Multer'
 
 export const superAdminRouter = express.Router()
-const sharedRoutes = new SharedRoutes(superAdminRouter)
 
 superAdminRouter.post('/admins-signin', AdminOnboardingController.adminSignIn)
-
 superAdminRouter.use(AuthMiddleware.authenticateRequest('superadmin-auth'))
 
-sharedRoutes
+new SharedRoutes(superAdminRouter)
   .lives('Admin')
   .fetchSubtitles()
   .updateUserProfile('superadmin-auth')
   .paymentActions()
   .paymentHistory({ caller: 'Admin' })
   .vods()
+  .enums()
 
 superAdminRouter.use('/clients', superAdminClientsRouter)
 superAdminRouter.use('/enums', superAdminEnumsRouter)

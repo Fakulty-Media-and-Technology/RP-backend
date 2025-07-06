@@ -13,7 +13,7 @@ import {
 import { UserModel } from '../../models/users.model'
 import { VoteInfoModel } from '../../models/voteInfo.model'
 import { VoteModel } from '../../models/votes.model'
-import { WalletModel } from '../../models/wallet.model'
+import { WalletDocument, WalletModel } from '../../models/wallet.model'
 import Paystack from '../../paymentIntegration/paystack'
 import { PaymentRepo } from '../../repositories/PaymentRepo'
 import { WalletRepo, type WalletCurrencyKey } from '../../repositories/WalletRepo'
@@ -533,7 +533,20 @@ export class PaymentService {
   }
 
   static fetchWallet = async (user: LoggedInUser) => {
-    const custBalance = await WalletModel.find({ user_id: user._id }).select('-__v')
-    return custBalance
+    let wallet: WalletDocument | null = null
+
+    wallet = await WalletModel.findOne({ userId: user._id })
+
+    if (wallet == null) {
+      wallet = await WalletModel.create({
+        userId: user._id,
+      })
+    }
+
+    return Object.assign(wallet.toObject(), {
+      _id: undefined,
+      __v: undefined,
+      userId: undefined,
+    })
   }
 }

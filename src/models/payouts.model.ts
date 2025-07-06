@@ -10,11 +10,6 @@ const payoutSchema = new Schema(
       index: true,
     },
 
-    processedBy: {
-      type: [Schema.Types.ObjectId],
-      ref: 'users',
-    },
-
     amount: {
       type: Number,
       required: true,

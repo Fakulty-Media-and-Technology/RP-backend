@@ -5,12 +5,12 @@ import { updatePayOutReqStatusSchema } from '../../validations/admin'
 
 export const superAdminPayoutsRouter = Router()
 
-superAdminPayoutsRouter.get('/payouts/request/all', AdminPayoutController.payoutReqAll)
-superAdminPayoutsRouter.get('/payouts/request/one/:id', AdminPayoutController.payoutReqOne)
+superAdminPayoutsRouter.get('/request/all', AdminPayoutController.payoutReqAll)
+superAdminPayoutsRouter.get('/request/one/:id', AdminPayoutController.payoutReqOne)
 
 superAdminPayoutsRouter.put(
-  '/payouts/request/status/:id',
+  '/request/status/:id',
   requestValidator(updatePayOutReqStatusSchema),
   AdminPayoutController.payoutStatusUpdate,
 )
-// superAdminPayoutsRouter.get("/payouts/request/group", AdminPayoutController.payoutReqGroup);
+// superAdminPayoutsRouter.get("/request/group", AdminPayoutController.payoutReqGroup);

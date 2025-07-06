@@ -25,7 +25,7 @@ export class SharedRoutes {
   enums() {
     this._router.get('/get-categories', AdminEnumController.getCategories)
     this._router.get('/get-genres', AdminEnumController.getGenres)
-    this._router.get('/get-cast', AdminEnumController.getCast)
+    this._router.get('/get-casts', AdminEnumController.getCasts)
     this._router.get('/casts/:castId', AdminEnumController.getCastById)
     return this
   }
@@ -50,7 +50,7 @@ export class SharedRoutes {
   }
 
   paymentHistory(callerConfig: PaymentHistoryCaller) {
-    this._router.get('/trans/payment-history', SharedController.paymentHistory(callerConfig))
+    this._router.get('/payment-history', SharedController.paymentHistory(callerConfig))
     this._router.get('/wallet', SharedController.fetchWallet)
     return this
   }
@@ -81,3 +81,4 @@ export class SharedRoutes {
     return this
   }
 }
+

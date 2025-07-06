@@ -7,6 +7,7 @@ const giftcardVideosSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
 
     serialNumber: {
@@ -32,9 +33,10 @@ const giftcardVideosSchema = new Schema(
       unique: true,
     },
 
-    used: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'used'],
+      default: 'inactive',
     },
   },
 

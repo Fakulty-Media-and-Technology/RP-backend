@@ -37,7 +37,7 @@ export class Paystack {
       amount: (details.amount * 100).toString(),
       currency: details.currency,
       metadata: details.metadata ?? {},
-      reference: details.reference
+      reference: details.reference,
     })
 
     if (response.data == null || !response.status) {
@@ -101,7 +101,7 @@ export class Paystack {
     const recepiantDetails = await this._createTransferRecipient(createRecipiantInput)
 
     const response = await paystackClient.transfer.initiate({
-      source: 'wallet',
+      source: 'balance',
       amount: amount * 100,
       reference,
       recipient: recepiantDetails.recipient_code,

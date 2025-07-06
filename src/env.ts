@@ -45,6 +45,9 @@ export const env = getValidEnv({
   S3ACCESS_KEY: process.env.S3ACCESS_KEY,
   IAM_ROLE_ARN: process.env.IAM_ROLE_ARN,
 
+  // new
+  GIFT_CARD_AUTHORIZATION_TOKEN: process.env.GIFT_CARD_AUTHORIZATION_TOKEN ?? 'abcdef',
+
   // media
   KEY_PAIR_ID: process.env.KEY_PAIR_ID,
   CFS_PRIVATE_KEY: process.env.CFS_PRIVATE_KEY,

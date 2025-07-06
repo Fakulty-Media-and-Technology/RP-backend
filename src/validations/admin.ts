@@ -1,6 +1,7 @@
 import Joi from 'joi'
 
 import {
+  CURRENCY_SCHEMA,
   FLOATS_REG,
   ISO_STRING_SCHEMA,
   LIVE_TYPE_SCHEMA,
@@ -239,6 +240,7 @@ export const updateTrailerSchema = {
 export const createGiftCardSchema = {
   body: Joi.object({
     amount: Joi.number().min(0).required(),
+    currency: CURRENCY_SCHEMA.required()
   }),
 }
 

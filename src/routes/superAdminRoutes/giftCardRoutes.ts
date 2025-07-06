@@ -8,7 +8,8 @@ export const superAdminGiftCardRouter = Router()
 superAdminGiftCardRouter.post(
   '/generate/new',
   requestValidator(createGiftCardSchema),
-  AdminGiftCardController.createGiftCard,
+  AdminGiftCardController.create,
 )
 
-superAdminGiftCardRouter.get('/generated/fetch', AdminGiftCardController.fetchGiftCards)
+superAdminGiftCardRouter.put('/activate/:code/:token', AdminGiftCardController.activate)
+superAdminGiftCardRouter.get('/generated/fetch', AdminGiftCardController.fetch)
