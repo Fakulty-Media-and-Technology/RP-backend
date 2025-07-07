@@ -62,3 +62,12 @@ export const viewContentSchema = {
     contentType: STRING_SCHEMA.valid('vod', 'episode', 'live', 'trailer').required(),
   }),
 }
+
+export const createWatchedSchema = {
+  body: Joi.object({
+    parentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    parentType: STRING_SCHEMA.valid('episode', 'vod').required(),
+    duration: Joi.number().min(0).required(),
+    totalDuration: Joi.number().min(0).required(),
+  }),
+}

@@ -18,7 +18,7 @@ export class FeaturedService {
 
     const [vods, events] = await Promise.all([
       MovieMediaSourcesUtils.resolveMediaSources(
-        await VideoRepo.searchTitleOrDescriptionByTextReg(reg),
+        await VideoRepo.searchVodContentByRegex(reg),
         true,
         '1080p',
       ),

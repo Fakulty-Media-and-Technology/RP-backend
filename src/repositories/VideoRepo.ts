@@ -3,6 +3,7 @@ import { Video, VideoModel } from '../models/videos.model'
 import { skip } from '../utils/QueryParamsFeatures'
 import { SeasonModel } from '../models/seasons.model'
 import { AllVideoTypes } from '../utils/UploadMediaUtils'
+import { EpisodeModel } from '../models/episodes.model'
 
 export const toObjectId = (val: string) => new Types.ObjectId(val)
 
@@ -255,12 +256,16 @@ export class VideoRepo {
     })
   }
 
-  static searchTitleOrDescriptionByTextReg = async (textReg: RegExp, page = 1, limit = 10) => {
+  static searchVodContentByRegex = async (textReg: RegExp, page = 1, limit = 10) => {
     return await this.fetchVideoAggr({
       prevStages: [
         {
           $match: {
-            $or: [{ title: { $regex: textReg } }, { description: { $regex: textReg } }],
+            $or: [
+              { title: { $regex: textReg } },
+              { description: { $regex: textReg } },
+              { type: { $regex: textReg } },
+            ],
           },
         },
       ],
@@ -417,6 +422,39 @@ export class VideoRepo {
     { $project: { __v: false, trailer: false, views: false } },
   ]
 
+  protected static _fetchEpisode = ({
+    prevStages,
+    limit,
+    skip,
+  }: {
+    prevStages: PipelineStage[]
+    limit: number
+    skip: number
+  }) => {
+    //
+    const res = EpisodeModel.aggregate([
+      ...prevStages,
+      ...this._episodesPipeline,
+      { $sort: { _id: 1 } },
+      { $skip: skip },
+      { $limit: limit },
+    ])
+
+    return res
+  }
+
+  static fetchEpisodeById = (id: string) => {
+    return this._fetchEpisode({
+      skip: 0,
+      limit: 1,
+      prevStages: [
+        {
+          $match: { _id: toObjectId(id) },
+        },
+      ],
+    })
+  }
+
   static fetchSeasonsAndEpisodes = async (videoId: string, page: number, limit: number) => {
     const aggr = await SeasonModel.aggregate([
       {
@@ -433,7 +471,7 @@ export class VideoRepo {
         },
       },
 
-      { $sort: { createdAt: 1 } },
+      { $sort: { _id: 1 } },
       { $skip: skip(page, limit) },
       { $limit: limit },
     ])

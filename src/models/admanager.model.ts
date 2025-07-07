@@ -17,25 +17,32 @@ const schema = new Schema(
     type: {
       type: String,
       enum: ['general', 'movie_ad', 'web', 'mobile'],
+      default: 'mobile'
     },
+
     brand: {
       type: String,
       required: true,
     },
+
     photo: previewPhotoSchema,
 
     link: {
       type: String,
     },
+
     duration: {
       type: Number, // in days
     },
+
     start: {
       type: Date,
     },
+
     expiry: {
       type: Date,
     },
+
     active: {
       type: Boolean,
       //    default: true
