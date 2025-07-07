@@ -6,6 +6,7 @@ import { intitiatePaymentSchema, updateUserProfileSchema } from '../validations/
 import { AuthHeaderKey } from '../middlewares/auth'
 import { ClientLiveStreamController } from '../controllers/clients/livestream.clients'
 import { AdminEnumController } from '../controllers/admins/enums.admin'
+import { AdminFeaturedController } from '../controllers/admins/featured.admin'
 
 export class SharedRoutes {
   private _router: Router
@@ -15,10 +16,11 @@ export class SharedRoutes {
     router.use('/shared', this._router)
   }
 
-  vods() {
+  contents() {
     this._router.get('/vods/category/:catId', SharedController.fetchVidsForCategory)
     this._router.get('/vods/similar-by-cast/:castId/:vodId', SharedController.getSimilarByCastId)
     this._router.get('/vods/similar-by-genre/:genreId/:vodId', SharedController.getSimilarByGenreId)
+    this._router.get('/contents/search/:text', AdminFeaturedController.searchContents)
     return this
   }
 
@@ -70,7 +72,7 @@ export class SharedRoutes {
     return this
   }
 
-  updateUserProfile(authType: AuthHeaderKey) {
+  profile(authType: AuthHeaderKey) {
     this._router.put(
       '/user-profile/update/:userId',
       Multer.uploadSingleImage,
@@ -81,4 +83,3 @@ export class SharedRoutes {
     return this
   }
 }
-

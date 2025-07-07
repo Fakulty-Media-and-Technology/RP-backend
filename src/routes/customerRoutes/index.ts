@@ -46,10 +46,10 @@ customerRouter.post(
 
 new SharedRoutes(customerRouter)
   .fetchSubtitles()
-  .updateUserProfile('customer-auth')
+  .profile('customer-auth')
   .paymentActions()
   .paymentHistory({ caller: 'Others' })
-  .vods()
+  .contents()
 
 customerRouter.use('/profile', ProfileRouter)
 customerRouter.use('/upcoming', UpcomingRouter)

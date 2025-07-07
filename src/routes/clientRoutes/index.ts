@@ -15,7 +15,7 @@ clientsRouter.use(AuthMiddleware.authenticateRequest('clients-auth'))
 
 new SharedRoutes(clientsRouter)
   .lives('Client')
-  .updateUserProfile('clients-auth')
+  .profile('clients-auth')
   .paymentHistory({ caller: 'Others' })
   .enums()
   .paymentActions()

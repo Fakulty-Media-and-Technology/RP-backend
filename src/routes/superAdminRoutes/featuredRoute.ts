@@ -5,7 +5,6 @@ import { addFeaturedContentSchema } from '../../validations/admin'
 
 export const superAdminFeaturedRouter = Router()
 
-superAdminFeaturedRouter.get('/contents/search', AdminFeaturedController.searchContents)
 superAdminFeaturedRouter.get('/contents/fetch', AdminFeaturedController.getFeaturedContents)
 
 superAdminFeaturedRouter.post(
