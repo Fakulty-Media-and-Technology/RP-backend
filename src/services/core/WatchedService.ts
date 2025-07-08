@@ -19,13 +19,11 @@ export class WatchedService {
     duration,
     totalDuration,
   }: CreateWatchedTimeInput) => {
-    await WatchedModel.create({
-      userId: currentUserId,
-      parentId,
-      parentType,
-      duration,
-      totalDuration,
-    })
+    await WatchedModel.findOneAndUpdate(
+      { userId: currentUserId, parentId, parentType },
+      { $set: { duration, totalDuration } },
+      { upsert: true },
+    )
   }
 
   static fetchContinueWatching = async (userId: string, query: ExpressRequestQuery) => {
@@ -111,4 +109,3 @@ export class WatchedService {
     )
   }
 }
-

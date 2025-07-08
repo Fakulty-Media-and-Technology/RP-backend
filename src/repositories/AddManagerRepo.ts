@@ -8,7 +8,7 @@ interface FetchManyInput {
   type: unknown
 }
 
-interface FetchAdResult extends Omit<AdSchema, 'videoUpload'> {
+export interface FetchAdResult extends Omit<AdSchema, 'videoUpload'> {
   videoUpload: VideoUploadSchema
 }
 

@@ -1,12 +1,12 @@
 import { Settings, SettingsModel } from '../models/userSettings.model'
 import { MediaAccess } from '../services/media-access'
-import { Movie } from '../types/movie'
+import { Movie, Resolution } from '../types/movie'
 
 export type VidRes = NonNullable<Settings['video_quality']>
 
 export class VidUploadUtils {
   static getResSourceUrl = (
-    videoUpload: Movie['trailerVideoUpload'] | undefined,
+    videoUpload: { resolutions: Resolution[] } | undefined | null,
     defaultRes: VidRes,
   ) => {
     if (videoUpload == null) return null

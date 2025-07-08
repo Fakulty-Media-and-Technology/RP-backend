@@ -1,5 +1,5 @@
 import { AdModel, AdSchema } from '../../models/admanager.model'
-import { AdManagerRepo } from '../../repositories/AddManagerRepo'
+import { AdManagerRepo, FetchAdResult } from '../../repositories/AddManagerRepo'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { OperationalError } from '../../utils/OperationalError'
 import { MulterFile } from '../../types'
@@ -7,6 +7,9 @@ import { MediaManagement } from '../media-management'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { VideoUploadModel } from '../../models/videoupload.model'
 import { Purge } from '../../utils/Purge'
+import { VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { getPromiseAllFulfilledResults } from '../../utils/promises'
+import { MediaAccess } from '../media-access'
 
 export interface CreateAdData
   extends Omit<AdSchema, 'createdAt' | 'updatedAt' | 'video' | 'photo'> {
@@ -21,6 +24,37 @@ interface UploadMediaInput {
 }
 
 export class AdManagerService {
+  protected static _resolveMediaSources = async (ads: FetchAdResult[], userId: string) => {
+    const videoQuality = await VidUploadUtils.getUserVideoQuality(userId)
+
+    return getPromiseAllFulfilledResults(
+      await Promise.allSettled(
+        ads.map(async ad => {
+          const [photoSrcResult, videoSourceResult] = await Promise.allSettled([
+            MediaAccess.getSignedUrl(ad.photo.Bucket, ad.photo.Key, 'photo'),
+            VidUploadUtils.getResSourceUrl(ad.videoUpload, videoQuality),
+          ])
+
+          if (photoSrcResult.status === 'rejected') {
+            throw photoSrcResult.reason
+          }
+
+          if (videoSourceResult.status === 'rejected') {
+            throw videoSourceResult.reason
+          }
+
+          return Object.assign(ad, {
+            photoUrl: photoSrcResult.value,
+            videoUrl: videoSourceResult.value,
+            photo: undefined,
+            videoUpload: undefined,
+            __v: undefined,
+          })
+        }),
+      ),
+    )
+  }
+
   protected static _uploadMedia = async ({ videoFile, imageFile, expire }: UploadMediaInput) => {
     const [imageUploadResult, videoUploadResult] = await Promise.allSettled([
       MediaManagement.store({
@@ -104,7 +138,7 @@ export class AdManagerService {
     return adDocument
   }
 
-  static getMany = async (query: ExpressRequestQuery) => {
+  static getMany = async (currentUserId: string, query: ExpressRequestQuery) => {
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const ads = await AdManagerRepo.fetchMany({
@@ -113,12 +147,12 @@ export class AdManagerService {
       type: query.type,
     })
 
-    return ads
+    return await this._resolveMediaSources(ads, currentUserId)
   }
 
-  static getRandom = async (type: unknown) => {
+  static getRandom = async (currentUserId: string, type: unknown) => {
     const ads = await AdManagerRepo.fetcRandom(type)
-    return ads
+    return await this._resolveMediaSources(ads, currentUserId)
   }
 
   static deleteAd = async (addId: string) => {

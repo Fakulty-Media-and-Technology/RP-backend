@@ -5,6 +5,7 @@ import { OperationalError } from '../../utils/OperationalError'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { validate } from '../../middlewares/requestValidator'
 import { createAdSchema } from '../../validations/admin'
+import { GetDefined } from '../../utils/GetDefined'
 
 export class AdsController {
   static create = Catch.async(async (req, res) => {
@@ -39,18 +40,25 @@ export class AdsController {
     })
   })
 
-  static fetchMany = Catch.async(async ({ query }, res) => {
+  static fetchMany = Catch.async(async ({ query, user }, res) => {
+    const ads = await AdManagerService.getMany(GetDefined.loggedInUser(user)._id.toString(), query)
+
     sendResponse({
       res,
-      data: await AdManagerService.getMany(query),
+      data: ads,
       message: 'ads fetched',
     })
   })
 
-  static fetchRandom = Catch.async(async ({ query }, res) => {
+  static fetchRandom = Catch.async(async ({ query, user }, res) => {
+    const ads = await AdManagerService.getRandom(
+      GetDefined.loggedInUser(user)._id.toString(),
+      query.type,
+    )
+
     sendResponse({
       res,
-      data: await AdManagerService.getRandom(query.type),
+      data: ads,
       message: 'ad fetched',
     })
   })
@@ -64,3 +72,4 @@ export class AdsController {
     })
   })
 }
+

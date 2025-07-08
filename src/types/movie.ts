@@ -36,7 +36,7 @@ interface TrailerVideoUpload {
   resolutions: Resolution[]
 }
 
-interface Resolution {
+export interface Resolution {
   resolution: string
   key: string
 }
