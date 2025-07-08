@@ -1,10 +1,9 @@
 import { Router } from 'express'
-import { AdminAdsController } from '../../controllers/admins/ads.admin'
-import { requestValidator } from '../../middlewares/requestValidator'
-import { createAdSchema } from '../../validations/admin'
+import { AdsController } from '../../controllers/common/ad.controller'
+import { Multer } from '../../utils/Multer'
 
 export const superAdminAdsRouter = Router()
 
-superAdminAdsRouter.post('/create', requestValidator(createAdSchema), AdminAdsController.addAds)
-superAdminAdsRouter.get('/fetchall', AdminAdsController.getAds)
-superAdminAdsRouter.delete('/remove/:id', AdminAdsController.removeAds)
+superAdminAdsRouter.post('/create', Multer.createAdConfig, AdsController.create)
+superAdminAdsRouter.get('/fetchall', AdsController.fetchMany)
+superAdminAdsRouter.delete('/remove/:id', AdsController.removeById)

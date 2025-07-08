@@ -240,7 +240,7 @@ export const updateTrailerSchema = {
 export const createGiftCardSchema = {
   body: Joi.object({
     amount: Joi.number().min(0).required(),
-    currency: CURRENCY_SCHEMA.required()
+    currency: CURRENCY_SCHEMA.required(),
   }),
 }
 
@@ -333,20 +333,18 @@ export const createClientSchema = {
   }),
 }
 
-export const createAdSchema = {
-  body: Joi.object({
-    title: STRING_SCHEMA.required(),
-    sub_title: STRING_SCHEMA,
-    type: STRING_SCHEMA.valid('general', 'movie_ad', 'web', 'mobile'),
-    brand: STRING_SCHEMA.required(),
-    photo: PHOTO_SCHEMA.optional(),
-    link: STRING_SCHEMA,
-    duration: Joi.number(),
-    start: STRING_SCHEMA.isoDate(),
-    expiry: STRING_SCHEMA.isoDate(),
-    active: Joi.boolean(),
-  }),
-}
+export const createAdSchema = Joi.object({
+  title: STRING_SCHEMA.required(),
+  type: STRING_SCHEMA.valid('general', 'movie_ad', 'web', 'mobile').required(),
+  brand: STRING_SCHEMA.required(),
+  link: STRING_SCHEMA.required(),
+  duration: Joi.number().required(),
+  start: STRING_SCHEMA.isoDate().required(),
+  expiry: STRING_SCHEMA.isoDate().required(),
+  active: Joi.boolean().required(),
+  videoFile: Joi.object().required(),
+  imageFile: Joi.object().required(),
+})
 
 export const upcomingAllGetSchema = {
   query: Joi.object({
@@ -354,3 +352,7 @@ export const upcomingAllGetSchema = {
     limit: Joi.number(),
   }),
 }
+
+// export const createAdSchema = {
+
+// }

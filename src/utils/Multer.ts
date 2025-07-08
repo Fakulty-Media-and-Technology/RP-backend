@@ -75,6 +75,11 @@ export class Multer {
     { name: 'coverPhoto', maxCount: 1 },
   ])
 
+  static createAdConfig = this._configs.multipleTypesConfig.fields([
+    { name: 'video', maxCount: 1 },
+    { name: 'image', maxCount: 1 },
+  ])
+
   static createUpcomingConfig = this._configs.multipleTypesConfig.fields([
     { name: 'portraitPhoto', maxCount: 1 },
     { name: 'landscapePhoto', maxCount: 1 },

@@ -1,4 +1,4 @@
-import { HydratedDocumentFromSchema, Schema, model } from 'mongoose'
+import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { S3 } from '../services/aws/s3'
 import { videoUploadParents } from './assets'
 
@@ -71,3 +71,4 @@ schema.pre('save', async function (next) {
 
 export const VideoUploadModel = model('video_uploads', schema)
 export type VideoUpload = HydratedDocumentFromSchema<typeof schema>
+export type VideoUploadSchema = InferSchemaType<typeof schema>

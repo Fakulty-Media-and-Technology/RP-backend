@@ -163,7 +163,7 @@ export class UploadMediaUtils {
     }
   }
 
-  protected static _checkFiles = (files?: RequestFiles) => {
+   static _checkFiles = (files?: RequestFiles) => {
     if (files == null) {
       throw new OperationalError('expected at least one file', 400)
     }

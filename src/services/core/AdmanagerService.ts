@@ -1,44 +1,133 @@
-import { Request } from 'express'
-import { AdmanagerModel } from '../../models/admanager.model'
+import { AdModel, AdSchema } from '../../models/admanager.model'
 import { AdManagerRepo } from '../../repositories/AddManagerRepo'
-import { QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { OperationalError } from '../../utils/OperationalError'
+import { MulterFile } from '../../types'
+import { MediaManagement } from '../media-management'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { VideoUploadModel } from '../../models/videoupload.model'
+import { Purge } from '../../utils/Purge'
+
+export interface CreateAdData
+  extends Omit<AdSchema, 'createdAt' | 'updatedAt' | 'video' | 'photo'> {
+  videoFile: MulterFile
+  imageFile: MulterFile
+}
+
+interface UploadMediaInput {
+  videoFile: MulterFile
+  imageFile: MulterFile
+  expire: Date
+}
 
 export class AdManagerService {
-  static addAd = async (body: any) => {
-    const { title, sub_title, type, brand, photo, link, duration, start, expiry, active } = body
+  protected static _uploadMedia = async ({ videoFile, imageFile, expire }: UploadMediaInput) => {
+    const [imageUploadResult, videoUploadResult] = await Promise.allSettled([
+      MediaManagement.store({
+        file: imageFile,
+        baseDir: 'images',
+        expire,
+      }),
 
-    const ad = await AdManagerRepo.create({
-      title,
-      sub_title,
-      type,
-      brand,
-      photo,
-      link,
-      duration,
-      start,
-      expiry,
-      active,
-    })
+      MediaManagement.uploadAndInitiateMediaConvert({ file: videoFile, expire }),
+    ])
 
-    return ad
+    if (imageUploadResult.status === 'rejected') {
+      throw imageUploadResult.reason
+    }
+
+    if (videoUploadResult.status === 'rejected') {
+      throw videoUploadResult.reason
+    }
+
+    return {
+      imageUpload: imageUploadResult.value,
+      videoUpload: videoUploadResult.value,
+    }
   }
 
-  static getAds = async (query: Request['query']) => {
-    const queryFeatures = new QueryParamsFeatures(AdManagerRepo.getAdds().sort({ createdAt: -1 }), {
-      queryParams: query,
-      defaultLimit: 10,
-      defaultPage: 1,
+  static create = async (data: CreateAdData) =>
+    await withMongoDBSession(this._createTransaction, data)
+
+  static _createTransaction = async (
+    {
+      active,
+      expiry,
+      start,
+      duration,
+      link,
+      videoFile,
+      imageFile,
+      brand,
+      type,
+      title,
+    }: CreateAdData,
+    session: MaybeSession,
+  ) => {
+    const expireAt = new Date(expiry)
+
+    const { imageUpload, videoUpload } = await this._uploadMedia({
+      videoFile,
+      imageFile,
+      expire: expireAt,
     })
 
-    return await queryFeatures.paginate().query
+    const adDocument = new AdModel({
+      title,
+      type,
+      brand,
+      link,
+      duration,
+      active,
+      expiry: expireAt,
+      start: new Date(start),
+      photo: {
+        Bucket: imageUpload.Bucket,
+        Key: imageUpload.Key,
+        ContentType: 'image',
+      },
+    })
+
+    const videoUploadDocument = new VideoUploadModel({
+      bucket: videoUpload.Bucket,
+      key: videoUpload.Key,
+      mimetype: videoUpload.mimetype,
+      size: videoUpload.size,
+      isTranscoded: videoUpload.isTranscoded,
+      parentType: 'ad',
+      parentId: adDocument._id,
+    })
+
+    adDocument.videoUpload = videoUploadDocument._id
+    await adDocument.save({ session })
+    await videoUploadDocument.save({ session })
+    return adDocument
+  }
+
+  static getMany = async (query: ExpressRequestQuery) => {
+    const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
+
+    const ads = await AdManagerRepo.fetchMany({
+      skip,
+      limit,
+      type: query.type,
+    })
+
+    return ads
+  }
+
+  static getRandom = async (type: unknown) => {
+    const ads = await AdManagerRepo.fetcRandom(type)
+    return ads
   }
 
   static deleteAd = async (addId: string) => {
-    const deleted = await AdmanagerModel.findByIdAndDelete(addId)
+    const deleted = await AdModel.findByIdAndDelete(addId)
 
     if (deleted == null) {
       throw new OperationalError('invalid add Id', 404)
     }
+
+    Purge.videoUploadById(deleted.videoUpload)
   }
 }

@@ -21,6 +21,7 @@ import { router as PasswordResetRouter } from './../customerRoutes/passwordReset
 import { router as ProfileRouter } from './../customerRoutes/profileRouter'
 import { router as EnumsRouter } from './../customerRoutes/enumsRouter'
 import { router as WatchedRouter } from './watchedRouter'
+import { router as AdsRouter } from './addsRouter'
 
 import { SharedRoutes } from '../SharedRoutes'
 import { requestValidator } from '../../middlewares/requestValidator'
@@ -65,6 +66,7 @@ customerRouter.use('/subscription', SubscriptionRuuter)
 customerRouter.use('/notification', PushNotificationRouter)
 customerRouter.use('/notifications', NotificationsRouter)
 customerRouter.use('/watched', WatchedRouter)
+customerRouter.use('/ads', AdsRouter)
 
 customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.get('/banner/contents', SharedController.bannerContents)
