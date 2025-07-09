@@ -12,3 +12,4 @@ router.use((req, _, next) => {
 
 router.post('/register', requestValidator(createWatchedSchema), WatchedController.create)
 router.get('/continue-watching', WatchedController.continueWatching)
+router.delete('/:id', WatchedController.deleteOneById)

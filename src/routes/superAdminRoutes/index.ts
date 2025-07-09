@@ -22,6 +22,7 @@ import { superAdminUploadsRouter } from './uploadRoute'
 import { superAdminUsersRouter } from './userRouter'
 import { throwDepricatedRoute } from '../../middlewares/depricate'
 import { Multer } from '../../utils/Multer'
+import { OnboardingController } from '../../controllers/customers/onboarding.customer'
 
 export const superAdminRouter = express.Router()
 
@@ -56,19 +57,19 @@ superAdminRouter.use('/ads', superAdminAdsRouter)
 superAdminRouter.post(
   '/create-super-admin',
   requestValidator(createAdminORSuperAdminSchema),
-  AdminOnboardingController.createAdminORSuperAdmin('superadmin'),
+  OnboardingController.createAdminORSuperAdmin('superadmin'),
 )
 
 superAdminRouter.post(
   '/create-admin',
   Multer.uploadSingleImage,
   requestValidator(createAdminORSuperAdminSchema),
-  AdminOnboardingController.createAdminORSuperAdmin('admin'),
+  OnboardingController.createAdminORSuperAdmin('admin'),
 )
 
 superAdminRouter.post(
   '/create-clients',
   Multer.uploadSingleImage,
   requestValidator(createClientSchema),
-  AdminOnboardingController.clientsSignup,
+  OnboardingController.clientsSignup,
 )

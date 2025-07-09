@@ -2,13 +2,43 @@ import { OnboardingService } from '../../services/core/OnboardingService'
 import { Catch } from '../../utils/Catch'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
+import { UserSchema } from '../../models/users.model'
 
 export class OnboardingController {
-  static customerSignup = Catch.async(async ({ body }, res) => {
+  static createAdminORSuperAdmin = (role: Extract<UserSchema['role'], 'superadmin' | 'admin'>) =>
+    Catch.async(async (req, res) => {
+      await OnboardingService.createUser({ data: req.body, role, image: req.file })
+
+      sendResponse({
+        res,
+        message: `New ${role} created`,
+      })
+    })
+
+  static clientsSignup = Catch.async(async (req, res) => {
+    await OnboardingService.createUser({
+      data: req.body,
+      role: req.body.client_type,
+      image: req.file,
+    })
+
+    sendResponse({
+      res,
+      message: 'New client created',
+    })
+  })
+
+  static customerSignup = Catch.async(async (req, res) => {
+    const customer = await OnboardingService.createUser({
+      data: req.body,
+      role: 'customer',
+      image: req.file,
+    })
+
     sendResponse({
       res,
       message: 'New Customer Account Created successfully',
-      data: await OnboardingService.createCustomer(body),
+      data: customer,
     })
   })
 

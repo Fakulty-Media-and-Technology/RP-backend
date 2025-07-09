@@ -1,6 +1,22 @@
 import Joi from 'joi'
 import { MONGO_DB_OBJECT_ID_SCHEMA, STRING_SCHEMA } from './common'
 
+export const createCustomerSchema = {
+  body: Joi.object({
+    first_name: STRING_SCHEMA.required(),
+    last_name: STRING_SCHEMA.required(),
+    email: STRING_SCHEMA.email().required(),
+    password: STRING_SCHEMA.required(),
+    cpassword: STRING_SCHEMA.required(),
+    country_code: STRING_SCHEMA.required(),
+    mobile: STRING_SCHEMA.required(),
+    verified: Joi.boolean().required(),
+    gender: STRING_SCHEMA.valid('male', 'female', 'nil'),
+    dob: STRING_SCHEMA.isoDate(),
+    country: STRING_SCHEMA,
+  }),
+}
+
 export const fetchUpcomingSchema = {
   query: Joi.object({
     page: Joi.number(),

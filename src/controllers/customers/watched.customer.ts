@@ -14,6 +14,13 @@ export class WatchedController {
       res,
     })
   })
+  static deleteOneById = Catch.async(async (req, res) => {
+    await WatchedService.deleteById(req.params.id)
+
+    sendResponse({
+      res,
+    })
+  })
 
   static continueWatching = Catch.async(async (req, res) => {
     const watched = await WatchedService.fetchContinueWatching(
@@ -23,7 +30,7 @@ export class WatchedController {
 
     sendResponse({
       res,
-      data: watched
+      data: watched,
     })
   })
 }

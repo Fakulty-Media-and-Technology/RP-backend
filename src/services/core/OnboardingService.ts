@@ -1,4 +1,4 @@
-import { UserModel } from '../../models/users.model'
+import { UserDocument, UserModel, UserSchema } from '../../models/users.model'
 import { SettingsModel } from '../../models/userSettings.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { authCode } from '../../utils/strGen'
@@ -9,8 +9,126 @@ import { Password } from '../../utils/Password'
 import { ClientSession } from 'mongoose'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import env from '../../env'
+import { MulterFile } from '../../types'
+import { throwReasonIfAny } from '../../utils/promises'
+import { MediaManagement } from '../media-management'
+
+type Role = UserSchema['role']
+
+interface CreateUserInput {
+  data: Record<string, any>
+  role: Role
+  image?: Express.Multer.File
+}
 
 export class OnboardingService {
+  protected static _handleUserImageUpload = async (user: UserDocument, image?: MulterFile) => {
+    if (!image) return
+
+    const { Bucket, Key } = await MediaManagement.store({
+      file: image,
+      expire: undefined,
+      baseDir: 'images',
+    })
+
+    if (Bucket == null) {
+      throw new OperationalError('could not upload photo', 500)
+    }
+
+    user.photo = {
+      Bucket,
+      Key,
+    }
+  }
+
+  protected static _handleAuthCreds = async (user: UserDocument, password: string) => {
+    const [encPasswordResult, encPinResult] = await Promise.allSettled([
+      Password.encrypt(password),
+      Password.encrypt('1111'),
+    ])
+
+    if (encPasswordResult.status === 'rejected') {
+      throw encPasswordResult.reason
+    }
+
+    if (encPinResult.status === 'rejected') {
+      throw encPinResult.reason
+    }
+
+    user.password = encPasswordResult.value
+    user.pin = encPinResult.value
+  }
+
+  static createUser = async ({ data, role, image }: CreateUserInput) => {
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      cpassword,
+      country_code,
+      mobile,
+      gender,
+      country,
+      dob,
+    } = data
+
+    if (password !== cpassword) {
+      throw new OperationalError('passwords do not match', 400)
+    }
+
+    if (!Password.isStrong(password)) {
+      throw new OperationalError(
+        'password is too weak: use capital letter, small letter, interger and not less than 8 character',
+        400,
+      )
+    }
+
+    const user = new UserModel({
+      first_name: first_name,
+      last_name: last_name,
+      email: email,
+      country_code,
+      mobile,
+      role,
+      gender,
+      country,
+      dob,
+      verified: true,
+      approved: true,
+    })
+
+    const settled = await Promise.allSettled([
+      this._handleAuthCreds(user, password),
+      this._handleUserImageUpload(user, image),
+    ])
+
+    throwReasonIfAny(settled)
+    await user.save()
+
+    if (role !== 'customer') {
+      return
+    }
+
+    const tokenPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    }
+
+    const token = TokenManager.sign('access', tokenPayload)
+    const refToken = TokenManager.sign('refresh', tokenPayload)
+
+    return {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      accessToken: token,
+      refreshToken: refToken,
+      verificationPin: user.pin,
+    }
+  }
+
   private static _createCustomerWithSession = async (
     data: Record<string, any>,
     session: MaybeSession,
@@ -361,3 +479,5 @@ export class OnboardingService {
     }
   }
 }
+
+

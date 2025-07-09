@@ -1,17 +1,25 @@
 import { Aggregate, Types } from 'mongoose'
 import { WatchedModel, WatchedSchema } from '../../models/watched.model'
-import { LoggedInUser } from '../../types'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
-import { toObjectId, VideoRepo } from '../../repositories/VideoRepo'
+import { VideoRepo } from '../../repositories/VideoRepo'
 import { SettingsModel } from '../../models/userSettings.model'
+import { OperationalError } from '../../utils/OperationalError'
 
 interface CreateWatchedTimeInput extends Omit<WatchedSchema, 'userId' | 'createdAt' | 'updatedAt'> {
   currentUserId: string
 }
 
 export class WatchedService {
+  static deleteById = async (id: string) => {
+    const watched = await WatchedModel.findByIdAndDelete(id)
+
+    if (watched == null) {
+      throw new OperationalError('invalid id', 404)
+    }
+  }
+
   static create = async ({
     currentUserId,
     parentId,
@@ -54,8 +62,7 @@ export class WatchedService {
           },
         },
 
-        { $unset: '_id' },
-
+        { $set: { watchedDocumentId: '$_id', _id: '$$REMOVE' } },
         { $sort: { updatedAt: -1 } },
         { $skip: skip },
         { $limit: limit },

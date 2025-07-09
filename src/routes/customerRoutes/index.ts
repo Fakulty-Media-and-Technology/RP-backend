@@ -25,13 +25,20 @@ import { router as AdsRouter } from './addsRouter'
 
 import { SharedRoutes } from '../SharedRoutes'
 import { requestValidator } from '../../middlewares/requestValidator'
-import { viewContentSchema } from '../../validations/customers'
+import { createCustomerSchema, viewContentSchema } from '../../validations/customers'
 import { SharedController } from '../../controllers/common/shared.controller'
+import { Multer } from '../../utils/Multer'
 
 export const customerRouter = Router()
 
 // onboarding
-customerRouter.post('/signup', OnboardingController.customerSignup)
+customerRouter.post(
+  '/signup',
+  Multer.uploadSingleImage,
+  requestValidator(createCustomerSchema),
+  OnboardingController.customerSignup,
+)
+
 customerRouter.post('/general-signin', OnboardingController.signIn)
 customerRouter.get('/verification/get-token', OnboardingController.getVerificationToken)
 customerRouter.post('/signup/verifyaccount', OnboardingController.verifyAccount)
