@@ -52,14 +52,14 @@ jobs:
 
             # Map branch to Docker container
             if [ "${{ github.ref_name }}" = "typescript" ]; then
-              container_name="app"
+              container_name="reeplay"
               branch="typescript"
             else
               echo "Unknown branch. Exiting."
               exit 1
             fi
 
-            docker exec ${container_name} /bin/bash -c "
+            docker exec ${container_name} /bin/sh -c "
                 set -e  # Exit immediately if any command fails
                 git fetch origin && \
                 git reset --hard HEAD && \
