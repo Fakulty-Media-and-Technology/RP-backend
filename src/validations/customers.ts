@@ -87,3 +87,10 @@ export const createWatchedSchema = {
     totalDuration: Joi.number().min(0).required(),
   }),
 }
+
+export const registerRecentSearchSchema = {
+  body: Joi.object({
+    contentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    contentType: STRING_SCHEMA.valid('vod', 'live').required(),
+  }),
+}

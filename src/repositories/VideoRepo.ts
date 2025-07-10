@@ -4,6 +4,7 @@ import { skip } from '../utils/QueryParamsFeatures'
 import { SeasonModel } from '../models/seasons.model'
 import { AllVideoTypes } from '../utils/UploadMediaUtils'
 import { EpisodeModel } from '../models/episodes.model'
+import { MongoDBObjectId } from '../types/general'
 
 export const toObjectId = (val: string) => new Types.ObjectId(val)
 
@@ -228,6 +229,20 @@ export class VideoRepo {
     return aggr as Array<AddEpisodeUtilAggrRes>
   }
 
+  static fetchByIds = async (ids: MongoDBObjectId[]) => {
+    return await this.fetchVideoAggr({
+      prevStages: [
+        {
+          $match: { _id: { $in: ids } },
+        },
+      ],
+      fetchSeasons: false,
+      sortStage: { $sort: { _id: -1 } },
+      page: 0,
+      limit: 2,
+    })
+  }
+
   static fetchUpcoming = async (page = 1, limit = 10) => {
     return await this.fetchVideoAggr({
       prevStages: [
@@ -236,7 +251,7 @@ export class VideoRepo {
         },
       ],
       fetchSeasons: false,
-      sortStage: { $sort: { createdAt: -1 } },
+      sortStage: { $sort: { _id: -1 } },
       page,
       limit,
     })

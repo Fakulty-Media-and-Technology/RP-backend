@@ -1,18 +1,19 @@
-import { model, Schema } from 'mongoose'
+import { HydratedDocumentFromSchema, InferSchemaType, model, Schema } from 'mongoose'
 
-const contentsSchema = new Schema(
+const contentSchema = new Schema(
   {
     contentId: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: true,
     },
 
     contentType: {
       type: String,
       enum: ['vod', 'live'],
+      required: true,
     },
   },
-  { timestamps: false, index: false, versionKey: false },
+  { timestamps: false, _id: false, versionKey: false },
 )
 
 const schema = new Schema(
@@ -23,7 +24,7 @@ const schema = new Schema(
     },
 
     contents: {
-      type: [contentsSchema],
+      type: [contentSchema],
       required: true,
     },
   },
@@ -31,3 +32,5 @@ const schema = new Schema(
 )
 
 export const RecentSearchModel = model('recent_searches', schema)
+export type ContentSchema = InferSchemaType<typeof contentSchema>
+export type RecentSearchDocument = HydratedDocumentFromSchema<typeof schema>

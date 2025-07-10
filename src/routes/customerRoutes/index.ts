@@ -22,6 +22,7 @@ import { router as ProfileRouter } from './../customerRoutes/profileRouter'
 import { router as EnumsRouter } from './../customerRoutes/enumsRouter'
 import { router as WatchedRouter } from './watchedRouter'
 import { router as AdsRouter } from './addsRouter'
+import { RecentSearchRouter } from './recentSearchRouter'
 
 import { SharedRoutes } from '../SharedRoutes'
 import { requestValidator } from '../../middlewares/requestValidator'
@@ -72,6 +73,7 @@ customerRouter.use('/livestream', LivestreamRouter)
 customerRouter.use('/subscription', SubscriptionRuuter)
 customerRouter.use('/notification', PushNotificationRouter)
 customerRouter.use('/notifications', NotificationsRouter)
+customerRouter.use('/recent-search', RecentSearchRouter)
 customerRouter.use('/watched', WatchedRouter)
 customerRouter.use('/ads', AdsRouter)
 

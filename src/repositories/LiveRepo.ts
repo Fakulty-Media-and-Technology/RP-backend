@@ -2,6 +2,7 @@ import { FilterQuery, PipelineStage } from 'mongoose'
 import { LiveModel, LiveSchema } from '../models/lives.model'
 import { skip } from '../utils/QueryParamsFeatures'
 import { toObjectId } from './VideoRepo'
+import { MongoDBObjectId } from '../types/general'
 
 type FetchLives = {
   prevStages: PipelineStage[]
@@ -73,6 +74,14 @@ export class LiveRepo {
       prevStages: [{ $match: { featured: true, expired: false } }],
       page,
       limit,
+    })
+  }
+
+  static fetchByIds = async (ids: MongoDBObjectId[]) => {
+    return await this.fetchLivesAggr({
+      prevStages: [{ $match: { _id: { $in: ids } } }],
+      page: 0,
+      limit: 2,
     })
   }
 
