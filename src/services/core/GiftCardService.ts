@@ -138,4 +138,12 @@ export class GiftCardService {
 
   static redeem = async (input: RedeemGiftCardInput) =>
     await withMongoDBSession(this._redeemGiftCardSession, input)
+
+  static deleteById = async (id: string) => {
+    const dCard = await GiftCardModel.findByIdAndDelete(id)
+
+    if (dCard == null) {
+      throw new OperationalError('invalid gift card Id', 404)
+    }
+  }
 }

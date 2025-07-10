@@ -13,3 +13,4 @@ superAdminGiftCardRouter.post(
 
 superAdminGiftCardRouter.put('/activate/:code/:token', AdminGiftCardController.activate)
 superAdminGiftCardRouter.get('/generated/fetch', AdminGiftCardController.fetch)
+superAdminGiftCardRouter.delete('/:id', AdminGiftCardController.deleteById)

@@ -36,4 +36,12 @@ export class AdminGiftCardController {
       message: 'activated',
     })
   })
+
+  static deleteById = Catch.async(async ({ params }, res) => {
+    await GiftCardService.deleteById(params.id)
+
+    sendResponse({
+      res,
+    })
+  })
 }
