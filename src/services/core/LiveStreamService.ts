@@ -271,14 +271,14 @@ export class LiveStreamService {
   }
 
   private static _checkLiveOngoinStreams = async (data: CreateLiveData) => {
-    const live = await LiveModel.findOne({
+    const _ = await LiveModel.findOne({
       client_id: data.clientId,
       expiry: { $lte: new Date() },
     })
 
-    if (live) {
-      throw new OperationalError('all previous live must first expire', 403)
-    }
+    // if (live) {
+    //   throw new OperationalError('all previous live must first expire', 403)
+    // }
   }
 
   private static _checkLivePayments = async (data: CreateLiveData, session: MaybeSession) => {

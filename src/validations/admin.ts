@@ -354,6 +354,4 @@ export const upcomingAllGetSchema = {
   }),
 }
 
-// export const createAdSchema = {
 
-// }
