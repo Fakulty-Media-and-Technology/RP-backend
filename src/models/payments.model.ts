@@ -34,13 +34,6 @@ const paymentSchema = new Schema(
       required: true,
     },
 
-    // query by reference in webhooks
-    reference: {
-      type: String,
-      required: true,
-      index: true,
-    },
-
     fullName: {
       type: String,
       required: true,
