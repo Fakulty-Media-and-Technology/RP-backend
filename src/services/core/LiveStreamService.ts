@@ -284,9 +284,9 @@ export class LiveStreamService {
   private static _checkLivePayments = async (data: CreateLiveData, session: MaybeSession) => {
     const confirmPayment = await PaymentModel.findOne({
       _id: data.paymentId,
-      user_id: data.clientId,
+      userId: data.clientId,
       status: 'success',
-      is_used: false,
+      isUsed: false,
     })
 
     if (!confirmPayment) {
@@ -450,3 +450,5 @@ export class LiveStreamService {
     return await withMongoDBSession(this._createLiveSession, data)
   }
 }
+
+

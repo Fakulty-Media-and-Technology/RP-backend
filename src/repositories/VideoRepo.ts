@@ -238,7 +238,7 @@ export class VideoRepo {
       ],
       fetchSeasons: false,
       sortStage: { $sort: { _id: -1 } },
-      page: 0,
+      page: 1,
       limit: 2,
     })
   }

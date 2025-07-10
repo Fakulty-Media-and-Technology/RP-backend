@@ -80,7 +80,7 @@ export class LiveRepo {
   static fetchByIds = async (ids: MongoDBObjectId[]) => {
     return await this.fetchLivesAggr({
       prevStages: [{ $match: { _id: { $in: ids } } }],
-      page: 0,
+      page: 1,
       limit: 2,
     })
   }
