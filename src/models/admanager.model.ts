@@ -8,10 +8,6 @@ const schema = new Schema(
       required: true,
     },
 
-    // subTitle: {
-    //   type: String,
-    // },
-
     type: {
       type: String,
       enum: ['general', 'movie_ad', 'web', 'mobile'],
@@ -37,6 +33,11 @@ const schema = new Schema(
     },
 
     link: {
+      type: String,
+      required: true,
+    },
+
+    cta: {
       type: String,
       required: true,
     },

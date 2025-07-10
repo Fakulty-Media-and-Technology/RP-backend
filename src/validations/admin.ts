@@ -338,6 +338,7 @@ export const createAdSchema = Joi.object({
   type: STRING_SCHEMA.valid('general', 'movie_ad', 'web', 'mobile').required(),
   brand: STRING_SCHEMA.required(),
   link: STRING_SCHEMA.required(),
+  cta: STRING_SCHEMA.required(),
   duration: Joi.number().required(),
   start: STRING_SCHEMA.isoDate().required(),
   expiry: STRING_SCHEMA.isoDate().required(),

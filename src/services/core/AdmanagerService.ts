@@ -95,6 +95,7 @@ export class AdManagerService {
       brand,
       type,
       title,
+      cta,
     }: CreateAdData,
     session: MaybeSession,
   ) => {
@@ -112,6 +113,7 @@ export class AdManagerService {
       brand,
       link,
       duration,
+      cta,
       active,
       expiry: expireAt,
       start: new Date(start),
