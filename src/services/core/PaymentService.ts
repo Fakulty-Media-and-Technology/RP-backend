@@ -485,6 +485,7 @@ export class PaymentService {
       fullName: clientFullName,
       email: clientEmail,
       amount,
+      status: 'success',  // TODO: remove after webhooks is registered
       useCase,
     })
 
