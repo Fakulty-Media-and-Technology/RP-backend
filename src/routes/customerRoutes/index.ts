@@ -46,6 +46,8 @@ customerRouter.post('/signup/verifyaccount', OnboardingController.verifyAccount)
 customerRouter.use('/general', GeneralRouter)
 customerRouter.use('/pass-reset', PasswordResetRouter)
 
+customerRouter.use('/ads', AdsRouter)
+
 customerRouter.use(AuthMiddleware.authenticateRequest('customer-auth'))
 
 customerRouter.post(
@@ -75,7 +77,6 @@ customerRouter.use('/notification', PushNotificationRouter)
 customerRouter.use('/notifications', NotificationsRouter)
 customerRouter.use('/recent-search', RecentSearchRouter)
 customerRouter.use('/watched', WatchedRouter)
-customerRouter.use('/ads', AdsRouter)
 
 customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.get('/banner/contents', SharedController.bannerContents)
