@@ -24,6 +24,13 @@ export type AddSeasonUtilAggrRes = {
   movieExpiryDate: Date | undefined
 }
 
+type FetchByCategAndCastParams = {
+  catId: string
+  genreId: string
+  page: number
+  limit: number
+}
+
 export type AddEpisodeUtilAggrRes = {
   _id: string
   seasonTrailerLink: null
@@ -800,6 +807,19 @@ export class VideoRepo {
       sortStage: { $sort: { enagements: -1 } },
       fetchSeasons: false,
       page: 1,
+      limit,
+    })
+  }
+
+  static fetchByCategAndCast = ({ catId, genreId, page, limit }: FetchByCategAndCastParams) => {
+    return this.fetchVideoAggr({
+      prevStages: [
+        { $match: { category: toObjectId(catId), genre: toObjectId(genreId) } },
+        ...this._mostEngagedPrevStages,
+      ],
+      sortStage: { $sort: { enagements: -1 } },
+      fetchSeasons: false,
+      page,
       limit,
     })
   }
