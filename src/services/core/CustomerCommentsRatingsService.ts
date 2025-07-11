@@ -1,4 +1,4 @@
-import {  QueryOptions, UpdateQuery } from 'mongoose'
+import { QueryOptions, UpdateQuery } from 'mongoose'
 import { Comment, CommentModel } from '../../models/comments.model'
 import { RatingModel } from '../../models/rating.model'
 import { ReactionModel } from '../../models/reaction.model'
@@ -28,7 +28,7 @@ type AddCommentInput = {
   parentId: string
 }
 
-type AddReplyInput = { parentCommentId: string } & AddCommentInput
+type AddReplyInput = { parentCommentId: string; parentReplyId?: string } & AddCommentInput
 
 type AddReaction = {
   commentId: string
@@ -126,13 +126,14 @@ export class CustomerCommentsRatingsService {
   }
 
   static _addReplyTransaction = async (
-    { parentCommentId, message, authorId, parentType, parentId }: AddReplyInput,
+    { parentCommentId, message, authorId, parentType, parentId, parentReplyId }: AddReplyInput,
     session: MaybeSession,
   ) => {
     const reply = await new CommentModel({
       userId: authorId,
       message,
       parentCommentId,
+      parentReplyId,
       parentId,
       parentType,
     }).save({ session })

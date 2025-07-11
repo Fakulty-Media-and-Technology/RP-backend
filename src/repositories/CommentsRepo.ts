@@ -107,8 +107,26 @@ export class CommentsRepo {
           from: 'comments',
           localField: '_id',
           foreignField: 'parentCommentId',
+
+          let: {
+            parentCommentId: '$parentCommentId',
+            parentReplyId: '$parentReplyId',
+          },
+
           as: 'replies',
-          pipeline: [{ $project: { _id: true } }],
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ['$parentCommentId', '$$parentCommentId'] },
+                    { $eq: ['$parentReplyId', '$$parentReplyId'] },
+                  ],
+                },
+              },
+            },
+            { $project: { _id: true } },
+          ],
         },
       },
 
@@ -134,6 +152,18 @@ export class CommentsRepo {
       },
 
       { $match: { 'user.0': { $exists: true } } },
+
+      {
+        $set: {
+          parentCommentId: {
+            $cond: {
+              if: { $eq: [{ $ifNull: ['$parentReplyId', null] }, null] },
+              then: '$parentCommentId',
+              else: '$parentReplyId',
+            },
+          },
+        },
+      },
 
       {
         $project: {

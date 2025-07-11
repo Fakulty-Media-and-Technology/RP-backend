@@ -50,11 +50,8 @@ export class AdsController {
     })
   })
 
-  static fetchRandom = Catch.async(async ({ query, user }, res) => {
-    const ads = await AdManagerService.getRandom(
-      GetDefined.loggedInUser(user)._id.toString(),
-      query.type,
-    )
+  static fetchRandom = Catch.async(async ({ query }, res) => {
+    const ads = await AdManagerService.getRandom(query.type)
 
     sendResponse({
       res,
@@ -72,4 +69,3 @@ export class AdsController {
     })
   })
 }
-

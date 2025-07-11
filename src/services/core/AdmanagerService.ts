@@ -7,7 +7,7 @@ import { MediaManagement } from '../media-management'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { VideoUploadModel } from '../../models/videoupload.model'
 import { Purge } from '../../utils/Purge'
-import { VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { VidRes, VidUploadUtils } from '../../utils/VideoUploadUtils'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { MediaAccess } from '../media-access'
 
@@ -24,8 +24,8 @@ interface UploadMediaInput {
 }
 
 export class AdManagerService {
-  protected static _resolveMediaSources = async (ads: FetchAdResult[], userId: string) => {
-    const videoQuality = await VidUploadUtils.getUserVideoQuality(userId)
+  protected static _resolveMediaSources = async (ads: FetchAdResult[], userId?: string) => {
+    const videoQuality: VidRes = userId ? await VidUploadUtils.getUserVideoQuality(userId) : '720p'
 
     return getPromiseAllFulfilledResults(
       await Promise.allSettled(
@@ -152,9 +152,9 @@ export class AdManagerService {
     return await this._resolveMediaSources(ads, currentUserId)
   }
 
-  static getRandom = async (currentUserId: string, type: unknown) => {
+  static getRandom = async (type: unknown) => {
     const ads = await AdManagerRepo.fetcRandom(type)
-    return await this._resolveMediaSources(ads, currentUserId)
+    return await this._resolveMediaSources(ads)
   }
 
   static deleteAd = async (addId: string) => {
