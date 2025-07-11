@@ -304,6 +304,31 @@ export class SharedController extends UploadMediaUtils {
     })
   })
 
+  static randomSuggestions = Catch.async(async ({ query, user, params }, res) => {
+    const vidQuality = await VidUploadUtils.getUserVideoQuality(
+      GetDefined.loggedInUser(user)._id.toString(),
+    )
+
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
+
+    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
+      await VideoRepo.fetchSimilarByGenreId({
+        page,
+        limit,
+        genreId: params.genreId,
+        vodToExcludeId: query.vodId,
+      }),
+      true,
+      vidQuality,
+    )
+
+    sendResponse({
+      res,
+      data: vods,
+      message: '',
+    })
+  })
+
   static getFeaturedLives = Catch.async(async ({ query, user }, res) => {
     const vidQuality = await VidUploadUtils.getUserVideoQuality(
       GetDefined.loggedInUser(user)._id.toString(),

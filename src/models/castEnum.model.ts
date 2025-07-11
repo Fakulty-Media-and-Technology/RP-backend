@@ -22,7 +22,6 @@ const schema = new Schema(
     name: {
       type: String,
       trim: true,
-      lowercase: true,
       index: true,
       required: true,
     },
@@ -30,7 +29,6 @@ const schema = new Schema(
     description: {
       type: String,
       trim: true,
-      lowercase: true,
       required: true,
     },
 
