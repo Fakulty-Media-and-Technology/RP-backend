@@ -31,7 +31,12 @@ export type GetCommentsResponse = {
   totalEngagements: number
 }
 
-type Author = {
+export type GetRepliesResponse = GetCommentsResponse & {
+  _id: string
+  parentCommentAuthor: Author
+}
+
+export type Author = {
   fullName: string
   photoKey: null | string
   photoBucket: null | string
@@ -80,7 +85,7 @@ export class CommentsRepo {
   }
 
   static getReplies = ({ parentCommentId, skip, limit }: GetRepliesInput) => {
-    return this._getCommentsRes({
+    return this._getRepliesRes({
       skip,
       limit,
       match: {
@@ -89,46 +94,9 @@ export class CommentsRepo {
     })
   }
 
-  static _getCommentsRes = ({ match, skip, limit }: GetCommentsAggeResInput) => {
+  static _getRepliesRes = ({ match, skip, limit }: GetCommentsAggeResInput) => {
     const res = CommentModel.aggregate([
-      match,
-
-      {
-        $lookup: {
-          from: 'reactions',
-          localField: '_id',
-          foreignField: 'commentId',
-          as: 'reactions',
-        },
-      },
-
-      {
-        $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'parentCommentId',
-
-          let: {
-            parentCommentId: '$parentCommentId',
-            parentReplyId: '$parentReplyId',
-          },
-
-          as: 'replies',
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $or: [
-                    { $eq: ['$parentCommentId', '$$parentCommentId'] },
-                    { $eq: ['$parentReplyId', '$$parentReplyId'] },
-                  ],
-                },
-              },
-            },
-            { $project: { _id: true } },
-          ],
-        },
-      },
+      { $match: { ...match.$match, parentCommentId: { $exists: true } } },
 
       {
         $lookup: {
@@ -164,6 +132,126 @@ export class CommentsRepo {
           },
         },
       },
+
+      {
+        $lookup: {
+          from: 'comments',
+          localField: 'parentCommentId',
+          foreignField: '_id',
+          as: 'parentComment',
+
+          pipeline: [
+            {
+              $lookup: {
+                from: 'users',
+                foreignField: '_id',
+                localField: 'userId',
+                as: 'parentCommentUser',
+
+                pipeline: [
+                  {
+                    $project: {
+                      fullName: { $concat: ['$first_name', ' ', '$last_name'] },
+                      photoKey: { $ifNull: ['$photo.Key', null] },
+                      photoBucket: { $ifNull: ['$photo.Bucket', null] },
+                      userDocumentId: '$_id',
+                      _id: '$$REMOVE',
+                    },
+                  },
+                ],
+              },
+            },
+
+            { $match: { 'parentCommentUser.0': { $exists: true } } },
+
+            {
+              $set: {
+                user: { $first: '$parentCommentUser' },
+              },
+            },
+          ],
+        },
+      },
+
+      { $match: { 'parentComment.0': { $exists: true } } },
+
+      {
+        $lookup: {
+          from: 'reactions',
+          localField: '_id',
+          foreignField: 'commentId',
+          as: 'reactions',
+        },
+      },
+
+      {
+        $project: {
+          commentId: '$_id',
+          author: { $first: '$user' },
+          parentCommentAuthor: { $first: '$parentComment.user' },
+          totalReactions: { $size: '$reactions' },
+          content: '$message',
+          reactions: '$$REMOVE',
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+
+      { $set: { totalEngagements: { $sum: ['$totalReactions', '$totalReplies'] } } },
+
+      { $sort: { _id: 1, totalEngagements: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+    ])
+
+    return res as Aggregate<GetRepliesResponse[]>
+  }
+
+  static _getCommentsRes = ({ match, skip, limit }: GetCommentsAggeResInput) => {
+    const res = CommentModel.aggregate([
+      { $match: { ...match.$match, parentCommentId: { $exists: false } } },
+
+      {
+        $lookup: {
+          from: 'reactions',
+          localField: '_id',
+          foreignField: 'commentId',
+          as: 'reactions',
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'parentCommentId',
+          as: 'replies',
+          pipeline: [{ $project: { _id: true } }],
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+
+          pipeline: [
+            {
+              $project: {
+                fullName: { $concat: ['$first_name', ' ', '$last_name'] },
+                photoKey: { $ifNull: ['$photo.Key', null] },
+                photoBucket: { $ifNull: ['$photo.Bucket', null] },
+                userDocumentId: '$_id',
+                _id: '$$REMOVE',
+              },
+            },
+          ],
+        },
+      },
+
+      { $match: { 'user.0': { $exists: true } } },
 
       {
         $project: {

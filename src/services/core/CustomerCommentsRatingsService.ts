@@ -10,7 +10,12 @@ import { LiveModel } from '../../models/lives.model'
 import { SeasonModel } from '../../models/seasons.model'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { commentsParent } from '../../models/assets'
-import { CommentsRepo, GetCommentsResponse } from '../../repositories/CommentsRepo'
+import {
+  Author,
+  CommentsRepo,
+  GetCommentsResponse,
+  GetRepliesResponse,
+} from '../../repositories/CommentsRepo'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { MediaAccess } from '../media-access'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
@@ -199,26 +204,34 @@ export class CustomerCommentsRatingsService {
     await withMongoDBSession(this._deleteCommentTransaction, commentId)
   }
 
-  protected static _attachAuthorPhoto = async (comments: GetCommentsResponse[]) => {
+  protected static _attachAuthorPhoto = async (
+    comments: (GetRepliesResponse | GetCommentsResponse)[],
+  ) => {
+    const fetchAuthorPhotoUrl = async (author?: Author) => {
+      if (author == null) return
+
+      const bucket = author.photoBucket
+      const key = author.photoKey
+
+      if (bucket && key) {
+        return await MediaAccess.getSignedUrl(bucket, key, 'photo')
+      }
+    }
+
     const withAuthorPhotosResults = await Promise.allSettled(
       comments.map(async comment => {
-        const bucket = comment.author.photoBucket
-        const key = comment.author.photoKey
+        const [authorPhotoURL, parentCommentAuthorPhotoURL] = await Promise.all([
+          fetchAuthorPhotoUrl(comment.author),
 
-        let photoUrl: string | null = null
+          // @ts-ignore
+          fetchAuthorPhotoUrl(comment.parentCommentAuthor as any),
+        ])
 
-        if (bucket && key) {
-          photoUrl = await MediaAccess.getSignedUrl(bucket, key, 'photo')
+        return {
+          ...comment,
+          authorPhotoURL,
+          parentCommentAuthorPhotoURL,
         }
-
-        return Object.assign(comment, {
-          author: {
-            ...comment.author,
-            photoBucket: undefined,
-            photoKey: undefined,
-            photoUrl,
-          },
-        })
       }),
     )
 
