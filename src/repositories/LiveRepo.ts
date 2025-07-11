@@ -125,6 +125,15 @@ export class LiveRepo {
     })
   }
 
+  static fetchRandom = async (limit = 3) => {
+    return this.fetchLivesAggr({
+      prevStages: [{ $sample: { size: limit * 2 } }],
+      sortStage: { $sort: { createdAt: -1 } },
+      page: 1,
+      limit,
+    })
+  }
+
   static fetchLivesAggr = async ({ prevStages, sortStage, page, limit }: FetchLives) => {
     const sortPaginateStages: PipelineStage[] = [
       sortStage ?? { $sort: { _id: -1 } },

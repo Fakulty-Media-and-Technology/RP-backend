@@ -785,12 +785,21 @@ export class VideoRepo {
     })
   }
 
-  static fetchMostEngaged = async (page = 1, limit = 5) => {
-    return await this.fetchVideoAggr({
+  static fetchMostEngaged = (page = 1, limit = 5) => {
+    return this.fetchVideoAggr({
       prevStages: this._mostEngagedPrevStages,
       sortStage: { $sort: { enagements: -1 } },
       fetchSeasons: false,
       page,
+      limit,
+    })
+  }
+  static fetchRandom = (limit = 3) => {
+    return this.fetchVideoAggr({
+      prevStages: [{ $sample: { size: limit * 2 } }, ...this._mostEngagedPrevStages],
+      sortStage: { $sort: { enagements: -1 } },
+      fetchSeasons: false,
+      page: 1,
       limit,
     })
   }

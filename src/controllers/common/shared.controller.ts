@@ -304,27 +304,51 @@ export class SharedController extends UploadMediaUtils {
     })
   })
 
-  static randomSuggestions = Catch.async(async ({ query, user, params }, res) => {
-    const vidQuality = await VidUploadUtils.getUserVideoQuality(
-      GetDefined.loggedInUser(user)._id.toString(),
-    )
+  static randomSuggestions = Catch.async(async ({ query, user }, res) => {
+    const userId = GetDefined.loggedInUser(user)._id.toString()
+    const { limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
+    const [vidQualityResult, vodsRepoReult, liveRepoResult] = await Promise.allSettled([
+      VidUploadUtils.getUserVideoQuality(userId),
+      VideoRepo.fetchRandom(limit),
+      LiveRepo.fetchRandom(limit),
+    ])
 
-    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
-      await VideoRepo.fetchSimilarByGenreId({
-        page,
-        limit,
-        genreId: params.genreId,
-        vodToExcludeId: query.vodId,
-      }),
-      true,
-      vidQuality,
-    )
+    if (vidQualityResult.status == 'rejected') {
+      throw vidQualityResult.reason
+    }
+
+    if (vodsRepoReult.status == 'rejected') {
+      throw vodsRepoReult.reason
+    }
+
+    if (liveRepoResult.status == 'rejected') {
+      throw liveRepoResult.reason
+    }
+
+    const vidQuality = vidQualityResult.value
+
+    const [movieResult, liveResults] = await Promise.allSettled([
+      MovieMediaSourcesUtils.resolveMediaSources(vodsRepoReult.value, true, vidQuality),
+      LiveMediaSourcesUtils.resolveSources(liveRepoResult.value, vidQuality),
+    ])
+
+    if (movieResult.status == 'rejected') {
+      throw movieResult.reason
+    }
+
+    if (liveResults.status == 'rejected') {
+      throw liveResults.reason
+    }
+
+    const response = {
+      vods: movieResult.value,
+      lives: liveResults.value,
+    }
 
     sendResponse({
       res,
-      data: vods,
+      data: response,
       message: '',
     })
   })
