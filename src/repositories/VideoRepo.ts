@@ -35,16 +35,16 @@ export type AddEpisodeUtilAggrRes = {
   totalPreviousEpisodes: number
 }
 
-type FetchByCastIdExcludingVodByVodIdParams = {
+type FetchSimilarByCastIdInput = {
   castId: string
-  vodToExcludeId: string
+  vodToExcludeId: unknown
   page: number
   limit: number
 }
 
-type FetchByGenreIdExcludingVodByVodIdParams = {
+type FetchSimilarByGenreIdInput = {
   genreId: string
-  vodToExcludeId: string
+  vodToExcludeId: unknown
   page: number
   limit: number
 }
@@ -705,17 +705,20 @@ export class VideoRepo {
     return aggr
   }
 
-  static fetchByCastIdExcludingVodByVodId = async ({
+  static fetchSimilarByCastId = async ({
     castId,
     vodToExcludeId,
     page,
     limit,
-  }: FetchByCastIdExcludingVodByVodIdParams) => {
+  }: FetchSimilarByCastIdInput) => {
+    const match: PipelineStage.Match = { $match: { cast: toObjectId(castId) } }
+
+    if (typeof vodToExcludeId === 'string') {
+      match.$match._id = { $ne: toObjectId(vodToExcludeId) }
+    }
+
     return await this.fetchVideoAggr({
-      prevStages: [
-        { $match: { cast: toObjectId(castId), _id: { $ne: toObjectId(vodToExcludeId) } } },
-        ...this._mostEngagedPrevStages,
-      ],
+      prevStages: [match, ...this._mostEngagedPrevStages],
       sortStage: { $sort: { enagements: -1 } },
       fetchSeasons: false,
       page,
@@ -723,17 +726,20 @@ export class VideoRepo {
     })
   }
 
-  static fetchByGenreIdExcludingVodByVodId = async ({
+  static fetchSimilarByGenreId = ({
     genreId,
     vodToExcludeId,
     page,
     limit,
-  }: FetchByGenreIdExcludingVodByVodIdParams) => {
-    return await this.fetchVideoAggr({
-      prevStages: [
-        { $match: { genre: toObjectId(genreId), _id: { $ne: toObjectId(vodToExcludeId) } } },
-        ...this._mostEngagedPrevStages,
-      ],
+  }: FetchSimilarByGenreIdInput) => {
+    const match: PipelineStage.Match = { $match: { genre: toObjectId(genreId) } }
+
+    if (typeof vodToExcludeId === 'string') {
+      match.$match._id = { $ne: toObjectId(vodToExcludeId) }
+    }
+
+    return this.fetchVideoAggr({
+      prevStages: [match, ...this._mostEngagedPrevStages],
       sortStage: { $sort: { enagements: -1 } },
       fetchSeasons: false,
       page,

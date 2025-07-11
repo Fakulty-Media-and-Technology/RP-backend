@@ -211,7 +211,6 @@ export class SharedController extends UploadMediaUtils {
   })
 
   static fetchWallet = Catch.async(async (req, res) => {
-
     const wallet = await PaymentService.fetchWallet(GetDefined.loggedInUser(req.user))
 
     sendResponse({
@@ -263,11 +262,11 @@ export class SharedController extends UploadMediaUtils {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const vods = await MovieMediaSourcesUtils.resolveMediaSources(
-      await VideoRepo.fetchByCastIdExcludingVodByVodId({
+      await VideoRepo.fetchSimilarByCastId({
         page,
         limit,
         castId: params.castId,
-        vodToExcludeId: params.vodId,
+        vodToExcludeId: query.vodId,
       }),
       true,
       vidQuality,
@@ -288,11 +287,11 @@ export class SharedController extends UploadMediaUtils {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const vods = await MovieMediaSourcesUtils.resolveMediaSources(
-      await VideoRepo.fetchByGenreIdExcludingVodByVodId({
+      await VideoRepo.fetchSimilarByGenreId({
         page,
         limit,
         genreId: params.genreId,
-        vodToExcludeId: params.vodId,
+        vodToExcludeId: query.vodId,
       }),
       true,
       vidQuality,

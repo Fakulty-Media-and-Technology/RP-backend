@@ -18,8 +18,8 @@ export class SharedRoutes {
 
   contents() {
     this._router.get('/vods/category/:catId', SharedController.fetchVidsForCategory)
-    this._router.get('/vods/similar-by-cast/:castId/:vodId', SharedController.getSimilarByCastId)
-    this._router.get('/vods/similar-by-genre/:genreId/:vodId', SharedController.getSimilarByGenreId)
+    this._router.get('/vods/similar-by-cast/:castId', SharedController.getSimilarByCastId)
+    this._router.get('/vods/similar-by-genre/:genreId', SharedController.getSimilarByGenreId)
     this._router.get('/featured/contents/search/:text', AdminFeaturedController.searchContents)
     return this
   }
