@@ -51,8 +51,13 @@ const paymentSchema = new Schema(
     status: {
       type: String,
       enum: ['success', 'pending', 'failed', 'reversed', 'abandoned'],
-      default: env.IS_PROD ? 'pending' : 'success',
       index: true,
+    },
+
+    method: {
+      type: String,
+      enum: ['paystack', 'wallet'],
+      required: true,
     },
 
     isUsed: {

@@ -28,7 +28,7 @@ import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParam
 
 type PaystackTransaction = Awaited<ReturnType<typeof Paystack.verifyPayment>>
 type PaymentStatus = PaymentSchema['status']
-type PaymentCurrency = PaymentSchema['currency']
+type PaymentMethod = PaymentSchema['method']
 
 type UserRole = LoggedInUser['role']
 /**Includes dynamic Parameters depending on payment useCase */
@@ -39,6 +39,7 @@ interface InitiatePaymentInput {
   fullName?: string
   email?: string
   useCase: PaymentUseCase
+  method: PaymentMethod
 
   /**Required for live extention donations */
   liveId?: string
@@ -471,6 +472,7 @@ export class PaymentService {
       liveId,
       voteInfoId,
       contestantId,
+      method,
     }: InitiatePaymentInput,
     session: MaybeSession,
   ) => {
@@ -485,9 +487,13 @@ export class PaymentService {
       fullName: clientFullName,
       email: clientEmail,
       amount,
-      status: 'success',  // TODO: remove after webhooks is registered
+      method,
+      status: method === 'wallet' ? 'success' : 'pending',
       useCase,
     })
+
+
+    
 
     await this._prePaymentOperations({
       session,
