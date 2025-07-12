@@ -1,6 +1,7 @@
 import { VoteService } from '../../services/core/VoteService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
+import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 
 export class ClientVoteController {
@@ -25,8 +26,15 @@ export class ClientVoteController {
     })
   })
 
-  static addVoteContestant = Catch.async(async ({ user, body }, res) => {
-    await VoteService.addVoteContestant(GetDefined.loggedInUser(user), body)
+  static addVoteContestant = Catch.async(async ({ user, body, file }, res) => {
+    if (file == null) {
+      throw new OperationalError('photo file is required', 400)
+    }
+
+    await VoteService.addVoteContestant(GetDefined.loggedInUser(user), {
+      ...body,
+      photoFile: file,
+    })
 
     sendResponse({
       res,

@@ -354,4 +354,12 @@ export const upcomingAllGetSchema = {
   }),
 }
 
-
+export const createContestantSchema = {
+  body: Joi.object({
+    liveId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    names: STRING_SCHEMA.required(),
+    occupation: STRING_SCHEMA.required(),
+    bio: STRING_SCHEMA.required(),
+    contact: STRING_SCHEMA.required(),
+  }),
+}

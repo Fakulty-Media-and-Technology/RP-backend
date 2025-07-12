@@ -2,10 +2,11 @@ import { MediaAccess } from '../../../src/services/media-access'
 import { ContestantsModel } from '../../models/contestants.model'
 import { LiveModel } from '../../models/lives.model'
 import { VoteInfoModel } from '../../models/voteInfo.model'
-import { LoggedInUser } from '../../types'
+import { LoggedInUser, MulterFile } from '../../types'
 import { ValidCurrency } from '../../utils/currency'
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { MediaManagement } from '../media-management'
 
 interface CreateVoteInfoInput {
   liveId: string
@@ -18,6 +19,15 @@ interface CreateVoteInfoInput {
 interface UpdateVoteInfoInput extends Partial<Omit<CreateVoteInfoInput, 'currentUser' | 'liveId'>> {
   currentUser: LoggedInUser
   liveId: string
+}
+
+interface AddContestantInput {
+  liveId: string
+  names: string
+  photoFile: MulterFile
+  occupation: string
+  bio: string
+  contact: string
 }
 
 export class VoteService {
@@ -89,25 +99,35 @@ export class VoteService {
     await voteInfo.save()
   }
 
-  static addVoteContestant = async (currentUser: LoggedInUser, data: Record<string, any>) => {
-    const { live_id, names, photo, occupation, bio, contact } = data
-
+  static addVoteContestant = async (currentUser: LoggedInUser, data: AddContestantInput) => {
     if (currentUser.role !== 'tvshow') {
       throw new OperationalError('this feature is not available to you', 400)
     }
 
-    if (!live_id || !names || !occupation || !bio || !contact) {
-      throw new OperationalError('all inputs are required', 400)
+    const contestant = new ContestantsModel({
+      liveId: data.liveId,
+      names: data.names,
+      occupation: data.occupation,
+      bio: data.bio,
+      contact: data.contact,
+    })
+
+    const photoUpload = await MediaManagement.store({
+      file: data.photoFile,
+      expire: undefined,
+      baseDir: 'images',
+    })
+
+    if (!photoUpload.Key || !photoUpload.Bucket) {
+      throw new OperationalError('could not upload photo please try again', 500)
     }
 
-    await ContestantsModel.create({
-      live_id: live_id,
-      names: names,
-      photo: photo,
-      occupation: occupation,
-      bio: bio,
-      contact: contact,
-    })
+    contestant.photo = {
+      Bucket: photoUpload.Bucket,
+      Key: photoUpload.Key,
+    }
+
+    await contestant.save()
   }
 
   static voteStatusInfo = async (currentUser: LoggedInUser, live_id: string) => {
@@ -155,12 +175,20 @@ export class VoteService {
     const contestants = await ContestantsModel.find({ liveId }).sort({ name: 1 })
 
     return await Promise.all(
-      contestants.map(async event => {
+      contestants.map(async contestant => {
         return {
-          ...event.toObject(),
-          photo_url: await MediaAccess.getSignedUrl(event.photo.Bucket, event.photo.Key, 'photo'),
+          ...contestant.toObject(),
+          photo_url: await MediaAccess.getSignedUrl(
+            contestant.photo.Bucket,
+            contestant.photo.Key,
+            'photo',
+          ),
+          photo: undefined,
+          __v: undefined
         }
       }),
     )
   }
 }
+
+
