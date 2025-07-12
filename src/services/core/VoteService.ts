@@ -152,7 +152,7 @@ export class VoteService {
   }
 
   static fetchVoteContestants = async (liveId: string) => {
-    const contestants = await ContestantsModel.find({ live_id: liveId }).sort({ name: 1 })
+    const contestants = await ContestantsModel.find({ liveId }).sort({ name: 1 })
 
     return await Promise.all(
       contestants.map(async event => {
