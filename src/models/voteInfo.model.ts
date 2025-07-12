@@ -7,7 +7,7 @@ const voteinfoSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Live',
       required: true,
-      index: true,
+      unique: true,
     },
 
     price: {
@@ -32,4 +32,4 @@ const voteinfoSchema = new Schema(
 
 export const VoteInfoModel = model('voteinfos', voteinfoSchema)
 export type VoteInfoSchema = InferSchemaType<typeof voteinfoSchema>
-export type VoteInfo = HydratedDocumentFromSchema<typeof voteinfoSchema>
+export type VoteInfoDocument = HydratedDocumentFromSchema<typeof voteinfoSchema>

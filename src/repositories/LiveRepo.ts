@@ -258,6 +258,23 @@ export class LiveRepo {
       },
 
       ...sortPaginateStages,
+
+      {
+        $lookup: {
+          from: 'voteinfos',
+          localField: '_id',
+          foreignField: 'liveId',
+          as: 'voteInfo',
+          pipeline: [{ $unset: ['liveId', '__v'] }],
+        },
+      },
+
+      {
+        $set: {
+          voteInfo: { $ifNull: [{ $first: '$voteInfo' }, null] },
+        },
+      },
+
       {
         $project: {
           views: false,
