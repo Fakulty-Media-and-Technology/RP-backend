@@ -2,6 +2,7 @@ import path from 'node:path'
 import ejs from 'ejs'
 import nodemailer from 'nodemailer'
 import env from '../env'
+import { capitalize } from './strGen'
 
 interface RecipientData {
   firstName: string
@@ -21,25 +22,11 @@ export class Email {
   private firstName: string
   private lastName: string
   private email: string
-  private sender: string
 
   constructor(recipientData: RecipientData) {
-    this.firstName = recipientData.firstName
-    this.lastName = recipientData.lastName
+    this.firstName = capitalize(recipientData.firstName)
+    this.lastName = capitalize(recipientData.lastName)
     this.email = recipientData.email
-    this.sender = env.MAILTRAP_USER
-  }
-
-  protected createTransport() {
-    const transport = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: env.MAILTRAP_USER,
-        pass: env.MAILTRAP_PASS,
-      },
-    })
-
-    return transport
   }
 
   protected async makeHtml({ template, pin }: MakeHtmlInput) {
@@ -56,12 +43,22 @@ export class Email {
   async sendMsg({ subject, ...params }: SendMessageInput) {
     const html = await this.makeHtml(params)
 
-    await this.createTransport().sendMail({
+    const transport = nodemailer.createTransport({
+      host: env.MAIL_HOST,
+      port: 587,
+      secure: false,
+      auth: {
+        user: env.MAIL_USER,
+        pass: env.MAIL_PASSWORD,
+      },
+    })
+
+    await transport.sendMail({
       from: {
         name: env.MAIL_SENDER,
-        address: this.sender,
+        address: env.MAIL_USER,
       },
-      to: this.email,
+      to: this.email.toLowerCase(),
       subject,
       html,
       text: html,
@@ -94,3 +91,4 @@ export class Email {
 }
 
 export default Email
+

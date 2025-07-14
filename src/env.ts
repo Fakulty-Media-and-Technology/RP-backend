@@ -31,8 +31,10 @@ export const env = getValidEnv({
 
   // emails
   MAIL_SENDER: process.env.MAIL_SENDER,
-  MAILTRAP_USER: process.env.MAILTRAP_USER,
-  MAILTRAP_PASS: process.env.MAILTRAP_PASS,
+  MAIL_HOST: process.env.MAIL_HOST,
+  MAIL_USER: process.env.MAIL_USER,
+  MAIL_PASSWORD: process.env.MAIL_PASSWORD,
+
 
   //   secrets
   JWT_SECRET: process.env.JWT_SECRET,
