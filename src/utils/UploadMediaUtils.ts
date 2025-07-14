@@ -19,6 +19,7 @@ import { addSeriesSchema, addMovieOrSkitSchema, addMusicVideoSchema } from '../v
 import { validate } from '../middlewares/requestValidator'
 import { Purge } from './Purge'
 import { MaybeSession } from './mongoDbSessionRunner'
+import { ValidCurrency } from './currency'
 
 type RequestFiles =
   | {
@@ -67,6 +68,7 @@ export type MovieData = {
   artistName?: string
 
   amount?: number
+  currency?: ValidCurrency
 
   active?: boolean
   showViews?: boolean
@@ -416,6 +418,7 @@ export class UploadMediaUtils {
       videoLink: data.videoLink,
       trailerLink: data.trailerLink,
       runtime: data.runtime,
+      currency: data.currency,
       active: data.active,
       showViews: data.showViews,
       is_series: type === 'series',

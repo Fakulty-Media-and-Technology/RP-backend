@@ -19,7 +19,7 @@ export class WalletRepo {
       {
         $inc: { [getWalletCurrencyKey(currency)]: topUpAmount },
       },
-      { upsert: true, session },
+      { upsert: true, session, new: true },
     )
 
   static totalBalance = () =>

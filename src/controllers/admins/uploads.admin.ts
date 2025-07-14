@@ -47,14 +47,16 @@ export class AdminUploadController extends UploadMediaUtils {
 
     this._validateAddMovieData(type, data, files)
 
+    const vod = await AdminUploadService.addVideo({
+      type,
+      data: data,
+      adminId: admin.id,
+    })
+
     sendResponse({
       res,
       message: `${type} added successfully`,
-      data: await AdminUploadService.addVideo({
-        type,
-        data: data,
-        adminId: admin.id,
-      }),
+      data: vod,
     })
   })
 

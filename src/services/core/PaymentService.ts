@@ -607,25 +607,6 @@ export class PaymentService {
     liveId,
     videoId,
   }: HandleWalletPaymentInput) => {
-    // debit customer wallet
-    const customerWallet = await WalletRepo.updateBalance({
-      userId: currentUser._id,
-      topUpAmount: payment.amount * -1,
-      currency: payment.currency,
-      session,
-    })
-
-    if (customerWallet == null) {
-      throw new OperationalError('customer wallet not found', 404)
-    }
-
-    if (
-      (payment.currency === 'NGN' && customerWallet.NGNBalance < 0) ||
-      (payment.currency === 'USD' && customerWallet.USDBalance < 0)
-    ) {
-      throw new OperationalError('insufficient funds', 403)
-    }
-
     switch (payment.useCase) {
       case 'live-watch-exclusive':
         const live = await this._validateWatchExclusiveLive(payment, liveId)
@@ -658,7 +639,26 @@ export class PaymentService {
         await this._validateWatchExclusiveVOD(payment, videoId)
         break
       default:
-        throw new OperationalError('unsupoorted wallet payment', 400)
+        throw new OperationalError('unsupported wallet payment', 400)
+    }
+
+    // debit customer wallet
+    const customerWallet = await WalletRepo.updateBalance({
+      userId: currentUser._id,
+      topUpAmount: payment.amount * -1,
+      currency: payment.currency,
+      session,
+    })
+
+    if (customerWallet == null) {
+      throw new OperationalError('customer wallet not found', 404)
+    }
+
+    if (
+      (payment.currency === 'NGN' && customerWallet.NGNBalance < 0) ||
+      (payment.currency === 'USD' && customerWallet.USDBalance < 0)
+    ) {
+      throw new OperationalError('insufficient funds', 403)
     }
 
     await payment.save({ session })
@@ -775,4 +775,3 @@ export class PaymentService {
     })
   }
 }
-

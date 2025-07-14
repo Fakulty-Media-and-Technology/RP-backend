@@ -6,10 +6,7 @@ import { VideoRepo } from '../../repositories/VideoRepo'
 import { Season } from '../../types/movie'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 
-import {
-  guranteeNumericResult,
-  QueryParamsFeaturesOptions,
-} from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult, QueryParamsFeaturesOptions } from '../../utils/QueryParamsFeatures'
 
 import {
   AddEpisodeInput,
@@ -22,12 +19,6 @@ import {
 
 import { Purge } from '../../utils/Purge'
 import { SeasonModel } from '../../models/seasons.model'
-
-// type EditVideoInput = {
-//   vidId: string
-//   type: AllVideoTypes
-//   changes: Record<string, any>
-// }
 
 export class AdminUploadService extends UploadMediaUtils {
   static resolveWithMediaSources = (queryParams: QueryParamsFeaturesOptions['queryParams']) =>

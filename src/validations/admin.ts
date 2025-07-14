@@ -38,8 +38,6 @@ export const addMovieOrSkitSchema = Joi.object({
 
   // maps to details in UI
   description: STRING_SCHEMA.required(),
-  amount: Joi.number().strict(),
-
   runtime: STRING_SCHEMA,
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG),
 
@@ -58,6 +56,18 @@ export const addMovieOrSkitSchema = Joi.object({
   vidClass: STRING_SCHEMA.valid('free', 'ad', 'exclusive', 'premium').required(),
 
   expiryDate: ISO_STRING_SCHEMA,
+
+  currency: Joi.when('vidClass', {
+    is: 'exclusive',
+    then: CURRENCY_SCHEMA.required(),
+    otherwise: Joi.forbidden(),
+  }),
+
+  amount: Joi.when('vidClass', {
+    is: 'exclusive',
+    then: Joi.number().strict().required(),
+    otherwise: Joi.forbidden(),
+  }),
 })
   .xor('trailerLink', 'trailer')
   .xor('video', 'videoLink')
@@ -73,7 +83,6 @@ export const addSeriesSchema = Joi.object({
   defaultRating: STRING_SCHEMA.pattern(FLOATS_REG).required(),
 
   description: STRING_SCHEMA,
-  amount: Joi.number().strict(),
 
   // files
   landscapePoster: Joi.object().required(),
@@ -89,6 +98,18 @@ export const addSeriesSchema = Joi.object({
   genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
   cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA.required(),
   expiryDate: ISO_STRING_SCHEMA,
+
+  currency: Joi.when('vidClass', {
+    is: 'exclusive',
+    then: CURRENCY_SCHEMA.required(),
+    otherwise: Joi.forbidden(),
+  }),
+
+  amount: Joi.when('vidClass', {
+    is: 'exclusive',
+    then: Joi.number().strict().required(),
+    otherwise: Joi.forbidden(),
+  }),
 }).xor('trailerLink', 'trailer')
 
 export const addMusicVideoSchema = Joi.object({
@@ -104,7 +125,6 @@ export const addMusicVideoSchema = Joi.object({
   primaryColor: STRING_SCHEMA.required(),
 
   description: STRING_SCHEMA,
-  amount: Joi.number().strict(),
 
   // files
   landscapePoster: Joi.object().required(),
@@ -118,6 +138,18 @@ export const addMusicVideoSchema = Joi.object({
 
   trailerLink: STRING_SCHEMA.optional(), // file
   trailer: Joi.object().optional(),
+
+  currency: Joi.when('vidClass', {
+    is: 'exclusive',
+    then: CURRENCY_SCHEMA.required(),
+    otherwise: Joi.forbidden(),
+  }),
+
+  amount: Joi.when('vidClass', {
+    is: 'exclusive',
+    then: Joi.number().strict().required(),
+    otherwise: Joi.forbidden(),
+  }),
 })
   .xor('trailerLink', 'trailer')
   .xor('video', 'videoLink')
