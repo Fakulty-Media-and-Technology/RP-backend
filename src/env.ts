@@ -59,9 +59,10 @@ export const env = getValidEnv({
   // *** charges
   EVENT_HOURLY_CHARGES_NGN: setToNumberWithDefault('EVENT_HOURLY_CHARGES_NGN', 10000),
   EVENT_HOURLY_CHARGES_USD: setToNumberWithDefault('EVENT_HOURLY_CHARGES_USD', 10),
-
   MIN_WITHDRAWAL_AMOUNT: setToNumberWithDefault('MIN_WITHDRAWAL_AMOUNT', 50000),
   PAYOUT_SERVICE_CHARGE: setToNumberWithDefault('PAYOUT_SERVICE_CHARGE', 15),
+  NGN_PREMIUM_CONTENT_COST: setToNumberWithDefault('NGN_PREMIUM_CONTENT_COST', 400),
+  USD_PREMIUM_CONTENT_COST: setToNumberWithDefault('USD_PREMIUM_CONTENT_COST', 10),
 
   // livestream
   RP_RTMP_APP_NAME: process.env.RP_RTMP_APP_NAME,

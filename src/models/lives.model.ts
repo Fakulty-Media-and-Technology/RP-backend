@@ -1,4 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { validCurrencies } from '../utils/currency'
 
 const schema = new Schema(
   {
@@ -17,6 +18,8 @@ const schema = new Schema(
 
     paymentExtentions: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
     donationPayments: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
+    premiumPayments: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
+    exclusivePayments: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
 
     title: {
       type: String,
@@ -65,7 +68,7 @@ const schema = new Schema(
 
     vid_class: {
       type: String,
-      enum: ['free', 'ad', 'exclusive', 'premium'],
+      enum: ['free', 'ad', 'exclusive'],
       required: true,
     },
 
@@ -86,6 +89,15 @@ const schema = new Schema(
     expired: {
       type: Boolean,
       default: false,
+    },
+
+    amount: {
+      type: Number,
+    },
+
+    currency: {
+      type: String,
+      enum: validCurrencies,
     },
 
     type: {

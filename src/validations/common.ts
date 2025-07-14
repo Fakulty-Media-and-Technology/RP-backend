@@ -80,31 +80,48 @@ export const intitiatePaymentSchema = {
       'donate',
       'live schedule',
       'live schedule ext',
+      'live-watch-exclusive',
+      'video-watch-premium',
+      'video-watch-exclusive',
     ).required(),
 
-    email: Joi.alternatives().conditional('useCase', {
+    email: Joi.when('useCase', {
       is: 'live schedule',
       then: STRING_SCHEMA.required().email(),
       otherwise: STRING_SCHEMA.email(),
     }),
 
-    liveId: Joi.alternatives().conditional('useCase', {
+    liveId: Joi.when('useCase', {
       is: 'live schedule ext',
       then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-      otherwise: Joi.alternatives().conditional('useCase', {
+      otherwise: Joi.when('useCase', {
         is: 'donate',
+        then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+        otherwise: Joi.when('useCase', {
+          is: 'live-watch-exclusive',
+          then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+          otherwise: Joi.forbidden(),
+        }),
+      }),
+    }),
+
+    videoId: Joi.when('useCase', {
+      is: 'video-watch-premium',
+      then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+      otherwise: Joi.when('useCase', {
+        is: 'video-watch-exclusive',
         then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
         otherwise: Joi.forbidden(),
       }),
     }),
 
-    voteInfoId: Joi.alternatives().conditional('useCase', {
+    voteInfoId: Joi.when('useCase', {
       is: 'vote',
       then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
       otherwise: Joi.forbidden(),
     }),
 
-    contestantId: Joi.alternatives().conditional('useCase', {
+    contestantId: Joi.when('useCase', {
       is: 'vote',
       then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
       otherwise: Joi.forbidden(),

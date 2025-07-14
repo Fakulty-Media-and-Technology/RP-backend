@@ -1,6 +1,7 @@
 import mongoose, { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { OperationalError } from '../utils/OperationalError'
 import env from '../env'
+import { validCurrencies } from '../utils/currency'
 
 export const videoTypes = ['movie', 'series', 'music-video', 'skit'] as const
 
@@ -71,6 +72,11 @@ const schema = new Schema(
 
     amount: {
       type: Number,
+    },
+
+    currency: {
+      type: String,
+      enum: validCurrencies,
     },
 
     genre: [

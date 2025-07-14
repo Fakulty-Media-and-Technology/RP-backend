@@ -1,6 +1,7 @@
+import env from '../../env'
 import { ContestantsModel } from '../../models/contestants.model'
 import { DonateModel } from '../../models/donate.model'
-import { LiveModel, LiveSchema } from '../../models/lives.model'
+import { Live, LiveModel } from '../../models/lives.model'
 import { PaymentDetailModel } from '../../models/paymentDetails.model'
 
 import {
@@ -11,12 +12,13 @@ import {
 } from '../../models/payments.model'
 
 import { UserModel } from '../../models/users.model'
+import { VideoModel } from '../../models/videos.model'
 import { VoteInfoModel } from '../../models/voteInfo.model'
 import { VoteModel } from '../../models/votes.model'
 import { WalletDocument, WalletModel } from '../../models/wallet.model'
 import Paystack from '../../paymentIntegration/paystack'
 import { PaymentRepo } from '../../repositories/PaymentRepo'
-import { WalletRepo, type WalletCurrencyKey } from '../../repositories/WalletRepo'
+import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser, StringOrObjectId } from '../../types'
 import { CalcUtils } from '../../utils/Calc'
 import { ValidCurrency } from '../../utils/currency'
@@ -29,22 +31,20 @@ import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParam
 type PaystackTransaction = Awaited<ReturnType<typeof Paystack.verifyPayment>>
 type PaymentStatus = PaymentSchema['status']
 type PaymentMethod = PaymentSchema['method']
-
 type UserRole = LoggedInUser['role']
+
 /**Includes dynamic Parameters depending on payment useCase */
 interface InitiatePaymentInput {
   amount: number
   currency: ValidCurrency
   currentUser: LoggedInUser
-  fullName?: string
-  email?: string
   useCase: PaymentUseCase
   method: PaymentMethod
 
-  /**Required for live extention donations */
+  fullName?: string
+  email?: string
   liveId?: string
-
-  /**Required for vote */
+  videoId?: string
   voteInfoId?: string
   contestantId?: string
 }
@@ -78,6 +78,21 @@ interface PrePaymentOperationsInput
   currentUserId: StringOrObjectId
   payment: PaymentDocument
   session: MaybeSession
+}
+
+interface HandleGatewayPaymentInput
+  extends Pick<InitiatePaymentInput, 'contestantId' | 'voteInfoId' | 'liveId'> {
+  currentUser: LoggedInUser
+  payment: PaymentDocument
+  session: MaybeSession
+}
+
+interface HandleWalletPaymentInput {
+  session: MaybeSession
+  payment: PaymentDocument
+  currentUser: LoggedInUser
+  liveId: InitiatePaymentInput['liveId']
+  videoId: InitiatePaymentInput['videoId']
 }
 
 type ProcessVoteInput = Pick<InitiatePaymentInput, 'voteInfoId' | 'contestantId'> &
@@ -151,7 +166,7 @@ export class PaymentService {
     }).save({ session })
   }
 
-  protected static _prePaymentOperations = async ({
+  protected static _preGatewayPaymentOperations = async ({
     currentUserRole,
     currentUserId,
     liveId,
@@ -461,56 +476,30 @@ export class PaymentService {
     }
   }
 
-  protected static _initiatePaymentTransaction = async (
-    {
-      currency,
-      currentUser,
-      email,
-      amount,
-      useCase,
-      fullName,
-      liveId,
-      voteInfoId,
-      contestantId,
-      method,
-    }: InitiatePaymentInput,
-    session: MaybeSession,
-  ) => {
-    denyGuestUser(currentUser)
-
-    const clientFullName = fullName ?? `${currentUser.first_name} ${currentUser.last_name}`
-    const clientEmail = email?.toLowerCase() ?? currentUser.email
-
-    const payment = new PaymentModel({
-      userId: currentUser._id,
-      currency,
-      fullName: clientFullName,
-      email: clientEmail,
-      amount,
-      method,
-      status: method === 'wallet' ? 'success' : 'pending',
-      useCase,
-    })
-
-
-    
-
-    await this._prePaymentOperations({
+  protected static _handleGatewayPayment = async ({
+    currentUser,
+    payment,
+    session,
+    liveId,
+    contestantId,
+    voteInfoId,
+  }: HandleGatewayPaymentInput) => {
+    await this._preGatewayPaymentOperations({
       session,
-      email,
+      email: payment.email,
       liveId,
       voteInfoId,
       contestantId,
       currentUserRole: currentUser.role,
       currentUserId: currentUser._id,
       payment,
-      useCase,
+      useCase: payment.useCase,
     })
 
     const initPaymentResponse = await Paystack.initializePayment({
       email: payment.email,
-      currency,
-      amount,
+      currency: payment.currency,
+      amount: payment.amount,
       reference: payment._id.toString(),
     })
 
@@ -521,6 +510,216 @@ export class PaymentService {
     })
 
     return response
+  }
+
+  protected static _getVideoById = async (videoId: string | undefined) => {
+    if (videoId == null) {
+      throw new OperationalError('videoId is required', 400)
+    }
+
+    const video = await VideoModel.findById(videoId)
+
+    if (video == null) {
+      throw new OperationalError('video not found', 404)
+    }
+
+    return video
+  }
+
+  protected static _validateWatchPremiumVOD = async (
+    payment: PaymentDocument,
+    videoId?: string,
+  ) => {
+    if (
+      (payment.currency === 'NGN' && payment.amount < env.NGN_PREMIUM_CONTENT_COST) ||
+      (payment.currency === 'USD' && payment.amount < env.USD_PREMIUM_CONTENT_COST)
+    ) {
+      throw new OperationalError('insufficient payment amount', 403)
+    }
+
+    const video = await this._getVideoById(videoId)
+
+    if (video.vid_class !== 'premium') {
+      throw new OperationalError('this is not a premium content', 403)
+    }
+  }
+
+  protected static _validateWatchExclusiveVOD = async (
+    payment: PaymentDocument,
+    videoId?: string,
+  ) => {
+    const video = await this._getVideoById(videoId)
+
+    if (video.vid_class !== 'exclusive') {
+      throw new OperationalError('this is not an exclusive content', 403)
+    }
+
+    if (payment.currency !== video.currency) {
+      throw new OperationalError('currency mismatch for payment and content', 403)
+    }
+
+    if (video.currency == null || video.amount == null) {
+      throw new OperationalError('currency and amount are expected on exclusive contents', 403)
+    }
+
+    if (payment.amount !== video.amount) {
+      throw new OperationalError('payment amout does not match video cost', 403)
+    }
+  }
+
+  protected static _validateWatchExclusiveLive = async (
+    payment: PaymentDocument,
+    liveId?: string,
+  ) => {
+    if (liveId == null) {
+      throw new OperationalError('liveId is required', 400)
+    }
+
+    const live = await LiveModel.findById(liveId)
+
+    if (live == null) {
+      throw new OperationalError('invalid liveId', 404)
+    }
+
+    if (live.amount == null || live.currency == null) {
+      throw new OperationalError('currency and amount are expected on exclusive contents', 403)
+    }
+
+    if (payment.currency !== live.currency) {
+      throw new OperationalError('currency mismatch for payment and content', 403)
+    }
+
+    if (payment.amount !== live.amount) {
+      throw new OperationalError('invalid payment amount. Expected ' + live.amount, 403)
+    }
+
+    return live
+  }
+
+  protected static _handleWalletPayment = async ({
+    session,
+    payment,
+    currentUser,
+    liveId,
+    videoId,
+  }: HandleWalletPaymentInput) => {
+    // debit customer wallet
+    const customerWallet = await WalletRepo.updateBalance({
+      userId: currentUser._id,
+      topUpAmount: payment.amount * -1,
+      currency: payment.currency,
+      session,
+    })
+
+    if (customerWallet == null) {
+      throw new OperationalError('customer wallet not found', 404)
+    }
+
+    if (
+      (payment.currency === 'NGN' && customerWallet.NGNBalance < 0) ||
+      (payment.currency === 'USD' && customerWallet.USDBalance < 0)
+    ) {
+      throw new OperationalError('insufficient funds', 403)
+    }
+
+    switch (payment.useCase) {
+      case 'live-watch-exclusive':
+        const live = await this._validateWatchExclusiveLive(payment, liveId)
+
+        // credit client wallet
+        const clientWallet = await WalletRepo.updateBalance({
+          userId: live.client_id,
+          topUpAmount: payment.amount,
+          currency: payment.currency,
+          session,
+        })
+
+        const isNairaPayment = payment.currency === 'NGN'
+
+        // create client wallet
+        if (clientWallet == null) {
+          await new WalletModel({
+            userId: live.client_id,
+            NGNBalance: isNairaPayment ? payment.amount : 0,
+            USDBalance: isNairaPayment ? 0 : payment.amount,
+          }).save({ session })
+        }
+        break
+
+      case 'video-watch-premium':
+        await this._validateWatchPremiumVOD(payment, videoId)
+        break
+
+      case 'video-watch-exclusive':
+        await this._validateWatchExclusiveVOD(payment, videoId)
+        break
+      default:
+        throw new OperationalError('unsupoorted wallet payment', 400)
+    }
+
+    await payment.save({ session })
+  }
+
+  protected static _initiatePaymentTransaction = async (
+    {
+      currency,
+      currentUser,
+      email,
+      amount,
+      useCase,
+      fullName,
+      liveId,
+      videoId,
+      voteInfoId,
+      contestantId,
+      method,
+    }: InitiatePaymentInput,
+    session: MaybeSession,
+  ) => {
+    denyGuestUser(currentUser)
+
+    const status = method === 'wallet' ? 'success' : 'pending'
+
+    fullName = fullName ?? `${currentUser.first_name} ${currentUser.last_name}`
+    email = email?.toLowerCase() ?? currentUser.email
+
+    const payment = new PaymentModel({
+      userId: currentUser._id,
+      currency,
+      fullName,
+      email,
+      amount,
+      method,
+      status,
+      useCase,
+      liveId,
+      videoId,
+    })
+
+    switch (payment.method) {
+      case 'paystack':
+        return await this._handleGatewayPayment({
+          currentUser,
+          payment,
+          session,
+          liveId,
+          contestantId,
+          voteInfoId,
+        })
+      case 'wallet':
+        await this._handleWalletPayment({
+          session,
+          currentUser,
+          liveId,
+          videoId,
+          payment,
+        })
+        break
+
+      default:
+        throw new OperationalError('Unsupported payment method', 400)
+        
+    }
   }
 
   static getHistory = async (userId: string, query: ExpressRequestQuery) => {

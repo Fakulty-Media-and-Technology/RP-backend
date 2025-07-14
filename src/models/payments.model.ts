@@ -1,6 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { validCurrencies } from '../utils/currency'
-import env from '../env'
 
 const paymentUseCases = [
   'subscription',
@@ -9,24 +8,37 @@ const paymentUseCases = [
   'donate',
   'live schedule',
   'live schedule ext',
+  'live-watch-exclusive',
+  'video-watch-premium',
+  'video-watch-exclusive',
 ] as const
 
 export type PaymentUseCase = (typeof paymentUseCases)[number]
 
-const paymentSchema = new Schema(
+const schema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
+    },
+
+    liveId: {
+      type: Schema.Types.ObjectId,
+      ref: 'lives',
+      sparse: true,
+    },
+
+    videoId: {
+      type: Schema.Types.ObjectId,
+      ref: 'videos',
+      sparse: true
     },
 
     currency: {
       type: String,
       enum: validCurrencies,
       required: true,
-      index: true,
     },
 
     amount: {
@@ -69,6 +81,7 @@ const paymentSchema = new Schema(
       type: String,
       enum: paymentUseCases,
       index: true,
+      required: true,
     },
   },
   {
@@ -76,6 +89,8 @@ const paymentSchema = new Schema(
   },
 )
 
-export const PaymentModel = model('payments', paymentSchema)
-export type PaymentSchema = InferSchemaType<typeof paymentSchema>
-export type PaymentDocument = HydratedDocumentFromSchema<typeof paymentSchema>
+schema.index({ userId: 1, currency: 1, useCase: 1 })
+
+export const PaymentModel = model('payments', schema)
+export type PaymentSchema = InferSchemaType<typeof schema>
+export type PaymentDocument = HydratedDocumentFromSchema<typeof schema>
