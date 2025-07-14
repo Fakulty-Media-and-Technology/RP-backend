@@ -7,7 +7,6 @@ import { SubscriptionModel } from '../../models/subscription.model'
 import { WalletModel } from '../../models/wallet.model'
 import { SubscriptionRepo } from '../../repositories/SubscriptionRepo'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
-import { GiftCardModel } from '../../models/giftcard.model'
 
 interface CreateSubInput {
   user: LoggedInUser

@@ -17,6 +17,7 @@ import { VoteInfoModel } from '../../models/voteInfo.model'
 import { VoteModel } from '../../models/votes.model'
 import { WalletDocument, WalletModel } from '../../models/wallet.model'
 import Paystack from '../../paymentIntegration/paystack'
+import { PaymentDetailRepo } from '../../repositories/PaymentDetailRepo'
 import { PaymentRepo } from '../../repositories/PaymentRepo'
 import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser, StringOrObjectId } from '../../types'
@@ -47,6 +48,12 @@ interface InitiatePaymentInput {
   videoId?: string
   voteInfoId?: string
   contestantId?: string
+}
+
+interface AuthorizePaymentInput {
+  currentUser: LoggedInUser
+  amount: number
+  paymentDetailsId: string
 }
 
 interface PostPaymentActionsInput {
@@ -773,5 +780,51 @@ export class PaymentService {
       __v: undefined,
       userId: undefined,
     })
+  }
+
+  static authorizePayment = async ({
+    currentUser,
+    paymentDetailsId,
+    amount,
+  }: AuthorizePaymentInput) => {
+    const paymentDetailsDocument = await PaymentDetailRepo.findOneById(paymentDetailsId)
+
+    if (paymentDetailsDocument == null) {
+      throw new OperationalError('invalid paymentdetails Id', 404)
+    }
+
+    if (paymentDetailsDocument.userId.toString() !== currentUser._id.toString()) {
+      throw new OperationalError('You did not make this payment', 403)
+    }
+
+    if (paymentDetailsDocument.reusable === false) {
+      throw new OperationalError('Details are not reusable', 403)
+    }
+
+    // TODO: check if payment details is expired
+
+    const response = await Paystack.authorizePayment({
+      email: currentUser.email,
+      amount,
+      authorization_code: paymentDetailsDocument.authorization_code,
+    })
+
+    if (response.status !== 'success') {
+      throw new OperationalError('Charge failed', 400)
+    }
+  }
+
+  static fetchPaymentDetails = async (currentUserId: string, query: ExpressRequestQuery) => {
+    const paymentDetailsQuery = PaymentDetailRepo.findManyByUserId(currentUserId)
+      .sort({ _id: -1 })
+      .select({ userId: false })
+
+    const paginatedResults = new QueryParamsFeatures(paymentDetailsQuery, {
+      defaultLimit: 10,
+      defaultPage: 1,
+      queryParams: query,
+    }).paginate().query
+
+    return paginatedResults
   }
 }

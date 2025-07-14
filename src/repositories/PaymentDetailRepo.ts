@@ -1,5 +1,9 @@
 import { PaymentDetailModel } from '../models/paymentDetails.model'
+import { StringOrObjectId } from '../types'
 
 export class PaymentDetailRepo {
-  static findOneByUserId = (userId: string) => PaymentDetailModel.findOne({ user_id: userId })
+  static findOneById = (paymentDetailsId: StringOrObjectId) =>
+    PaymentDetailModel.findById(paymentDetailsId)
+
+  static findManyByUserId = (userId: string) => PaymentDetailModel.find({ userId })
 }

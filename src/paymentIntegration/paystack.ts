@@ -24,7 +24,7 @@ export interface IntitializePaymentInput {
   reference: string
 }
 
-export interface AuthorizePaymentInput extends IntitializePaymentInput {
+export interface AuthorizePaymentInput extends Pick<IntitializePaymentInput, 'amount' | 'email'> {
   authorization_code: string
 }
 
@@ -58,7 +58,7 @@ export class Paystack {
       throw new OperationalError(response.message, 400)
     }
 
-    return response
+    return response.data
   }
 
   static async verifyPayment(reference: string) {

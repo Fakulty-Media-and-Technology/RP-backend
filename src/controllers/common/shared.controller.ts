@@ -8,7 +8,7 @@ import { addLiveSchema } from '../../validations/admin'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { AuthHeaderKey } from '../../middlewares/auth'
 import { LiveStreamService, CreateLiveData } from '../../services/core/LiveStreamService'
-import { CustomerPaymentService } from '../../services/core/CustomenrPaymentService'
+// import { CustomerPaymentService } from '../../services/core/CustomenrPaymentService'
 import { VideoService } from '../../services/core/VideoService'
 import { PaymentService } from '../../services/core/PaymentService'
 import { FilterQuery } from 'mongoose'
@@ -65,6 +65,31 @@ export class SharedController extends UploadMediaUtils {
     const response = await PaymentService.setPaymentShouldStoreDetails(
       req.params.paymentId,
       req.query.shouldStore === 'true',
+    )
+
+    sendResponse({
+      res,
+      data: response,
+    })
+  })
+
+  static authorizePayment = Catch.async(async (req, res) => {
+    await PaymentService.authorizePayment({
+      currentUser: GetDefined.loggedInUser(req.user),
+      amount: req.body.amount,
+      paymentDetailsId: req.body.paymentDetailsId,
+    })
+
+    sendResponse({
+      res,
+      data: 'Payment is successful',
+    })
+  })
+
+  static fetchPaymentDetails = Catch.async(async (req, res) => {
+    const response = await PaymentService.fetchPaymentDetails(
+      GetDefined.loggedInUser(req.user)._id.toString(),
+      req.query,
     )
 
     sendResponse({

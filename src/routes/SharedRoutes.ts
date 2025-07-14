@@ -2,7 +2,11 @@ import { Router } from 'express'
 import { PaymentHistoryCaller, SharedController } from '../controllers/common/shared.controller'
 import { Multer } from '../utils/Multer'
 import { requestValidator } from '../middlewares/requestValidator'
-import { intitiatePaymentSchema, updateUserProfileSchema } from '../validations/common'
+import {
+  authorizePaymentSchema,
+  intitiatePaymentSchema,
+  updateUserProfileSchema,
+} from '../validations/common'
 import { AuthHeaderKey } from '../middlewares/auth'
 import { ClientLiveStreamController } from '../controllers/clients/livestream.clients'
 import { AdminEnumController } from '../controllers/admins/enums.admin'
@@ -71,8 +75,14 @@ export class SharedRoutes {
       SharedController.startPayment,
     )
 
-    this._router.put('/should-store/:paymentId', SharedController.setPaymentShouldStoreDetails)
+    this._router.post(
+      '/authorize-payment',
+      requestValidator(authorizePaymentSchema),
+      SharedController.authorizePayment,
+    )
 
+    this._router.put('/should-store/:paymentId', SharedController.setPaymentShouldStoreDetails)
+    this._router.get('/payment-details', SharedController.fetchPaymentDetails)
     return this
   }
 
