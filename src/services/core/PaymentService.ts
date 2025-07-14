@@ -234,7 +234,7 @@ export class PaymentService {
   }
 
   protected static _postPaymentOperationsOnSuccess = async (params: PostPaymentActionsInput) => {
-    // this._registerPaymentCardDetails(params)
+    this._registerPaymentCardDetails(params)
 
     switch (params.payment.useCase) {
       case 'topup':
@@ -278,11 +278,15 @@ export class PaymentService {
   }
 
   protected static _registerPaymentCardDetails = async ({
-    transaction: { authorization, channel },
+    transaction,
     payment,
     session,
   }: PostPaymentActionsInput) => {
-    if (payment.status !== 'success' || channel !== 'card') {
+    if (
+      payment.status !== 'success' ||
+      transaction.channel !== 'card' ||
+      payment.storeDetails === false
+    ) {
       return
     }
 
@@ -290,12 +294,12 @@ export class PaymentService {
       await new PaymentDetailModel({
         userId: payment.userId,
         paymentId: payment._id,
-        authorization_code: authorization.authorization_code,
-        last4: authorization.last4,
-        exp_month: authorization.exp_month,
-        exp_year: authorization.exp_year,
-        brand: authorization.brand,
-        reusable: !authorization.reusable,
+        authorization_code: transaction.authorization.authorization_code,
+        last4: transaction.authorization.last4,
+        exp_month: transaction.authorization.exp_month,
+        exp_year: transaction.authorization.exp_year,
+        brand: transaction.authorization.brand,
+        reusable: transaction.authorization.reusable,
       }).save({ session })
     } catch (e: any) {
       console.error('_registerPaymentCardDetails error:', e.message || e)
@@ -718,7 +722,6 @@ export class PaymentService {
 
       default:
         throw new OperationalError('Unsupported payment method', 400)
-        
     }
   }
 
@@ -736,6 +739,22 @@ export class PaymentService {
     }).paginate().query
 
     return response
+  }
+
+  static setPaymentShouldStoreDetails = async (paymentId: string, shouldStore: boolean) => {
+    const payment = await PaymentModel.findByIdAndUpdate(
+      paymentId,
+      {
+        $set: { storeDetails: shouldStore },
+      },
+      { new: true },
+    )
+
+    if (payment == null) {
+      throw new OperationalError('invalid payment Id', 404)
+    }
+
+    return { shouldStore: payment.storeDetails }
   }
 
   static fetchWallet = async (user: LoggedInUser) => {
@@ -756,3 +775,4 @@ export class PaymentService {
     })
   }
 }
+

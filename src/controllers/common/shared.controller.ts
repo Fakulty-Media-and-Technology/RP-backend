@@ -61,6 +61,18 @@ export class SharedController extends UploadMediaUtils {
     })
   })
 
+  static setPaymentShouldStoreDetails = Catch.async(async (req, res) => {
+    const response = await PaymentService.setPaymentShouldStoreDetails(
+      req.params.paymentId,
+      req.query.shouldStore === 'true',
+    )
+
+    sendResponse({
+      res,
+      data: response,
+    })
+  })
+
   static updateProfile = (authType: AuthHeaderKey) =>
     Catch.async(async (req, res) => {
       if (Object.values(req.body).length === 0 && req.file == null) {
@@ -306,7 +318,7 @@ export class SharedController extends UploadMediaUtils {
 
   static getByCategoryIdAndAndGenreId = Catch.async(async ({ query, user, params }, res) => {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
-    
+
     const vidQuality = await VidUploadUtils.getUserVideoQuality(
       GetDefined.loggedInUser(user)._id.toString(),
     )

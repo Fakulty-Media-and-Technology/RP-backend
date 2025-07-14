@@ -32,7 +32,7 @@ const schema = new Schema(
     videoId: {
       type: Schema.Types.ObjectId,
       ref: 'videos',
-      sparse: true
+      sparse: true,
     },
 
     currency: {
@@ -82,6 +82,11 @@ const schema = new Schema(
       enum: paymentUseCases,
       index: true,
       required: true,
+    },
+
+    storeDetails: {
+      type: Boolean,
+      default: false,
     },
   },
   {

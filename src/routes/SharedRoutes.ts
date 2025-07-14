@@ -71,6 +71,8 @@ export class SharedRoutes {
       SharedController.startPayment,
     )
 
+    this._router.put('/should-store/:paymentId', SharedController.setPaymentShouldStoreDetails)
+
     return this
   }
 
