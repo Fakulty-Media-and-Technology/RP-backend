@@ -16,9 +16,6 @@ const schema = new Schema(
       index: true,
     },
 
-    paymentExtentions: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
-    donationPayments: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
-
     title: {
       type: String,
       required: true,
@@ -173,8 +170,6 @@ const schema = new Schema(
   },
 )
 
-schema.index({ paymentExtentions: 1 })
-schema.index({ donationPayments: 1 })
 schema.index({ category: 1 })
 schema.index({ views: 1 })
 
