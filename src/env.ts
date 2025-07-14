@@ -34,6 +34,7 @@ export const env = getValidEnv({
   MAIL_HOST: process.env.MAIL_HOST,
   MAIL_USER: process.env.MAIL_USER,
   MAIL_PASSWORD: process.env.MAIL_PASSWORD,
+  MAIL_PORT: setToNumberWithDefault('MAIL_PORT', 465),
 
 
   //   secrets

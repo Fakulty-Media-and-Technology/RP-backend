@@ -26,7 +26,7 @@ export class Email {
   constructor(recipientData: RecipientData) {
     this.firstName = capitalize(recipientData.firstName)
     this.lastName = capitalize(recipientData.lastName)
-    this.email = recipientData.email
+    this.email = recipientData.email.toLowerCase()
   }
 
   protected async makeHtml({ template, pin }: MakeHtmlInput) {
@@ -45,8 +45,8 @@ export class Email {
 
     const transport = nodemailer.createTransport({
       host: env.MAIL_HOST,
-      port: 587,
-      secure: false,
+      port: env.MAIL_PORT,
+      secure: env.MAIL_PORT === 465,
       auth: {
         user: env.MAIL_USER,
         pass: env.MAIL_PASSWORD,
@@ -58,7 +58,7 @@ export class Email {
         name: env.MAIL_SENDER,
         address: env.MAIL_USER,
       },
-      to: this.email.toLowerCase(),
+      to: this.email,
       subject,
       html,
       text: html,
@@ -91,4 +91,3 @@ export class Email {
 }
 
 export default Email
-
