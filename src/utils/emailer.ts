@@ -1,14 +1,21 @@
 import path from 'node:path'
 import ejs from 'ejs'
 import nodemailer from 'nodemailer'
-
 import env from '../env'
 
-type RecipientData = {
+interface RecipientData {
   firstName: string
   lastName: string
   email: string
 }
+
+interface SendMessageInput {
+  template: string
+  subject: string
+  pin: string
+}
+
+interface MakeHtmlInput extends Omit<SendMessageInput, 'subject'> {}
 
 export class Email {
   private firstName: string
@@ -23,7 +30,7 @@ export class Email {
     this.sender = env.MAILTRAP_USER
   }
 
-  async createTransport() {
+  protected createTransport() {
     const transport = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -35,15 +42,21 @@ export class Email {
     return transport
   }
 
-  async sendMsg(template: string, subject: string, pin: string) {
-    const templatePath = path.join(__dirname, '..', 'views', `${template}.ejs`)
+  protected async makeHtml({ template, pin }: MakeHtmlInput) {
+    const templatePath = path.resolve('src', 'views', `${template}.ejs`)
 
     const html = await ejs.renderFile(templatePath, {
       name: `${this.firstName}, ${this.lastName}`,
       pin: pin,
     })
 
-    const mailOptions = {
+    return html
+  }
+
+  async sendMsg({ subject, ...params }: SendMessageInput) {
+    const html = await this.makeHtml(params)
+
+    await this.createTransport().sendMail({
       from: {
         name: env.MAIL_SENDER,
         address: this.sender,
@@ -52,26 +65,31 @@ export class Email {
       subject,
       html,
       text: html,
-    }
-
-    const mail = await this.createTransport()
-    await mail.sendMail(mailOptions)
+    })
   }
 
   async sendVerifyEmail(pin: string) {
-    await this.sendMsg('verify-email', 'Welcome On Board', pin)
+    await this.sendMsg({ template: 'verify-email', subject: 'Welcome On Board', pin })
   }
 
   async sendResetPasswordToken(pin: string) {
-    await this.sendMsg('reset-pass', 'Reset Password Token', pin)
+    await this.sendMsg({ template: 'reset-pass', subject: 'Reset Password Token', pin })
   }
 
   async sendAutoRenewSuccess(source: string) {
-    await this.sendMsg('autorenew-success', 'Auto Renew Subscription Success', source)
+    await this.sendMsg({
+      template: 'autorenew-success',
+      subject: 'Auto Renew Subscription Success',
+      pin: source,
+    })
   }
 
   async sendAutoRenewFailure(reason: string) {
-    await this.sendMsg('autorenew-fail', 'Auto Renew Subscription Failure', reason)
+    await this.sendMsg({
+      template: 'autorenew-fail',
+      subject: 'Auto Renew Subscription Failure',
+      pin: reason,
+    })
   }
 }
 

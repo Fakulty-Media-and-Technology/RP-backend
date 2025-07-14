@@ -133,14 +133,14 @@ export class OnboardingController {
     })
   })
 
-  static passwordChangeCode = Catch.async(async (req, res) => {
+  static getPasswordResetToken = Catch.async(async (req, res) => {
     const { email } = req.body
 
     if (typeof email !== 'string') {
       throw new OperationalError('required body.email must be a string', 400)
     }
 
-    await OnboardingService.changePasswordCode(email)
+    await OnboardingService.getPasswordResetToken(email)
 
     sendResponse({
       res,

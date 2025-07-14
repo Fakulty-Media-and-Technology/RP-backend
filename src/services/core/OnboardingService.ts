@@ -184,7 +184,10 @@ export class OnboardingService {
     return newUser
   }
 
-  private static _changePasswordWithSession = async (email: string, session: MaybeSession) => {
+  private static _getPasswordResetTokenWithSession = async (
+    email: string,
+    session: MaybeSession,
+  ) => {
     // if the sendResetPasswordToken fails, updated to user will rollback. NEAT TRICK
     const emailUser = await UserRepo.getByEmail(email)
 
@@ -204,7 +207,6 @@ export class OnboardingService {
         auth_code: pin,
       },
       {
-        upsert: true,
         session,
       },
     )
@@ -326,8 +328,8 @@ export class OnboardingService {
     await withMongoDBSession(this._getVerificationTokenWithSession, email)
   }
 
-  static changePasswordCode = async (email: string) => {
-    await withMongoDBSession(this._changePasswordWithSession, email)
+  static getPasswordResetToken = async (email: string) => {
+    await withMongoDBSession(this._getPasswordResetTokenWithSession, email)
   }
 
   static createPin = async (data: Record<string, string>) => {
@@ -479,5 +481,3 @@ export class OnboardingService {
     }
   }
 }
-
-

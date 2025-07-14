@@ -3,5 +3,5 @@ import { OnboardingController } from '../../controllers/customers/onboarding.cus
 
 export const router = Router()
 
-router.post('/get-token', OnboardingController.passwordChangeCode)
+router.post('/get-token', OnboardingController.getPasswordResetToken)
 router.post('/change-pass', OnboardingController.passwordChange)
