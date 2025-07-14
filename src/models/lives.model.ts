@@ -18,8 +18,6 @@ const schema = new Schema(
 
     paymentExtentions: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
     donationPayments: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
-    premiumPayments: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
-    exclusivePayments: [{ type: Schema.Types.ObjectId, ref: 'payments' }],
 
     title: {
       type: String,

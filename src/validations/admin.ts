@@ -187,6 +187,18 @@ export const addLiveSchema = Joi.object({
   upcoming: Joi.boolean(),
   popular: Joi.boolean(),
   location: STRING_SCHEMA,
+
+  currency: Joi.when('vidClass', {
+    is: 'exclusive',
+    then: CURRENCY_SCHEMA.required(),
+    otherwise: Joi.forbidden(),
+  }),
+
+  amount: Joi.when('vidClass', {
+    is: 'exclusive',
+    then: Joi.number().strict().required(),
+    otherwise: Joi.forbidden(),
+  }),
 })
 
 export const createUpcomingEventSchema = Joi.object({

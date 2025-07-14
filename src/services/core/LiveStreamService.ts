@@ -38,6 +38,8 @@ export type CreateLiveData = {
   popular?: boolean
   paymentId: string
   creatorType: 'admin' | 'client'
+  amount?: number
+  currency?: string
 }
 
 type LiveFileUploader = (
@@ -353,6 +355,8 @@ export class LiveStreamService {
       popular: data.popular,
       location: data.location,
       payment_id: data.paymentId,
+      amount: data.amount,
+      currency: data.currency,
     })
 
     const uploaderParams = { data, live }
@@ -450,5 +454,3 @@ export class LiveStreamService {
     return await withMongoDBSession(this._createLiveSession, data)
   }
 }
-
-
