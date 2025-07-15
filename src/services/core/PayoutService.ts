@@ -41,9 +41,16 @@ export class PayoutService {
     }: RequestPayoutInput,
     session: MaybeSession,
   ) => {
-    if (amount < env.MIN_WITHDRAWAL_AMOUNT) {
+    if (currency === 'NGN' && amount < env.MIN_WITHDRAWAL_AMOUNT_NGN) {
       throw new OperationalError(
-        'requested amount is below limit of ' + env.MIN_WITHDRAWAL_AMOUNT,
+        'requested amount is below limit of ' + env.MIN_WITHDRAWAL_AMOUNT_NGN,
+        400,
+      )
+    }
+
+    if (currency === 'USD' && amount < env.MIN_WITHDRAWAL_AMOUNT_USD) {
+      throw new OperationalError(
+        'requested amount is below limit of ' + env.MIN_WITHDRAWAL_AMOUNT_USD,
         400,
       )
     }
