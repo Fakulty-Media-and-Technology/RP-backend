@@ -23,7 +23,7 @@ export class VODWaitlistService {
   static add = async (currentUserId: MongoDBObjectId, vodId: string) => {
     await VodWaitlistModel.findOneAndUpdate(
       { userId: currentUserId },
-      { $push: { vods: vodId } },
+      { $addToSet: { vods: vodId } },
       { upsert: true },
     )
   }
