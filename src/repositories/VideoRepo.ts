@@ -236,7 +236,7 @@ export class VideoRepo {
     return aggr as Array<AddEpisodeUtilAggrRes>
   }
 
-  static fetchByIds = async (ids: MongoDBObjectId[]) => {
+  static fetchByIds = async (ids: MongoDBObjectId[], page = 1, limit = 2) => {
     return await this.fetchVideoAggr({
       prevStages: [
         {
@@ -245,8 +245,8 @@ export class VideoRepo {
       ],
       fetchSeasons: false,
       sortStage: { $sort: { _id: -1 } },
-      page: 1,
-      limit: 2,
+      page,
+      limit,
     })
   }
 
