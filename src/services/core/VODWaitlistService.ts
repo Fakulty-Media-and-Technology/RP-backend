@@ -29,23 +29,7 @@ export class VODWaitlistService {
   }
 
   static remove = async (currentUserId: MongoDBObjectId, vodId: string) => {
-    const waitlist = await this._findByUserId(currentUserId)
-
-    const prevVodsCount = waitlist.vods.length
-
-    // empty waitlist
-    if (prevVodsCount === 0) {
-      return
-    }
-
-    waitlist.vods = waitlist.vods.filter(vod => vod.toString() !== vodId)
-
-    // no changes
-    if (prevVodsCount === waitlist.vods.length) {
-      return
-    }
-
-    await waitlist.save()
+    await VodWaitlistModel.findOneAndUpdate({ userId: currentUserId }, { $pull: { vods: vodId } })
   }
 
   static fetch = async (currentUserId: MongoDBObjectId, query: ExpressRequestQuery) => {
@@ -67,7 +51,7 @@ export class VODWaitlistService {
     if (waitlist.vods.length === 0) {
       return []
     }
-    
+
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const vods = await MovieMediaSourcesUtils.resolveMediaSources(

@@ -29,6 +29,7 @@ import { requestValidator } from '../../middlewares/requestValidator'
 import { createCustomerSchema, viewContentSchema } from '../../validations/customers'
 import { SharedController } from '../../controllers/common/shared.controller'
 import { Multer } from '../../utils/Multer'
+import { VODWaitlistRouter } from './VODWaitlistRouter'
 
 export const customerRouter = Router()
 
@@ -77,6 +78,7 @@ customerRouter.use('/notification', PushNotificationRouter)
 customerRouter.use('/notifications', NotificationsRouter)
 customerRouter.use('/recent-search', RecentSearchRouter)
 customerRouter.use('/watched', WatchedRouter)
+customerRouter.use('/vod-waitlist', VODWaitlistRouter)
 
 customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.get('/banner/contents', SharedController.bannerContents)
