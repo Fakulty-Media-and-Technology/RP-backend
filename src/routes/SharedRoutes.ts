@@ -65,6 +65,10 @@ export class SharedRoutes {
   paymentHistory(callerConfig: PaymentHistoryCaller) {
     this._router.get('/payment-history', SharedController.paymentHistory(callerConfig))
     this._router.get('/wallet', SharedController.fetchWallet)
+
+    this._router.put('/should-store/:paymentId', SharedController.setPaymentShouldStoreDetails)
+    this._router.get('/payment-details', SharedController.fetchPaymentDetails)
+    this._router.get('/content-costs', SharedController.checkContentCosts)
     return this
   }
 
@@ -80,10 +84,6 @@ export class SharedRoutes {
       requestValidator(authorizePaymentSchema),
       SharedController.authorizePayment,
     )
-
-    this._router.put('/should-store/:paymentId', SharedController.setPaymentShouldStoreDetails)
-    this._router.get('/payment-details', SharedController.fetchPaymentDetails)
-    this._router.get('/content-costs', SharedController.checkContentCosts)
     return this
   }
 
@@ -103,3 +103,5 @@ export class SharedRoutes {
     return this
   }
 }
+
+
