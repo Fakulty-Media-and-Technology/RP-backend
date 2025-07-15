@@ -83,6 +83,7 @@ export class SharedRoutes {
 
     this._router.put('/should-store/:paymentId', SharedController.setPaymentShouldStoreDetails)
     this._router.get('/payment-details', SharedController.fetchPaymentDetails)
+    this._router.get('/content-costs', SharedController.fetchPaymentDetails)
     return this
   }
 

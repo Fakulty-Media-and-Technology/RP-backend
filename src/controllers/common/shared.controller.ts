@@ -1,3 +1,4 @@
+import { Response, Request } from 'express'
 import { MediaService } from '../../services/core/MediaService'
 import { Catch } from '../../utils/Catch'
 import { GetDefined } from '../../utils/GetDefined'
@@ -48,6 +49,15 @@ type LiveEventsType =
   | 'podcasts popular'
 
 export class SharedController extends UploadMediaUtils {
+  static checkContentCosts = (_: Request, res: Response) => {
+    const costs = PaymentService.checkContentCosts()
+
+    sendResponse({
+      res,
+      data: costs,
+    })
+  }
+
   static startPayment = Catch.async(async (req, res) => {
     const response = await PaymentService.initiatePayment({
       currentUser: GetDefined.loggedInUser(req.user),

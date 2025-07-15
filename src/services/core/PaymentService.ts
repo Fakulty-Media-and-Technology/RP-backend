@@ -827,4 +827,13 @@ export class PaymentService {
 
     return paginatedResults
   }
+
+  static checkContentCosts = () => {
+    const costs = {
+      premiumNGN: env.NGN_PREMIUM_CONTENT_COST,
+      premiumUSD: env.USD_PREMIUM_CONTENT_COST,
+    }
+
+    return costs
+  }
 }
