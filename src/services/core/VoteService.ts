@@ -42,10 +42,6 @@ export class VoteService {
   }
 
   protected static throwIllegalLive = async (liveId: string, currentUser: LoggedInUser) => {
-    if (currentUser.role !== 'tvshow') {
-      throw new OperationalError('Only tvShows have allow this feature', 403)
-    }
-
     const live = await LiveModel.findById(liveId)
 
     if (live == null) {
@@ -55,6 +51,8 @@ export class VoteService {
     if (live.client_id.toString() !== currentUser._id.toString()) {
       throw new OperationalError('Only owner can perform this operation', 403)
     }
+
+    return live
   }
 
   static createVoteInfo = async ({
