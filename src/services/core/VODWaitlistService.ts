@@ -1,25 +1,11 @@
 import { VodWaitlistModel } from '../../models/vodWaitlist.model'
 import { VideoRepo } from '../../repositories/VideoRepo'
-import { StringOrObjectId } from '../../types'
 import { MongoDBObjectId } from '../../types/general'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
-import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 
 export class VODWaitlistService {
-  protected static _findByUserId = async (userId: StringOrObjectId) => {
-    const waitlist = await VodWaitlistModel.findOne({
-      userId,
-    })
-
-    if (waitlist == null) {
-      throw new OperationalError('not found', 404)
-    }
-
-    return waitlist
-  }
-
   static add = async (currentUserId: MongoDBObjectId, vodId: string) => {
     await VodWaitlistModel.findOneAndUpdate(
       { userId: currentUserId },
@@ -34,7 +20,10 @@ export class VODWaitlistService {
 
   static fetch = async (currentUserId: MongoDBObjectId, query: ExpressRequestQuery) => {
     const [waitlistSettled, vidQualitySettled] = await Promise.allSettled([
-      this._findByUserId(currentUserId),
+      VodWaitlistModel.findOne({
+        userId: currentUserId,
+      }),
+
       VidUploadUtils.getUserVideoQuality(currentUserId.toString()),
     ])
 
@@ -48,7 +37,7 @@ export class VODWaitlistService {
 
     const waitlist = waitlistSettled.value
 
-    if (waitlist.vods.length === 0) {
+    if (waitlist == null || waitlist.vods.length === 0) {
       return []
     }
 
