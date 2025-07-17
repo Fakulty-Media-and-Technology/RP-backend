@@ -6,6 +6,23 @@ import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParam
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 
 export class VODWaitlistService {
+  static isListed = async (currentUserId: MongoDBObjectId, vodId: string) => {
+    const response = {
+      isListed: false,
+    }
+
+    const waitlist = await VodWaitlistModel.findOne({
+      userId: currentUserId,
+    })
+
+    if (waitlist?.vods == null || waitlist.vods.length === 0) {
+      return response
+    }
+
+    response.isListed = waitlist.vods.some(vod => vod.toString() === vodId)
+    return response
+  }
+
   static add = async (currentUserId: MongoDBObjectId, vodId: string) => {
     await VodWaitlistModel.findOneAndUpdate(
       { userId: currentUserId },

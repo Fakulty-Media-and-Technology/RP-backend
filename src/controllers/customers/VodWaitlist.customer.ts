@@ -4,6 +4,18 @@ import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 export class VODWaitlistController {
+  static checkIsListed = Catch.async(async (req, res) => {
+    const result = await VODWaitlistService.isListed(
+      GetDefined.loggedInUser(req.user)._id,
+      req.params.videoId,
+    )
+
+    sendResponse({
+      res,
+      data: result,
+    })
+  })
+
   static add = Catch.async(async (req, res) => {
     await VODWaitlistService.add(GetDefined.loggedInUser(req.user)._id, req.params.videoId)
 
