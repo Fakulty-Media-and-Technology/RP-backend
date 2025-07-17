@@ -1,3 +1,4 @@
+import { FilterQuery } from 'mongoose'
 import env from '../../env'
 import { ContestantsModel } from '../../models/contestants.model'
 import { DonateModel } from '../../models/donate.model'
@@ -23,7 +24,7 @@ import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser, StringOrObjectId } from '../../types'
 import { CalcUtils } from '../../utils/Calc'
 import { ValidCurrency } from '../../utils/currency'
-import { addHours } from '../../utils/date'
+import { addDays, addHours, setToStartOfDay } from '../../utils/date'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { OperationalError } from '../../utils/OperationalError'
@@ -100,6 +101,12 @@ interface HandleWalletPaymentInput {
   currentUser: LoggedInUser
   liveId: InitiatePaymentInput['liveId']
   videoId: InitiatePaymentInput['videoId']
+}
+
+interface CheckHasValidContentPaymentInput {
+  contentId: string
+  contentType: string
+  currentUserId: StringOrObjectId
 }
 
 type ProcessVoteInput = Pick<InitiatePaymentInput, 'voteInfoId' | 'contestantId'> &
@@ -835,5 +842,31 @@ export class PaymentService {
     }
 
     return costs
+  }
+
+  static checkHasValidContentPayment = async ({
+    contentId,
+    contentType,
+    currentUserId,
+  }: CheckHasValidContentPaymentInput) => {
+    if (contentType !== 'vod' && contentType !== 'live') {
+      throw new OperationalError('allowed contentType is vod OR live', 400)
+    }
+
+    const contentKey = contentType === 'live' ? 'liveId' : 'videoId'
+
+    const dateAgo = new Date()
+    addDays(dateAgo, -30)
+
+    const payment = await PaymentModel.findOne({
+      userId: currentUserId,
+      [contentKey]: contentId,
+      status: 'success',
+      updatedAt: { $gt: dateAgo },
+    })
+
+    return {
+      canView: !!payment,
+    }
   }
 }

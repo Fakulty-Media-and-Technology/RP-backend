@@ -58,6 +58,19 @@ export class SharedController extends UploadMediaUtils {
     })
   }
 
+  static checkHasPaidForContent = Catch.async(async (req, res) => {
+    const result = await PaymentService.checkHasValidContentPayment({
+      contentId: req.params.contentId,
+      contentType: req.params.contentType,
+      currentUserId: GetDefined.loggedInUser(req.user)._id,
+    })
+
+    sendResponse({
+      res,
+      data: result,
+    })
+  })
+
   static startPayment = Catch.async(async (req, res) => {
     const response = await PaymentService.initiatePayment({
       currentUser: GetDefined.loggedInUser(req.user),

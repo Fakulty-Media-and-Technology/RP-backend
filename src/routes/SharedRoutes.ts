@@ -69,6 +69,12 @@ export class SharedRoutes {
     this._router.put('/should-store/:paymentId', SharedController.setPaymentShouldStoreDetails)
     this._router.get('/payment-details', SharedController.fetchPaymentDetails)
     this._router.get('/content-costs', SharedController.checkContentCosts)
+    
+    this._router.get(
+      '/check-content-payment/:contentType/:contentId',
+      SharedController.checkHasPaidForContent,
+    )
+
     return this
   }
 
@@ -103,5 +109,3 @@ export class SharedRoutes {
     return this
   }
 }
-
-

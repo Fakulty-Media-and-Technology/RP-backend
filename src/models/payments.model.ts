@@ -94,6 +94,7 @@ const schema = new Schema(
   },
 )
 
+schema.index({ status: 1, userId: 1, videoId: 1, liveId: 1 })
 schema.index({ userId: 1, currency: 1, useCase: 1 })
 
 export const PaymentModel = model('payments', schema)
