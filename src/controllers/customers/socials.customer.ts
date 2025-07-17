@@ -1,15 +1,15 @@
-import { CustomerCommentsRatingsService } from '../../services/core/CustomerCommentsRatingsService'
+import { SocialService } from '../../services/core/SocialService'
 import { Catch } from '../../utils/Catch'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
-export class CustomerCommentsRatingsController {
+export class SocialsController {
   static deleteReaction = Catch.async(async (req, res) => {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    await CustomerCommentsRatingsService.deleteReaction(req.params.reactionId)
+    await SocialService.deleteReaction(req.params.reactionId)
 
     sendResponse({
       res,
@@ -21,7 +21,7 @@ export class CustomerCommentsRatingsController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    await CustomerCommentsRatingsService.CUReaction({
+    await SocialService.CUReaction({
       commentId: req.params.commentId,
       reaction: req.params.reaction,
       authorId: user.id,
@@ -37,7 +37,7 @@ export class CustomerCommentsRatingsController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    await CustomerCommentsRatingsService.addComment({
+    await SocialService.addComment({
       ...req.body,
       authorId: user.id,
     })
@@ -52,7 +52,7 @@ export class CustomerCommentsRatingsController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    await CustomerCommentsRatingsService.addReply({
+    await SocialService.addReply({
       ...req.body,
       authorId: user._id.toString(),
     })
@@ -63,11 +63,18 @@ export class CustomerCommentsRatingsController {
     })
   })
 
+  static getTotalCommentsCount = Catch.async(async (req, res) => {
+    const result = await SocialService.totalCommentsCount(req.params.parentId)
+
+    sendResponse({
+      res,
+      data: result,
+      message: '',
+    })
+  })
+
   static getComments = Catch.async(async (req, res) => {
-    const comments = await CustomerCommentsRatingsService.getComments(
-      req.params.parentId,
-      req.query,
-    )
+    const comments = await SocialService.getComments(req.params.parentId, req.query)
 
     sendResponse({
       res,
@@ -77,7 +84,7 @@ export class CustomerCommentsRatingsController {
   })
 
   static getReplies = Catch.async(async (req, res) => {
-    const replies = await CustomerCommentsRatingsService.getReplies(req.params.commentId, req.query)
+    const replies = await SocialService.getReplies(req.params.commentId, req.query)
 
     sendResponse({
       res,
@@ -88,10 +95,7 @@ export class CustomerCommentsRatingsController {
 
   static updateComment = Catch.async(async (req, res) => {
     denyGuestUser(GetDefined.loggedInUser(req.user))
-    const comment = await CustomerCommentsRatingsService.updateComment(
-      req.params.commentId,
-      req.body.message,
-    )
+    const comment = await SocialService.updateComment(req.params.commentId, req.body.message)
 
     sendResponse({
       res,
@@ -102,7 +106,7 @@ export class CustomerCommentsRatingsController {
 
   static deleteComment = Catch.async(async (req, res) => {
     denyGuestUser(GetDefined.loggedInUser(req.user))
-    await CustomerCommentsRatingsService.deleteComment(req.params.commentId)
+    await SocialService.deleteComment(req.params.commentId)
 
     sendResponse({
       res,
@@ -114,7 +118,7 @@ export class CustomerCommentsRatingsController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    const rating = await CustomerCommentsRatingsService.addRating({
+    const rating = await SocialService.addRating({
       ...req.body,
       userId: user.id,
     })
@@ -130,12 +134,12 @@ export class CustomerCommentsRatingsController {
     sendResponse({
       res,
       message: 'rating fetched successfully',
-      data: await CustomerCommentsRatingsService.getRatings(req.params.parentId),
+      data: await SocialService.getRatings(req.params.parentId),
     })
   })
 
   static updateRating = Catch.async(async (req, res) => {
-    const rating = await CustomerCommentsRatingsService.updateRating({
+    const rating = await SocialService.updateRating({
       ...req.body,
       ratingId: req.params.ratingId,
     })
@@ -148,7 +152,7 @@ export class CustomerCommentsRatingsController {
   })
 
   static deleteRating = Catch.async(async (req, res) => {
-    await CustomerCommentsRatingsService.deleteRating(req.params.ratingId)
+    await SocialService.deleteRating(req.params.ratingId)
 
     sendResponse({
       res,

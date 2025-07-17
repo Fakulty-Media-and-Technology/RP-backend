@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { CustomerCommentsRatingsController } from '../../controllers/customers/comments.ratings.customer'
+import { SocialsController } from '../../controllers/customers/socials.customer'
 import { requestValidator } from '../../middlewares/requestValidator'
 import {
   createCommentSchema,
@@ -11,27 +11,28 @@ export const router = Router()
 
 router.put(
   '/create-update/reaction/:commentId/:reaction',
-  CustomerCommentsRatingsController.createUpdateReaction,
+  SocialsController.createUpdateReaction,
 )
 
-router.delete('/delete/reaction/:reactionId', CustomerCommentsRatingsController.deleteReaction)
+router.delete('/delete/reaction/:reactionId', SocialsController.deleteReaction)
 
 router.post(
   '/create/comment',
   requestValidator(createCommentSchema),
-  CustomerCommentsRatingsController.addComment,
+  SocialsController.addComment,
 )
 
 router.post(
   '/create/reply',
   requestValidator(createReplySchema),
-  CustomerCommentsRatingsController.addReply,
+  SocialsController.addReply,
 )
 
-router.get('/fetch/comments/:parentId', CustomerCommentsRatingsController.getComments)
-router.get('/fetch/replies/:commentId', CustomerCommentsRatingsController.getReplies)
+router.get('/fetch/comments/:parentId', SocialsController.getComments)
+router.get('/fetch/total-comments/:parentId', SocialsController.getTotalCommentsCount)
+router.get('/fetch/replies/:commentId', SocialsController.getReplies)
 
 router
   .route('/comments/:commentId')
-  .put(requestValidator(updateCommentSchema), CustomerCommentsRatingsController.updateComment)
-  .delete(CustomerCommentsRatingsController.deleteComment)
+  .put(requestValidator(updateCommentSchema), SocialsController.updateComment)
+  .delete(SocialsController.deleteComment)

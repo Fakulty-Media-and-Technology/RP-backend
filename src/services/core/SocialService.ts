@@ -48,7 +48,7 @@ type IncCommentsCountInput = {
   incCount: number
 }
 
-export class CustomerCommentsRatingsService {
+export class SocialService {
   static CUReaction = async ({ commentId, reaction, authorId }: AddReaction) => {
     await ReactionModel.findOneAndUpdate(
       {
@@ -308,5 +308,11 @@ export class CustomerCommentsRatingsService {
     if (deletedRating === null) {
       throw new OperationalError('invalid rating Id', 404)
     }
+  }
+
+  static totalCommentsCount = async (vodId: string) => {
+    const totalComments = await CommentModel.find({ parentId: vodId }).countDocuments()
+
+    return { totalComments }
   }
 }
