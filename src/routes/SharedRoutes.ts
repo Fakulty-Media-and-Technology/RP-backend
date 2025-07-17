@@ -15,9 +15,9 @@ import { AdminFeaturedController } from '../controllers/admins/featured.admin'
 export class SharedRoutes {
   private _router: Router
 
-  constructor(router: Router) {
+  constructor(parentRouter: Router) {
     this._router = Router()
-    router.use('/shared', this._router)
+    parentRouter.use('/shared', this._router)
   }
 
   contents() {
@@ -69,7 +69,7 @@ export class SharedRoutes {
     this._router.put('/should-store/:paymentId', SharedController.setPaymentShouldStoreDetails)
     this._router.get('/payment-details', SharedController.fetchPaymentDetails)
     this._router.get('/content-costs', SharedController.checkContentCosts)
-    
+
     this._router.get(
       '/check-content-payment/:contentType/:contentId',
       SharedController.checkHasPaidForContent,
