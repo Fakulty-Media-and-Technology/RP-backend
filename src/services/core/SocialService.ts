@@ -19,6 +19,7 @@ import {
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { MediaAccess } from '../media-access'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
+import { MongoDBObjectId } from '../../types/general'
 
 type UpdateRatingInput = {
   ratingId: string
@@ -46,6 +47,16 @@ type IncCommentsCountInput = {
   session: MaybeSession
   action: 'CREATE' | 'DELETE'
   incCount: number
+}
+
+type GetCommentsInput = {
+  parentId: string
+  query: ExpressRequestQuery
+  currentUserId: MongoDBObjectId
+}
+
+type GetRepliesInput = Omit<GetCommentsInput, 'parentId'> & {
+  commentId: string
 }
 
 export class SocialService {
@@ -238,11 +249,12 @@ export class SocialService {
     return getPromiseAllFulfilledResults(withAuthorPhotosResults)
   }
 
-  static getComments = async (parentId: string, query: ExpressRequestQuery) => {
+  static getComments = async ({ query, parentId, currentUserId }: GetCommentsInput) => {
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const comments = await CommentsRepo.getComments({
       parentId,
+      userId: currentUserId,
       skip,
       limit,
     })
@@ -250,11 +262,12 @@ export class SocialService {
     return await this._attachAuthorPhoto(comments)
   }
 
-  static getReplies = async (commentId: string, query: ExpressRequestQuery) => {
+  static getReplies = async ({ commentId, query, currentUserId }: GetRepliesInput) => {
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const replies = await CommentsRepo.getReplies({
       parentCommentId: commentId,
+      userId: currentUserId,
       skip,
       limit,
     })
@@ -316,4 +329,3 @@ export class SocialService {
     return { totalComments }
   }
 }
-

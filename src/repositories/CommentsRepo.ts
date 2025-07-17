@@ -9,13 +9,15 @@ type PageOptions = {
 
 type GetCommentsAggeResInput = PageOptions & {
   match: PipelineStage.Match
+  userId: MongoDBObjectId
 }
 
 type GetCommentsInput = PageOptions & {
   parentId: string
+  userId: MongoDBObjectId
 }
 
-type GetRepliesInput = PageOptions & {
+type GetRepliesInput = Omit<GetCommentsInput, 'parentId'> & {
   parentCommentId: string
 }
 
@@ -74,27 +76,29 @@ export class CommentsRepo {
     return res as Aggregate<({ totalReplies: number; _id: MongoDBObjectId } | undefined)[]>
   }
 
-  static getComments = ({ parentId, skip, limit }: GetCommentsInput) => {
+  static getComments = ({ parentId, skip, limit, userId }: GetCommentsInput) => {
     return this._getCommentsRes({
       skip,
       limit,
+      userId,
       match: {
         $match: { $expr: { $eq: ['$parentId', { $toObjectId: parentId }] } },
       },
     })
   }
 
-  static getReplies = ({ parentCommentId, skip, limit }: GetRepliesInput) => {
+  static getReplies = ({ parentCommentId, skip, limit, userId }: GetRepliesInput) => {
     return this._getRepliesRes({
       skip,
       limit,
+      userId,
       match: {
         $match: { $expr: { $eq: ['$parentCommentId', { $toObjectId: parentCommentId }] } },
       },
     })
   }
 
-  static _getRepliesRes = ({ match, skip, limit }: GetCommentsAggeResInput) => {
+  static _getRepliesRes = ({ match, skip, limit, userId }: GetCommentsAggeResInput) => {
     const res = CommentModel.aggregate([
       { $match: { ...match.$match, parentCommentId: { $exists: true } } },
 
@@ -123,6 +127,9 @@ export class CommentsRepo {
 
       {
         $set: {
+
+          originalParentCommentId: '$parentCommentId',
+
           parentCommentId: {
             $cond: {
               if: { $eq: [{ $ifNull: ['$parentReplyId', null] }, null] },
@@ -181,15 +188,41 @@ export class CommentsRepo {
           localField: '_id',
           foreignField: 'commentId',
           as: 'reactions',
+
+          pipeline: [
+            {
+              $project: {
+                isUserReaction: { $toBool: { $eq: ['$userId', userId] } },
+              },
+            },
+          ],
         },
       },
 
       {
         $project: {
-          commentId: '$_id',
           author: { $first: '$user' },
           parentCommentAuthor: { $first: '$parentComment.user' },
           totalReactions: { $size: '$reactions' },
+          parentCommentId: '$originalParentCommentId',
+
+          currentUserReacted: {
+            $toBool: {
+              $gt: [
+                {
+                  $size: {
+                    $filter: {
+                      input: '$reactions',
+                      cond: { $eq: ['$$this.isUserReaction', true] },
+                      limit: 1,
+                    },
+                  },
+                },
+                0,
+              ],
+            },
+          },
+
           content: '$message',
           reactions: '$$REMOVE',
           createdAt: true,
@@ -197,9 +230,10 @@ export class CommentsRepo {
         },
       },
 
-      { $set: { totalEngagements: { $sum: ['$totalReactions', '$totalReplies'] } } },
+      // { $set: { totalEngagements: { $sum: ['$totalReactions', '$totalReplies'] } } },
 
-      { $sort: { _id: 1, totalEngagements: -1 } },
+      // { $sort: { _id: 1, totalEngagements: -1 } },
+      { $sort: { _id: 1 } },
       { $skip: skip },
       { $limit: limit },
     ])
@@ -207,28 +241,9 @@ export class CommentsRepo {
     return res as Aggregate<GetRepliesResponse[]>
   }
 
-  static _getCommentsRes = ({ match, skip, limit }: GetCommentsAggeResInput) => {
+  static _getCommentsRes = ({ match, skip, limit, userId }: GetCommentsAggeResInput) => {
     const res = CommentModel.aggregate([
       { $match: { ...match.$match, parentCommentId: { $exists: false } } },
-
-      {
-        $lookup: {
-          from: 'reactions',
-          localField: '_id',
-          foreignField: 'commentId',
-          as: 'reactions',
-        },
-      },
-
-      {
-        $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'parentCommentId',
-          as: 'replies',
-          pipeline: [{ $project: { _id: true } }],
-        },
-      },
 
       {
         $lookup: {
@@ -254,9 +269,53 @@ export class CommentsRepo {
       { $match: { 'user.0': { $exists: true } } },
 
       {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'parentCommentId',
+          as: 'replies',
+          pipeline: [{ $project: { _id: true } }],
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'reactions',
+          localField: '_id',
+          foreignField: 'commentId',
+          as: 'reactions',
+
+          pipeline: [
+            {
+              $project: {
+                isUserReaction: { $toBool: { $eq: ['$userId', userId] } },
+              },
+            },
+          ],
+        },
+      },
+
+      {
         $project: {
-          commentId: '$_id',
           author: { $first: '$user' },
+
+          currentUserReacted: {
+            $toBool: {
+              $gt: [
+                {
+                  $size: {
+                    $filter: {
+                      input: '$reactions',
+                      cond: { $eq: ['$$this.isUserReaction', true] },
+                      limit: 1,
+                    },
+                  },
+                },
+                0,
+              ],
+            },
+          },
+
           totalReactions: { $size: '$reactions' },
           totalReplies: { $size: '$replies' },
           content: '$message',
@@ -266,9 +325,10 @@ export class CommentsRepo {
         },
       },
 
-      { $set: { totalEngagements: { $sum: ['$totalReactions', '$totalReplies'] } } },
+      // { $set: { totalEngagements: { $sum: ['$totalReactions', '$totalReplies'] } } },
 
-      { $sort: { totalEngagements: -1, _id: 1 } },
+      // { $sort: { totalEngagements: -1, _id: 1 } },
+      { $sort: { _id: 1 } },
       { $skip: skip },
       { $limit: limit },
     ])

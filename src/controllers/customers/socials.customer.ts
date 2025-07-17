@@ -74,7 +74,11 @@ export class SocialsController {
   })
 
   static getComments = Catch.async(async (req, res) => {
-    const comments = await SocialService.getComments(req.params.parentId, req.query)
+    const comments = await SocialService.getComments({
+      parentId: req.params.parentId,
+      query: req.query,
+      currentUserId: GetDefined.loggedInUser(req.user)._id,
+    })
 
     sendResponse({
       res,
@@ -84,7 +88,11 @@ export class SocialsController {
   })
 
   static getReplies = Catch.async(async (req, res) => {
-    const replies = await SocialService.getReplies(req.params.commentId, req.query)
+    const replies = await SocialService.getReplies({
+      commentId: req.params.commentId,
+      query: req.query,
+      currentUserId: GetDefined.loggedInUser(req.user)._id,
+    })
 
     sendResponse({
       res,
