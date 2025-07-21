@@ -11,7 +11,6 @@ export const deleteOldFile = async (absFilePath: string, timeAgoDiffMs = 900000)
 
   if (Date.now() - fileStat.ctimeMs >= timeAgoDiffMs) {
     await fs.promises.unlink(absFilePath)
-    console.log('func: deleteOldFile(..) deleted file:', absFilePath)
   }
 }
 

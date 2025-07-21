@@ -65,6 +65,7 @@ type GetRepliesInput = Omit<GetCommentsInput, 'parentId'> & {
   commentId: string
 }
 
+
 export class SocialService {
   static CUReaction = async ({ commentId, reaction, authorId }: AddReaction) => {
     const reactionDocument = await ReactionModel.findOneAndUpdate(
@@ -73,7 +74,7 @@ export class SocialService {
         commentId,
       },
       { reaction },
-      { upsert: true },
+      { upsert: true, new: true },
     )
 
     if (reactionDocument == null) {
@@ -354,3 +355,5 @@ export class SocialService {
     return { totalComments }
   }
 }
+
+

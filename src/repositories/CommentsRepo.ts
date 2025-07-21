@@ -221,31 +221,30 @@ export class CommentsRepo {
       },
 
       {
+        $set: {
+          userReaction: {
+            $first: {
+              $filter: {
+                input: '$reactions',
+                cond: { $eq: ['$$this.isUserReaction', true] },
+                limit: 1,
+              },
+            },
+          },
+        },
+      },
+
+      {
         $project: {
           author: { $first: '$user' },
           parentCommentAuthor: { $first: '$parentComment.user' },
           totalReactions: { $size: '$reactions' },
           parentCommentId: '$originalParentCommentId',
-
-          currentUserReacted: {
-            $toBool: {
-              $gt: [
-                {
-                  $size: {
-                    $filter: {
-                      input: '$reactions',
-                      cond: { $eq: ['$$this.isUserReaction', true] },
-                      limit: 1,
-                    },
-                  },
-                },
-                0,
-              ],
-            },
+          reactionId: {
+            $ifNull: ['$userReaction._id', null],
           },
 
           content: '$message',
-          reactions: '$$REMOVE',
           createdAt: true,
           updatedAt: true,
         },
@@ -317,30 +316,30 @@ export class CommentsRepo {
       },
 
       {
+        $set: {
+          userReaction: {
+            $first: {
+              $filter: {
+                input: '$reactions',
+                cond: { $eq: ['$$this.isUserReaction', true] },
+                limit: 1,
+              },
+            },
+          },
+        },
+      },
+
+      {
         $project: {
           author: { $first: '$user' },
 
-          currentUserReacted: {
-            $toBool: {
-              $gt: [
-                {
-                  $size: {
-                    $filter: {
-                      input: '$reactions',
-                      cond: { $eq: ['$$this.isUserReaction', true] },
-                      limit: 1,
-                    },
-                  },
-                },
-                0,
-              ],
-            },
+          reactionId: {
+            $ifNull: ['$userReaction._id', null],
           },
 
           totalReactions: { $size: '$reactions' },
           totalReplies: { $size: '$replies' },
           content: '$message',
-          reactions: '$$REMOVE',
           createdAt: true,
           updatedAt: true,
         },
