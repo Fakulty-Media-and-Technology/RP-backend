@@ -55,6 +55,12 @@ type GetCommentsInput = {
   currentUserId: MongoDBObjectId
 }
 
+type GetCommentById = {
+  currentUserId: MongoDBObjectId
+  commentId: string
+  type: string
+}
+
 type GetRepliesInput = Omit<GetCommentsInput, 'parentId'> & {
   commentId: string
 }
@@ -255,7 +261,18 @@ export class SocialService {
     return getPromiseAllFulfilledResults(withAuthorPhotosResults)
   }
 
-  static getCommentById = (commentId: string, type: 'COMMENT' | 'REPLY') => {}
+  static getCommentById = async ({ currentUserId, commentId, type }: GetCommentById) => {
+    switch (type) {
+      case 'COMMENT':
+        const [comment] = await CommentsRepo.getCommentById(commentId, currentUserId)
+        return comment
+      case 'REPLY':
+        const [reply] = await CommentsRepo.getReplyById(commentId, currentUserId)
+        return reply
+      default:
+        throw new OperationalError('comment type must be either COMMENT || REPLY', 400)
+    }
+  }
 
   static getComments = async ({ query, parentId, currentUserId }: GetCommentsInput) => {
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)

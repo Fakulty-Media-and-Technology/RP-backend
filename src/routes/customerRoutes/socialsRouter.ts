@@ -9,26 +9,16 @@ import {
 
 export const router = Router()
 
-router.put(
-  '/create-update/reaction/:commentId/:reaction',
-  SocialsController.createUpdateReaction,
-)
+router.put('/create-update/reaction/:commentId/:reaction', SocialsController.createUpdateReaction)
 
 router.delete('/delete/reaction/:reactionId', SocialsController.deleteReaction)
 
-router.post(
-  '/create/comment',
-  requestValidator(createCommentSchema),
-  SocialsController.addComment,
-)
+router.post('/create/comment', requestValidator(createCommentSchema), SocialsController.addComment)
 
-router.post(
-  '/create/reply',
-  requestValidator(createReplySchema),
-  SocialsController.addReply,
-)
+router.post('/create/reply', requestValidator(createReplySchema), SocialsController.addReply)
 
 router.get('/fetch/comments/:parentId', SocialsController.getComments)
+router.get('/fetch-by-Id/comments/:commentId/:type', SocialsController.getCommentById)
 router.get('/fetch/total-comments/:parentId', SocialsController.getTotalCommentsCount)
 router.get('/fetch/replies/:commentId', SocialsController.getReplies)
 
