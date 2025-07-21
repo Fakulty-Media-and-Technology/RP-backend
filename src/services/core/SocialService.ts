@@ -61,7 +61,7 @@ type GetRepliesInput = Omit<GetCommentsInput, 'parentId'> & {
 
 export class SocialService {
   static CUReaction = async ({ commentId, reaction, authorId }: AddReaction) => {
-    await ReactionModel.findOneAndUpdate(
+    const reactionDocument = await ReactionModel.findOneAndUpdate(
       {
         userId: authorId,
         commentId,
@@ -69,6 +69,12 @@ export class SocialService {
       { reaction },
       { upsert: true },
     )
+
+    if (reactionDocument == null) {
+      throw new OperationalError('could not create reaction', 500)
+    }
+
+    return { reactionId: reactionDocument._id }
   }
 
   static deleteReaction = async (reactionId: string) => {
@@ -248,6 +254,8 @@ export class SocialService {
 
     return getPromiseAllFulfilledResults(withAuthorPhotosResults)
   }
+
+  static getCommentById = (commentId: string, type: 'COMMENT' | 'REPLY') => {}
 
   static getComments = async ({ query, parentId, currentUserId }: GetCommentsInput) => {
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)

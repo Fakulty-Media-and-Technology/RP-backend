@@ -21,7 +21,7 @@ export class SocialsController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    await SocialService.CUReaction({
+    const response = await SocialService.CUReaction({
       commentId: req.params.commentId,
       reaction: req.params.reaction,
       authorId: user.id,
@@ -30,6 +30,7 @@ export class SocialsController {
     sendResponse({
       res,
       message: 'reaction created successfully',
+      data: response,
     })
   })
 

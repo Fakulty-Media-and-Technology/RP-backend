@@ -76,6 +76,21 @@ export class CommentsRepo {
     return res as Aggregate<({ totalReplies: number; _id: MongoDBObjectId } | undefined)[]>
   }
 
+  static getCommentById = (commentId: MongoDBObjectId, userId: MongoDBObjectId) => {
+    return this._getCommentsRes({
+      skip: 0,
+      limit: 1,
+      userId,
+      match: {
+        $match: { $expr: { $eq: ['$_id', { $toObjectId: commentId }] } },
+      },
+    })
+  }
+
+  static getReplyById = (commentId: MongoDBObjectId, userId: MongoDBObjectId) => {
+    
+  }
+
   static getComments = ({ parentId, skip, limit, userId }: GetCommentsInput) => {
     return this._getCommentsRes({
       skip,
@@ -127,7 +142,6 @@ export class CommentsRepo {
 
       {
         $set: {
-
           originalParentCommentId: '$parentCommentId',
 
           parentCommentId: {
