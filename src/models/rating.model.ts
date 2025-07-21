@@ -12,6 +12,7 @@ const ratingSchema = new Schema(
     parentId: {
       type: Schema.Types.ObjectId,
       required: true,
+      index: true
     },
 
     userId: {

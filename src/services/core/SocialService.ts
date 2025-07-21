@@ -20,6 +20,7 @@ import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParam
 import { MediaAccess } from '../media-access'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { MongoDBObjectId } from '../../types/general'
+import { RatingsRepo } from '../../repositories/ReatingsRepo'
 
 type UpdateRatingInput = {
   ratingId: string
@@ -64,7 +65,6 @@ type GetCommentById = {
 type GetRepliesInput = Omit<GetCommentsInput, 'parentId'> & {
   commentId: string
 }
-
 
 export class SocialService {
   static CUReaction = async ({ commentId, reaction, authorId }: AddReaction) => {
@@ -308,24 +308,7 @@ export class SocialService {
   }
 
   static getRatings = async (parentId: string) => {
-    const ratings = await RatingModel.aggregate([
-      {
-        $match: {
-          parentId: toObjectId(parentId),
-        },
-      },
-
-      {
-        $group: {
-          _id: null,
-          totalRatings: { $sum: 1 },
-          averageRatings: { $avg: '$rate' },
-        },
-      },
-
-      { $set: { _id: '$$REMOVE' } },
-    ])
-
+    const [ratings] = await RatingsRepo.parentRatingsStats(parentId)
     return ratings
   }
 
@@ -355,5 +338,3 @@ export class SocialService {
     return { totalComments }
   }
 }
-
-
