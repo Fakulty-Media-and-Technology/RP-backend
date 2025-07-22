@@ -696,7 +696,7 @@ export class PaymentService {
   ) => {
     denyGuestUser(currentUser)
 
-    // const status = method === 'wallet' ? 'success' : 'pending'
+    const status = method === 'wallet' ? 'success' : 'pending'
 
     fullName = fullName ?? `${currentUser.first_name} ${currentUser.last_name}`
     email = email?.toLowerCase() ?? currentUser.email
@@ -708,7 +708,7 @@ export class PaymentService {
       email,
       amount,
       method,
-      status: 'success',
+      status,
       useCase,
       liveId,
       videoId,
