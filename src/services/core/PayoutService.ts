@@ -206,6 +206,10 @@ export class PayoutService {
   ) => {
     const payout = await PayoutModel.findByIdAndUpdate(reference, { $set: { status } }, { session })
 
+    console.log('Payout handler called')
+
+    console.dir({ reference, status, payout }, { depth: null })
+
     if (payout == null) {
       throw new OperationalError('invalid reference: ' + reference, 404)
     }

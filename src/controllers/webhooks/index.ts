@@ -5,13 +5,14 @@ import env from '../../env'
 
 export class WebhooksController {
   static paystack = Catch.async(async (req, res) => {
+    console.log('Webhook was called at', new Date())
+    console.dir({ payload: req.body }, { depth: null })
+
     const hash = createHmac('sha512', env.PAYSTACK_SECRET_KEY)
       .update(JSON.stringify(req.body))
       .digest('hex')
 
     const payshackHash = req.headers['x-paystack-signature']
-
-    // TODO: remove after testing
 
     console.log({
       hash,
@@ -21,7 +22,7 @@ export class WebhooksController {
       },
     })
 
-    if (hash == req.headers['x-paystack-signature']) {
+    if (hash == payshackHash) {
       WebhooksService.delegateHandler(req.body)
     }
 

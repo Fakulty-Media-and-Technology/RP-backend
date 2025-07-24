@@ -34,8 +34,15 @@ export class WebhooksService {
   }
 
   static delegateHandler = async ({ event, reference, data }: DelegateServiceInput) => {
+    console.dir(
+      { activity: 'WebhookService.delegateHandlercalled', payload: { event, reference, data } },
+      { depth: null },
+    )
+
     try {
       if (event === 'charge.success') {
+        console.log('Charge Success event')
+
         if (data == null) {
           throw new OperationalError('Expected data object for charge.success event', 500)
         }
@@ -43,6 +50,8 @@ export class WebhooksService {
         await PaymentService.handleWebookEventByReference(data.reference)
         return
       }
+
+      console.log('Other events')
 
       // transfers
       if (reference == null) {

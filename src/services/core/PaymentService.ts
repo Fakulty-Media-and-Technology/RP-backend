@@ -402,6 +402,10 @@ export class PaymentService {
       status: this._getStatusFromTransaction(transaction),
     })
 
+    console.log('Payment service called post webhooks trigger')
+
+    console.dir({ transaction, payment, reference }, { depth: null })
+
     if (payment === null) {
       throw new OperationalError(`Could not find payment for ref: ${reference}`, 400)
     }
