@@ -110,58 +110,6 @@ export class PayoutService {
     await withMongoDBSession(this._reqPayoutTransaction, params)
   }
 
-  // static editPayout = async (
-  //   currentUser: LoggedInUser,
-  //   payoutId: string,
-  //   data: Record<string, any>,
-  // ) => {
-  //   const { amount, account_number, account_name, bank_name } = data
-
-  //   const initVal = await PayoutModel.findOne({
-  //     _id: payoutId,
-  //     status: 'pending',
-  //     client_id: currentUser._id,
-  //   })
-
-  //   if (!initVal) {
-  //     throw new OperationalError(
-  //       "payout request can no longer be modified, it's being processed",
-  //       400,
-  //     )
-  //   }
-
-  //   const accBal = await WalletModel.findOne({ user_id: currentUser._id })
-
-  //   // if (Number(amount) > Number(accBal?.balance)) {
-  //   //   throw new OperationalError('insufficient balance', 400)
-  //   // }
-
-  //   if (Number(amount) < env.MIN_WITHDRAWAL_AMOUNT) {
-  //     throw new OperationalError(
-  //       `requested amount is below limit of ${env.MIN_WITHDRAWAL_AMOUNT}`,
-  //       400,
-  //     )
-  //   }
-
-  //   const finAmount = amount - (Number(amount) * env.WITHDRAWAL_PERCENT) / 100
-
-  //   await PayoutModel.findOneAndUpdate(
-  //     {
-  //       _id: payoutId,
-  //       client_id: currentUser._id,
-  //     },
-  //     {
-  //       amount: amount ? finAmount : initVal.amount,
-  //       account_number: account_number ? account_number : initVal.account_number,
-  //       account_name: account_name ? account_name : initVal.account_name,
-  //       bank_name: bank_name ? account_name : initVal.bank_name,
-  //     },
-  //     {
-  //       upsert: true,
-  //     },
-  //   )
-  // }
-
   static requestAllPayoutInfo = async (currentUser: LoggedInUser, query: ExpressRequestQuery) => {
     const payouts = await new QueryParamsFeatures(
       PayoutModel.find({ client_id: currentUser.id }).sort({ _id: -1 }),
