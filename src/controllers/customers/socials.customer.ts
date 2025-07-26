@@ -38,7 +38,7 @@ export class SocialsController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    await SocialService.addComment({
+    const comment = await SocialService.addComment({
       ...req.body,
       authorId: user.id,
     })
@@ -46,6 +46,7 @@ export class SocialsController {
     sendResponse({
       res,
       message: 'comment created successfully',
+      data: comment,
     })
   })
 
@@ -53,7 +54,7 @@ export class SocialsController {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    await SocialService.addReply({
+    const reply = await SocialService.addReply({
       ...req.body,
       authorId: user._id.toString(),
     })
@@ -61,6 +62,7 @@ export class SocialsController {
     sendResponse({
       res,
       message: 'reply created successfully',
+      data: reply,
     })
   })
 

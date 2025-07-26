@@ -148,11 +148,12 @@ export class SocialService {
       action: 'CREATE',
       incCount: 1,
     })
+
+    return comment
   }
 
-  static addComment = async (input: AddCommentInput) => {
+  static addComment = async (input: AddCommentInput) =>
     await withMongoDBSession(this._addCommentTransaction, input)
-  }
 
   static _addReplyTransaction = async (
     { parentCommentId, message, authorId, parentType, parentId, parentReplyId }: AddReplyInput,
@@ -173,11 +174,12 @@ export class SocialService {
       action: 'CREATE',
       incCount: 1,
     })
+
+    return reply
   }
 
-  static addReply = async (input: AddReplyInput) => {
+  static addReply = async (input: AddReplyInput) =>
     await withMongoDBSession(this._addReplyTransaction, input)
-  }
 
   static updateComment = async (commentId: string, message: string) => {
     const comment = await CommentModel.findByIdAndUpdate(commentId, { message }, { new: true })
