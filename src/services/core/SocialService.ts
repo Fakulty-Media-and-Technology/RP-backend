@@ -66,6 +66,14 @@ type GetRepliesInput = Omit<GetCommentsInput, 'parentId'> & {
   commentId: string
 }
 
+type CreateRating = {
+  rate: number
+  parentType: string
+  parentId: string
+  comment?: string
+  userId: string
+}
+
 export class SocialService {
   static CUReaction = async ({ commentId, reaction, authorId }: AddReaction) => {
     const reactionDocument = await ReactionModel.findOneAndUpdate(
@@ -304,8 +312,16 @@ export class SocialService {
   }
 
   // ********* Ratings
-  static addRating = async (data: Record<string, any>) => {
-    const rating = await RatingModel.create(data)
+  static addRating = async ({ userId, rate, parentId, parentType, comment }: CreateRating) => {
+    const rating = await RatingModel.findOneAndUpdate(
+      {
+        userId,
+        parentId,
+      },
+      { parentType, comment, rate },
+      { new: true, upsert: true },
+    )
+
     return rating
   }
 

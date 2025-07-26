@@ -12,7 +12,7 @@ const ratingSchema = new Schema(
     parentId: {
       type: Schema.Types.ObjectId,
       required: true,
-      index: true
+      index: true,
     },
 
     userId: {
@@ -37,7 +37,7 @@ const ratingSchema = new Schema(
   },
 )
 
-ratingSchema.index({ parentType: 1, parentId: 1, userId: 1 }, { unique: true })
+ratingSchema.index({ userId: 1, parentId: 1 }, { unique: true })
 
 export const RatingModel = model('ratings', ratingSchema)
 export type RatingSchema = InferSchemaType<typeof ratingSchema>

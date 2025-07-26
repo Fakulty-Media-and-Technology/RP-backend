@@ -144,7 +144,7 @@ export class SocialsController {
 
     const rating = await SocialService.addRating({
       ...req.body,
-      userId: user.id,
+      userId: user._id.toString(),
     })
 
     sendResponse({
