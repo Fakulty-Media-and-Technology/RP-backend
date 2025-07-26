@@ -250,10 +250,7 @@ export class CommentsRepo {
         },
       },
 
-      // { $set: { totalEngagements: { $sum: ['$totalReactions', '$totalReplies'] } } },
-
-      // { $sort: { _id: 1, totalEngagements: -1 } },
-      { $sort: { _id: 1 } },
+      { $sort: { _id: -1 } },
       { $skip: skip },
       { $limit: limit },
     ])
@@ -344,11 +341,7 @@ export class CommentsRepo {
           updatedAt: true,
         },
       },
-
-      // { $set: { totalEngagements: { $sum: ['$totalReactions', '$totalReplies'] } } },
-
-      // { $sort: { totalEngagements: -1, _id: 1 } },
-      { $sort: { _id: 1 } },
+      { $sort: { _id: -1 } },
       { $skip: skip },
       { $limit: limit },
     ])
