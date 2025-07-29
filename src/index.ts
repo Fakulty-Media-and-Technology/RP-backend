@@ -18,7 +18,6 @@ const { PORT } = env
 
 const app = reeplayApp()
 const server = createServer(app)
-const cronJobs = new CronTasks()
 const mediaStream = new MediaStream()
 
 const io = new Server(server, {
@@ -38,7 +37,6 @@ connectMongoDB().then(conn => {
     console.log(`Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`)
 
     socketChat(io)
-    cronJobs.start()
     WithWorkerThread.manageJobs('START')
     mediaStream.initiate()
 
