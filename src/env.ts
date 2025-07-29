@@ -36,7 +36,6 @@ export const env = getValidEnv({
   MAIL_PASSWORD: process.env.MAIL_PASSWORD,
   MAIL_PORT: setToNumberWithDefault('MAIL_PORT', 465),
 
-
   //   secrets
   JWT_SECRET: process.env.JWT_SECRET,
   GUEST_TOKEN: process.env.GUEST_TOKEN,
@@ -97,4 +96,4 @@ export const env = getValidEnv({
 
 export default env
 
-
+console.log('ENVIRONMENT VARIABLES BELOW!!👇👇\n', JSON.stringify(env, null, 2))
