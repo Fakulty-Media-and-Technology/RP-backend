@@ -1,10 +1,17 @@
 import { Schema, model } from 'mongoose'
+import { previewPhotoSchema } from './commonSchema'
 
 const schema = new Schema(
   {
     adminNotification: {
       type: Schema.Types.ObjectId,
       ref: 'admin-notifications',
+      required: true,
+    },
+
+    publisher: {
+      type: String,
+      enum: ['Client', 'Admin'],
       required: true,
     },
 
