@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { ClientLiveStreamController } from '../../controllers/clients/livestream.clients'
-import { CustomerPaymentController } from '../../controllers/customers/payment.customer'
 
-export const router = Router()
+export const clientEventsRouter = Router()
 
-router.get('/payment/estimate', ClientLiveStreamController.calculateEventCharges)
+clientEventsRouter.get('/payment/estimate', ClientLiveStreamController.calculateEventCharges)

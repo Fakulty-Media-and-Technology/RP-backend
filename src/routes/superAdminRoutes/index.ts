@@ -23,6 +23,7 @@ import { superAdminUsersRouter } from './userRouter'
 import { throwDepricatedRoute } from '../../middlewares/depricate'
 import { Multer } from '../../utils/Multer'
 import { OnboardingController } from '../../controllers/customers/onboarding.customer'
+import { superAdminNotificationRouter } from './notificationRoute'
 
 export const superAdminRouter = express.Router()
 
@@ -53,6 +54,7 @@ superAdminRouter.use('/uploads', superAdminUploadsRouter)
 superAdminRouter.use('/user', superAdminUsersRouter)
 superAdminRouter.use('/dashboard', superAdminDashboardRouter)
 superAdminRouter.use('/ads', superAdminAdsRouter)
+superAdminRouter.use('/notifications', superAdminNotificationRouter)
 
 superAdminRouter.post(
   '/create-super-admin',

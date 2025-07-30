@@ -23,13 +23,14 @@ import { router as EnumsRouter } from './../customerRoutes/enumsRouter'
 import { router as WatchedRouter } from './watchedRouter'
 import { router as AdsRouter } from './addsRouter'
 import { RecentSearchRouter } from './recentSearchRouter'
+import { VODWaitlistRouter } from './VODWaitlistRouter'
 
 import { SharedRoutes } from '../SharedRoutes'
 import { requestValidator } from '../../middlewares/requestValidator'
 import { createCustomerSchema, viewContentSchema } from '../../validations/customers'
 import { SharedController } from '../../controllers/common/shared.controller'
 import { Multer } from '../../utils/Multer'
-import { VODWaitlistRouter } from './VODWaitlistRouter'
+import { notificationRouter } from './notificationRouter'
 
 export const customerRouter = Router()
 
@@ -74,13 +75,16 @@ customerRouter.use('/enums', EnumsRouter)
 customerRouter.use('/live/events', LivesRouter)
 customerRouter.use('/livestream', LivestreamRouter)
 customerRouter.use('/subscription', SubscriptionRuuter)
-customerRouter.use('/notification', PushNotificationRouter)
-customerRouter.use('/notifications', NotificationsRouter)
+// customerRouter.use('/notification', PushNotificationRouter)
+// customerRouter.use('/notifications', NotificationsRouter)
 customerRouter.use('/recent-search', RecentSearchRouter)
 customerRouter.use('/watched', WatchedRouter)
 customerRouter.use('/vod-waitlist', VODWaitlistRouter)
+customerRouter.use('/notifications', notificationRouter)
 
 customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.get('/banner/contents', SharedController.bannerContents)
 customerRouter.post('/signup/createpin', OnboardingController.createPin)
 customerRouter.post('/suggestion/create', CustomerProfileController.createSuggestion)
+
+

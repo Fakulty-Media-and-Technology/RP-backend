@@ -6,12 +6,21 @@ import { PushNotificationService } from './PushNotificationService'
 import { AdminNotificationModel } from '../../models/admin.notification.model'
 import { MediaManagement } from '../media-management'
 import { fetchManyUsersByFilterGenerator, Filter } from '../../generators/fetchAllExceptUserId'
-import { CustomerNotificationModel } from '../../models/customer.notification.model'
+import { UserNotificationModel } from '../../models/customer.notification.model'
+import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { NotificationRepo } from '../../repositories/NotificationRepo'
+import { getPromiseAllFulfilledResults } from '../../utils/promises'
 
 interface GetNotificationsInput {
   currentUser: LoggedInUser
   page: number
   limit: number
+}
+
+interface UpdateHasSeenParams {
+  currentUser: LoggedInUser
+  notificationId: string
+  hasSeenStatus: boolean
 }
 
 interface CreateClientNotification {
@@ -39,13 +48,13 @@ export class NotificationService {
 
     setTimeout(async () => {
       const filter: Filter = {
-        _id: { $ne: currentUser._id },
+        role: 'customer',
       }
 
       for await (const users of fetchManyUsersByFilterGenerator(filter)) {
         users.forEach(async user => {
           try {
-            await CustomerNotificationModel.create({
+            await UserNotificationModel.create({
               adminNotification: adminNotification._id,
               user: user._id,
               publisher: 'Client',
@@ -90,19 +99,15 @@ export class NotificationService {
       photo: photoSchema,
     })
 
-    // allow request to conclude here
-
     setTimeout(async () => {
       const filter: Filter = {
         _id: { $ne: currentUser._id },
       }
 
-      // TODO: Implement Push Notification
-
       for await (const users of fetchManyUsersByFilterGenerator(filter)) {
         users.forEach(async user => {
           try {
-            await CustomerNotificationModel.create({
+            await UserNotificationModel.create({
               adminNotification: adminNotification._id,
               user: user._id,
               publisher: 'Admin',
@@ -113,6 +118,50 @@ export class NotificationService {
         })
       }
     }, 0)
+  }
+
+  static getUnseenNotifications = async (currentUser: LoggedInUser, query: ExpressRequestQuery) => {
+    const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
+
+    const notifications = await NotificationRepo.fetchUnSeenUserNotifications({
+      userId: currentUser._id,
+      skip,
+      limit,
+    })
+
+    const withImagesResults = await Promise.allSettled(
+      notifications.map(async notification => {
+        const result = Object.assign(notification, {
+          photoUri:
+            notification.adminNotification.photo == null
+              ? null
+              : await MediaAccess.getSignedUrl(
+                  notification.adminNotification.photo.Bucket,
+                  notification.adminNotification.photo.Key,
+                  'photo',
+                ),
+        })
+
+        return result
+      }),
+    )
+
+    return getPromiseAllFulfilledResults(withImagesResults)
+  }
+
+  static updateHasSeen = async ({
+    currentUser,
+    notificationId,
+    hasSeenStatus,
+  }: UpdateHasSeenParams) => {
+    const notification = await UserNotificationModel.findOneAndUpdate(
+      { _id: notificationId, user: currentUser._id },
+      { $set: { hasSeen: hasSeenStatus } },
+    )
+
+    if (notification == null) {
+      throw new OperationalError('Notfication not found', 404)
+    }
   }
 
   // OLD

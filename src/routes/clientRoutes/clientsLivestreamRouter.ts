@@ -5,18 +5,18 @@ import { requestValidator } from '../../middlewares/requestValidator'
 import { Multer } from '../../utils/Multer'
 import { createContestantSchema } from '../../validations/admin'
 
-export const router = Router()
+export const clientLiveRouter = Router()
 
-router.get('/streamkey', ClientLiveStreamController.getLiveStreamCredentials)
-router.post('/vote/info', ClientVoteController.createVoteInfo)
-router.put('/vote/info/update', ClientVoteController.updateVoteInfo)
-router.get('/vote/contestant/fetch', ClientVoteController.fetchVoteContestants)
+clientLiveRouter.get('/streamkey', ClientLiveStreamController.getLiveStreamCredentials)
+clientLiveRouter.post('/vote/info', ClientVoteController.createVoteInfo)
+clientLiveRouter.put('/vote/info/update', ClientVoteController.updateVoteInfo)
+clientLiveRouter.get('/vote/contestant/fetch', ClientVoteController.fetchVoteContestants)
 
-router.post(
+clientLiveRouter.post(
   '/vote/contestant',
   Multer.uploadSingleImage,
   requestValidator(createContestantSchema),
   ClientVoteController.addVoteContestant,
 )
-router.post('/vote/contestant/remove', ClientVoteController.rmVoteContestants)
-router.get('/vote/voting-status', ClientVoteController.votestatusInfo)
+clientLiveRouter.post('/vote/contestant/remove', ClientVoteController.rmVoteContestants)
+clientLiveRouter.get('/vote/voting-status', ClientVoteController.votestatusInfo)

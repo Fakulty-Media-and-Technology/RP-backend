@@ -1,15 +1,15 @@
-import express from 'express'
+import { Router } from 'express'
 
 import { ClientProfileController } from '../../controllers/clients/profile.clients'
 import { AuthMiddleware } from '../../middlewares/auth'
-
-import { router as ClientsLiveStreamRouter } from './../clientRoutes/clientsLivestreamRouter'
-import { router as ClientPayoutRouter } from './../clientRoutes/clientsPayoutRouter'
-import { router as ClientEventRouter } from './../clientRoutes/clientEventRouter'
-import { router as ClientProfileRouter } from './../clientRoutes/clientProfileRouter'
+import { clientLiveRouter } from './../clientRoutes/clientsLivestreamRouter'
+import { clientPayoutRouter } from './../clientRoutes/clientsPayoutRouter'
+import { clientEventsRouter } from './../clientRoutes/clientEventRouter'
+import { clientprofileRouter } from './../clientRoutes/clientProfileRouter'
 import { SharedRoutes } from '../SharedRoutes'
+import { clientNotificationRouter } from './notificationRouter'
 
-export const clientsRouter = express.Router()
+export const clientsRouter = Router()
 
 clientsRouter.use(AuthMiddleware.authenticateRequest('clients-auth'))
 
@@ -20,10 +20,9 @@ new SharedRoutes(clientsRouter)
   .enums()
   .paymentActions()
 
-clientsRouter.use('/livestream', ClientsLiveStreamRouter)
-clientsRouter.use('/payouts', ClientPayoutRouter)
-clientsRouter.use('/event', ClientEventRouter)
-clientsRouter.use('/profile', ClientProfileRouter)
+clientsRouter.use('/livestream', clientLiveRouter)
+clientsRouter.use('/payouts', clientPayoutRouter)
+clientsRouter.use('/event', clientEventsRouter)
+clientsRouter.use('/profile', clientprofileRouter)
+clientsRouter.use('/notifications', clientNotificationRouter)
 clientsRouter.get('/history/payment/fetch', ClientProfileController.clientsPaymentHis)
-
-

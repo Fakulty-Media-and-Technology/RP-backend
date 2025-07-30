@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+import { InferSchemaType, Schema, model } from 'mongoose'
 import { previewPhotoSchema } from './commonSchema'
 
 const schema = new Schema(
@@ -22,7 +22,7 @@ const schema = new Schema(
       index: true,
     },
 
-    hasRead: {
+    hasSeen: {
       type: Boolean,
       default: false,
     },
@@ -30,4 +30,5 @@ const schema = new Schema(
   { timestamps: true, versionKey: false },
 )
 
-export const CustomerNotificationModel = model('customer-notifications', schema)
+export const UserNotificationModel = model('user-notifications', schema)
+export type UserNotificationSchema = InferSchemaType<typeof schema>
