@@ -96,4 +96,3 @@ export const env = getValidEnv({
 
 export default env
 
-console.log('ENVIRONMENT VARIABLES BELOW!!👇👇\n', JSON.stringify(env, null, 2))
