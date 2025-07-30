@@ -843,6 +843,9 @@ export class PaymentService {
     const costs = {
       premiumNGN: env.NGN_PREMIUM_CONTENT_COST,
       premiumUSD: env.USD_PREMIUM_CONTENT_COST,
+      eventHourlyChargeNGN: env.EVENT_HOURLY_CHARGES_NGN,
+      eventHourlyChargeUSD: env.EVENT_HOURLY_CHARGES_USD,
+      payoutServiceCharge: env.PAYOUT_SERVICE_CHARGE,
     }
 
     return costs
