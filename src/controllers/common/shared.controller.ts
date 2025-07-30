@@ -28,6 +28,8 @@ import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { QueryParamsFeatures, guranteeNumericResult } from '../../utils/QueryParamsFeatures'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { getPromiseAllFulfilledResults } from '../../utils/promises'
+import { PaymentModel } from '../../models/payments.model'
 
 export type PaymentHistoryCaller = {
   caller: 'Admin' | 'Others'
@@ -659,6 +661,24 @@ export class SharedController extends UploadMediaUtils {
         ),
       ])
     }
+
+    lives = getPromiseAllFulfilledResults(
+      await Promise.allSettled(
+        lives.map(async live => {
+          const response = Object.assign(live, {
+            canView: (
+              await PaymentService.checkHasValidContentPayment({
+                currentUserId: GetDefined.loggedInUser(req.user)._id,
+                contentId: live._id,
+                contentType: 'live',
+              })
+            ).canView,
+          })
+
+          return response
+        }),
+      ),
+    )
 
     sendResponse({
       res,
