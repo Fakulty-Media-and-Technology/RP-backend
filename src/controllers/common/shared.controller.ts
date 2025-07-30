@@ -609,12 +609,10 @@ export class SharedController extends UploadMediaUtils {
         GetDefined.loggedInUser(req.user)._id.toString(),
       )
 
+      const { page, limit } = QueryParamsFeatures.paginagteParams(req.query)
+
       const liveEvents = await LiveMediaSourcesUtils.resolveSources(
-        await LiveRepo.getSelectedLive(
-          filter,
-          guranteeNumericResult(req.query.page, 1),
-          guranteeNumericResult(req.query.limit, 10),
-        ),
+        await LiveRepo.getSelectedLive(filter, page, limit),
         vidQuality,
       )
 

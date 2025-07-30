@@ -109,6 +109,11 @@ export class LiveRepo {
   }
 
   static getSelectedLive = async (filter: FilterQuery<LiveSchema>, page = 1, limit = 10) => {
+    if (filter.popular) {
+      delete filter.popular
+      return await this.getMostEngaged(page, limit, { $match: filter })
+    }
+
     return await this.fetchLivesAggr({
       prevStages: [{ $match: filter }],
       page,
@@ -293,9 +298,14 @@ export class LiveRepo {
     return aggr
   }
 
-  static getMostEngaged = async (page = 1, limit = 5) => {
+  static getMostEngaged = async (
+    page = 1,
+    limit = 5,
+    match: PipelineStage.Match = { $match: {} },
+  ) => {
     return await this.fetchLivesAggr({
       prevStages: [
+        match,
         {
           $lookup: {
             from: 'comments',
@@ -350,8 +360,6 @@ export class LiveRepo {
           },
         },
 
-        { $sort: { engagements: -1 } },
-        { $limit: 10 },
         {
           $project: {
             donations: false,
@@ -365,6 +373,9 @@ export class LiveRepo {
 
       page,
       limit,
+      sortStage: { $sort: { engagements: -1 } },
     })
   }
 }
+
+
