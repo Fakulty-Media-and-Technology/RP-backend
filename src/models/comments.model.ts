@@ -18,7 +18,7 @@ const commentSchema = new Schema(
       ref: 'comments',
       sparse: true,
     },
-    
+
     parentReplyId: {
       type: Schema.Types.ObjectId,
       ref: 'comments',

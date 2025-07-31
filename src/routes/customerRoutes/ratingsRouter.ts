@@ -5,11 +5,7 @@ import { createRatingSchema, updateRatingSchema } from '../../validations/custom
 
 export const router = Router()
 
-router.post(
-  '/create',
-  requestValidator(createRatingSchema),
-  SocialsController.addRating,
-)
+router.post('/create', requestValidator(createRatingSchema), SocialsController.addRating)
 
 router.get('/fetch/:parentId', SocialsController.getRatings)
 

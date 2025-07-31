@@ -13,5 +13,4 @@ v1Router.use('/clients', clientsRouter)
 v1Router.use('/admin', adminRouter)
 v1Router.use('/superadmin', superAdminRouter)
 
-
 export default v1Router

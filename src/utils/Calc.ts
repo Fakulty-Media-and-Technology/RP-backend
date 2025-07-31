@@ -38,5 +38,3 @@ export class CalcUtils {
     return charge / this.getHourlyCharge(currency)
   }
 }
-
-

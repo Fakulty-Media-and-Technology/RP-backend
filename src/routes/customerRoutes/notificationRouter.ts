@@ -3,8 +3,6 @@ import { NotificationController } from '../../controllers/common/notification.co
 
 export const notificationRouter = Router()
 
-
-
 notificationRouter
   .route('/')
   .get(NotificationController.getUnseenNotifications)

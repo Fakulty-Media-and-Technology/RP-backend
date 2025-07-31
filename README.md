@@ -5,21 +5,18 @@ A robust Node.js backend service for video streaming and media management, built
 ## 🚀 Features
 
 - **Authentication & Authorization**
-
   - JWT-based authentication
   - Firebase integration
   - Role-based access control
   - Secure password handling with bcrypt
 
 - **Media Management**
-
   - Video upload and processing
   - AWS S3 storage integration
   - CloudFront CDN distribution
   - FFmpeg media manipulation
 
 - **Streaming Capabilities**
-
   - Live streaming support
   - Video on demand (VOD)
   - Adaptive bitrate streaming
@@ -59,7 +56,7 @@ A robust Node.js backend service for video streaming and media management, built
 git clone https://github.com/eddel/RP-backend.git
 cd RP-backend
 
-# comment " make start " if docker is not installed 
+# comment " make start " if docker is not installed
 git checkout typescript
 make start
 ```

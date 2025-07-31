@@ -6,7 +6,7 @@ const donateSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Live',
       required: true,
-      index: true
+      index: true,
     },
 
     customerId: {

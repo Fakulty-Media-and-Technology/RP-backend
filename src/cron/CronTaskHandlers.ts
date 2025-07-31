@@ -203,8 +203,7 @@ export class CronTaskHandlers {
   //         // }
 
   //         // user does not have card details here
-          
-          
+
   //         const cusWallet = await WalletModel.findOne({
   //           user_id: sub.user_id,
   //         })

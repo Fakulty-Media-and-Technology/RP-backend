@@ -129,10 +129,9 @@ export const intitiatePaymentSchema = {
   }),
 }
 
-
 export const authorizePaymentSchema = {
   body: Joi.object({
     amount: Joi.number().strict().required(),
-    paymentDetailsId: MONGO_DB_OBJECT_ID_SCHEMA.required()
-  })
+    paymentDetailsId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+  }),
 }

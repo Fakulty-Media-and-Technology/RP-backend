@@ -40,5 +40,3 @@ export class RatingsRepo {
     return res
   }
 }
-
-

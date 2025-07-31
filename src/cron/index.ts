@@ -18,11 +18,9 @@ export class CronTasks {
 
   start() {
     this._nodeCronTasks.forEach(task => task.start())
-    
   }
 
   stop() {
     this._nodeCronTasks.forEach(task => task.stop())
-    
   }
 }

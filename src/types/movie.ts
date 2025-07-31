@@ -1,4 +1,4 @@
-import { CastEnumSchema } from "../models/castEnum.model"
+import { CastEnumSchema } from '../models/castEnum.model'
 
 export interface Movie {
   _id: string

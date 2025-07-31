@@ -1,7 +1,6 @@
 import { startSession, ClientSession } from 'mongoose'
 import env from '../env'
 
-
 export type MaybeSession = ClientSession | undefined
 
 export type Executor<T, U> = (params: T, session: MaybeSession) => Promise<U>

@@ -4,7 +4,6 @@ import { LiveModel, Live } from '../../models/lives.model'
 import { PaymentModel } from '../../models/payments.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
-import { ClientSession } from 'mongoose'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { calcLiveCharges, signCred, getUniqueStreamKey } from '../../utils/live'
 import { LiveRepo } from '../../repositories/LiveRepo'
@@ -175,25 +174,8 @@ export class LiveStreamService {
 
     const vidQuality = vidQualitySettled.value
     const liveAggrRes = liveSettled.value
-
-    const lives = await LiveMediaSourcesUtils.resolveSources(liveAggrRes, vidQuality)
-
-    const creds = await Promise.allSettled(
-      lives.map(async live => {
-        const { streamKey } = live
-        const signed = `?sign=${signCred(streamKey, live.expiry)}`
-
-        Object.assign(live, {
-          stream_server: env.RP_RTMP_URL,
-          stream_url: env.RP_HLS_URL + streamKey + '/index.m3u8' + signed,
-          stream_key: streamKey + signed,
-        })
-
-        return live
-      }),
-    )
-
-    return getPromiseAllFulfilledResults(creds)
+    const lives = await LiveMediaSourcesUtils.resolveSources(liveAggrRes, vidQuality, true)
+    return lives
   }
 
   static extendLiveEvent = async (currentUser: LoggedInUser, data: Record<string, any>) => {

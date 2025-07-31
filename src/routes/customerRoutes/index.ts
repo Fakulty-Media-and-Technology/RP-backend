@@ -86,5 +86,3 @@ customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.get('/banner/contents', SharedController.bannerContents)
 customerRouter.post('/signup/createpin', OnboardingController.createPin)
 customerRouter.post('/suggestion/create', CustomerProfileController.createSuggestion)
-
-

@@ -182,11 +182,9 @@ export class VoteService {
             'photo',
           ),
           photo: undefined,
-          __v: undefined
+          __v: undefined,
         }
       }),
     )
   }
 }
-
-

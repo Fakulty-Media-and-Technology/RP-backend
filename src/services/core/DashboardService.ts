@@ -7,10 +7,7 @@ import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
 
-import {
-  guranteeNumericResult,
-  QueryParamsFeaturesOptions,
-} from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult, QueryParamsFeaturesOptions } from '../../utils/QueryParamsFeatures'
 
 import { MediaManagement } from '../media-management'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'

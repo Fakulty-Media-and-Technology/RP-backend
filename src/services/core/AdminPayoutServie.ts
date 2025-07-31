@@ -128,25 +128,24 @@ export class AdminPayoutService {
   }
 }
 
-
 interface Response {
-  status: number;
-  message: string;
-  data: Data;
+  status: number
+  message: string
+  data: Data
 }
 
 interface Data {
-  _id: string;
-  client_id: string;
-  amount: number;
-  charges: number;
-  account_number: string;
-  account_name: string;
-  bank_name: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: boolean;
-  processed_by: string[];
-  photoUrl: null;
+  _id: string
+  client_id: string
+  amount: number
+  charges: number
+  account_number: string
+  account_name: string
+  bank_name: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  __v: boolean
+  processed_by: string[]
+  photoUrl: null
 }
