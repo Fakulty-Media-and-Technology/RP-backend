@@ -5,12 +5,12 @@ import { skip } from '../utils/QueryParamsFeatures'
 interface UpdatePaymentStatusInput {
   status: PaymentSchema['status']
   session: MaybeSession
-  reference: string
+  paymentId: string
 }
 export class PaymentRepo {
-  static updateStatusByReference = ({ reference, session, status }: UpdatePaymentStatusInput) =>
-    PaymentModel.findOneAndUpdate(
-      { reference },
+  static updatePaymentStatus = ({ paymentId, session, status }: UpdatePaymentStatusInput) =>
+    PaymentModel.findByIdAndUpdate(
+      paymentId,
       { $set: { status, isUsed: status === 'success' } },
       { session, new: true },
     )

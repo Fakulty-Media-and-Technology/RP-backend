@@ -396,8 +396,8 @@ export class PaymentService {
   ) => {
     const transaction = await Paystack.verifyPayment(reference)
 
-    const payment = await PaymentRepo.updateStatusByReference({
-      reference,
+    const payment = await PaymentRepo.updatePaymentStatus({
+      paymentId: reference,
       session,
       status: this._getStatusFromTransaction(transaction),
     })

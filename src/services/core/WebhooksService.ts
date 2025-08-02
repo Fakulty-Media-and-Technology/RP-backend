@@ -34,15 +34,8 @@ export class WebhooksService {
   }
 
   static delegateHandler = async ({ event, reference, data }: DelegateServiceInput) => {
-    console.dir(
-      { activity: 'WebhookService.delegateHandler called', payload: { event, reference, data } },
-      { depth: null },
-    )
-
     try {
       if (event === 'charge.success') {
-        console.log('Charge Success event')
-
         if (data == null) {
           throw new OperationalError('Expected data object for charge.success event', 500)
         }
