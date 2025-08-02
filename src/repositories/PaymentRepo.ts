@@ -12,7 +12,7 @@ export class PaymentRepo {
     PaymentModel.findOneAndUpdate(
       { reference },
       { $set: { status, isUsed: status === 'success' } },
-      { session },
+      { session, new: true },
     )
 
   static getDeposits = (page: number, limit: number) =>

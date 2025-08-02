@@ -35,7 +35,7 @@ export class WebhooksService {
 
   static delegateHandler = async ({ event, reference, data }: DelegateServiceInput) => {
     console.dir(
-      { activity: 'WebhookService.delegateHandlercalled', payload: { event, reference, data } },
+      { activity: 'WebhookService.delegateHandler called', payload: { event, reference, data } },
       { depth: null },
     )
 
