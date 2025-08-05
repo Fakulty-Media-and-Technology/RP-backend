@@ -2,10 +2,8 @@ import { Server } from 'socket.io'
 import mongoose from 'mongoose'
 import { createServer } from 'node:http'
 
-import { CronTasks } from './cron'
-import { reeplayApp } from './app'
-
 import env from './env'
+import { reeplayApp } from './app'
 import { Assets } from './utils/Assets'
 import { MediaStream } from './livestream/nms'
 import { FileHandler } from './utils/FileHandler'
@@ -17,10 +15,9 @@ import { WithWorkerThread } from './utils/WithWorkerThread'
 const { PORT } = env
 
 const app = reeplayApp()
-const server = createServer(app)
+const httpServer = createServer(app)
 const mediaStream = new MediaStream()
-
-const io = new Server(server, {
+const io = new Server(httpServer, {
   cors: { origin: '*' },
 })
 
@@ -33,18 +30,20 @@ makeMediaDirectories()
 connectMongoDB().then(conn => {
   console.log(conn)
 
-  server.listen(PORT, async () => {
+  httpServer.listen(PORT, async () => {
     console.log(`Node Server Listening on port: ${PORT} >>>>>> [http://localhost:${PORT}]`)
 
     socketChat(io)
+    console.log('Sockets initited successfully')
     WithWorkerThread.manageJobs('START')
+    console.log('Cron Workers initited successfully')
     mediaStream.initiate()
-
+    console.log('RTMP-HLS PIPE initited successfully')
     setInterval(() => purgeOldTempMediaFiles(), 600000) // every ten minutes
   })
 })
 
-server.on('close', async () => {
+httpServer.on('close', async () => {
   console.error('reeplay server is closed: ..... 😢😢......')
   process.exit()
 })
@@ -71,6 +70,6 @@ function shutdown(exception: string) {
     mediaStream.close()
     await mongoose.connection.close(true)
     console.log('Mongoose connection closed')
-    server.close()
+    httpServer.close()
   }
 }

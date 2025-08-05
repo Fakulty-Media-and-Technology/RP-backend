@@ -18,8 +18,7 @@ class CompleteError extends OperationalError {
 }
 
 export const socketChat = async (io: Server) => {
-  console.log('Sockets initited successfully')
-
+  
   io.on('connection', async socket => {
     socket.on('joinLivestream', async (data, cb: unknown) => {
       try {
