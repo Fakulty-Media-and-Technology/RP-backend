@@ -1,8 +1,7 @@
-import { FilterQuery } from 'mongoose'
 import env from '../../env'
 import { ContestantsModel } from '../../models/contestants.model'
 import { DonateModel } from '../../models/donate.model'
-import { Live, LiveModel } from '../../models/lives.model'
+import { LiveModel } from '../../models/lives.model'
 import { PaymentDetailModel } from '../../models/paymentDetails.model'
 
 import {
@@ -169,8 +168,12 @@ export class PaymentService {
       contestantId,
     })
 
-    if (payment.amount !== voteInfoDocument.price) {
-      throw new OperationalError('vote info price must be equal to payment amount', 400)
+    if (payment.amount < voteInfoDocument.price) {
+      throw new OperationalError('Insfficient payment amount for this vote', 400)
+    }
+
+    if (payment.amount % voteInfoDocument.price !== 0) {
+      throw new OperationalError('Could not infer quantity of votes', 400)
     }
 
     await new VoteModel({
@@ -178,6 +181,7 @@ export class PaymentService {
       liveId: voteInfoDocument.liveId,
       voterId: currentUserId,
       paymentId: payment._id,
+      quantity: payment.amount / voteInfoDocument.price,
     }).save({ session })
   }
 
@@ -777,6 +781,10 @@ export class PaymentService {
             {
               $set: {
                 contestantInfo: { $first: '$contestantInfo' },
+                paymentId: '$$REMOVE',
+                voterId: '$$REMOVE',
+                contestantId: '$$REMOVE',
+                isDone: '$$REMOVE',
               },
             },
           ],
@@ -871,6 +879,8 @@ export class PaymentService {
         $set: {
           videoDetails: { $first: '$videoDetails' },
           liveDetails: { $first: '$liveDetails' },
+
+          votePaymentDetails: { $ifNull: [{ $first: '$vote' }, '$$REMOVE'] },
 
           contestantInfo: {
             $cond: {
@@ -1006,5 +1016,3 @@ export class PaymentService {
     }
   }
 }
-
-

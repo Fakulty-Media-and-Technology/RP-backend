@@ -34,6 +34,11 @@ const voteSchema = new Schema(
       type: Boolean,
       default: false,
     },
+
+    quantity: {
+      type: Number,
+      required: true,
+    },
   },
   {
     timestamps: true,
