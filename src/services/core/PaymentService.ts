@@ -29,6 +29,7 @@ import { denyGuestUser } from '../../utils/denyGuestUser'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { toObjectId } from '../../repositories/VideoRepo'
 
 type PaystackTransaction = Awaited<ReturnType<typeof Paystack.verifyPayment>>
 type PaymentStatus = PaymentSchema['status']
@@ -402,10 +403,6 @@ export class PaymentService {
       status: this._getStatusFromTransaction(transaction),
     })
 
-    console.log('Payment service called post webhooks trigger')
-
-    console.dir({ transaction, payment, reference }, { depth: null })
-
     if (payment === null) {
       throw new OperationalError(`Could not find payment for ref: ${reference}`, 400)
     }
@@ -744,19 +741,151 @@ export class PaymentService {
   }
 
   static getHistory = async (userId: string, query: ExpressRequestQuery) => {
-    const dbQuery = PaymentModel.find({
-      user_id: userId,
-    })
-      .select('-user_id -is_used -__v')
-      .sort({ _id: -1 })
+    const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
+    const NO_MATCH = 'NO MATCH'
 
-    const response = await new QueryParamsFeatures(dbQuery, {
-      defaultLimit: 10,
-      defaultPage: 1,
-      queryParams: query,
-    }).paginate().query
+    const payments = await PaymentModel.aggregate([
+      {
+        $match: {
+          userId: toObjectId(userId),
+        },
+      },
 
-    return response
+      { $skip: skip },
+      { $limit: limit },
+
+      {
+        $lookup: {
+          from: 'votes',
+          localField: '_id',
+          foreignField: 'paymentId',
+          as: 'vote',
+
+          pipeline: [
+            {
+              $lookup: {
+                from: 'contestants',
+                localField: 'contestantId',
+                foreignField: '_id',
+                as: 'contestantInfo',
+                pipeline: [{ $project: { names: true, bio: true } }],
+              },
+            },
+
+            { $match: { 'contestantInfo.0': { $exists: true } } },
+
+            {
+              $set: {
+                contestantInfo: { $first: '$contestantInfo' },
+              },
+            },
+          ],
+        },
+      },
+
+      {
+        $set: {
+          liveId: {
+            $ifNull: [
+              '$liveId',
+              {
+                $cond: {
+                  if: { $eq: [{ $size: '$vote' }, 1] },
+                  then: { $first: '$vote.liveId' },
+                  else: NO_MATCH,
+                },
+              },
+            ],
+          },
+          videoId: { $ifNull: ['$videoId', NO_MATCH] },
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'lives',
+          localField: 'liveId',
+          foreignField: '_id',
+          as: 'liveDetails',
+          let: { useCase: '$useCase' },
+
+          pipeline: [
+            {
+              $project: {
+                title: true,
+                location: true,
+                description: true,
+                type: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+
+            {
+              $lookup: {
+                from: 'voteinfos',
+                localField: '_id',
+                foreignField: 'liveId',
+                as: 'voteInfo',
+                pipeline: [{ $project: { price: true, currency: true } }],
+              },
+            },
+
+            {
+              $set: {
+                voteInfo: {
+                  $cond: {
+                    if: { $eq: ['$$useCase', 'vote'] },
+                    then: { $first: '$voteInfo' },
+                    else: '$$REMOVE',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'videos',
+          localField: 'videoId',
+          foreignField: '_id',
+          as: 'videoDetails',
+
+          pipeline: [
+            {
+              $project: {
+                title: true,
+                description: true,
+                type: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          ],
+        },
+      },
+
+      {
+        $set: {
+          videoDetails: { $first: '$videoDetails' },
+          liveDetails: { $first: '$liveDetails' },
+
+          contestantInfo: {
+            $cond: {
+              if: { $gt: [{ $size: '$vote' }, 0] },
+              then: { $first: '$vote.contestantInfo' },
+              else: '$$REMOVE',
+            },
+          },
+        },
+      },
+
+      { $unset: ['isUsed', '__v', 'userId', 'videoId', 'liveId', 'vote'] },
+    ])
+
+    return payments
   }
 
   static setPaymentShouldStoreDetails = async (paymentId: string, shouldStore: boolean) => {
@@ -877,3 +1006,5 @@ export class PaymentService {
     }
   }
 }
+
+
