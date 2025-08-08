@@ -291,7 +291,7 @@ export class VideoRepo {
           },
         },
       ],
-      fetchSeasons: false,
+      fetchSeasons: true,
       sortStage: { $sort: { createdAt: -1 } },
       page,
       limit,
