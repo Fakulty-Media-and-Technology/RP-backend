@@ -97,11 +97,7 @@ export class VoteService {
     await voteInfo.save()
   }
 
-  static addVoteContestant = async (currentUser: LoggedInUser, data: AddContestantInput) => {
-    if (currentUser.role !== 'tvshow') {
-      throw new OperationalError('this feature is not available to you', 400)
-    }
-
+  static addVoteContestant = async (_: LoggedInUser, data: AddContestantInput) => {
     const contestant = new ContestantsModel({
       liveId: data.liveId,
       names: data.names,
@@ -152,13 +148,9 @@ export class VoteService {
   }
 
   static removeVoteContestant = async (
-    currentUser: LoggedInUser,
+    _: LoggedInUser,
     data: { contestantId: string; liveId: string },
   ) => {
-    if (currentUser.role !== 'tvshow') {
-      throw new OperationalError('this feature is not available to you', 400)
-    }
-
     const deletedContestant = await ContestantsModel.findOneAndDelete({
       live_id: data.liveId,
       _id: data.contestantId,
