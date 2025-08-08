@@ -6,7 +6,11 @@ import { VideoRepo } from '../../repositories/VideoRepo'
 import { Season } from '../../types/movie'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 
-import { guranteeNumericResult, QueryParamsFeaturesOptions } from '../../utils/QueryParamsFeatures'
+import {
+  guranteeNumericResult,
+  QueryParamsFeatures,
+  QueryParamsFeaturesOptions,
+} from '../../utils/QueryParamsFeatures'
 
 import {
   AddEpisodeInput,
@@ -100,15 +104,14 @@ export class AdminUploadService extends UploadMediaUtils {
       throw new OperationalError('video is not a series', 400)
     }
 
-    const page = guranteeNumericResult(queryParams.page, 1)
-    const limit = guranteeNumericResult(queryParams.limit, 10)
-    const seasons = (await VideoRepo.fetchSeasonsAndEpisodes(vidSeriesId, page, limit)) as Season[]
+    const { page, limit } = QueryParamsFeatures.paginagteParams(queryParams)
+    const seasons = await VideoRepo.fetchSeasonsAndEpisodes(vidSeriesId, page, limit)
+    const withMediaSources = this.resolveWithMediaSources(queryParams)
 
     const seasonsWithMediaSources = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
       seasons,
-      this.resolveWithMediaSources(queryParams),
+      withMediaSources,
       '720p',
-      MovieMediaSourcesUtils.resolveEpisodesMediaSources,
     )
 
     return seasonsWithMediaSources

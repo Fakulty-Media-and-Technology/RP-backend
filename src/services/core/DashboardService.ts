@@ -114,7 +114,7 @@ export class DashboardService {
         VideoRepo.totalVideosCountQuery(),
         VideoRepo.totalMovieSeriesCountQuery(),
         VideoRepo.totalMusicVideosCountQuery(),
-        VideoRepo.totalSkitVideosCOuntQuery(),
+        VideoRepo.totalSkitVideosCountQuery(),
         LiveRepo.totalActiveLiveQuery().countDocuments(),
       ])
 

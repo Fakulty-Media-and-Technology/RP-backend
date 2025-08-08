@@ -71,7 +71,7 @@ export class VideoRepo {
 
   static totalMusicVideosCountQuery = () => this.totalVideosCountQuery({ type: 'music-video' })
 
-  static totalSkitVideosCOuntQuery = () => this.totalVideosCountQuery({ type: 'skit' })
+  static totalSkitVideosCountQuery = () => this.totalVideosCountQuery({ type: 'skit' })
 
   static addSeasonUtilAggr = async (vidId: string) => {
     const aggr = await VideoModel.aggregate([
@@ -147,7 +147,7 @@ export class VideoRepo {
         as: 'episodes',
 
         pipeline: [
-          { $sort: { createdAt: -1 } },
+          { $sort: { _id: -1 } },
 
           {
             $lookup: {
@@ -483,16 +483,6 @@ export class VideoRepo {
         $match: { video: toObjectId(videoId) },
       },
       ...this._seasonPipeline,
-      {
-        $lookup: {
-          from: 'episodes',
-          localField: '_id',
-          foreignField: 'season',
-          as: 'episodes',
-          pipeline: this._episodesPipeline,
-        },
-      },
-
       { $sort: { _id: 1 } },
       { $skip: skip(page, limit) },
       { $limit: limit },

@@ -41,31 +41,30 @@ export class MovieMediaSourcesUtils {
     seasons: Season[],
     withMediaSources: boolean,
     quality: VidRes,
-    episodesMediaResolver?: (
-      e: Episode[],
-      withMediaSources: boolean,
-      quality: VidRes,
-    ) => Promise<Episode[]>,
   ) => {
     const seasonsWithSources = await Promise.all(
       seasons.map(async season => {
-        if (episodesMediaResolver) {
-          season.episodes = await episodesMediaResolver(season.episodes, withMediaSources, quality)
-        }
+        season.episodes = await this.resolveEpisodesMediaSources(
+          season.episodes,
+          withMediaSources,
+          quality,
+        )
+
         return season
       }),
     )
 
     return seasonsWithSources as Season[]
   }
+
   public static resolveEpisodesMediaSources = async (
     episodes: Episode[],
-    withMediaSources: boolean,
+    _: boolean,
     quality: VidRes,
   ) => {
     const episodesWithSources = await Promise.all(
       episodes.map(async episode => {
-        if (!withMediaSources) return
+        // if (!withMediaSources) return
 
         Object.assign(episode, {
           video: this._getMovieVideoSource(episode, 'vid', quality),
@@ -100,7 +99,6 @@ export class MovieMediaSourcesUtils {
             vid.seasons,
             withMediaSources,
             quality,
-            MovieMediaSourcesUtils.resolveEpisodesMediaSources,
           )
         }
 

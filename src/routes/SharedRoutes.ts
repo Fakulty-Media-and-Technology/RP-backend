@@ -2,15 +2,18 @@ import { Router } from 'express'
 import { PaymentHistoryCaller, SharedController } from '../controllers/common/shared.controller'
 import { Multer } from '../utils/Multer'
 import { requestValidator } from '../middlewares/requestValidator'
+
 import {
   authorizePaymentSchema,
   intitiatePaymentSchema,
   updateUserProfileSchema,
 } from '../validations/common'
+
 import { AuthHeaderKey } from '../middlewares/auth'
 import { ClientLiveStreamController } from '../controllers/clients/livestream.clients'
 import { AdminEnumController } from '../controllers/admins/enums.admin'
 import { AdminFeaturedController } from '../controllers/admins/featured.admin'
+import { AdminUploadController } from '../controllers/admins/uploads.admin'
 
 export class SharedRoutes {
   private _router: Router
@@ -20,17 +23,24 @@ export class SharedRoutes {
     parentRouter.use('/shared', this._router)
   }
 
-  contents() {
-    this._router.get('/vods/category/:catId', SharedController.fetchVidsForCategory)
-    this._router.get('/vods/similar-by-cast/:castId', SharedController.getSimilarByCastId)
-    this._router.get('/vods/similar-by-genre/:genreId', SharedController.getSimilarByGenreId)
+  protected vods() {
+    const vodsRouter = Router()
 
-    this._router.get(
-      '/vods/categ-and-genre/:genreId/:catId',
+    vodsRouter.get('/category/:catId', SharedController.fetchVidsForCategory)
+    vodsRouter.get('/similar-by-cast/:castId', SharedController.getSimilarByCastId)
+    vodsRouter.get('/similar-by-genre/:genreId', SharedController.getSimilarByGenreId)
+    vodsRouter.get('/seasons/:vidId', AdminUploadController.fetchSeasonsAndEpisodes)
+    vodsRouter.get('/suggestions', SharedController.randomSuggestions)
+    vodsRouter.get(
+      '/categ-and-genre/:genreId/:catId',
       SharedController.getByCategoryIdAndAndGenreId,
     )
 
-    this._router.get('/vods/suggestions', SharedController.randomSuggestions)
+    this._router.use('/vods', vodsRouter)
+  }
+
+  contents() {
+    this.vods()
     this._router.get('/featured/contents/search/:text', AdminFeaturedController.searchContents)
     return this
   }
@@ -44,28 +54,30 @@ export class SharedRoutes {
   }
 
   lives(caller: 'Admin' | 'Client') {
-    this._router.post(
-      '/lives/create',
+    const livesRouter = Router()
+
+    livesRouter.post(
+      '/create',
       Multer.createLiveConfig,
       SharedController.createLive({ isAdmin: caller === 'Admin' }),
     )
 
-    this._router.put(
-      '/lives/update-media/:liveId',
+    livesRouter.put(
+      '/update-media/:liveId',
       Multer.createLiveConfig,
       SharedController.updateLiveMedia,
     )
 
-    this._router.put('/lives/update-active/:liveId', SharedController.updateLiveActiveStatus)
-    this._router.get('/lives/estimate', ClientLiveStreamController.calculateEventCharges)
-    this._router.delete('/lives/delete/:liveId', SharedController.deleteLiveById)
+    livesRouter.put('/update-active/:liveId', SharedController.updateLiveActiveStatus)
+    livesRouter.get('/estimate', ClientLiveStreamController.calculateEventCharges)
+    livesRouter.delete('/delete/:liveId', SharedController.deleteLiveById)
+    this._router.use('', livesRouter)
     return this
   }
 
   paymentHistory(callerConfig: PaymentHistoryCaller) {
     this._router.get('/payment-history', SharedController.paymentHistory(callerConfig))
     this._router.get('/wallet', SharedController.fetchWallet)
-
     this._router.put('/should-store/:paymentId', SharedController.setPaymentShouldStoreDetails)
     this._router.get('/payment-details', SharedController.fetchPaymentDetails)
     this._router.get('/content-costs', SharedController.checkContentCosts)
