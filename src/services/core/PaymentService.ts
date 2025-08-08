@@ -780,7 +780,10 @@ export class PaymentService {
 
             {
               $set: {
-                contestantInfo: { $first: '$contestantInfo' },
+                contestantName: { $first: '$contestantInfo.names' },
+                contestantBio: { $first: '$contestantInfo.bio' },
+
+                contestantInfo: '$$REMOVE',
                 paymentId: '$$REMOVE',
                 voterId: '$$REMOVE',
                 contestantId: '$$REMOVE',
@@ -815,8 +818,7 @@ export class PaymentService {
           localField: 'liveId',
           foreignField: '_id',
           as: 'liveDetails',
-          let: { useCase: '$useCase' },
-
+     
           pipeline: [
             {
               $project: {
@@ -826,28 +828,6 @@ export class PaymentService {
                 type: true,
                 createdAt: true,
                 updatedAt: true,
-              },
-            },
-
-            {
-              $lookup: {
-                from: 'voteinfos',
-                localField: '_id',
-                foreignField: 'liveId',
-                as: 'voteInfo',
-                pipeline: [{ $project: { price: true, currency: true } }],
-              },
-            },
-
-            {
-              $set: {
-                voteInfo: {
-                  $cond: {
-                    if: { $eq: ['$$useCase', 'vote'] },
-                    then: { $first: '$voteInfo' },
-                    else: '$$REMOVE',
-                  },
-                },
               },
             },
           ],
@@ -877,18 +857,9 @@ export class PaymentService {
 
       {
         $set: {
-          videoDetails: { $first: '$videoDetails' },
-          liveDetails: { $first: '$liveDetails' },
-
           votePaymentDetails: { $ifNull: [{ $first: '$vote' }, '$$REMOVE'] },
-
-          contestantInfo: {
-            $cond: {
-              if: { $gt: [{ $size: '$vote' }, 0] },
-              then: { $first: '$vote.contestantInfo' },
-              else: '$$REMOVE',
-            },
-          },
+          liveDetails: { $ifNull: [{ $first: '$liveDetails' }, '$$REMOVE'] },
+          videoDetails: { $ifNull: [{ $first: '$videoDetails' }, '$$REMOVE'] },
         },
       },
 
