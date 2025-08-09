@@ -92,7 +92,8 @@ export class AdminUploadService extends UploadMediaUtils {
 
   static getSeasonsAndEpisodes = async (
     vidSeriesId: string,
-    queryParams: QueryParamsFeaturesOptions['queryParams'],
+    queryParams: any,
+    // queryParams: QueryParamsFeaturesOptions['queryParams'],
   ) => {
     const vid = await VideoModel.findById(vidSeriesId)
 
@@ -105,6 +106,7 @@ export class AdminUploadService extends UploadMediaUtils {
     }
 
     const { page, limit } = QueryParamsFeatures.paginagteParams(queryParams)
+
     const seasons = await VideoRepo.fetchSeasonsAndEpisodes(vidSeriesId, page, limit)
     const withMediaSources = this.resolveWithMediaSources(queryParams)
 
