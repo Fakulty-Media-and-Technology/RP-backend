@@ -115,22 +115,11 @@ export class WatchedService {
                 throw new Error()
               }
 
-              const [video] = await Promise.all([
-                VideoRepo.fetchById(season.video.toString()),
-
-                // VideoRepo.fetchSeasonsAndEpisodes(
-                //   season.video.toString(),
-                //   season.serial_number,
-                //   limit,
-                // ),
-              ])
-
-              const [videoWithMediaSources] = await Promise.all([
-                // MovieMediaSourcesUtils.resolveSeasonsMediaSources(seasons, true, quality),
-                MovieMediaSourcesUtils.resolveMediaSources(video, true, quality),
-              ])
-
-              const [populatedVideo] = videoWithMediaSources
+              const [populatedVideo] = await MovieMediaSourcesUtils.resolveMediaSources(
+                await VideoRepo.fetchById(season.video.toString()),
+                true,
+                quality,
+              )
 
               if (populatedVideo === null) {
                 throw new Error()
@@ -167,7 +156,7 @@ export class WatchedService {
                 episode: targetEpisode,
               })
             default:
-              break
+              throw new OperationalError('Unkown parent type', 400)
           }
         }),
       ),

@@ -22,6 +22,9 @@ export class MovieMediaSourcesUtils {
     routine: 'vid' | 'trailer',
     quality: VidRes,
   ) => {
+
+    
+
     switch (routine) {
       case 'vid':
         return vid.videoLink
