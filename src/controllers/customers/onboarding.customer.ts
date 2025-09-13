@@ -29,11 +29,7 @@ export class OnboardingController {
   })
 
   static customerSignup = Catch.async(async (req, res) => {
-    const customer = await OnboardingService.createUser({
-      data: req.body,
-      role: 'customer',
-      image: req.file,
-    })
+    const customer = await OnboardingService.createCustomer(req.body)
 
     sendResponse({
       res,

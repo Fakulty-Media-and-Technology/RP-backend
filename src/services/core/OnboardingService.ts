@@ -161,6 +161,24 @@ export class OnboardingService {
     const pin = authCode(6)
     const pinExpiry = Date.now() + 1000 * 60 * 5 // 5 mins
 
+    const existingUser = await UserRepo.getByEmail(email)
+
+    if (existingUser) {
+      existingUser.auth_code = existingUser.auth_code ?? Number(pin)
+      existingUser.auth_expiry = pinExpiry
+      existingUser.approved = false
+      existingUser.verified = false
+      await existingUser.save()
+
+      await new Email({
+        firstName: existingUser.first_name,
+        lastName: existingUser.last_name,
+        email: existingUser.email,
+      }).sendVerifyEmail(pin)
+
+      return existingUser.restricted()
+    }
+
     const newUser = await new UserModel({
       email,
       mobile,
@@ -173,15 +191,13 @@ export class OnboardingService {
       password: await Password.encrypt(password),
     }).save({ session })
 
-    //TODO: send welcome pin to mobile number and or email
-    const userData = {
+    await new Email({
       firstName: newUser.first_name,
       lastName: newUser.last_name,
       email: newUser.email,
-    }
+    }).sendVerifyEmail(pin)
 
-    await new Email(userData).sendVerifyEmail(pin)
-    return newUser
+    return newUser.restricted()
   }
 
   private static _getPasswordResetTokenWithSession = async (
@@ -230,9 +246,10 @@ export class OnboardingService {
     const user = await UserModel.findOneAndUpdate(
       {
         email: email,
-        verified: false,
       },
       {
+        verified: false,
+        approved: false,
         auth_code: Number(pin),
         auth_expiry: pinExpiry,
       },
@@ -460,8 +477,9 @@ export class OnboardingService {
       throw new OperationalError('token has expired!', 400)
     }
 
-    await UserRepo.updateById(user.id, {
+    await UserRepo.updateById(user._id.toString(), {
       verified: true,
+      approved: true,
       auth_code: null,
       auth_expiry: null,
     })

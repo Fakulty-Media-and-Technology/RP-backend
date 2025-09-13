@@ -10,7 +10,7 @@ export const createCustomerSchema = {
     cpassword: STRING_SCHEMA.required(),
     country_code: STRING_SCHEMA.required(),
     mobile: STRING_SCHEMA.required(),
-    verified: Joi.boolean().required(),
+    verified: Joi.boolean(),
     gender: STRING_SCHEMA.valid('male', 'female', 'nil'),
     dob: STRING_SCHEMA.isoDate(),
     country: STRING_SCHEMA,
