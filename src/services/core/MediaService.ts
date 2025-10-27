@@ -107,11 +107,7 @@ export class MediaService {
     let prevKey: string | null | undefined = null
     let prevBucket: string | null | undefined = null
 
-    const { Bucket, Key, mimetype } = await MediaManagement.store({
-      file: imageFile,
-      expire: undefined,
-      baseDir: 'images',
-    })
+    const { Bucket, Key } = await MediaManagement.store(imageFile)
 
     if (!Bucket) {
       throw new OperationalError('error updating image', 500)
@@ -123,7 +119,6 @@ export class MediaService {
     user.photo = {
       Bucket,
       Key,
-      ContentType: mimetype,
     }
 
     return {

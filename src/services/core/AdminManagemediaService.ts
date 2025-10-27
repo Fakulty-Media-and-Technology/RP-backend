@@ -3,7 +3,7 @@ import { Request } from 'express'
 import { LiveSchema } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { OperationalError } from '../../utils/OperationalError'
-import { guranteeNumericResult, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { LiveRepo } from '../../repositories/LiveRepo'
@@ -67,11 +67,7 @@ export class AdminManageMediaService {
       throw new OperationalError('parent does not exist', 404)
     }
 
-    const { Bucket, Key } = await MediaManagement.store({
-      file: data.subtitle,
-      expire: undefined,
-      baseDir: 'subtitles',
-    })
+    const { Bucket, Key } = await MediaManagement.store(data.subtitle)
 
     const subtitle = await SubtitleModel.create({
       video_id: data.parentId,

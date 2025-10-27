@@ -28,11 +28,7 @@ export class CastEnumService {
     description,
     photoFile,
   }: CreateCastInput) => {
-    const imageUpload = await MediaManagement.store({
-      file: photoFile,
-      expire: undefined,
-      baseDir: 'images',
-    })
+    const imageUpload = await MediaManagement.store(photoFile)
 
     if (imageUpload.Key == null || imageUpload.Bucket == null) {
       throw new OperationalError('Could not upload photo', 400)
@@ -63,11 +59,7 @@ export class CastEnumService {
     }
 
     if (photoFile) {
-      const imageUpload = await MediaManagement.store({
-        file: photoFile,
-        expire: undefined,
-        baseDir: 'images',
-      })
+      const imageUpload = await MediaManagement.store(photoFile)
 
       if (imageUpload.Key == null || imageUpload.Bucket == null) {
         throw new OperationalError('Could not upload photo', 400)

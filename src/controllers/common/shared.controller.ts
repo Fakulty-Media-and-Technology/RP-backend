@@ -27,9 +27,12 @@ import { signCred } from '../../utils/live'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { QueryParamsFeatures, guranteeNumericResult } from '../../utils/QueryParamsFeatures'
-import { VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { VideoQuality, VidUploadUtils } from '../../utils/VideoUploadUtils'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { PaymentModel } from '../../models/payments.model'
+import { VideoUploadModel } from '../../models/videoupload.model'
+import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
+import { MediaAccess } from '../../services/media-access'
 
 export type PaymentHistoryCaller = {
   caller: 'Admin' | 'Others'
@@ -76,7 +79,7 @@ export class SharedController extends UploadMediaUtils {
   static startPayment = Catch.async(async (req, res) => {
     const response = await PaymentService.initiatePayment({
       currentUser: GetDefined.loggedInUser(req.user),
-      ...req.body, // validated by Joi at route level
+      ...req.body,
     })
 
     sendResponse({
@@ -144,7 +147,7 @@ export class SharedController extends UploadMediaUtils {
     })
 
   static updateLiveMedia = Catch.async(async (req, res) => {
-    const files = this._checkFiles(req.files)
+    const files = UploadMediaUtils.checkFiles(req.files)
 
     await LiveStreamService.editLiveMedia({
       liveId: req.params.liveId,
@@ -181,7 +184,7 @@ export class SharedController extends UploadMediaUtils {
         )
       }
 
-      const files = this._checkFiles(req.files)
+      const files = UploadMediaUtils.checkFiles(req.files)
       const parsedData = JSON.parse(_data)
 
       const data: CreateLiveData = {
@@ -282,17 +285,75 @@ export class SharedController extends UploadMediaUtils {
     })
   })
 
-  static uploadImageRoute = Catch.async(async ({ file, user }, res) => {
-    denyGuestUser(GetDefined.loggedInUser(user))
+  static fetchVideoSource = Catch.async(async (req, res) => {
+    const loggedInUserId = GetDefined.loggedInUser(req.user)._id.toString()
 
-    if (!file) {
-      throw new OperationalError('Upload an image', 400)
+    const [videoDocumentResult, videoQualityResult] = await Promise.allSettled([
+      VideoModel.findById(req.params.videoId),
+      VidUploadUtils.getUserVideoQuality(loggedInUserId),
+    ])
+
+    if (videoDocumentResult.status === 'rejected') {
+      throw videoDocumentResult.reason
+    }
+
+    const quality: VideoQuality =
+      videoQualityResult.status === 'rejected' ? '480p' : videoQualityResult.value
+
+    const videoDocument = videoDocumentResult.value
+    let source: string | null = null
+
+    if (videoDocument == null) {
+      throw new OperationalError('Not Found', 404)
+    }
+
+    switch (req.params.type) {
+      case 'vod':
+        if (videoDocument.videoLink) {
+          source = videoDocument.videoLink
+          break
+        }
+
+        const vodUploadDocument = await VideoUploadRepo.findByParentId(videoDocument._id).where(
+          'parentType',
+          'vod',
+        )
+
+        if (vodUploadDocument == null || vodUploadDocument.isTranscoded === false) {
+          throw new OperationalError('Not Found', 404)
+        }
+
+        source = VidUploadUtils.getResSourceUrl(vodUploadDocument, quality)
+        break
+
+      case 'trailer':
+        if (videoDocument.trailerLink) {
+          source = videoDocument.trailerLink
+        }
+
+        const videoUploadDocument = await VideoUploadRepo.findByParentId(videoDocument._id).where(
+          'parentType',
+          'trailer',
+        )
+
+        if (videoUploadDocument == null || videoUploadDocument.isTranscoded === false) {
+          throw new OperationalError('Not Found', 404)
+        }
+
+        source = VidUploadUtils.getResSourceUrl(videoUploadDocument, quality)
+        break
+
+      default:
+        throw new OperationalError('Expected type to be vod or trailer', 404)
+    }
+
+    if (source == null) {
+      throw new OperationalError('Not Found', 422)
     }
 
     sendResponse({
       res,
-      data: await MediaManagement.store({ file, baseDir: 'images', expire: undefined }),
-      message: 'image uploaded',
+      data: { source },
     })
   })
 

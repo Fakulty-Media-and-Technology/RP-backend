@@ -2,6 +2,7 @@ import { Upload } from '@aws-sdk/lib-storage'
 import { Options } from '@aws-sdk/lib-storage/dist-types'
 import { AwsUtils } from './utils'
 import { DeleteObjectCommand, ListObjectsCommand } from '@aws-sdk/client-s3'
+import { VideoUploadSchema } from '../../models/videoupload.model'
 
 export class S3 {
   static upload = (params: Options['params']) => {
@@ -17,14 +18,16 @@ export class S3 {
   static getTranscodedKeysFromInputKey = async (inputKey: string) => {
     const command = new ListObjectsCommand({
       Bucket: AwsUtils.buckets.reeplay,
-      Prefix: inputKey.replace('videos', 'transcode'),
+      Prefix: 'transcode/' + inputKey,
     })
 
-    const res = await AwsUtils.clients.s3.send(command)
+    const { Contents } = await AwsUtils.clients.s3.send(command)
 
-    if (!res.Contents) return []
+    if (Contents == null || Contents.length === 0) {
+      return []
+    }
 
-    const outputKeys = res.Contents.reduce<string[]>((acc, content) => {
+    const outputKeys = Contents.reduce<string[]>((acc, content) => {
       content.Key ? acc.push(content.Key) : acc
       return acc
     }, [])
@@ -36,7 +39,7 @@ export class S3 {
     const keys = await this.getTranscodedKeysFromInputKey(inputKey)
 
     const pairs = keys.map(key => {
-      let resolution = ''
+      let resolution: VideoUploadSchema['resolutions'][number]['resolution'] = '720'
 
       switch (true) {
         case key.includes('_1080p'):

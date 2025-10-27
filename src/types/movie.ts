@@ -42,10 +42,8 @@ export interface Resolution {
 }
 
 interface LandscapePhoto {
-  _id: string
-  bucket: string
-  key: string
-  language?: string
+  Bucket: string
+  Key: string
 }
 
 export interface Season {

@@ -8,7 +8,7 @@ import { VideoRepo } from '../../repositories/VideoRepo'
 import { MongoDBObjectId } from '../../types/general'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
-import { VidRes, VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { VideoQuality, VidUploadUtils } from '../../utils/VideoUploadUtils'
 
 interface RegisterInput {
   contentId: string
@@ -24,7 +24,7 @@ interface FetcContentsInput {
 interface SaturateMediaSourcesInput {
   vods: any[]
   lives: any[]
-  quality: VidRes
+  quality: VideoQuality
 }
 
 export class RecentSearchService {

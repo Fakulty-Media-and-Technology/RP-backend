@@ -1,47 +1,27 @@
 import { LiveModel } from '../models/lives.model'
-import { PaymentDetailModel } from '../models/paymentDetails.model'
-import { PaymentModel } from '../models/payments.model'
-import { PlanModel } from '../models/plans.model'
-import { SubscriptionModel } from '../models/subscription.model'
-import { VideoUploadModel } from '../models/videoupload.model'
 import { VideoModel } from '../models/videos.model'
-import { WalletModel } from '../models/wallet.model'
-import { UserRepo } from '../repositories/UserRepo'
-import { MediaConvert } from '../services/aws/mediaConvert'
 import { S3 } from '../services/aws/s3'
-import Email from '../utils/emailer'
-import moment from 'moment'
+import { fetchUntranscodedVideoUploadDocumentsGenerator } from '../generators/fetchUntranscodedVideoUploads'
 
-const stringify = (data: Object) => JSON.stringify(data, null, 2)
-const laterInMins = (mins: number) => moment().add(mins, 'minutes').toDate()
+// const stringify = (data: Object) => JSON.stringify(data, null, 2)
+// const laterInMins = (mins: number) => moment().add(mins, 'minutes').toDate()
 
 export class CronTaskHandlers {
   static updateVidUploadsResolutions = async () => {
-    const pairs = await MediaConvert.recentCompletedJobsKeyPairs()
-    const funcLoc = 'CronTaskHandlers.updateVidUploadsResolutions'
-
-    //
-    pairs.forEach(async pair => {
-      try {
-        const vid = await VideoUploadModel.findOneAndUpdate(
-          {
-            key: pair.inputKey,
-            isTranscoded: false,
-          },
-          {
-            $set: {
-              isTranscoded: true,
-              resolutions: await S3.setResolutionsPairs(pair.inputKey),
-            },
-          },
-        )
-
-        vid && console.log(`✔Video upload with ID: ${vid.id} updated in ${funcLoc}`)
-      } catch (e) {
-        console.error(`🛑Error updating video with inputKey: ${pair.inputKey} in ${funcLoc}`)
-        console.error('Error details', e)
-      }
-    })
+    for await (const videoUploadDouments of fetchUntranscodedVideoUploadDocumentsGenerator()) {
+      await Promise.all(
+        videoUploadDouments.map(async document => {
+          try {
+            const resolutions = await S3.setResolutionsPairs(document.key)
+            document.resolutions = resolutions as any
+            document.isTranscoded = !!resolutions.length
+            document.isTranscoded && (await document.save())
+          } catch (error) {
+            console.error('Error updating isTranscoded for video upload document', document._id)
+          }
+        }),
+      )
+    }
   }
 
   // static autoRenewSubscriptions = async () => {

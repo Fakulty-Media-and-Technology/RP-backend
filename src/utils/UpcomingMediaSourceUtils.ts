@@ -1,10 +1,10 @@
 import { UpcomingAggrRes } from '../types/upcoming'
 import { MovieMediaSourcesUtils } from './MovieMediaSourcesUtils'
 import { getPromiseAllFulfilledResults } from './promises'
-import { VidRes } from './VideoUploadUtils'
+import { VideoQuality } from './VideoUploadUtils'
 
 export class UpcomingMediaSourceUtils extends MovieMediaSourcesUtils {
-  static resolveSources = async (upcomings: UpcomingAggrRes[], quality: VidRes) => {
+  static resolveSources = async (upcomings: UpcomingAggrRes[], quality: VideoQuality) => {
     const upsWithSources = await Promise.allSettled(
       upcomings.map(async upcoming => {
         const { landscapePhoto, portraitPhoto } = await this._getMoviePhotos(upcoming)

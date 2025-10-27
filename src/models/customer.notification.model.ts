@@ -1,5 +1,4 @@
 import { InferSchemaType, Schema, model } from 'mongoose'
-import { previewPhotoSchema } from './commonSchema'
 
 const schema = new Schema(
   {

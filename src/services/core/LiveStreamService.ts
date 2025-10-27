@@ -17,6 +17,7 @@ import { UserRepo } from '../../repositories/UserRepo'
 import { MongoDBObjectId } from '../../types/general'
 import { Purge } from '../../utils/Purge'
 import { MediaManagement } from '../media-management'
+import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 
 export type CreateLiveData = {
   clientId: string
@@ -213,47 +214,6 @@ export class LiveStreamService {
     await withMongoDBSession(this._deleteLiveSession, input)
   }
 
-  private static _uploadLivePreviewVideo: LiveFileUploader = async ({ data, live }, session) => {
-    if (!data.previewVideo) return
-
-    const upload = await MediaManagement.uploadAndInitiateMediaConvert({
-      file: data.previewVideo,
-      expire: undefined,
-    })
-
-    const videoUploadDoc = await new VideoUploadModel({
-      bucket: upload.Bucket,
-      key: upload.Key,
-      mimetype: upload.mimetype,
-      size: upload.size,
-      isTranscoded: upload.isTranscoded,
-      parentId: live._id,
-      parentType: 'live',
-    }).save({ session })
-
-    live.previewVideoUpload = videoUploadDoc._id
-  }
-
-  private static _uploadLiveCoverPhoto: LiveFileUploader = async ({ data, live }, session) => {
-    if (!data.coverPhoto) {
-      throw new OperationalError('cover photo is required', 400)
-    }
-    const upload = await MediaManagement.store({
-      expire: undefined,
-      baseDir: 'images',
-      file: data.coverPhoto,
-    })
-
-    const coverPhoto = await new PosterImageModel({
-      video_id: live._id,
-      bucket: upload.Bucket,
-      key: upload.Key,
-      parentType: 'live',
-    }).save({ session })
-
-    live.coverPhoto = coverPhoto._id
-  }
-
   private static _checkLiveOngoinStreams = async (data: CreateLiveData) => {
     const _ = await LiveModel.findOne({
       client_id: data.clientId,
@@ -310,6 +270,65 @@ export class LiveStreamService {
     }
   }
 
+  protected static _editLiveMedia = async (
+    { previewVideoFile, coverPhotoFile, liveId }: EditLiveInput,
+    session: MaybeSession,
+  ) => {
+    if (previewVideoFile == null && coverPhotoFile == null) {
+      throw new OperationalError('upload at least one file', 400)
+    }
+
+    const liveDocument = await LiveModel.findById(liveId)
+
+    if (liveDocument == null) {
+      throw new OperationalError('invalid live id', 404)
+    }
+
+    if (coverPhotoFile) {
+      const photoUpload = await MediaManagement.store(coverPhotoFile, liveDocument.expiry)
+
+      if (liveDocument.coverPhoto) {
+        MediaManagement.deleteObject(liveDocument.coverPhoto.Key, liveDocument.coverPhoto.Bucket)
+      }
+
+      liveDocument.coverPhoto = {
+        Key: photoUpload.Key,
+        Bucket: photoUpload.Bucket,
+      }
+    }
+
+    if (previewVideoFile) {
+      const vidUpload = await MediaManagement.uploadAndInitiateMediaConvert(
+        previewVideoFile,
+        liveDocument.expiry,
+      )
+
+      if (liveDocument.previewVideoUpload) {
+        Purge.videoUploadById(liveDocument.previewVideoUpload)
+      }
+
+      const videoUploadDocument = UploadMediaUtils.getVideoUploadDocument(vidUpload)
+      videoUploadDocument.parentId = liveDocument._id
+      videoUploadDocument.parentType = 'live'
+      liveDocument.previewVideoUpload = videoUploadDocument._id
+      await videoUploadDocument.save({ session })
+    }
+
+    await liveDocument.save({ session })
+  }
+
+  static editLiveMedia = async (data: EditLiveInput) => {
+    await withMongoDBSession(this._editLiveMedia, data)
+  }
+
+  static updateLiveActiveState = async ({ liveId, active }: UpdateLiveActiveStateInput) => {
+    const live = await LiveModel.findByIdAndUpdate(liveId, { $set: { active } })
+
+    if (live == null) {
+      throw new OperationalError('invalid live id', 404)
+    }
+  }
+
   private static _createLiveSession = async (data: CreateLiveData, session: MaybeSession) => {
     const settled = await Promise.allSettled([
       this._checkLiveClient(data),
@@ -320,7 +339,7 @@ export class LiveStreamService {
 
     await this._checkLivePayments(data, session)
 
-    const live = new LiveModel({
+    const liveDocument = new LiveModel({
       client_id: data.clientId,
       title: data.title,
       subTitle: data.subTitle,
@@ -341,95 +360,29 @@ export class LiveStreamService {
       currency: data.currency,
     })
 
-    const uploaderParams = { data, live }
+    if (data.coverPhoto) {
+      const photoUpload = await MediaManagement.store(data.coverPhoto, liveDocument.expiry)
 
-    await this._uploadLivePreviewVideo(uploaderParams, session)
-    await this._uploadLiveCoverPhoto(uploaderParams, session)
-    await live.save({ session })
-  }
-
-  protected static _editLiveMedia = async (
-    { previewVideoFile, coverPhotoFile, liveId }: EditLiveInput,
-    session: MaybeSession,
-  ) => {
-    if (previewVideoFile == null && coverPhotoFile == null) {
-      throw new OperationalError('upload at least one file', 400)
+      liveDocument.coverPhoto = {
+        Key: photoUpload.Key,
+        Bucket: photoUpload.Bucket,
+      }
     }
 
-    let prevCoverPhotoId: MongoDBObjectId | null = null
-    let prevPreviewVideoId: MongoDBObjectId | null = null
+    if (data.previewVideo) {
+      const vidUpload = await MediaManagement.uploadAndInitiateMediaConvert(
+        data.previewVideo,
+        liveDocument.expiry,
+      )
 
-    const live = await LiveModel.findById(liveId)
-
-    if (live == null) {
-      throw new OperationalError('invalid live id', 404)
+      const videoUploadDocument = UploadMediaUtils.getVideoUploadDocument(vidUpload)
+      videoUploadDocument.parentId = liveDocument._id
+      videoUploadDocument.parentType = 'live'
+      liveDocument.previewVideoUpload = videoUploadDocument._id
+      await videoUploadDocument.save({ session })
     }
 
-    if (coverPhotoFile) {
-      const photoUpload = await MediaManagement.store({
-        file: coverPhotoFile,
-        expire: undefined,
-        baseDir: 'images',
-      })
-
-      prevCoverPhotoId = live.coverPhoto
-
-      const coverPhototDocument = await new PosterImageModel({
-        video_id: live._id,
-        bucket: photoUpload.Bucket,
-        key: photoUpload.Key,
-        dimension: 'channel-logo',
-        parentType: 'live',
-      }).save({ session })
-
-      live.coverPhoto = coverPhototDocument._id
-    }
-
-    if (previewVideoFile) {
-      const vidUpload = await MediaManagement.uploadAndInitiateMediaConvert({
-        file: previewVideoFile,
-        expire: undefined,
-      })
-
-      prevPreviewVideoId = live.previewVideoUpload
-
-      const videoUploadDocument = await new VideoUploadModel({
-        bucket: vidUpload.Bucket,
-        key: vidUpload.Key,
-        mimetype: vidUpload.mimetype,
-        size: vidUpload.size,
-        isTranscoded: vidUpload.isTranscoded,
-        parentId: live._id,
-        parentType: 'live',
-      }).save({ session })
-
-      live.previewVideoUpload = videoUploadDocument._id
-    }
-
-    await live.save({ session })
-
-    return {
-      prevCoverPhotoId,
-      prevPreviewVideoId,
-    }
-  }
-
-  static editLiveMedia = async (data: EditLiveInput) => {
-    const { prevCoverPhotoId, prevPreviewVideoId } = await withMongoDBSession(
-      this._editLiveMedia,
-      data,
-    )
-
-    if (prevCoverPhotoId) Purge.posterById(prevCoverPhotoId)
-    if (prevPreviewVideoId) Purge.videoUploadById(prevPreviewVideoId)
-  }
-
-  static updateLiveActiveState = async ({ liveId, active }: UpdateLiveActiveStateInput) => {
-    const live = await LiveModel.findByIdAndUpdate(liveId, { $set: { active } })
-
-    if (live == null) {
-      throw new OperationalError('invalid live id', 404)
-    }
+    await liveDocument.save({ session })
   }
 
   static createLive = async (data: CreateLiveData) => {

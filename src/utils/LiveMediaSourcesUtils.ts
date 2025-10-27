@@ -4,10 +4,10 @@ import { LiveAggrRes } from '../types/Live'
 import { signCred } from './live'
 
 import { getPromiseAllFulfilledResults } from './promises'
-import { VidUploadUtils, VidRes } from './VideoUploadUtils'
+import { VidUploadUtils, VideoQuality } from './VideoUploadUtils'
 
 export class LiveMediaSourcesUtils {
-  static resolveSources = async (lives: LiveAggrRes[], quality: VidRes, isClient = false) => {
+  static resolveSources = async (lives: LiveAggrRes[], quality: VideoQuality, isClient = false) => {
     const results = await Promise.allSettled(
       lives.map(async live => {
         const signed = `?sign=${signCred(live.streamKey, live.expiry)}`

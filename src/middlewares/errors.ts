@@ -32,14 +32,12 @@ export class ErrorMiddleware {
             keyValues += index === entries.length - 1 ? keyValueStr : keyValueStr + ' AND '
           })
 
-          const message = `<${keyValues}> ${entries.length === 1 ? 'is' : 'are'} associated with another document in the table.`
+          const message = `<${keyValues}> ${entries.length === 1 ? 'is' : 'are'} associated with another record.`
           error = new OperationalError(message, 400)
           break
         }
-
+        // Let it fall through to default
         console.log(error.name, error.message)
-
-        break
       default:
         error = new OperationalError(
           error.message || 'Unkown application error',

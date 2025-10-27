@@ -1,4 +1,5 @@
 import { VideoUpload, VideoUploadModel } from '../models/videoupload.model'
+import { StringOrObjectId } from '../types'
 import { OperationalError } from '../utils/OperationalError'
 import { MaybeSession } from '../utils/mongoDbSessionRunner'
 
@@ -10,6 +11,14 @@ type UpdateWithParentInput = {
 }
 
 export class VideoUploadRepo {
+  static findByParentId = (parentId: StringOrObjectId) =>
+    VideoUploadModel.findOne({
+      parentId,
+    })
+
+  static fetchNotTranscoded = (skip: number, limit: number) =>
+    VideoUploadModel.find({ isTranscoded: false }).skip(skip).limit(limit)
+
   static updateWithParent = async (input: UpdateWithParentInput) => {
     const update = await VideoUploadModel.findOneAndUpdate(
       {

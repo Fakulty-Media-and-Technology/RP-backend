@@ -491,6 +491,14 @@ export class VideoRepo {
     return aggr
   }
 
+  protected static _fetchVideoEnumProjectionStage: PipelineStage.Project = {
+    $project: {
+      __v: false,
+      createdAt: false,
+      updatedAt: false,
+    },
+  }
+
   static fetchVideoAggr = async ({
     prevStages,
     sortStage,
@@ -498,49 +506,102 @@ export class VideoRepo {
     limit,
     fetchSeasons,
   }: FetchVideosParams) => {
-    const enumsProjectShared: PipelineStage.Project = {
-      $project: { __v: false, createdAt: false, updatedAt: false },
-    }
-    const sortPaginateStages: PipelineStage[] = [{ $skip: skip(page, limit) }, { $limit: limit }]
+    const paginateionStages: PipelineStage[] = [
+      {
+        $skip: skip(page, limit),
+      },
+      { $limit: limit },
+    ]
 
-    if (sortStage) sortPaginateStages.unshift(sortStage)
+    if (sortStage) {
+      paginateionStages.unshift(sortStage)
+    }
 
     const allStages: PipelineStage[] = [
       ...prevStages,
 
       {
         $lookup: {
-          from: 'poster_images',
-          localField: '_id',
-          foreignField: 'video_id',
-          as: 'landscapePhoto',
+          from: 'video_uploads',
+          localField: 'videoUpload',
+          foreignField: '_id',
+          as: 'videoUpload',
           pipeline: [
-            { $match: { dimension: 'landscape' } },
-            { $project: { key: true, bucket: true } },
+            {
+              $match: {
+                parentType: 'vod',
+                isTranscoded: true,
+              },
+            },
+            {
+              $project: {
+                key: true,
+                isTranscoded: true,
+                resolutions: true,
+              },
+            },
           ],
         },
       },
-      {
-        $lookup: {
-          from: 'poster_images',
-          localField: '_id',
-          foreignField: 'video_id',
-          as: 'portraitPhoto',
-          pipeline: [
-            { $match: { dimension: 'portrait' } },
-            { $project: { key: true, bucket: true } },
-          ],
-        },
-      },
+
       {
         $lookup: {
           from: 'video_uploads',
-          localField: '_id',
-          foreignField: 'parentId',
-          as: 'videoUpload',
+          localField: 'trailerUpload',
+          foreignField: '_id',
+          as: 'trailer',
           pipeline: [
-            { $match: { isTranscoded: true } },
-            { $project: { key: true, isTranscoded: true, resolutions: true } },
+            {
+              $match: {
+                parentType: 'trailer',
+                isTranscoded: true,
+              },
+            },
+            {
+              $project: {
+                key: true,
+                isTranscoded: true,
+                resolutions: true,
+              },
+            },
+          ],
+        },
+      },
+
+      {
+        $set: {
+          trailerVideoUpload: {
+            $ifNull: [{ $first: '$trailer' }, null],
+          },
+
+          videoUpload: {
+            $ifNull: [{ $first: '$videoUpload' }, null],
+          },
+        },
+      },
+
+      {
+        $match: {
+          $or: [
+            // series can have vids and trailers properties as null
+            { type: 'series' },
+
+            {
+              // videoLink and videoUpload are not null on the same document
+              // trailerLink and trailer are not null on the same document
+              $and: [
+                {
+                  $or: [{ videoLink: { $exists: true } }, { videoUpload: { $exists: true } }],
+                },
+
+                {
+                  $or: [
+                    { trailerLink: { $exists: true } },
+                    { trailerVideoUpload: { $exists: true } },
+                  ],
+                },
+              ],
+            },
           ],
         },
       },
@@ -551,7 +612,7 @@ export class VideoRepo {
           foreignField: '_id',
           localField: 'genre',
           as: 'genre',
-          pipeline: [enumsProjectShared],
+          pipeline: [this._fetchVideoEnumProjectionStage],
         },
       },
 
@@ -561,7 +622,7 @@ export class VideoRepo {
           foreignField: '_id',
           localField: 'category',
           as: 'category',
-          pipeline: [enumsProjectShared],
+          pipeline: [this._fetchVideoEnumProjectionStage],
         },
       },
 
@@ -571,34 +632,10 @@ export class VideoRepo {
           foreignField: '_id',
           localField: 'cast',
           as: 'cast',
-          pipeline: [enumsProjectShared],
+          pipeline: [this._fetchVideoEnumProjectionStage],
         },
       },
 
-      {
-        $lookup: {
-          from: 'trailers',
-          localField: '_id',
-          foreignField: 'video_id',
-          as: 'trailer',
-          pipeline: [
-            {
-              $lookup: {
-                from: 'video_uploads',
-                localField: '_id',
-                foreignField: 'parentId',
-                as: 'trailerVideoUpload',
-                pipeline: [
-                  { $match: { isTranscoded: true } },
-                  { $project: { key: true, isTranscoded: true, resolutions: true } },
-                ],
-              },
-            },
-
-            { $addFields: { trailerVideoUpload: { $first: '$trailerVideoUpload' } } },
-          ],
-        },
-      },
       {
         $lookup: {
           from: 'ratings',
@@ -606,80 +643,41 @@ export class VideoRepo {
           localField: '_id',
           as: 'ratings',
 
-          pipeline: [{ $group: { _id: null, avgRating: { $avg: '$rate' } } }],
+          pipeline: [
+            {
+              $group: {
+                _id: null,
+                avgRating: { $avg: '$rate' },
+              },
+            },
+          ],
         },
       },
+
       {
         $lookup: {
           from: 'views',
           foreignField: 'content',
           localField: '_id',
           as: 'views',
+          pipeline: [{ $count: 'total' }],
         },
       },
 
       {
         $addFields: {
-          viewsCount: { $size: '$views' },
-          vidClass: '$vid_class',
-          artistName: '$artist_name',
-          releaseDate: '$released_date',
-          expiryDate: '$expiry_date',
-          defaultRating: '$default_rating',
-          trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
-          videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
-          portraitPhoto: { $first: '$portraitPhoto' },
-          landscapePhoto: { $first: '$landscapePhoto' },
+          viewsCount: { $ifNull: [{ $first: '$views.total' }, 0] },
           averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
         },
       },
 
-      {
-        $match: {
-          $or: [
-            // series can have vids and trailers properties as as null
-            { is_series: true },
+      ...paginateionStages,
 
-            // TODO: find a coincise way
-            {
-              // videoLink and videoUpload are not null on the same document
-              // trailerLink and trailerVideoUpload are not null on the same document
-              $and: [
-                {
-                  $or: [
-                    { $and: [{ videoLink: { $ne: null } }, { videoUpload: null }] },
-                    { $and: [{ videoLink: null }, { videoUpload: { $ne: null } }] },
-                  ],
-                },
-
-                {
-                  $or: [
-                    { $and: [{ trailerLink: { $ne: null } }, { trailerVideoUpload: null }] },
-                    { $and: [{ trailerLink: null }, { trailerVideoUpload: { $ne: null } }] },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      },
-      ...sortPaginateStages,
       {
         $project: {
-          expiry_date: false,
           views: false,
-          released_date: false,
-          artist_name: false,
-          subtitle_upload: false,
-          vid_class: false,
-          default_rating: false,
           ratings: false,
-          is_series: false,
           trailer: false,
-          trailer_upload: false,
-          landscape_photo: false,
-          portrait_photo: false,
-          video_upload: false,
           __v: false,
           updatedAt: false,
         },

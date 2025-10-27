@@ -91,7 +91,7 @@ export class MediaConvert {
 
   static transcode = async (key: string) => {
     const FileInput = AwsUtils.buckets.s3Input + key
-    const Destination = AwsUtils.buckets.transcodeOutput + key.replace('videos/', '')
+    const Destination = AwsUtils.buckets.transcodeOutput + key
 
     const params: CreateJobCommandInput = {
       Role: env.IAM_ROLE_ARN,

@@ -25,11 +25,7 @@ export class OnboardingService {
   protected static _handleUserImageUpload = async (user: UserDocument, image?: MulterFile) => {
     if (!image) return
 
-    const { Bucket, Key } = await MediaManagement.store({
-      file: image,
-      expire: undefined,
-      baseDir: 'images',
-    })
+    const { Bucket, Key } = await MediaManagement.store(image)
 
     if (Bucket == null) {
       throw new OperationalError('could not upload photo', 500)

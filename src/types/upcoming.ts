@@ -16,8 +16,8 @@ export interface UpcomingAggrRes {
 
 interface LandscapePhoto {
   _id: string
-  bucket: string
-  key: string
+  Bucket: string
+  Key: string
 }
 
 interface TrailerVideoUpload {

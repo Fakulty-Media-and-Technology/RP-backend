@@ -77,11 +77,7 @@ export class NotificationService {
       throw new OperationalError('photo file is required', 400)
     }
 
-    const photoUpload = await MediaManagement.store({
-      file: photoFile,
-      expire: undefined,
-      baseDir: 'images',
-    })
+    const photoUpload = await MediaManagement.store(photoFile)
 
     if (photoUpload.Key == null || photoUpload.Bucket == null) {
       throw new OperationalError('error processing photo upload', 500)

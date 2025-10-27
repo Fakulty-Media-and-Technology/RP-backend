@@ -1,5 +1,5 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
-import { previewPhotoSchema } from './commonSchema'
+import { PhotoSchema } from './commonSchema'
 
 const schema = new Schema(
   {
@@ -56,7 +56,7 @@ const schema = new Schema(
     },
 
     // TODO:
-    photo: previewPhotoSchema,
+    photo: PhotoSchema,
 
     auth_code: {
       type: Number,

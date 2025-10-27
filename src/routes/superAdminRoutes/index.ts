@@ -16,11 +16,9 @@ import { superAdminMediaRouter } from './mediaRoute'
 import { superAdminPayoutsRouter } from './payoutRoute'
 import { superAdminSubscriptionRouter } from './subscriptionRoute'
 import { superAdminSuggestionsRouter } from './suggestionsRoute'
-import { superAdminTrailerRouter } from './trailerRoute'
 import { superAdminUpcomingRouter } from './upcomingRoute'
 import { superAdminUploadsRouter } from './uploadRoute'
 import { superAdminUsersRouter } from './userRouter'
-import { throwDepricatedRoute } from '../../middlewares/depricate'
 import { Multer } from '../../utils/Multer'
 import { OnboardingController } from '../../controllers/customers/onboarding.customer'
 import { superAdminNotificationRouter } from './notificationRoute'
@@ -44,7 +42,6 @@ superAdminRouter.use('/enums', superAdminEnumsRouter)
 superAdminRouter.use('/media', superAdminMediaRouter)
 superAdminRouter.use('/lives', superAdminLivesRouter)
 superAdminRouter.use('/upcoming', superAdminUpcomingRouter)
-superAdminRouter.use('/trailer', throwDepricatedRoute, superAdminTrailerRouter)
 superAdminRouter.use('/giftcard', superAdminGiftCardRouter)
 superAdminRouter.use('/payouts', superAdminPayoutsRouter)
 superAdminRouter.use('/suggestions', superAdminSuggestionsRouter)

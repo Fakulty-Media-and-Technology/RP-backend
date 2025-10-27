@@ -7,10 +7,9 @@ import { GetDefined } from '../../utils/GetDefined'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
 import { AllVideoTypes, MovieData, UploadMediaUtils } from '../../utils/UploadMediaUtils'
-
 import { addEpisodeSchema, editVideoSchema } from '../../validations/admin'
 
-export class AdminUploadController extends UploadMediaUtils {
+export class AdminUploadController {
   private static _validateVideoType = (type: string) => {
     if (!videoTypes.includes(type as any)) {
       throw new OperationalError(`Valid video types are ${videoTypes.join(' || ')} `, 400)
@@ -32,7 +31,7 @@ export class AdminUploadController extends UploadMediaUtils {
       )
     }
 
-    const files = this._checkFiles(reqFiles)
+    const files = UploadMediaUtils.checkFiles(reqFiles)
 
     if (Object.keys(files).length === 0) {
       throw new OperationalError('Expected at least one file', 400)
@@ -45,7 +44,7 @@ export class AdminUploadController extends UploadMediaUtils {
       trailer: files.trailer?.[0],
     }
 
-    this._validateAddMovieData(type, data, files)
+    UploadMediaUtils.validateAddMovieData(type, data, files)
 
     const vod = await AdminUploadService.addVideo({
       type,
@@ -109,7 +108,7 @@ export class AdminUploadController extends UploadMediaUtils {
     }
 
     if (!!req.files) {
-      const files = this._checkFiles(req.files)
+      const files = UploadMediaUtils.checkFiles(req.files)
 
       Object.assign(data, {
         trailer: files.trailer?.[0],
@@ -135,7 +134,7 @@ export class AdminUploadController extends UploadMediaUtils {
       throw new OperationalError('optional formData.data must be a JSON serialized string', 400)
     }
 
-    const files = this._checkFiles(reqFiles)
+    const files = UploadMediaUtils.checkFiles(reqFiles)
 
     const data: Partial<MovieData> = {
       landscapePoster: files.landscapePoster?.[0],

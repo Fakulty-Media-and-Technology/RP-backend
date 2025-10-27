@@ -26,11 +26,13 @@ export class SharedRoutes {
   protected vods() {
     const vodsRouter = Router()
 
+    vodsRouter.get('/suggestions', SharedController.randomSuggestions)
     vodsRouter.get('/category/:catId', SharedController.fetchVidsForCategory)
     vodsRouter.get('/similar-by-cast/:castId', SharedController.getSimilarByCastId)
-    vodsRouter.get('/similar-by-genre/:genreId', SharedController.getSimilarByGenreId)
     vodsRouter.get('/seasons/:vidId', AdminUploadController.fetchSeasonsAndEpisodes)
-    vodsRouter.get('/suggestions', SharedController.randomSuggestions)
+    vodsRouter.get('/similar-by-genre/:genreId', SharedController.getSimilarByGenreId)
+    vodsRouter.get('/video-source/:videoId/:type', SharedController.fetchVideoSource)
+
     vodsRouter.get(
       '/categ-and-genre/:genreId/:catId',
       SharedController.getByCategoryIdAndAndGenreId,

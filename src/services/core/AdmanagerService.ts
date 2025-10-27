@@ -5,11 +5,11 @@ import { OperationalError } from '../../utils/OperationalError'
 import { MulterFile } from '../../types'
 import { MediaManagement } from '../media-management'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
-import { VideoUploadModel } from '../../models/videoupload.model'
 import { Purge } from '../../utils/Purge'
-import { VidRes, VidUploadUtils } from '../../utils/VideoUploadUtils'
+import { VideoQuality, VidUploadUtils } from '../../utils/VideoUploadUtils'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { MediaAccess } from '../media-access'
+import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 
 export interface CreateAdData
   extends Omit<AdSchema, 'createdAt' | 'updatedAt' | 'video' | 'photo'> {
@@ -25,7 +25,7 @@ interface UploadMediaInput {
 
 export class AdManagerService {
   protected static _resolveMediaSources = async (ads: FetchAdResult[], userId?: string) => {
-    const videoQuality: VidRes = userId ? await VidUploadUtils.getUserVideoQuality(userId) : '720p'
+    const videoQuality: VideoQuality = userId ? await VidUploadUtils.getUserVideoQuality(userId) : '720p'
 
     return getPromiseAllFulfilledResults(
       await Promise.allSettled(
@@ -57,13 +57,8 @@ export class AdManagerService {
 
   protected static _uploadMedia = async ({ videoFile, imageFile, expire }: UploadMediaInput) => {
     const [imageUploadResult, videoUploadResult] = await Promise.allSettled([
-      MediaManagement.store({
-        file: imageFile,
-        baseDir: 'images',
-        expire,
-      }),
-
-      MediaManagement.uploadAndInitiateMediaConvert({ file: videoFile, expire }),
+      MediaManagement.store(imageFile, expire),
+      MediaManagement.uploadAndInitiateMediaConvert(videoFile, expire),
     ])
 
     if (imageUploadResult.status === 'rejected') {
@@ -120,20 +115,12 @@ export class AdManagerService {
       photo: {
         Bucket: imageUpload.Bucket,
         Key: imageUpload.Key,
-        ContentType: 'image',
       },
     })
 
-    const videoUploadDocument = new VideoUploadModel({
-      bucket: videoUpload.Bucket,
-      key: videoUpload.Key,
-      mimetype: videoUpload.mimetype,
-      size: videoUpload.size,
-      isTranscoded: videoUpload.isTranscoded,
-      parentType: 'ad',
-      parentId: adDocument._id,
-    })
-
+    const videoUploadDocument = UploadMediaUtils.getVideoUploadDocument(videoUpload)
+    videoUploadDocument.parentId = adDocument._id
+    videoUploadDocument.parentType = 'ad'
     adDocument.videoUpload = videoUploadDocument._id
     await adDocument.save({ session })
     await videoUploadDocument.save({ session })
@@ -158,12 +145,13 @@ export class AdManagerService {
   }
 
   static deleteAd = async (addId: string) => {
-    const deleted = await AdModel.findByIdAndDelete(addId)
+    const deletedAdDocument = await AdModel.findByIdAndDelete(addId)
 
-    if (deleted == null) {
+    if (deletedAdDocument == null) {
       throw new OperationalError('invalid add Id', 404)
     }
 
-    Purge.videoUploadById(deleted.videoUpload)
+    MediaManagement.deleteObject(deletedAdDocument.photo.Key, deletedAdDocument.photo.Bucket)
+    Purge.videoUploadById(deletedAdDocument.videoUpload)
   }
 }

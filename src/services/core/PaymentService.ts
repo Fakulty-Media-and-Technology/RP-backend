@@ -562,7 +562,7 @@ export class PaymentService {
 
     const video = await this._getVideoById(videoId)
 
-    if (video.vid_class !== 'premium') {
+    if (video.vidClass !== 'premium') {
       throw new OperationalError('this is not a premium content', 403)
     }
   }
@@ -573,7 +573,7 @@ export class PaymentService {
   ) => {
     const video = await this._getVideoById(videoId)
 
-    if (video.vid_class !== 'exclusive') {
+    if (video.vidClass !== 'exclusive') {
       throw new OperationalError('this is not an exclusive content', 403)
     }
 

@@ -16,7 +16,7 @@ export class AdsController {
       )
     }
 
-    const files = UploadMediaUtils._checkFiles(req.files)
+    const files = UploadMediaUtils.checkFiles(req.files)
 
     if (Object.keys(files).length === 0) {
       throw new OperationalError('Expected at least one file', 400)

@@ -14,8 +14,6 @@ import { router as SettingsRouter } from './../customerRoutes/settingRouter'
 import { router as UpcomingRouter } from './../customerRoutes/upcomingRouter'
 import { router as LivestreamRouter } from './../customerRoutes/livestreamRouter'
 import { router as SubscriptionRuuter } from './../customerRoutes/subscriptionRouter'
-import { router as PushNotificationRouter } from './../customerRoutes/pushNotificationRouter'
-import { router as NotificationsRouter } from './../customerRoutes/notificationsRouter'
 import { router as GeneralRouter } from './../customerRoutes/generalRouter'
 import { router as PasswordResetRouter } from './../customerRoutes/passwordResetRouter'
 import { router as ProfileRouter } from './../customerRoutes/profileRouter'
@@ -86,3 +84,5 @@ customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.get('/banner/contents', SharedController.bannerContents)
 customerRouter.post('/signup/createpin', OnboardingController.createPin)
 customerRouter.post('/suggestion/create', CustomerProfileController.createSuggestion)
+
+

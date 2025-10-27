@@ -1,6 +1,4 @@
-import { PosterImageModel } from '../models/poster.model'
 import { SubtitleModel } from '../models/subtitle.model'
-import { TrailerModel } from '../models/trailer.model'
 import { Video } from '../models/videos.model'
 import { VideoUploadModel } from '../models/videoupload.model'
 import { S3 } from '../services/aws/s3'
@@ -15,7 +13,7 @@ export class Purge {
     const payments: MongoDBObjectId[] = []
 
     Purge.subtitlesByParentId(live._id)
-    Purge.postersByParentId(live._id)
+
     live.previewVideoUpload && Purge.videoUploadById(live.previewVideoUpload)
     // live.payment_id && payments.push(live.payment_id)
     // live.extpayment_id && payments.push(live.extpayment_id)
@@ -53,53 +51,35 @@ export class Purge {
     }
   }
 
-  static posterById = async (posterId: MongoDBObjectId) => {
-    try {
-      const poster = await PosterImageModel.findByIdAndDelete(posterId)
-      poster && (await S3.deleteObject(poster.key, poster.bucket))
-    } catch (e) {
-      console.error('Error deleting poster with Id:', posterId)
-    }
-  }
+  // static posterById = async (posterId: MongoDBObjectId) => {
+  //   try {
+  //     const poster = await PosterImageModel.findByIdAndDelete(posterId)
+  //     poster && (await S3.deleteObject(poster.key, poster.bucket))
+  //   } catch (e) {
+  //     console.error('Error deleting poster with Id:', posterId)
+  //   }
+  // }
 
-  static postersByParentId = async (parentId: MongoDBObjectId) => {
-    try {
-      const posters = await PosterImageModel.find({ video_id: parentId })
+  // static postersByParentId = async (parentId: MongoDBObjectId) => {
+  //   try {
+  //     const posters = await PosterImageModel.find({ video_id: parentId })
 
-      await Promise.all(
-        posters.map(async ({ key, bucket }) => {
-          try {
-            await S3.deleteObject(key, bucket)
-            await PosterImageModel.findOneAndDelete({ video_id: parentId })
-          } catch (e) {
-            console.error(
-              `Error deleting poster with Key: ${key} => bucket: ${bucket} on VOD delete`,
-            )
-          }
-        }),
-      )
-    } catch (e) {
-      console.error('Error deleting poster with video_id:', parentId)
-    }
-  }
-
-  static trailerByParentId = async (parentId: MongoDBObjectId) => {
-    try {
-      const trailer = await TrailerModel.findOneAndDelete({ video_id: parentId })
-      trailer && this.videoUploadById(trailer.video_upload)
-    } catch (e) {
-      console.error(`Error deleting trailer for parent with ID: ${parentId}`)
-    }
-  }
-
-  static trailerById = async (trailerId: MongoDBObjectId) => {
-    try {
-      const trailer = await TrailerModel.findByIdAndDelete(trailerId)
-      trailer && this.videoUploadById(trailer.video_upload)
-    } catch (e) {
-      console.error(`Error deleting trailer  with ID: ${trailerId}`)
-    }
-  }
+  //     await Promise.all(
+  //       posters.map(async ({ key, bucket }) => {
+  //         try {
+  //           await S3.deleteObject(key, bucket)
+  //           await PosterImageModel.findOneAndDelete({ video_id: parentId })
+  //         } catch (e) {
+  //           console.error(
+  //             `Error deleting poster with Key: ${key} => bucket: ${bucket} on VOD delete`,
+  //           )
+  //         }
+  //       }),
+  //     )
+  //   } catch (e) {
+  //     console.error('Error deleting poster with video_id:', parentId)
+  //   }
+  // }
 
   static subtitlesByParentId = async (parentId: MongoDBObjectId) => {
     try {
@@ -127,14 +107,11 @@ export class Purge {
       await Promise.all(
         seasons.map(async season => {
           try {
-            this.postersByParentId(season._id)
-            this.trailerByParentId(season._id)
-
             const episodes = await EpisodeModel.find({ season: season._id })
 
             episodes.forEach(async ep => {
               this.videoUploadById(ep.videoUpload)
-              this.trailerByParentId(ep._id)
+              this.videoUploadById(ep.trailerUpload)
             })
 
             await SeasonModel.findByIdAndDelete(season._id)
@@ -148,14 +125,15 @@ export class Purge {
     }
   }
 
-  static vod = async (vod: Video) => {
-    await Promise.all([
-      this.postersByParentId(vod._id),
-      this.subtitlesByParentId(vod._id),
-      this.trailerByParentId(vod._id),
-      this.videoUploadById(vod.video_upload),
+  static vod = async (videoDocument: Video) => {
+    await Promise.allSettled([
+      this.subtitlesByParentId(videoDocument._id),
+      this.videoUploadById(videoDocument.videoUpload),
+      this.videoUploadById(videoDocument.trailerUpload),
     ])
 
-    if (vod.type === 'series') await this.seasonsByVideoId(vod._id)
+    if (videoDocument.type === 'series') {
+      this.seasonsByVideoId(videoDocument._id)
+    }
   }
 }

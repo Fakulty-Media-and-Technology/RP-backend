@@ -1,13 +1,12 @@
-import mongoose, { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
-import { OperationalError } from '../utils/OperationalError'
-import env from '../env'
+import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { validCurrencies } from '../utils/currency'
+import { PhotoSchema } from './commonSchema'
 
 export const videoTypes = ['movie', 'series', 'music-video', 'skit'] as const
 
 const schema = new Schema(
   {
-    admin_id: {
+    adminId: {
       type: Schema.Types.ObjectId,
       ref: 'users',
       required: true,
@@ -16,7 +15,6 @@ const schema = new Schema(
     title: {
       type: String,
       required: [true, 'A video must have a title'],
-      unique: true,
     },
 
     type: {
@@ -25,27 +23,27 @@ const schema = new Schema(
       required: true,
     },
 
-    landscape_photo: {
-      type: Schema.Types.ObjectId,
-      ref: 'poster_images',
+    landscapePhoto: {
+      type: PhotoSchema,
       required: true,
     },
 
-    portrait_photo: {
-      type: Schema.Types.ObjectId,
-      ref: 'poster_images',
+    portraitPhoto: {
+      type: PhotoSchema,
       required: true,
     },
 
-    video_upload: {
+    videoUpload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
+      sparse: true,
       default: null,
     },
 
-    trailer_upload: {
+    trailerUpload: {
       type: Schema.Types.ObjectId,
-      ref: 'trailers',
+      ref: 'video_uploads',
+      sparse: true,
       default: null,
     },
 
@@ -59,7 +57,7 @@ const schema = new Schema(
       required: true,
     },
 
-    vid_class: {
+    vidClass: {
       type: String,
       enum: ['free', 'ad', 'exclusive', 'premium'],
       required: true,
@@ -100,12 +98,13 @@ const schema = new Schema(
       },
     ],
 
-    released_date: {
+    releaseDate: {
       type: Date,
     },
 
-    expiry_date: {
+    expiryDate: {
       type: Date,
+      default: Date.now,
     },
 
     likes: [
@@ -119,7 +118,7 @@ const schema = new Schema(
       type: String,
     },
 
-    default_rating: {
+    defaultRating: {
       type: Number,
     },
 
@@ -143,18 +142,13 @@ const schema = new Schema(
       default: [],
     },
 
-    feat_expiry: {
+    featExpiry: {
       type: Date,
-    },
-
-    is_series: {
-      type: Boolean,
-      required: true,
     },
 
     videoLink: {
       type: String,
-      default: null, // crucial for Aggregation
+      default: null,
     },
 
     trailerLink: {
@@ -162,7 +156,7 @@ const schema = new Schema(
       default: null,
     },
 
-    artist_name: {
+    artistName: {
       type: String,
     },
 
@@ -186,18 +180,21 @@ const schema = new Schema(
   },
 )
 
+schema.index({ expiryDate: 1, upcoming: 1 }, { name: '_upcoming' })
+schema.index({ type: 1, title: 1, artistName: 1 }, { unique: true, name: '_uniqueTitle' })
+
 export const VideoModel = model('videos', schema)
 export type VideoSchema = InferSchemaType<typeof schema>
 export type Video = HydratedDocumentFromSchema<typeof schema>
 
-schema.pre('save', function (next) {
-  if (this.videoLink && this.video_upload) {
-    throw new OperationalError('only a videoLink OR a videoUpload can be povided', 400)
-  }
+// schema.pre('save', function (next) {
+//   if (this.videoLink && this.videoUpload) {
+//     throw new OperationalError('only a videoLink OR a videoUpload can be povided', 400)
+//   }
 
-  if (this.trailerLink && this.trailer_upload) {
-    throw new OperationalError('only a trailerLink OR a trailerUpload can be povided', 400)
-  }
+//   if (this.trailerLink && this.trailerUpload) {
+//     throw new OperationalError('only a trailerLink OR a trailerUpload can be povided', 400)
+//   }
 
-  next()
-})
+//   next()
+// })

@@ -1,5 +1,6 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { validCurrencies } from '../utils/currency'
+import { PhotoSchema } from './commonSchema'
 
 const schema = new Schema(
   {
@@ -43,10 +44,15 @@ const schema = new Schema(
     },
 
     coverPhoto: {
-      type: Schema.Types.ObjectId,
-      ref: 'poster_images',
+      type: PhotoSchema,
       required: true,
     },
+    
+    // coverPhoto: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: 'poster_images',
+    //   required: true,
+    // },
 
     previewVideoUpload: {
       type: Schema.Types.ObjectId,

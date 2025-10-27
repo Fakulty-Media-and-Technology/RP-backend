@@ -106,11 +106,7 @@ export class VoteService {
       contact: data.contact,
     })
 
-    const photoUpload = await MediaManagement.store({
-      file: data.photoFile,
-      expire: undefined,
-      baseDir: 'images',
-    })
+    const photoUpload = await MediaManagement.store(data.photoFile)
 
     if (!photoUpload.Key || !photoUpload.Bucket) {
       throw new OperationalError('could not upload photo please try again', 500)

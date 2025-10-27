@@ -49,12 +49,12 @@ const schema = new Schema(
       enum: videoUploadParents, // add more as needed
     },
 
-    parentId: Schema.Types.ObjectId,
-
-    resolutions: {
-      type: [resolutionsSchema],
-      default: [],
+    parentId: {
+      type: Schema.Types.ObjectId,
+      requires: true,
     },
+
+    resolutions: [resolutionsSchema],
   },
   {
     timestamps: true,
@@ -62,12 +62,13 @@ const schema = new Schema(
   },
 )
 
-schema.pre('save', async function (next) {
-  if (this.isTranscoded) {
-    this.resolutions = (await S3.setResolutionsPairs(this.key)) as any
-  }
-  next()
-})
+schema.index(
+  { isTranscoded: 1 },
+  {
+    partialFilterExpression: { isTranscoded: false },
+    name: '_isTranscodedStatus',
+  },
+)
 
 export const VideoUploadModel = model('video_uploads', schema)
 export type VideoUpload = HydratedDocumentFromSchema<typeof schema>
