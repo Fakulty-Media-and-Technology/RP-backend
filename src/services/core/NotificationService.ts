@@ -77,7 +77,7 @@ export class NotificationService {
       throw new OperationalError('photo file is required', 400)
     }
 
-    const photoUpload = await MediaManagement.store(photoFile)
+    const photoUpload = await MediaManagement.storeImage(photoFile)
 
     if (photoUpload.Key == null || photoUpload.Bucket == null) {
       throw new OperationalError('error processing photo upload', 500)
@@ -125,24 +125,16 @@ export class NotificationService {
       limit,
     })
 
-    const withImagesResults = await Promise.allSettled(
-      notifications.map(async notification => {
-        const result = Object.assign(notification, {
-          photoUri:
-            notification.adminNotification.photo == null
-              ? null
-              : await MediaAccess.getSignedUrl(
-                  notification.adminNotification.photo.Bucket,
-                  notification.adminNotification.photo.Key,
-                  'photo',
-                ),
-        })
+    return notifications.map(notification => {
+      const result = Object.assign(notification, {
+        photoUri:
+          notification.adminNotification.photo == null
+            ? null
+            : MediaAccess.getImageURL(notification.adminNotification.photo.Key),
+      })
 
-        return result
-      }),
-    )
-
-    return getPromiseAllFulfilledResults(withImagesResults)
+      return result
+    })
   }
 
   static updateHasSeen = async ({
@@ -200,18 +192,12 @@ export class NotificationService {
     ])
 
     // Get signed URLs for thumbnails
-    const notificationsWithUrls = await Promise.all(
-      notifications.map(async notification => {
-        return {
-          ...notification,
-          thumbnail_url: await MediaAccess.getSignedUrl(
-            notification.thumbnail.Bucket,
-            notification.thumbnail.Key,
-            'photo',
-          ),
-        }
-      }),
-    )
+    const notificationsWithUrls = notifications.map(async notification => {
+      return {
+        ...notification,
+        thumbnail_url: await MediaAccess.getImageURL(notification.thumbnail.Key),
+      }
+    })
 
     return notificationsWithUrls
   }

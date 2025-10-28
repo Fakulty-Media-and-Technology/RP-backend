@@ -70,25 +70,10 @@ export class RecentSearchService {
     vods,
     lives,
     quality,
-  }: SaturateMediaSourcesInput) => {
-    const [saturatedVodsResult, saturatedLivesResult] = await Promise.allSettled([
-      MovieMediaSourcesUtils.resolveMediaSources(vods, true, quality),
-      LiveMediaSourcesUtils.resolveSources(lives, quality),
-    ])
-
-    if (saturatedVodsResult.status === 'rejected') {
-      throw saturatedVodsResult.reason
-    }
-
-    if (saturatedLivesResult.status === 'rejected') {
-      throw saturatedLivesResult.reason
-    }
-
-    return {
-      saturatedVods: saturatedVodsResult.value,
-      saturatedLives: saturatedLivesResult.value,
-    }
-  }
+  }: SaturateMediaSourcesInput) => ({
+    saturatedVods: MovieMediaSourcesUtils.resolveMediaSources(vods, quality),
+    saturatedLives: await LiveMediaSourcesUtils.resolveSources(lives, quality),
+  })
 
   protected static _fetchSearchAndQuality = async (userId: string) => {
     const [qualityResult, searchResult] = await Promise.allSettled([

@@ -5,9 +5,7 @@ import { MediaAccess } from '../services/media-access'
 export class PhotoUtils {
   static fetchUserAggrResPhoto = async (user: FetchUserAggrRes) => {
     Object.assign(user, {
-      photo: user.photo
-        ? await MediaAccess.getSignedUrl(user.photo.Bucket, user.photo.Key, 'photo')
-        : null,
+      photo: user.photo ? MediaAccess.getImageURL(user.photo.Key) : null,
     })
 
     return user
@@ -18,7 +16,7 @@ export class PhotoUtils {
 
     const withPhotoUrL = {
       ...pureCast,
-      photoUrl: await MediaAccess.getSignedUrl(cast.bucket, cast.key, 'photo'),
+      photoUrl: MediaAccess.getImageURL(cast.key),
       bucket: undefined,
       key: undefined,
       __v: undefined,

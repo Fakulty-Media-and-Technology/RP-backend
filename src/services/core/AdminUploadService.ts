@@ -68,8 +68,8 @@ export class AdminUploadService {
     expire?: Date,
   ) => {
     const [portraitUpload, landscapeUpload] = await Promise.all([
-      MediaManagement.store(portraitFile, expire),
-      MediaManagement.store(landscapeFile, expire),
+      MediaManagement.storeImage(portraitFile, expire),
+      MediaManagement.storeImage(landscapeFile, expire),
     ])
 
     return {
@@ -381,7 +381,7 @@ export class AdminUploadService {
     videoDocument.upcoming = data.upcoming || videoDocument.upcoming
 
     if (data.portraitPoster) {
-      const potraitUpload = await MediaManagement.store(data.portraitPoster, expiry)
+      const potraitUpload = await MediaManagement.storeImage(data.portraitPoster, expiry)
 
       if (videoDocument.portraitPhoto) {
         MediaManagement.deleteObject(
@@ -397,7 +397,7 @@ export class AdminUploadService {
     }
 
     if (data.landscapePoster) {
-      const newLandscapePoster = await MediaManagement.store(data.landscapePoster, expiry)
+      const newLandscapePoster = await MediaManagement.storeImage(data.landscapePoster, expiry)
 
       if (videoDocument.landscapePhoto) {
         MediaManagement.deleteObject(
@@ -470,9 +470,8 @@ export class AdminUploadService {
       guranteeNumericResult(queryParams.limit, 1),
     )
 
-    return await MovieMediaSourcesUtils.resolveMediaSources(
+    return MovieMediaSourcesUtils.resolveMediaSources(
       aggrgatedVideoDocuments,
-      this.resolveWithMediaSources(queryParams),
       '720p',
     )
   }

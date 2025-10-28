@@ -60,9 +60,8 @@ export class VODWaitlistService {
 
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
+    const vods = MovieMediaSourcesUtils.resolveMediaSources(
       await VideoRepo.fetchByIds(waitlist.vods, page, limit),
-      true,
       vidQualitySettled.value,
     )
 

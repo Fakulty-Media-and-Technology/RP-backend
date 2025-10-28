@@ -238,38 +238,21 @@ export class SocialService {
     await withMongoDBSession(this._deleteCommentTransaction, commentId)
   }
 
-  protected static _attachAuthorPhoto = async (
+  protected static _attachAuthorPhoto = (
     comments: (GetRepliesResponse | GetCommentsResponse)[],
   ) => {
-    const fetchAuthorPhotoUrl = async (author?: Author) => {
-      if (author == null) return
+    const fetchAuthorPhotoUrl = (author?: Author) =>
+      typeof author?.photoKey === 'string' ? MediaAccess.getImageURL(author?.photoKey) : null
 
-      const bucket = author.photoBucket
-      const key = author.photoKey
+    return comments.map(comment => {
+      return {
+        ...comment,
+        authorPhotoURL: fetchAuthorPhotoUrl(comment.author),
 
-      if (bucket && key) {
-        return await MediaAccess.getSignedUrl(bucket, key, 'photo')
+        // @ts-ignore
+        parentCommentAuthorPhotoURL: fetchAuthorPhotoUrl(comment.parentCommentAuthor as any),
       }
-    }
-
-    const withAuthorPhotosResults = await Promise.allSettled(
-      comments.map(async comment => {
-        const [authorPhotoURL, parentCommentAuthorPhotoURL] = await Promise.all([
-          fetchAuthorPhotoUrl(comment.author),
-
-          // @ts-ignore
-          fetchAuthorPhotoUrl(comment.parentCommentAuthor as any),
-        ])
-
-        return {
-          ...comment,
-          authorPhotoURL,
-          parentCommentAuthorPhotoURL,
-        }
-      }),
-    )
-
-    return getPromiseAllFulfilledResults(withAuthorPhotosResults)
+    })
   }
 
   static getCommentById = async ({ currentUserId, commentId, type }: GetCommentById) => {
@@ -295,7 +278,7 @@ export class SocialService {
       limit,
     })
 
-    return await this._attachAuthorPhoto(comments)
+    return this._attachAuthorPhoto(comments)
   }
 
   static getReplies = async ({ commentId, query, currentUserId }: GetRepliesInput) => {

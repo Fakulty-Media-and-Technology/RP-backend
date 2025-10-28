@@ -15,7 +15,7 @@ type UploadVideoInput = {
   expire: Date | undefined
 }
 
-export type StoreResponse = Awaited<ReturnType<typeof MediaManagement.store>>
+export type StoreResponse = Awaited<ReturnType<typeof MediaManagement.storeImage>>
 
 export class MediaManagement {
   private static _genUniqueKey = () => crypto.randomBytes(8).toString('hex') + Date.now()
@@ -30,21 +30,25 @@ export class MediaManagement {
     }
   }
 
-  static uploadAndInitiateMediaConvert = async (file: MulterFile, expire?: Date) => {
-    const videoUpload = await this.store(file, expire)
-    await MediaConvert.transcode(videoUpload.Key)
+  static uploadAndInitiateMediaConvert = async (
+    file: MulterFile,
+    expire?: Date,
+    transcoder = MediaConvert.transcode,
+  ) => {
+    const upload = await this._storeObjectFile(file, AwsUtils.buckets.reeplay, expire)
+    await transcoder(upload.Key)
 
     return {
-      ...videoUpload,
+      ...upload,
       isTranscoded: false,
     }
   }
 
-  static store = async (file: MulterFile, expire?: Date) => {
+  protected static _storeObjectFile = async (file: MulterFile, bucket: string, expire?: Date) => {
     try {
       const { Key, Bucket, $metadata } = await S3.upload({
         Body: file.path ? createReadStream(file.path) : file.buffer,
-        Bucket: AwsUtils.buckets.reeplay,
+        Bucket: bucket,
         Key: this._genUniqueKey(),
         ContentType: file.mimetype,
         Expires: expire,
@@ -65,6 +69,14 @@ export class MediaManagement {
     } finally {
       this._deleteFile(file)
     }
+  }
+
+  static storeSubtitle = async (file: MulterFile, expire?: Date) => {
+    return await this._storeObjectFile(file, AwsUtils.buckets.reeplay, expire)
+  }
+
+  static storeImage = async (file: MulterFile, expire?: Date) => {
+    return await this._storeObjectFile(file, AwsUtils.buckets.replayImages, expire)
   }
 
   static deleteObject = async (key: string, bucket: string) => {

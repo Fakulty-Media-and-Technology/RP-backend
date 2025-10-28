@@ -2,7 +2,11 @@ import { PosterImage } from '../models/poster.model'
 import { Video, videoTypes } from '../models/videos.model'
 import { OperationalError } from '../utils/OperationalError'
 
-import { MediaManagement, StoreResponse, UploadAndTranscodeConfig } from './../services/media-management'
+import {
+  MediaManagement,
+  StoreResponse,
+  UploadAndTranscodeConfig,
+} from './../services/media-management'
 import { MulterFile, StringOrObjectId } from '../types'
 import { videoUploadParents } from '../models/assets'
 
@@ -92,11 +96,9 @@ export type EditVideoParams = Pick<AddVideoParams, 'adminId'> & {
   videoId: string
 }
 
-export type ImageUploadRes = Awaited<ReturnType<typeof MediaManagement.store>>
-
 export type SavePostersUploadToDBParams = {
-  portraitPosterUpload: ImageUploadRes
-  landscapePosterUpload: ImageUploadRes
+  portraitPosterUpload: StoreResponse
+  landscapePosterUpload: StoreResponse
   videoId: StringOrObjectId
   posterParentType: PosterImage['parentType']
 }

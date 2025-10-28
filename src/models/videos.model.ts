@@ -107,6 +107,7 @@ const schema = new Schema(
       default: Date.now,
     },
 
+    // TODO: Offload to a different collection
     likes: [
       {
         type: Schema.Types.ObjectId,
@@ -132,6 +133,7 @@ const schema = new Schema(
       default: false,
     },
 
+    // TODO: Offload to a different collection
     upcomingSubscribers: {
       type: [
         {
@@ -146,19 +148,9 @@ const schema = new Schema(
       type: Date,
     },
 
-    videoLink: {
-      type: String,
-      default: null,
-    },
-
-    trailerLink: {
-      type: String,
-      default: null,
-    },
-
-    artistName: {
-      type: String,
-    },
+    videoLink: String,
+    trailerLink: String,
+    artistName: String,
 
     active: {
       type: Boolean,
@@ -168,6 +160,26 @@ const schema = new Schema(
     showViews: {
       type: Boolean,
       default: true,
+    },
+
+    likesCount: {
+      type: Number,
+      defut: 0,
+    },
+
+    viewsCount: {
+      type: Number,
+      defut: 0,
+    },
+
+    totalRatings: {
+      type: Number,
+      defut: 0,
+    },
+
+    enagements: {
+      type: Number,
+      defut: 0,
     },
 
     commentsCount: {

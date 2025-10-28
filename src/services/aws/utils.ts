@@ -17,7 +17,9 @@ export class AwsUtils {
   }
 
   static buckets = {
-    reeplay: 'reeplay',
+    reeplay: env.S3_VIDEO_BUCKET,
+    replayImages: env.S3_IMAGE_BUCKET,
+
     get s3Input() {
       return `s3://${this.reeplay}/`
     },

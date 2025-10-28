@@ -6,32 +6,19 @@ import { VidUploadUtils, VideoQuality } from './VideoUploadUtils'
 
 import { UpcomingAggrRes } from '../types/upcoming'
 import { CastEnumService } from '../services/core/CastEnumService'
+import { VideoUpload, VodCardResponse } from '../repositories/VideoRepo'
 
 export class MovieMediaSourcesUtils {
-  protected static _getMoviePhotos = async (vid: Movie | UpcomingAggrRes) => {
-    const [landscapePhoto, portraitPhoto] = await Promise.all([
-      MediaAccess.getSignedUrl(vid.landscapePhoto.Bucket, vid.landscapePhoto.Key, 'photo'),
-      MediaAccess.getSignedUrl(vid.portraitPhoto.Bucket, vid.portraitPhoto.Key, 'photo'),
-    ])
-
-    return { landscapePhoto, portraitPhoto }
-  }
-
   protected static _getMovieVideoSource = (
-    vid: GetVideoSourceParams,
+    vid: VodCardResponse,
     routine: 'vid' | 'trailer',
     quality: VideoQuality,
   ) => {
-    if (routine === 'trailer') {
-      console.log(vid.trailerVideoUpload)
-    }
-
     switch (routine) {
       case 'vid':
         return vid.videoLink ?? VidUploadUtils.getResSourceUrl(vid.videoUpload, quality)
       case 'trailer':
-        return vid.trailerLink ?? VidUploadUtils.getResSourceUrl(vid.trailerVideoUpload, quality)
-
+        return vid.trailerLink ?? VidUploadUtils.getResSourceUrl(vid.trailerUpload, quality)
       default:
         throw new OperationalError('invalid getVideoSource routine', 500)
     }
@@ -60,20 +47,20 @@ export class MovieMediaSourcesUtils {
   public static resolveEpisodesMediaSources = async (
     episodes: Episode[],
     _: boolean,
-    quality: VideoQuality,
+    __: VideoQuality,
   ) => {
     const episodesWithSources = await Promise.all(
       episodes.map(async episode => {
         // if (!withMediaSources) return
 
-        Object.assign(episode, {
-          video: this._getMovieVideoSource(episode, 'vid', quality),
-          trailer: this._getMovieVideoSource(episode, 'trailer', quality),
-          trailerVideoUpload: undefined,
-          videoUpload: undefined,
-          trailerLink: undefined,
-          videoLink: undefined,
-        })
+        // Object.assign(episode, {
+        //   video: this._getMovieVideoSource(episode, 'vid', quality),
+        //   trailer: this._getMovieVideoSource(episode, 'trailer', quality),
+        //   trailerVideoUpload: undefined,
+        //   videoUpload: undefined,
+        //   trailerLink: undefined,
+        //   videoLink: undefined,
+        // })
 
         return episode
       }),
@@ -82,47 +69,17 @@ export class MovieMediaSourcesUtils {
     return episodesWithSources as unknown as Episode[]
   }
 
-  public static resolveMediaSources = async (
-    vids: Movie[],
-    withMediaSources: boolean,
-    quality: VideoQuality,
-  ) => {
-    const movies = await Promise.allSettled(
-      vids.map(async vid => {
-        const [{ landscapePhoto, portraitPhoto }, castsWithPhotoUrl] = await Promise.all([
-          this._getMoviePhotos(vid),
-          CastEnumService.setCastsWithPhotoUrl(vid.cast),
-        ])
+  public static resolveMediaSources = (videoDocuments: VodCardResponse[], quality: VideoQuality) =>
+    videoDocuments.map(videoDocument => {
+      Object.assign(videoDocument, {
+        video: this._getMovieVideoSource(videoDocument, 'vid', quality),
+        trailer: this._getMovieVideoSource(videoDocument, 'trailer', quality),
+        trailerUpload: undefined,
+        videoUpload: undefined,
+        trailerLink: undefined,
+        videoLink: undefined,
+      })
 
-        if (vid.seasons) {
-          vid.seasons = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
-            vid.seasons,
-            withMediaSources,
-            quality,
-          )
-        }
-
-        Object.assign(vid, {
-          landscapePhoto,
-          portraitPhoto,
-          cast: castsWithPhotoUrl,
-        })
-
-        if (withMediaSources) {
-          Object.assign(vid, {
-            video: this._getMovieVideoSource(vid, 'vid', quality),
-            trailer: this._getMovieVideoSource(vid, 'trailer', quality),
-            trailerVideoUpload: undefined,
-            videoUpload: undefined,
-            trailerLink: undefined,
-            videoLink: undefined,
-          })
-        }
-
-        return vid
-      }),
-    )
-
-    return getPromiseAllFulfilledResults(movies)
-  }
+      return videoDocument
+    })
 }

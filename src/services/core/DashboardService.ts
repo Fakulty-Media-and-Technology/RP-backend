@@ -78,11 +78,7 @@ export class DashboardService {
       guranteeNumericResult(queryParams.limit, 10),
     )
 
-    return await MovieMediaSourcesUtils.resolveMediaSources(
-      vids,
-      AdminUploadService.resolveWithMediaSources(queryParams),
-      '720p',
-    )
+    return MovieMediaSourcesUtils.resolveMediaSources(vids, '720p')
   }
 
   static fetchChannels = async (query: QueryParamsFeaturesOptions['queryParams']) => {

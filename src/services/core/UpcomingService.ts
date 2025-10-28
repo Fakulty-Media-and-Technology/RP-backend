@@ -55,20 +55,13 @@ export class UpcomingService {
     const page = guranteeNumericResult(params.page, 1)
     const limit = guranteeNumericResult(params.limit, 10)
 
-    const [vods, lives] = getPromiseAllFulfilledResults(
-      await Promise.allSettled([
-        MovieMediaSourcesUtils.resolveMediaSources(
-          await VideoRepo.fetchUpcoming(page, limit),
-          true,
-          '720p',
-        ),
-
-        LiveMediaSourcesUtils.resolveSources(await LiveRepo.fetchUpcoming(page, limit), '720p'),
-      ]),
-    )
+    const [vods, lives] = await Promise.all([
+      VideoRepo.fetchUpcoming(page, limit),
+      LiveMediaSourcesUtils.resolveSources(await LiveRepo.fetchUpcoming(page, limit), '720p'),
+    ])
 
     return {
-      vods: vods || [],
+      vods: MovieMediaSourcesUtils.resolveMediaSources(vods, '720p') || [],
       lives: lives || [],
     }
   }
@@ -84,23 +77,17 @@ export class UpcomingService {
     const page = guranteeNumericResult(params.page, 1)
     const limit = guranteeNumericResult(params.limit, 10)
 
-    const [vods, lives] = getPromiseAllFulfilledResults(
-      await Promise.allSettled([
-        MovieMediaSourcesUtils.resolveMediaSources(
-          await VideoRepo.fetchActiveUpcoming(page, limit),
-          true,
-          videoQuality,
-        ),
+    const [vods, lives] = await Promise.all([
+      VideoRepo.fetchActiveUpcoming(page, limit),
 
-        LiveMediaSourcesUtils.resolveSources(
-          await LiveRepo.fetchActiveUpcoming(page, limit),
-          videoQuality,
-        ),
-      ]),
-    )
+      LiveMediaSourcesUtils.resolveSources(
+        await LiveRepo.fetchActiveUpcoming(page, limit),
+        videoQuality,
+      ),
+    ])
 
     return {
-      vods: vods || [],
+      vods: MovieMediaSourcesUtils.resolveMediaSources(vods, videoQuality) || [],
       lives: lives || [],
     }
   }

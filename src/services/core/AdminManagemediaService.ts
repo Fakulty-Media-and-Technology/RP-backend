@@ -67,7 +67,7 @@ export class AdminManageMediaService {
       throw new OperationalError('parent does not exist', 404)
     }
 
-    const { Bucket, Key } = await MediaManagement.store(data.subtitle)
+    const { Bucket, Key } = await MediaManagement.storeImage(data.subtitle)
 
     const subtitle = await SubtitleModel.create({
       video_id: data.parentId,

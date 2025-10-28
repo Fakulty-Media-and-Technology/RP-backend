@@ -1,17 +1,18 @@
-import { FilterQuery, PipelineStage, Types } from 'mongoose'
+import { Aggregate, FilterQuery, PipelineStage, Types } from 'mongoose'
 import { Video, VideoModel } from '../models/videos.model'
 import { skip } from '../utils/QueryParamsFeatures'
 import { SeasonModel } from '../models/seasons.model'
 import { AllVideoTypes } from '../utils/UploadMediaUtils'
 import { EpisodeModel } from '../models/episodes.model'
 import { MongoDBObjectId } from '../types/general'
+import env from '../env'
 
 export const toObjectId = (val: string) => new Types.ObjectId(val)
 
 export type FetchVideosParams = {
   prevStages: PipelineStage[]
   sortStage?: PipelineStage.Sort
-  fetchSeasons: boolean
+  // fetchSeasons: boolean
   page: number
   limit: number
 }
@@ -243,7 +244,7 @@ export class VideoRepo {
           $match: { _id: { $in: ids } },
         },
       ],
-      fetchSeasons: false,
+
       sortStage: { $sort: { _id: -1 } },
       page,
       limit,
@@ -257,7 +258,7 @@ export class VideoRepo {
           $match: { upcoming: true },
         },
       ],
-      fetchSeasons: false,
+
       sortStage: { $sort: { _id: -1 } },
       page,
       limit,
@@ -271,7 +272,7 @@ export class VideoRepo {
           $match: { upcoming: true, active: true },
         },
       ],
-      fetchSeasons: false,
+
       sortStage: { $sort: { createdAt: -1 } },
       page,
       limit,
@@ -291,7 +292,7 @@ export class VideoRepo {
           },
         },
       ],
-      fetchSeasons: true,
+
       sortStage: { $sort: { createdAt: -1 } },
       page,
       limit,
@@ -499,13 +500,7 @@ export class VideoRepo {
     },
   }
 
-  static fetchVideoAggr = async ({
-    prevStages,
-    sortStage,
-    page,
-    limit,
-    fetchSeasons,
-  }: FetchVideosParams) => {
+  static fetchVideoAggr = ({ prevStages, sortStage, page, limit }: FetchVideosParams) => {
     const paginateionStages: PipelineStage[] = [
       {
         $skip: skip(page, limit),
@@ -535,8 +530,6 @@ export class VideoRepo {
             },
             {
               $project: {
-                key: true,
-                isTranscoded: true,
                 resolutions: true,
               },
             },
@@ -549,7 +542,7 @@ export class VideoRepo {
           from: 'video_uploads',
           localField: 'trailerUpload',
           foreignField: '_id',
-          as: 'trailer',
+          as: 'trailerUpload',
           pipeline: [
             {
               $match: {
@@ -559,8 +552,6 @@ export class VideoRepo {
             },
             {
               $project: {
-                key: true,
-                isTranscoded: true,
                 resolutions: true,
               },
             },
@@ -570,13 +561,8 @@ export class VideoRepo {
 
       {
         $set: {
-          trailerVideoUpload: {
-            $ifNull: [{ $first: '$trailer' }, null],
-          },
-
-          videoUpload: {
-            $ifNull: [{ $first: '$videoUpload' }, null],
-          },
+          trailerUpload: { $first: '$trailerUpload' },
+          videoUpload: { $first: '$videoUpload' },
         },
       },
 
@@ -595,14 +581,18 @@ export class VideoRepo {
                 },
 
                 {
-                  $or: [
-                    { trailerLink: { $exists: true } },
-                    { trailerVideoUpload: { $exists: true } },
-                  ],
+                  $or: [{ trailerLink: { $exists: true } }, { trailerUpload: { $exists: true } }],
                 },
               ],
             },
           ],
+        },
+      },
+
+      {
+        $set: {
+          landscapePhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$landscapePhoto.Key'] },
+          portraitPhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$portraitPhoto.Key'] },
         },
       },
 
@@ -677,27 +667,14 @@ export class VideoRepo {
         $project: {
           views: false,
           ratings: false,
-          trailer: false,
           __v: false,
           updatedAt: false,
         },
       },
     ]
 
-    if (fetchSeasons) {
-      allStages.push({
-        $lookup: {
-          from: 'seasons',
-          localField: '_id',
-          foreignField: 'video',
-          as: 'seasons',
-          pipeline: this._seasonPipeline as any,
-        },
-      })
-    }
-
-    const aggr = await VideoModel.aggregate(allStages)
-    return aggr
+    const aggr = VideoModel.aggregate(allStages)
+    return aggr as Aggregate<VodCardResponse[]>
   }
 
   static fetchSimilarByCastId = async ({
@@ -715,7 +692,6 @@ export class VideoRepo {
     return await this.fetchVideoAggr({
       prevStages: [match, ...this._mostEngagedPrevStages],
       sortStage: { $sort: { enagements: -1 } },
-      fetchSeasons: false,
       page,
       limit,
     })
@@ -736,7 +712,6 @@ export class VideoRepo {
     return this.fetchVideoAggr({
       prevStages: [match, ...this._mostEngagedPrevStages],
       sortStage: { $sort: { enagements: -1 } },
-      fetchSeasons: false,
       page,
       limit,
     })
@@ -746,7 +721,6 @@ export class VideoRepo {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { category: toObjectId(catId) } }, ...this._mostEngagedPrevStages],
       sortStage: { $sort: { enagements: -1 } },
-      fetchSeasons: false,
       page,
       limit,
     })
@@ -756,7 +730,6 @@ export class VideoRepo {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { type } }],
       sortStage: { $sort: { createdAt: -1 } },
-      fetchSeasons: true,
       page,
       limit,
     })
@@ -765,7 +738,6 @@ export class VideoRepo {
   static fetchById = async (id: string) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { _id: toObjectId(id) } }],
-      fetchSeasons: true,
       page: 1,
       limit: 1,
     })
@@ -774,7 +746,6 @@ export class VideoRepo {
   static fetchFeatured = async (page = 1, limit = 10) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { featured: true } }],
-      fetchSeasons: false,
       page,
       limit,
     })
@@ -784,7 +755,6 @@ export class VideoRepo {
     return this.fetchVideoAggr({
       prevStages: this._mostEngagedPrevStages,
       sortStage: { $sort: { enagements: -1 } },
-      fetchSeasons: false,
       page,
       limit,
     })
@@ -793,7 +763,6 @@ export class VideoRepo {
     return this.fetchVideoAggr({
       prevStages: [{ $sample: { size: limit * 2 } }, ...this._mostEngagedPrevStages],
       sortStage: { $sort: { enagements: -1 } },
-      fetchSeasons: false,
       page: 1,
       limit,
     })
@@ -806,9 +775,50 @@ export class VideoRepo {
         ...this._mostEngagedPrevStages,
       ],
       sortStage: { $sort: { enagements: -1 } },
-      fetchSeasons: false,
       page,
       limit,
     })
   }
+}
+export interface VodCardResponse {
+  _id: string
+  adminId: string
+  title: string
+  type: string
+  videoUpload?: VideoUpload
+  trailerUpload?: VideoUpload
+  primaryColor: string
+  vidClass: string
+  pg: string
+  genre: any[]
+  category: any[]
+  cast: any[]
+  releaseDate: string
+  expiryDate: string
+  likes: any[]
+  runtime: string
+  defaultRating: number
+  featured: boolean
+  upcoming: boolean
+  upcomingSubscribers: any[]
+  videoLink: null | string
+  trailerLink: null | string
+  artistName: string
+  active: boolean
+  showViews: boolean
+  landscapePhoto: string
+  portraitPhoto: string
+  createdAt: string
+  viewsCount: number
+  averageRating: number
+}
+
+export interface VideoUpload {
+  _id: string
+  resolutions: Resolution[]
+}
+
+interface Resolution {
+  resolution: string
+  key: string
 }

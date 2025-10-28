@@ -8,7 +8,7 @@ export class VidUploadUtils {
   static getResSourceUrl = (
     videoUpload: { resolutions: Resolution[] } | undefined | null,
     quality: VideoQuality,
-    signKey = MediaAccess.getCloudFrontSignedUrl,
+    signKey = MediaAccess.getSignedVideoURL,
   ) => {
     if (videoUpload == null) return null
     const nQuality = quality.replace('p', '')

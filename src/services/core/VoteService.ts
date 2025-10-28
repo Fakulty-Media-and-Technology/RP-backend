@@ -106,7 +106,7 @@ export class VoteService {
       contact: data.contact,
     })
 
-    const photoUpload = await MediaManagement.store(data.photoFile)
+    const photoUpload = await MediaManagement.storeImage(data.photoFile)
 
     if (!photoUpload.Key || !photoUpload.Bucket) {
       throw new OperationalError('could not upload photo please try again', 500)
@@ -130,10 +130,10 @@ export class VoteService {
       ContestantsModel.find({ live_id }).sort({ votes: -1 }),
     ])
 
-    const contestantInfoWithPhotoUrl = contestantInfo.map(async event => {
+    const contestantInfoWithPhotoUrl = contestantInfo.map(event => {
       return {
         ...event.toObject(),
-        photo_url: await MediaAccess.getSignedUrl(event.photo.Bucket, event.photo.Key, 'photo'),
+        photo_url: MediaAccess.getImageURL(event.photo.Key),
       }
     })
 
@@ -160,19 +160,13 @@ export class VoteService {
   static fetchVoteContestants = async (liveId: string) => {
     const contestants = await ContestantsModel.find({ liveId }).sort({ name: 1 })
 
-    return await Promise.all(
-      contestants.map(async contestant => {
-        return {
-          ...contestant.toObject(),
-          photo_url: await MediaAccess.getSignedUrl(
-            contestant.photo.Bucket,
-            contestant.photo.Key,
-            'photo',
-          ),
-          photo: undefined,
-          __v: undefined,
-        }
-      }),
-    )
+    return contestants.map(async contestant => {
+      return {
+        ...contestant.toObject(),
+        photo_url: MediaAccess.getImageURL(contestant.photo.Key),
+        photo: undefined,
+        __v: undefined,
+      }
+    })
   }
 }

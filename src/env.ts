@@ -46,6 +46,13 @@ export const env = getValidEnv({
   S3SECRET_KEY: process.env.S3SECRET_KEY,
   S3ACCESS_KEY: process.env.S3ACCESS_KEY,
   IAM_ROLE_ARN: process.env.IAM_ROLE_ARN,
+  CDN_IMAGES_BASE_URL: process.env.CDN_IMAGES_BASE_URL,
+
+  S3_IMAGE_BUCKET: process.env.S3_IMAGE_BUCKET,
+
+  get S3_VIDEO_BUCKET() {
+    return process.env.S3BUCKET
+  },
 
   // new
   GIFT_CARD_AUTHORIZATION_TOKEN: process.env.GIFT_CARD_AUTHORIZATION_TOKEN ?? 'abcdef',

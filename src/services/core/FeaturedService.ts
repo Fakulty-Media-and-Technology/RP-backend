@@ -17,16 +17,11 @@ export class FeaturedService {
     const reg = new RegExp(text, 'i')
 
     const [vods, events] = await Promise.all([
-      MovieMediaSourcesUtils.resolveMediaSources(
-        await VideoRepo.searchVodContentByRegex(reg),
-        true,
-        '1080p',
-      ),
-
+      VideoRepo.searchVodContentByRegex(reg),
       LiveMediaSourcesUtils.resolveSources(await LiveRepo.searchLivesByTextReg(reg), '1080p'),
     ])
 
-    return { vods, events }
+    return { vods: MovieMediaSourcesUtils.resolveMediaSources(vods, '1080p'), events }
   }
 
   static addFeatured = async ({ id, type, expiry }: AddFeaturedInput) => {
@@ -45,17 +40,12 @@ export class FeaturedService {
     const limit = guranteeNumericResult(query.limit, 1)
 
     const [vods, events] = await Promise.all([
-      MovieMediaSourcesUtils.resolveMediaSources(
-        await VideoRepo.fetchFeatured(page, limit),
-        true,
-        '720p',
-      ),
-
+      VideoRepo.fetchFeatured(page, limit),
       LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured(page, limit), '720p'),
     ])
 
     return {
-      vods_contents: vods,
+      vods_contents: MovieMediaSourcesUtils.resolveMediaSources(vods, '720p'),
       lives_contents: events,
     }
   }

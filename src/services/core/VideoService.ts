@@ -29,9 +29,7 @@ export class VideoService {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
     const vods = await VideoRepo.fetchByCategory(categoryId, page, limit)
     const vidQuality = await VidUploadUtils.getUserVideoQuality(currentUser._id.toString())
-
-    const parsedVods = await MovieMediaSourcesUtils.resolveMediaSources(vods, true, vidQuality)
-
+    const parsedVods = MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality)
     return parsedVods
   }
 }

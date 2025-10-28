@@ -57,19 +57,11 @@ export class AdminPayoutService {
       throw new OperationalError('invalid payout Id', 404)
     }
 
-    let photoUrl: string | null = null
-
-    if (payout.user?.photo?.Bucket && payout.user?.photo?.Key) {
-      photoUrl = await MediaAccess.getSignedUrl(
-        payout.user.photo.Bucket,
-        payout.user.photo.Key,
-        'photo',
-      )
+    if (payout.user?.photo?.Key) {
+      payout.photoUrl = MediaAccess.getImageURL(payout.user.photo.Key)
     }
 
-    return Object.assign(payout, {
-      photoUrl,
-    })
+    return payout
   }
 
   static payoutGroups = async () => {

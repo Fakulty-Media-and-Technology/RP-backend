@@ -46,7 +46,7 @@ export class MediaService {
     }
 
     if (!vidUpload.isTranscoded) {
-      response.streamUrl = MediaAccess.getCloudFrontSignedUrl(vidUpload.key)
+      response.streamUrl = MediaAccess.getSignedVideoURL(vidUpload.key)
       return response
     }
 
@@ -63,7 +63,7 @@ export class MediaService {
       throw new OperationalError('something went wrong', 500)
     }
 
-    response.streamUrl = MediaAccess.getCloudFrontSignedUrl(vidUploadRes.key)
+    response.streamUrl = MediaAccess.getSignedVideoURL(vidUploadRes.key)
     return response
   }
 
@@ -107,7 +107,7 @@ export class MediaService {
     let prevKey: string | null | undefined = null
     let prevBucket: string | null | undefined = null
 
-    const { Bucket, Key } = await MediaManagement.store(imageFile)
+    const { Bucket, Key } = await MediaManagement.storeImage(imageFile)
 
     if (!Bucket) {
       throw new OperationalError('error updating image', 500)
@@ -171,12 +171,12 @@ export class MediaService {
     }
   }
 
-  static getPhotoUrl = async (bucket: string, key: string) => {
-    return await MediaAccess.getSignedUrl(bucket, key, 'photo')
+  static getPhotoUrl = async (_: string, key: string) => {
+    return MediaAccess.getImageURL(key)
   }
 
-  static getSubtitleUrl = async (bucket: string, key: string) => {
-    return await MediaAccess.getSignedUrl(bucket, key, 'subtitle')
+  static getSubtitleUrl = async (_: string, key: string) => {
+    return await MediaAccess.getSubtitleURL(key)
   }
 
   static getSubtitles = async (parentId: string) => {
@@ -186,7 +186,7 @@ export class MediaService {
       subtitles.map(async subtitle => {
         return {
           ...subtitle.toObject(),
-          src: await MediaAccess.getSignedUrl(subtitle.bucket, subtitle.key, 'subtitle'),
+          src: await MediaAccess.getSubtitleURL(subtitle.key),
           createdAt: undefined,
           updatedAt: undefined,
           video_id: undefined,

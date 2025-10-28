@@ -18,7 +18,7 @@ import { LiveSchema, LiveModel } from '../../models/lives.model'
 import { VideoModel } from '../../models/videos.model'
 import { ViewModel } from '../../models/view.model'
 import { LiveRepo } from '../../repositories/LiveRepo'
-import { VideoRepo } from '../../repositories/VideoRepo'
+import { VideoRepo, VodCardResponse } from '../../repositories/VideoRepo'
 import { MediaManagement } from '../../services/media-management'
 import { LiveAggrRes } from '../../types/Live'
 import { Movie } from '../../types/movie'
@@ -366,7 +366,6 @@ export class SharedController extends UploadMediaUtils {
 
     const vods = await MovieMediaSourcesUtils.resolveMediaSources(
       await VideoRepo.fetchFeatured(page, limit),
-      true,
       vidQuality,
     )
 
@@ -391,7 +390,7 @@ export class SharedController extends UploadMediaUtils {
         castId: params.castId,
         vodToExcludeId: query.vodId,
       }),
-      true,
+
       vidQuality,
     )
 
@@ -416,7 +415,6 @@ export class SharedController extends UploadMediaUtils {
         genreId: params.genreId,
         vodToExcludeId: query.vodId,
       }),
-      true,
       vidQuality,
     )
 
@@ -441,7 +439,6 @@ export class SharedController extends UploadMediaUtils {
         genreId: params.genreId,
         catId: params.catId,
       }),
-      true,
       vidQuality,
     )
 
@@ -477,7 +474,7 @@ export class SharedController extends UploadMediaUtils {
     const vidQuality = vidQualityResult.value
 
     const [movieResult, liveResults] = await Promise.allSettled([
-      MovieMediaSourcesUtils.resolveMediaSources(vodsRepoReult.value, true, vidQuality),
+      MovieMediaSourcesUtils.resolveMediaSources(vodsRepoReult.value, vidQuality),
       LiveMediaSourcesUtils.resolveSources(liveRepoResult.value, vidQuality),
     ])
 
@@ -693,7 +690,7 @@ export class SharedController extends UploadMediaUtils {
     )
 
     let lives: LiveAggrRes[]
-    let vods: Movie[]
+    let vods: VodCardResponse[]
 
       //
     ;[lives, vods] = await Promise.all([
@@ -701,7 +698,7 @@ export class SharedController extends UploadMediaUtils {
 
       MovieMediaSourcesUtils.resolveMediaSources(
         await VideoRepo.fetchFeatured(page, limit),
-        true,
+
         vidQuality,
       ),
     ])
@@ -715,7 +712,6 @@ export class SharedController extends UploadMediaUtils {
 
         MovieMediaSourcesUtils.resolveMediaSources(
           await VideoRepo.fetchMostEngaged(page, limit),
-          true,
           vidQuality,
         ),
       ])

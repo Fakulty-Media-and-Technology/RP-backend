@@ -7,7 +7,6 @@ import { MediaManagement } from '../media-management'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { Purge } from '../../utils/Purge'
 import { VideoQuality, VidUploadUtils } from '../../utils/VideoUploadUtils'
-import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { MediaAccess } from '../media-access'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 
@@ -25,39 +24,22 @@ interface UploadMediaInput {
 
 export class AdManagerService {
   protected static _resolveMediaSources = async (ads: FetchAdResult[], userId?: string) => {
-    const videoQuality: VideoQuality = userId ? await VidUploadUtils.getUserVideoQuality(userId) : '720p'
+    const videoQuality: VideoQuality = userId
+      ? await VidUploadUtils.getUserVideoQuality(userId)
+      : '720p'
 
-    return getPromiseAllFulfilledResults(
-      await Promise.allSettled(
-        ads.map(async ad => {
-          const [photoSrcResult, videoSourceResult] = await Promise.allSettled([
-            MediaAccess.getSignedUrl(ad.photo.Bucket, ad.photo.Key, 'photo'),
-            VidUploadUtils.getResSourceUrl(ad.videoUpload, videoQuality),
-          ])
-
-          if (photoSrcResult.status === 'rejected') {
-            throw photoSrcResult.reason
-          }
-
-          if (videoSourceResult.status === 'rejected') {
-            throw videoSourceResult.reason
-          }
-
-          return Object.assign(ad, {
-            photoUrl: photoSrcResult.value,
-            videoUrl: videoSourceResult.value,
-            photo: undefined,
-            videoUpload: undefined,
-            __v: undefined,
-          })
-        }),
-      ),
-    )
+    return ads.map(ad => ({
+      photoUrl: MediaAccess.getImageURL(ad.photo.Key),
+      videoUrl: VidUploadUtils.getResSourceUrl(ad.videoUpload, videoQuality),
+      photo: undefined,
+      videoUpload: undefined,
+      __v: undefined,
+    }))
   }
 
   protected static _uploadMedia = async ({ videoFile, imageFile, expire }: UploadMediaInput) => {
     const [imageUploadResult, videoUploadResult] = await Promise.allSettled([
-      MediaManagement.store(imageFile, expire),
+      MediaManagement.storeImage(imageFile, expire),
       MediaManagement.uploadAndInitiateMediaConvert(videoFile, expire),
     ])
 

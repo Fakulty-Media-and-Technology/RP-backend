@@ -90,9 +90,8 @@ export class WatchedService {
         watchedResults.value.map(async watched => {
           switch (watched.parentType) {
             case 'vod':
-              const [vod] = await MovieMediaSourcesUtils.resolveMediaSources(
+              const [vod] = MovieMediaSourcesUtils.resolveMediaSources(
                 await VideoRepo.fetchById(watched.parentId.toString()),
-                true,
                 quality,
               )
 
@@ -115,9 +114,8 @@ export class WatchedService {
                 throw new Error()
               }
 
-              const [populatedVideo] = await MovieMediaSourcesUtils.resolveMediaSources(
+              const [populatedVideo] = MovieMediaSourcesUtils.resolveMediaSources(
                 await VideoRepo.fetchById(season.video.toString()),
-                true,
                 quality,
               )
 
