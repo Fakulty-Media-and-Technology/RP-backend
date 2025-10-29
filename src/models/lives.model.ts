@@ -47,7 +47,7 @@ const schema = new Schema(
       type: PhotoSchema,
       required: true,
     },
-    
+
     // coverPhoto: {
     //   type: Schema.Types.ObjectId,
     //   ref: 'poster_images',
@@ -166,6 +166,21 @@ const schema = new Schema(
       type: Date,
     },
 
+    likesCount: {
+      type: Number,
+      default: 0,
+    },
+
+    viewsCount: {
+      type: Number,
+      default: 0,
+    },
+
+    engagements: {
+      type: Number,
+      default: 0,
+    },
+
     commentsCount: {
       type: Number,
       default: 0,
@@ -173,9 +188,21 @@ const schema = new Schema(
   },
   {
     timestamps: true,
+
+    methods: {
+      async computeEngagements() {
+        try {
+          this.engagements = this.likesCount + this.commentsCount + this.viewsCount
+          await this.save()
+        } catch (e) {
+          console.error('Error in LiveDocument.computeEngagements', e)
+        }
+      },
+    },
   },
 )
 
+schema.index({ engagements: -1 })
 schema.index({ category: 1 })
 schema.index({ views: 1 })
 
