@@ -100,10 +100,12 @@ const schema = new Schema(
 
     releaseDate: {
       type: Date,
+      sparse: true,
     },
 
     expiryDate: {
       type: Date,
+      sparse: true,
       default: Date.now,
     },
 

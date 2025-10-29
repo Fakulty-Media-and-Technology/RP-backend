@@ -12,6 +12,8 @@ export const toObjectId = (val: string) => new Types.ObjectId(val)
 export type FetchVideosParams = {
   prevStages: PipelineStage[]
   sortStage?: PipelineStage.Sort
+  excludePreReleased?: boolean
+  excludeExpired?: boolean
   // fetchSeasons: boolean
   page: number
   limit: number
@@ -500,19 +502,26 @@ export class VideoRepo {
     },
   }
 
-  static fetchVideoAggr = ({ prevStages, sortStage, page, limit }: FetchVideosParams) => {
-    const paginateionStages: PipelineStage[] = [
-      {
-        $skip: skip(page, limit),
-      },
-      { $limit: limit },
-    ]
+  static _excludePreleasedVODSMatchStage: PipelineStage.Match = {
+    $match: { $expr: { $lte: ['$releaseDate', '$$NOW'] } },
+  }
 
-    if (sortStage) {
-      paginateionStages.unshift(sortStage)
-    }
+  static _excludeExpiredVODSMatchSage: PipelineStage.Match = {
+    $match: { $expr: { $gt: ['$expiryDate', '$$NOW'] } },
+  }
 
-    const allStages: PipelineStage[] = [
+  static fetchVideoAggr = ({
+    prevStages,
+    sortStage = { $sort: { _id: -1 } },
+    page,
+    limit,
+    excludePreReleased = true,
+    excludeExpired = true,
+  }: FetchVideosParams) => {
+    const aggr = VideoModel.aggregate([
+      ...(excludePreReleased ? [this._excludePreleasedVODSMatchStage] : []),
+      ...(excludeExpired ? [this._excludeExpiredVODSMatchSage] : []),
+
       ...prevStages,
 
       {
@@ -661,7 +670,9 @@ export class VideoRepo {
         },
       },
 
-      ...paginateionStages,
+      sortStage,
+      { $skip: skip(page, limit) },
+      { $limit: limit },
 
       {
         $project: {
@@ -671,9 +682,7 @@ export class VideoRepo {
           updatedAt: false,
         },
       },
-    ]
-
-    const aggr = VideoModel.aggregate(allStages)
+    ])
     return aggr as Aggregate<VodCardResponse[]>
   }
 
