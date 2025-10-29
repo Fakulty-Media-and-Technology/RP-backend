@@ -192,12 +192,9 @@ const schema = new Schema(
     methods: {
       async computeEngagements() {
         try {
-          console.log('Enagagements Before', this.engagements)
-
           this.engagements =
             this.likesCount + this.viewsCount + this.commentsCount + this.totalRatings
 
-          console.log('Enagagements After', this.engagements)
           await this.save()
         } catch (e) {
           console.error('Error computing engagements for VOD with ID', this._id, 'Reason', e)
@@ -214,15 +211,3 @@ schema.index({ type: 1, title: 1, artistName: 1 }, { unique: true, name: '_uniqu
 export const VideoModel = model('videos', schema)
 export type VideoSchema = InferSchemaType<typeof schema>
 export type Video = HydratedDocumentFromSchema<typeof schema>
-
-// schema.pre('save', function (next) {
-//   if (this.videoLink && this.videoUpload) {
-//     throw new OperationalError('only a videoLink OR a videoUpload can be povided', 400)
-//   }
-
-//   if (this.trailerLink && this.trailerUpload) {
-//     throw new OperationalError('only a trailerLink OR a trailerUpload can be povided', 400)
-//   }
-
-//   next()
-// })
