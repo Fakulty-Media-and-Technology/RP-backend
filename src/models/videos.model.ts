@@ -109,14 +109,6 @@ const schema = new Schema(
       default: Date.now,
     },
 
-    // TODO: Offload to a different collection
-    likes: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'users',
-      },
-    ],
-
     runtime: {
       type: String,
     },
@@ -166,34 +158,46 @@ const schema = new Schema(
 
     likesCount: {
       type: Number,
-      defut: 0,
+      default: 0,
     },
 
     viewsCount: {
       type: Number,
-      defut: 0,
+      default: 0,
     },
 
-    totalRatings: {
-      type: Number,
-      defut: 0,
-    },
+    // totalRatings: {
+    //   type: Number,
+    //   default: 0,
+    // },
 
-    enagements: {
+    engagements: {
       type: Number,
-      defut: 0,
+      default: 0,
     },
 
     commentsCount: {
       type: Number,
-      defut: 0,
+      default: 0,
     },
   },
   {
     timestamps: true,
+
+    methods: {
+      async computeEngagements() {
+        try {
+          this.engagements = this.likesCount + this.viewsCount + this.commentsCount
+          await this.save()
+        } catch (e) {
+          console.error('Error computing engagements for VOD with ID', this._id, 'Reason', e)
+        }
+      },
+    },
   },
 )
 
+schema.index({ engagements: 1 })
 schema.index({ expiryDate: 1, upcoming: 1 }, { name: '_upcoming' })
 schema.index({ type: 1, title: 1, artistName: 1 }, { unique: true, name: '_uniqueTitle' })
 

@@ -327,7 +327,7 @@ export class VideoRepo {
     },
     {
       $addFields: {
-        enagements: {
+        engagements: {
           $sum: [
             { $size: '$likes' },
             { $size: '$comments' },
@@ -336,7 +336,7 @@ export class VideoRepo {
         },
       },
     },
-    { $sort: { enagements: -1 } },
+    { $sort: { engagements: -1 } },
     { $project: { ratings: false, comments: false, __v: false } },
   ]
 
@@ -701,7 +701,7 @@ export class VideoRepo {
 
     return await this.fetchVideoAggr({
       prevStages: [match, ...this._mostEngagedPrevStages],
-      sortStage: { $sort: { enagements: -1 } },
+      sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
     })
@@ -721,7 +721,7 @@ export class VideoRepo {
 
     return this.fetchVideoAggr({
       prevStages: [match, ...this._mostEngagedPrevStages],
-      sortStage: { $sort: { enagements: -1 } },
+      sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
     })
@@ -730,7 +730,7 @@ export class VideoRepo {
   static fetchByCategory = async (catId: string, page: number, limit: number) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { category: toObjectId(catId) } }, ...this._mostEngagedPrevStages],
-      sortStage: { $sort: { enagements: -1 } },
+      sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
     })
@@ -764,7 +764,7 @@ export class VideoRepo {
   static fetchMostEngaged = (page = 1, limit = 5) => {
     return this.fetchVideoAggr({
       prevStages: this._mostEngagedPrevStages,
-      sortStage: { $sort: { enagements: -1 } },
+      sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
     })
@@ -772,7 +772,7 @@ export class VideoRepo {
   static fetchRandom = (limit = 3) => {
     return this.fetchVideoAggr({
       prevStages: [{ $sample: { size: limit * 2 } }, ...this._mostEngagedPrevStages],
-      sortStage: { $sort: { enagements: -1 } },
+      sortStage: { $sort: { engagements: -1 } },
       page: 1,
       limit,
     })
@@ -784,7 +784,7 @@ export class VideoRepo {
         { $match: { category: toObjectId(catId), genre: toObjectId(genreId) } },
         ...this._mostEngagedPrevStages,
       ],
-      sortStage: { $sort: { enagements: -1 } },
+      sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
     })

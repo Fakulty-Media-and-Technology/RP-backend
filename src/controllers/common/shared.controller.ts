@@ -33,6 +33,7 @@ import { PaymentModel } from '../../models/payments.model'
 import { VideoUploadModel } from '../../models/videoupload.model'
 import { VideoUploadRepo } from '../../repositories/VideoUploadRepo'
 import { MediaAccess } from '../../services/media-access'
+import { LikeModel } from '../../models/likes.model'
 
 export type PaymentHistoryCaller = {
   caller: 'Admin' | 'Others'
@@ -131,9 +132,6 @@ export class SharedController extends UploadMediaUtils {
       if (Object.values(req.body).length === 0 && req.file == null) {
         throw new OperationalError('Provide at least one property to update', 400)
       }
-
-
-      
 
       Object.assign(req.body, req.params)
 
@@ -367,14 +365,11 @@ export class SharedController extends UploadMediaUtils {
 
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
-      await VideoRepo.fetchFeatured(page, limit),
-      vidQuality,
-    )
+    const vods = await VideoRepo.fetchFeatured(page, limit)
 
     sendResponse({
       res,
-      data: vods,
+      data: MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality),
       message: 'featured contents fetched successful',
     })
   })
@@ -386,20 +381,16 @@ export class SharedController extends UploadMediaUtils {
 
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
-      await VideoRepo.fetchSimilarByCastId({
-        page,
-        limit,
-        castId: params.castId,
-        vodToExcludeId: query.vodId,
-      }),
-
-      vidQuality,
-    )
+    const vods = await VideoRepo.fetchSimilarByCastId({
+      page,
+      limit,
+      castId: params.castId,
+      vodToExcludeId: query.vodId,
+    })
 
     sendResponse({
       res,
-      data: vods,
+      data: MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality),
       message: '',
     })
   })
@@ -411,19 +402,16 @@ export class SharedController extends UploadMediaUtils {
 
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
-      await VideoRepo.fetchSimilarByGenreId({
-        page,
-        limit,
-        genreId: params.genreId,
-        vodToExcludeId: query.vodId,
-      }),
-      vidQuality,
-    )
+    const vods = await VideoRepo.fetchSimilarByGenreId({
+      page,
+      limit,
+      genreId: params.genreId,
+      vodToExcludeId: query.vodId,
+    })
 
     sendResponse({
       res,
-      data: vods,
+      data: MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality),
       message: '',
     })
   })
@@ -435,19 +423,16 @@ export class SharedController extends UploadMediaUtils {
       GetDefined.loggedInUser(user)._id.toString(),
     )
 
-    const vods = await MovieMediaSourcesUtils.resolveMediaSources(
-      await VideoRepo.fetchByCategAndCast({
-        page,
-        limit,
-        genreId: params.genreId,
-        catId: params.catId,
-      }),
-      vidQuality,
-    )
+    const vods = await VideoRepo.fetchByCategAndCast({
+      page,
+      limit,
+      genreId: params.genreId,
+      catId: params.catId,
+    })
 
     sendResponse({
       res,
-      data: vods,
+      data: MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality),
       message: '',
     })
   })
@@ -476,22 +461,9 @@ export class SharedController extends UploadMediaUtils {
 
     const vidQuality = vidQualityResult.value
 
-    const [movieResult, liveResults] = await Promise.allSettled([
-      MovieMediaSourcesUtils.resolveMediaSources(vodsRepoReult.value, vidQuality),
-      LiveMediaSourcesUtils.resolveSources(liveRepoResult.value, vidQuality),
-    ])
-
-    if (movieResult.status == 'rejected') {
-      throw movieResult.reason
-    }
-
-    if (liveResults.status == 'rejected') {
-      throw liveResults.reason
-    }
-
     const response = {
-      vods: movieResult.value,
-      lives: liveResults.value,
+      vods: MovieMediaSourcesUtils.resolveMediaSources(vodsRepoReult.value, vidQuality),
+      lives: await LiveMediaSourcesUtils.resolveSources(liveRepoResult.value, vidQuality),
     }
 
     sendResponse({
@@ -522,25 +494,25 @@ export class SharedController extends UploadMediaUtils {
   // ***************** likes ************************ //
 
   static likeVideo = Catch.async(async (req, res) => {
-    const streamId = req.params.id
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    const resLikes = await VideoModel.findById(streamId)
+    const videoDocument = await VideoModel.findById(req.params.id)
 
-    if (resLikes == null) {
-      throw new OperationalError('Could not find video by streamId', 404)
+    if (videoDocument == null) {
+      throw new OperationalError('Not found', 404)
     }
 
-    if (resLikes.likes.includes(user._id)) {
-      throw new OperationalError('user already liked', 400)
-    }
+    const likeDocument = await LikeModel.findOneAndUpdate(
+      { user: user._id, content: videoDocument._id, contentType: 'vod' },
+      { updatedAt: new Date() },
+    )
 
-    await VideoModel.findByIdAndUpdate(streamId, {
-      $push: {
-        likes: user._id,
-      },
-    })
+    // This is the first time this user liked this content
+    if (likeDocument == null) {
+      ++videoDocument.likesCount
+      videoDocument.computeEngagements()
+    }
 
     sendResponse({
       res,
@@ -565,45 +537,43 @@ export class SharedController extends UploadMediaUtils {
   })
 
   static userLikedVideo = Catch.async(async (req, res) => {
-    const streamId = req.params.id
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    const resLikes = await VideoModel.findById(streamId)
-
-    if (resLikes == null) {
-      throw new OperationalError('Could not find video by streamId', 404)
-    }
+    const likeDocument = await LikeModel.findOne({
+      user: user._id,
+      content: req.params.id,
+      contentType: 'vod',
+    })
 
     sendResponse({
       res,
       message: 'check user liked',
       data: {
-        user_liked: resLikes.likes.includes(user.id),
+        user_liked: !!likeDocument,
       },
     })
   })
 
   static unLikeVideo = Catch.async(async (req, res) => {
-    const streamId = req.params.id
     const user = GetDefined.loggedInUser(req.user)
-
     denyGuestUser(user)
 
-    const vod = await VideoModel.findOneAndUpdate(
-      {
-        _id: streamId,
-        likes: user.id,
-      },
-      {
-        $pull: {
-          likes: user.id,
-        },
-      },
-    )
+    const videoDocument = await VideoModel.findById(req.params.id)
 
-    if (vod === null) {
-      throw new OperationalError('user did not like the video or video does not exist', 404)
+    if (videoDocument == null) {
+      throw new OperationalError('Not found', 404)
+    }
+
+    const deletedLikeDocument = await LikeModel.findOneAndDelete({
+      user: user._id,
+      content: videoDocument._id,
+      contentType: 'vod',
+    })
+
+    if (deletedLikeDocument) {
+      --videoDocument.likesCount
+      videoDocument.computeEngagements()
     }
 
     sendResponse({
@@ -692,34 +662,31 @@ export class SharedController extends UploadMediaUtils {
       GetDefined.loggedInUser(req.user)._id.toString(),
     )
 
-    let lives: LiveAggrRes[]
-    let vods: VodCardResponse[]
+    let lives: LiveAggrRes[] = await LiveMediaSourcesUtils.resolveSources(
+      await LiveRepo.getFeatured(page, limit),
+      vidQuality,
+    )
 
-      //
-    ;[lives, vods] = await Promise.all([
-      LiveMediaSourcesUtils.resolveSources(await LiveRepo.getFeatured(page, limit), vidQuality),
+    let vods: VodCardResponse[] = MovieMediaSourcesUtils.resolveMediaSources(
+      await VideoRepo.fetchFeatured(page, limit),
+      vidQuality,
+    )
 
-      MovieMediaSourcesUtils.resolveMediaSources(
-        await VideoRepo.fetchFeatured(page, limit),
-
-        vidQuality,
-      ),
-    ])
+    //
 
     if (lives.length + vods.length < 10) {
-      ;[lives, vods] = await Promise.all([
-        LiveMediaSourcesUtils.resolveSources(
-          await LiveRepo.getMostEngaged(page, limit),
-          vidQuality,
-        ),
+      lives = await LiveMediaSourcesUtils.resolveSources(
+        await LiveRepo.getMostEngaged(page, limit),
+        vidQuality,
+      )
 
-        MovieMediaSourcesUtils.resolveMediaSources(
-          await VideoRepo.fetchMostEngaged(page, limit),
-          vidQuality,
-        ),
-      ])
+      vods = MovieMediaSourcesUtils.resolveMediaSources(
+        await VideoRepo.fetchMostEngaged(page, limit),
+        vidQuality,
+      )
     }
 
+    // TODO: This is hackey. Optimize and Polish
     lives = getPromiseAllFulfilledResults(
       await Promise.allSettled(
         lives.map(async live => {
