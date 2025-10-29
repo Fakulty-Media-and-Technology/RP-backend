@@ -16,7 +16,7 @@ import { FilterQuery } from 'mongoose'
 import env from '../../env'
 import { LiveSchema, LiveModel } from '../../models/lives.model'
 import { VideoModel } from '../../models/videos.model'
-import { ViewModel } from '../../models/view.model'
+import { ViewDocument, ViewModel } from '../../models/view.model'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { VideoRepo, VodCardResponse } from '../../repositories/VideoRepo'
 import { MediaManagement } from '../../services/media-management'
@@ -500,19 +500,17 @@ export class SharedController extends UploadMediaUtils {
     const videoDocument = await VideoModel.findById(req.params.id)
 
     if (videoDocument == null) {
-      throw new OperationalError('Not found', 404)
+      throw new OperationalError('Video Not found', 404)
     }
 
-    const likeDocument = await LikeModel.findOneAndUpdate(
-      { user: user._id, content: videoDocument._id, contentType: 'vod' },
-      { updatedAt: new Date() },
-    )
+    await LikeModel.create({
+      user: user._id,
+      content: videoDocument._id,
+      contentType: 'vod',
+    })
 
-    // This is the first time this user liked this content
-    if (likeDocument == null) {
-      ++videoDocument.likesCount
-      videoDocument.computeEngagements()
-    }
+    ++videoDocument.likesCount
+    videoDocument.computeEngagements()
 
     sendResponse({
       res,
@@ -520,15 +518,38 @@ export class SharedController extends UploadMediaUtils {
     })
   })
 
+  protected static _computeViewParentEngagements = async (viewDocument: ViewDocument) => {
+    try {
+      switch (viewDocument.contentType) {
+        case 'vod':
+          const videoDocument = await VideoModel.findById(viewDocument.content)
+
+          if (videoDocument == null) return
+
+          ++videoDocument.viewsCount
+          videoDocument.computeEngagements()
+
+          break
+
+        default:
+          break
+      }
+    } catch (e) {
+      console.error('Error in _computeParentEngagements', e)
+    }
+  }
+
   static viewContent = Catch.async(async (req, res) => {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    await ViewModel.create({
+    const viewDocument = await ViewModel.create({
       viewer: user._id,
       content: req.body.content,
       contentType: req.body.contentType,
     })
+
+    this._computeViewParentEngagements(viewDocument)
 
     sendResponse({
       res,
@@ -548,7 +569,7 @@ export class SharedController extends UploadMediaUtils {
 
     sendResponse({
       res,
-      message: 'check user liked',
+      message: '',
       data: {
         user_liked: !!likeDocument,
       },
@@ -559,22 +580,23 @@ export class SharedController extends UploadMediaUtils {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    const videoDocument = await VideoModel.findById(req.params.id)
-
-    if (videoDocument == null) {
-      throw new OperationalError('Not found', 404)
-    }
-
     const deletedLikeDocument = await LikeModel.findOneAndDelete({
       user: user._id,
-      content: videoDocument._id,
-      contentType: 'vod',
+      content: req.params.id,
     })
 
-    if (deletedLikeDocument) {
-      --videoDocument.likesCount
-      videoDocument.computeEngagements()
+    if (deletedLikeDocument == null) {
+      throw new OperationalError('Like Not Found', 404)
     }
+
+    const videoDocument = await VideoModel.findById(deletedLikeDocument.content)
+
+    if (videoDocument == null) {
+      throw new OperationalError('Content Not Found', 404)
+    }
+
+    --videoDocument.likesCount
+    videoDocument.computeEngagements()
 
     sendResponse({
       res,

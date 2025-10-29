@@ -1,3 +1,6 @@
+import { Comment } from '../../models/comments.model'
+import { VideoModel } from '../../models/videos.model'
+import { VideoRepo } from '../../repositories/VideoRepo'
 import { SocialService } from '../../services/core/SocialService'
 import { Catch } from '../../utils/Catch'
 import { denyGuestUser } from '../../utils/denyGuestUser'

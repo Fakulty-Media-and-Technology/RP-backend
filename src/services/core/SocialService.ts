@@ -1,6 +1,6 @@
 import { QueryOptions, UpdateQuery } from 'mongoose'
 import { Comment, CommentModel } from '../../models/comments.model'
-import { RatingModel } from '../../models/rating.model'
+import { Rating, RatingModel } from '../../models/rating.model'
 import { ReactionModel } from '../../models/reaction.model'
 import { toObjectId } from '../../repositories/VideoRepo'
 import { OperationalError } from '../../utils/OperationalError'
@@ -113,7 +113,14 @@ export class SocialService {
 
     switch (comment.parentType) {
       case 'vod':
-        parent = await VideoModel.findByIdAndUpdate(parentId, update, options)
+        const videoDocument = await VideoModel.findByIdAndUpdate(parentId, update, options)
+
+        if (videoDocument) {
+          videoDocument.computeEngagements()
+        }
+
+        parent = videoDocument
+
         break
 
       case 'episode':
@@ -264,9 +271,37 @@ export class SocialService {
     return replies
   }
 
+  protected static _computeRatingsParentStats = async (ratingsDocument: Rating | null) => {
+    try {
+      if (ratingsDocument == null) return
+
+      switch (ratingsDocument.parentType) {
+        case 'vod':
+          const videoDocument = await VideoModel.findById(ratingsDocument.parentId)
+
+          if (videoDocument == null) return
+
+          const [stats] = await RatingsRepo.parentRatingsStats(videoDocument._id.toString())
+
+          videoDocument.averageRating =
+            stats?.totalStats[0]?.averageRating || videoDocument.averageRating
+
+          videoDocument.totalRatings =
+            stats?.totalStats[0]?.totalRatingsDocuments || videoDocument.totalRatings
+          videoDocument.computeEngagements()
+          break
+
+        default:
+          break
+      }
+    } catch (e) {
+      console.error('Error computing ratings parents stats', ratingsDocument, 'Reason', e)
+    }
+  }
+
   // ********* Ratings
   static addRating = async ({ userId, rate, parentId, parentType, comment }: CreateRating) => {
-    const rating = await RatingModel.findOneAndUpdate(
+    const ratingsDocument = await RatingModel.findOneAndUpdate(
       {
         userId,
         parentId,
@@ -275,7 +310,9 @@ export class SocialService {
       { new: true, upsert: true },
     )
 
-    return rating
+    this._computeRatingsParentStats(ratingsDocument)
+
+    return ratingsDocument
   }
 
   static getRatings = async (parentId: string) => {
@@ -284,15 +321,16 @@ export class SocialService {
   }
 
   static updateRating = async ({ ratingId, comment, rate }: UpdateRatingInput) => {
-    const rating = await RatingModel.findById(ratingId)
+    const ratingsDocument = await RatingModel.findById(ratingId)
 
-    if (rating === null) {
+    if (ratingsDocument === null) {
       throw new OperationalError('invalid rating Id', 404)
     }
 
-    rating.comment = comment ? comment : rating.comment
-    rating.rate = rate ? rate : rating.rate
-    await rating.save()
+    ratingsDocument.comment = comment ? comment : ratingsDocument.comment
+    ratingsDocument.rate = rate ? rate : ratingsDocument.rate
+    await ratingsDocument.save()
+    this._computeRatingsParentStats(ratingsDocument)
   }
 
   static deleteRating = async (ratingId: string) => {

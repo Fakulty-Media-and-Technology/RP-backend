@@ -166,10 +166,15 @@ const schema = new Schema(
       default: 0,
     },
 
-    // totalRatings: {
-    //   type: Number,
-    //   default: 0,
-    // },
+    totalRatings: {
+      type: Number,
+      default: 0,
+    },
+
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
 
     engagements: {
       type: Number,
@@ -187,7 +192,12 @@ const schema = new Schema(
     methods: {
       async computeEngagements() {
         try {
-          this.engagements = this.likesCount + this.viewsCount + this.commentsCount
+          console.log('Enagagements Before', this.engagements)
+
+          this.engagements =
+            this.likesCount + this.viewsCount + this.commentsCount + this.totalRatings
+
+          console.log('Enagagements After', this.engagements)
           await this.save()
         } catch (e) {
           console.error('Error computing engagements for VOD with ID', this._id, 'Reason', e)

@@ -14,7 +14,6 @@ export type FetchVideosParams = {
   sortStage?: PipelineStage.Sort
   excludePreReleased?: boolean
   excludeExpired?: boolean
-  // fetchSeasons: boolean
   page: number
   limit: number
 }
@@ -300,45 +299,6 @@ export class VideoRepo {
       limit,
     })
   }
-
-  private static _mostEngagedPrevStages: PipelineStage[] = [
-    {
-      $lookup: {
-        from: 'comments',
-        foreignField: 'parentId',
-        localField: '_id',
-        as: 'comments',
-
-        pipeline: [{ $match: { parentType: 'vod' } }],
-      },
-    },
-    {
-      $lookup: {
-        from: 'ratings',
-        foreignField: 'parentId',
-        localField: '_id',
-        as: 'ratings',
-
-        pipeline: [
-          { $match: { parentType: 'vod' } },
-          { $group: { _id: null, totalRatings: { $sum: '$rate' } } },
-        ],
-      },
-    },
-    {
-      $addFields: {
-        engagements: {
-          $sum: [
-            { $size: '$likes' },
-            { $size: '$comments' },
-            { $ifNull: [{ $first: '$ratings.totalRatings' }, 0] },
-          ],
-        },
-      },
-    },
-    { $sort: { engagements: -1 } },
-    { $project: { ratings: false, comments: false, __v: false } },
-  ]
 
   private static _episodesPipeline = [
     {
@@ -700,7 +660,7 @@ export class VideoRepo {
     }
 
     return await this.fetchVideoAggr({
-      prevStages: [match, ...this._mostEngagedPrevStages],
+      prevStages: [match],
       sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
@@ -720,7 +680,7 @@ export class VideoRepo {
     }
 
     return this.fetchVideoAggr({
-      prevStages: [match, ...this._mostEngagedPrevStages],
+      prevStages: [match],
       sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
@@ -729,7 +689,7 @@ export class VideoRepo {
 
   static fetchByCategory = async (catId: string, page: number, limit: number) => {
     return await this.fetchVideoAggr({
-      prevStages: [{ $match: { category: toObjectId(catId) } }, ...this._mostEngagedPrevStages],
+      prevStages: [{ $match: { category: toObjectId(catId) } }],
       sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
@@ -763,7 +723,7 @@ export class VideoRepo {
 
   static fetchMostEngaged = (page = 1, limit = 5) => {
     return this.fetchVideoAggr({
-      prevStages: this._mostEngagedPrevStages,
+      prevStages: [],
       sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
@@ -771,7 +731,7 @@ export class VideoRepo {
   }
   static fetchRandom = (limit = 3) => {
     return this.fetchVideoAggr({
-      prevStages: [{ $sample: { size: limit * 2 } }, ...this._mostEngagedPrevStages],
+      prevStages: [{ $sample: { size: limit * 2 } }],
       sortStage: { $sort: { engagements: -1 } },
       page: 1,
       limit,
@@ -781,15 +741,22 @@ export class VideoRepo {
   static fetchByCategAndCast = ({ catId, genreId, page, limit }: FetchByCategAndCastParams) => {
     return this.fetchVideoAggr({
       prevStages: [
-        { $match: { category: toObjectId(catId), genre: toObjectId(genreId) } },
-        ...this._mostEngagedPrevStages,
+        {
+          $match: {
+            category: toObjectId(catId),
+            genre: toObjectId(genreId),
+          },
+        },
       ],
-      sortStage: { $sort: { engagements: -1 } },
+      sortStage: {
+        $sort: { engagements: -1 },
+      },
       page,
       limit,
     })
   }
 }
+
 export interface VodCardResponse {
   _id: string
   adminId: string

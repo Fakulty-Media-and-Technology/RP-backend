@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+import { HydratedDocumentFromSchema, Schema, model } from 'mongoose'
 import { viewContents } from './assets'
 
 const schema = new Schema({
@@ -26,3 +26,4 @@ const schema = new Schema({
 schema.index({ viewer: 1, content: 1, contentType: 1 }, { unique: true })
 
 export const ViewModel = model('views', schema)
+export type ViewDocument = HydratedDocumentFromSchema<typeof schema>

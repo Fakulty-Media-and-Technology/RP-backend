@@ -1,4 +1,20 @@
+import { Aggregate } from 'mongoose'
 import { RatingModel } from '../models/rating.model'
+
+interface ParentRatingsStatsResponse {
+  totalStats: TotalStat[]
+  groupStats: GroupStat[]
+}
+
+interface GroupStat {
+  count: number
+  rate: number
+}
+
+interface TotalStat {
+  totalRatingsDocuments: number
+  averageRating: number
+}
 
 export class RatingsRepo {
   static parentRatingsStats = (parentId: string) => {
@@ -37,6 +53,6 @@ export class RatingsRepo {
       },
     )
 
-    return res
+    return res as Aggregate<ParentRatingsStatsResponse[]>
   }
 }
