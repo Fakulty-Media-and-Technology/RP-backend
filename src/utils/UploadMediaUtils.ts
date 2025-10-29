@@ -1,4 +1,3 @@
-import { PosterImage } from '../models/poster.model'
 import { Video, videoTypes } from '../models/videos.model'
 import { OperationalError } from '../utils/OperationalError'
 
@@ -100,7 +99,7 @@ export type SavePostersUploadToDBParams = {
   portraitPosterUpload: StoreResponse
   landscapePosterUpload: StoreResponse
   videoId: StringOrObjectId
-  posterParentType: PosterImage['parentType']
+  posterParentType: 'vod' | 'live' | 'season' | 'episode' | 'upcoming'
 }
 
 export type UploadAndSavePostersToDBParams = Pick<
