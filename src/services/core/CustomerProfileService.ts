@@ -23,16 +23,7 @@ export class CustomerProfileService {
 
     const profile = await UserModel.aggregate([
       {
-        $match: {
-          $expr: {
-            $eq: [
-              '$_id',
-              {
-                $toObjectId: currentUser._id,
-              },
-            ],
-          },
-        },
+        $match: { _id: currentUser._id },
       },
       {
         $lookup: {

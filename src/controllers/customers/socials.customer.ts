@@ -76,19 +76,6 @@ export class SocialsController {
     })
   })
 
-  static getCommentById = Catch.async(async (req, res) => {
-    const comment = await SocialService.getCommentById({
-      commentId: req.params.commentId,
-      type: req.params.type,
-      currentUserId: GetDefined.loggedInUser(req.user)._id,
-    })
-
-    sendResponse({
-      res,
-      data: comment,
-    })
-  })
-
   static getComments = Catch.async(async (req, res) => {
     const comments = await SocialService.getComments({
       parentId: req.params.parentId,

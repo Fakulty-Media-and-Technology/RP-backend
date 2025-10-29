@@ -16,7 +16,6 @@ router.post('/create/comment', requestValidator(createCommentSchema), SocialsCon
 router.post('/create/reply', requestValidator(createReplySchema), SocialsController.addReply)
 
 router.get('/fetch/comments/:parentId', SocialsController.getComments)
-router.get('/fetch/comments/:commentId/:type', SocialsController.getCommentById)
 router.get('/fetch/total-comments/:parentId', SocialsController.getTotalCommentsCount)
 router.get('/fetch/replies/:commentId', SocialsController.getReplies)
 

@@ -55,7 +55,6 @@ const schema = new Schema(
       required: true,
     },
 
-    // TODO:
     photo: PhotoSchema,
 
     auth_code: {

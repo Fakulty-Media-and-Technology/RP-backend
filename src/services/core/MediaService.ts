@@ -10,6 +10,7 @@ import { UserSchema, UserModel, UserDocument } from '../../models/users.model'
 import { Password } from '../../utils/Password'
 import { S3 } from '../aws/s3'
 import { AuthHeaderKey } from '../../middlewares/auth'
+import { UpdateQuery } from 'mongoose'
 
 type UserProfileUpdate = {
   userId: string
@@ -31,6 +32,8 @@ type UpdateUserProfileInput = {
   data: UserProfileUpdate
   authType: AuthHeaderKey
 }
+
+type UserUpdate = UpdateQuery<UserSchema>
 
 export class MediaService {
   static getVodStream = async (vidUploadId: string, currentUser: LoggedInUser) => {
@@ -67,11 +70,13 @@ export class MediaService {
     return response
   }
 
-  private static _updateUserEmail = async (email: string, user: UserDocument) => {
-    if (email === user.email) return
+  private static _updateUserEmail = async (email: string, userDocument: UserDocument) => {
+    if (email === userDocument.email) {
+      return
+    }
 
     const existOnAnother = await UserModel.findOne({
-      _id: { $ne: user._id },
+      _id: { $ne: userDocument._id },
       email,
     })
 
@@ -79,20 +84,19 @@ export class MediaService {
       throw new OperationalError(`${email} is associated with other documents`, 403)
 
     // do other neccessary stuff like set auth pin and stuff
-
-    user.email = email
+    userDocument.email = email
   }
 
   private static _handleUpdateUserPassword = async (
     prevPass: string,
     newPass: string,
-    user: UserSchema,
+    userDocument: UserDocument,
   ) => {
     if (!Password.isStrong(newPass)) {
       throw new OperationalError('new password is not strong enough', 400)
     }
 
-    const isSamePassword = await Password.compare(prevPass, user.password)
+    const isSamePassword = await Password.compare(prevPass, userDocument.password)
 
     if (!isSamePassword) {
       throw new OperationalError('previous password did not match user password', 403)
@@ -100,30 +104,28 @@ export class MediaService {
 
     if (newPass === prevPass) return
 
-    user.password = await Password.encrypt(newPass)
+    userDocument.password = await Password.encrypt(newPass)
   }
 
-  private static _updateUserProfileImage = async (imageFile: MulterFile, user: UserSchema) => {
-    let prevKey: string | null | undefined = null
-    let prevBucket: string | null | undefined = null
-
+  private static _updateUserProfileImage = async (
+    imageFile: MulterFile,
+    userDocument: UserDocument,
+  ) => {
     const { Bucket, Key } = await MediaManagement.storeImage(imageFile)
 
     if (!Bucket) {
       throw new OperationalError('error updating image', 500)
     }
 
-    prevKey = user.photo?.Key
-    prevBucket = user.photo?.Bucket
+    const previousPhoto = userDocument.photo
 
-    user.photo = {
+    userDocument.photo = {
       Bucket,
       Key,
     }
 
     return {
-      prevKey,
-      prevBucket,
+      previousPhoto,
     }
   }
 
@@ -132,43 +134,38 @@ export class MediaService {
       throw new OperationalError('only admins can update role', 403)
     }
 
-    const user = await UserModel.findById(data.userId)
+    const userDocument = await UserModel.findById(data.userId)
 
-    let prevPhotoKey: string | null | undefined = null
-    let prevPhotoBucket: string | null | undefined = null
-
-    if (user == null) {
+    if (userDocument == null) {
       throw new OperationalError('invalid userId', 404)
     }
 
+    await userDocument.save()
+
     if (imageFile) {
-      const { prevBucket, prevKey } = await this._updateUserProfileImage(imageFile, user)
-      prevPhotoKey = prevKey
-      prevPhotoBucket = prevBucket
+      const { previousPhoto } = await this._updateUserProfileImage(imageFile, userDocument)
+
+      previousPhoto &&
+        MediaManagement.deleteObject(previousPhoto.Key, previousPhoto.Bucket).catch(() => {
+          console.error(`Error deleting key: ${previousPhoto.Key} in image bucket`)
+        })
     }
 
     if (data.password && data.prevPassword)
-      await this._handleUpdateUserPassword(data.prevPassword, data.password, user)
+      await this._handleUpdateUserPassword(data.prevPassword, data.password, userDocument)
 
-    if (data.email) await this._updateUserEmail(data.email, user)
-
-    user.first_name = data.firstName || user.first_name
-    user.last_name = data.lastName || user.last_name
-    user.country_code = data.countryCode || user.country_code
-    user.mobile = data.mobile || user.mobile
-    user.country = data.country || user.country
-    user.gender = (data.gender as any) || user.gender
-    user.dob = data.dob ? new Date(data.dob) : user.dob
-
-    await user.save()
-
-    if (prevPhotoBucket && prevPhotoKey) {
-      S3.deleteObject(prevPhotoKey, prevPhotoBucket).catch(() => {
-        console.error(
-          `Error deleting key: ${prevPhotoKey} in bucket: ${prevPhotoBucket} from s3 on MediaService.updateUserProfile`,
-        )
-      })
+    if (data.email) {
+      await this._updateUserEmail(data.email, userDocument)
     }
+
+    userDocument.first_name = data.firstName || userDocument.first_name
+    userDocument.last_name = data.lastName || userDocument.last_name
+    userDocument.country_code = data.countryCode || userDocument.country_code
+    userDocument.mobile = data.mobile || userDocument.mobile
+    userDocument.country = data.country || userDocument.country
+    userDocument.gender = (data.gender as any) || userDocument.gender
+    userDocument.dob = data.dob ? new Date(data.dob) : userDocument.dob
+    await userDocument.save()
   }
 
   static getPhotoUrl = async (_: string, key: string) => {

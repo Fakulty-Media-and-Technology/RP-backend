@@ -238,36 +238,6 @@ export class SocialService {
     await withMongoDBSession(this._deleteCommentTransaction, commentId)
   }
 
-  protected static _attachAuthorPhoto = (
-    comments: (GetRepliesResponse | GetCommentsResponse)[],
-  ) => {
-    const fetchAuthorPhotoUrl = (author?: Author) =>
-      typeof author?.photoKey === 'string' ? MediaAccess.getImageURL(author?.photoKey) : null
-
-    return comments.map(comment => {
-      return {
-        ...comment,
-        authorPhotoURL: fetchAuthorPhotoUrl(comment.author),
-
-        // @ts-ignore
-        parentCommentAuthorPhotoURL: fetchAuthorPhotoUrl(comment.parentCommentAuthor as any),
-      }
-    })
-  }
-
-  static getCommentById = async ({ currentUserId, commentId, type }: GetCommentById) => {
-    switch (type) {
-      case 'COMMENT':
-        const [comment] = await CommentsRepo.getCommentById(commentId, currentUserId)
-        return comment
-      case 'REPLY':
-        const [reply] = await CommentsRepo.getReplyById(commentId, currentUserId)
-        return reply
-      default:
-        throw new OperationalError('comment type must be either COMMENT || REPLY', 400)
-    }
-  }
-
   static getComments = async ({ query, parentId, currentUserId }: GetCommentsInput) => {
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
@@ -278,7 +248,7 @@ export class SocialService {
       limit,
     })
 
-    return this._attachAuthorPhoto(comments)
+    return comments
   }
 
   static getReplies = async ({ commentId, query, currentUserId }: GetRepliesInput) => {
@@ -291,7 +261,7 @@ export class SocialService {
       limit,
     })
 
-    return await this._attachAuthorPhoto(replies)
+    return replies
   }
 
   // ********* Ratings
@@ -335,7 +305,6 @@ export class SocialService {
 
   static totalCommentsCount = async (vodId: string) => {
     const totalComments = await CommentModel.find({ parentId: vodId }).countDocuments()
-
     return { totalComments }
   }
 }

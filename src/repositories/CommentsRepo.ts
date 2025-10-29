@@ -1,6 +1,7 @@
 import { Aggregate, PipelineStage } from 'mongoose'
 import { CommentModel } from '../models/comments.model'
 import { MongoDBObjectId } from '../types/general'
+import env from '../env'
 
 type PageOptions = {
   skip: number
@@ -40,8 +41,7 @@ export type GetRepliesResponse = GetCommentsResponse & {
 
 export type Author = {
   fullName: string
-  photoKey: null | string
-  photoBucket: null | string
+  photoURL: null | string
   userDocumentId: string
 }
 
@@ -120,6 +120,21 @@ export class CommentsRepo {
     })
   }
 
+  protected static _authorProjectionStage: PipelineStage.Project = {
+    $project: {
+      fullName: { $concat: ['$first_name', ' ', '$last_name'] },
+      photoURL: {
+        $cond: {
+          if: { $eq: [{ $type: { $ifNull: ['$photo', null] } }, null] },
+          then: null,
+          else: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$photo.Key'] },
+        },
+      },
+      userDocumentId: '$_id',
+      _id: '$$REMOVE',
+    },
+  }
+
   static _getRepliesRes = ({ match, skip, limit, userId }: GetCommentsAggeResInput) => {
     const res = CommentModel.aggregate([
       { $match: { ...match.$match, parentCommentId: { $exists: true } } },
@@ -131,17 +146,7 @@ export class CommentsRepo {
           foreignField: '_id',
           as: 'user',
 
-          pipeline: [
-            {
-              $project: {
-                fullName: { $concat: ['$first_name', ' ', '$last_name'] },
-                photoKey: { $ifNull: ['$photo.Key', null] },
-                photoBucket: { $ifNull: ['$photo.Bucket', null] },
-                userDocumentId: '$_id',
-                _id: '$$REMOVE',
-              },
-            },
-          ],
+          pipeline: [this._authorProjectionStage],
         },
       },
 
@@ -175,18 +180,7 @@ export class CommentsRepo {
                 foreignField: '_id',
                 localField: 'userId',
                 as: 'parentCommentUser',
-
-                pipeline: [
-                  {
-                    $project: {
-                      fullName: { $concat: ['$first_name', ' ', '$last_name'] },
-                      photoKey: { $ifNull: ['$photo.Key', null] },
-                      photoBucket: { $ifNull: ['$photo.Bucket', null] },
-                      userDocumentId: '$_id',
-                      _id: '$$REMOVE',
-                    },
-                  },
-                ],
+                pipeline: [this._authorProjectionStage],
               },
             },
 
@@ -268,18 +262,7 @@ export class CommentsRepo {
           localField: 'userId',
           foreignField: '_id',
           as: 'user',
-
-          pipeline: [
-            {
-              $project: {
-                fullName: { $concat: ['$first_name', ' ', '$last_name'] },
-                photoKey: { $ifNull: ['$photo.Key', null] },
-                photoBucket: { $ifNull: ['$photo.Bucket', null] },
-                userDocumentId: '$_id',
-                _id: '$$REMOVE',
-              },
-            },
-          ],
+          pipeline: [this._authorProjectionStage],
         },
       },
 
