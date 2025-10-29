@@ -207,7 +207,7 @@ const schema = new Schema(
   },
 )
 
-schema.index({ engagements: 1 })
+schema.index({ engagements: -1 })
 schema.index({ expiryDate: 1, upcoming: 1 }, { name: '_upcoming' })
 schema.index({ type: 1, title: 1, artistName: 1 }, { unique: true, name: '_uniqueTitle' })
 
