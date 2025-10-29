@@ -1,4 +1,5 @@
 import path from 'node:path'
+import compression from 'compression'
 import express, { Request, Response } from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
@@ -20,6 +21,7 @@ export const reeplayApp = () => {
   app.use(express.json({ limit: '10gb' }))
   app.use(express.urlencoded({ extended: true }))
   app.use(cors())
+  app.use(compression)
 
   app.use('/static/images', express.static(path.join(__dirname, 'public/static')))
 

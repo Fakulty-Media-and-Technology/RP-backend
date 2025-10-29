@@ -25,6 +25,7 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "axios": "^1.6.8",
     "bcrypt": "^6.0.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
@@ -48,6 +49,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.17",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.0",

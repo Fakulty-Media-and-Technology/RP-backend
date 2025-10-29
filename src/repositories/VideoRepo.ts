@@ -512,7 +512,9 @@ export class VideoRepo {
 
   static fetchVideoAggr = ({
     prevStages,
-    sortStage = { $sort: { _id: -1 } },
+    sortStage = {
+      $sort: { _id: -1 },
+    },
     page,
     limit,
     excludePreReleased = true,
@@ -521,7 +523,6 @@ export class VideoRepo {
     const aggr = VideoModel.aggregate([
       ...(excludePreReleased ? [this._excludePreleasedVODSMatchStage] : []),
       ...(excludeExpired ? [this._excludeExpiredVODSMatchSage] : []),
-
       ...prevStages,
 
       {
