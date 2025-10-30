@@ -46,6 +46,8 @@ customerRouter.post('/signup/verifyaccount', OnboardingController.verifyAccount)
 customerRouter.use('/general', GeneralRouter)
 customerRouter.use('/pass-reset', PasswordResetRouter)
 
+customerRouter.get('/pin-reset/:email', OnboardingController.resetPin)
+
 customerRouter.use('/ads', AdsRouter)
 
 customerRouter.use(AuthMiddleware.authenticateRequest('customer-auth'))
@@ -84,5 +86,3 @@ customerRouter.get('/giftcard/redeem', CustomerPaymentController.redeemGiftCard)
 customerRouter.get('/banner/contents', SharedController.bannerContents)
 customerRouter.post('/signup/createpin', OnboardingController.createPin)
 customerRouter.post('/suggestion/create', CustomerProfileController.createSuggestion)
-
-

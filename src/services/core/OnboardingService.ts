@@ -125,6 +125,25 @@ export class OnboardingService {
     }
   }
 
+  static sendResetPin = async (email: string) => {
+    const pin = authCode(4)
+
+    const userDocument = await UserModel.findOneAndUpdate(
+      {
+        email: email.toLowerCase().trim(),
+      },
+      { $set: { pin } },
+    )
+
+    if (userDocument == null) {
+      throw new OperationalError('Invalid Email', 404)
+    }
+
+    const recepiant = Email.makeRecepiant(userDocument)
+
+    await new Email(recepiant).sendResetPin(pin)
+  }
+
   private static _createCustomerWithSession = async (
     data: Record<string, any>,
     session: MaybeSession,
@@ -157,22 +176,22 @@ export class OnboardingService {
     const pin = authCode(6)
     const pinExpiry = Date.now() + 1000 * 60 * 5 // 5 mins
 
-    const existingUser = await UserRepo.getByEmail(email)
+    const userDocument = await UserRepo.getByEmail(email)
 
-    if (existingUser) {
-      existingUser.auth_code = existingUser.auth_code ?? Number(pin)
-      existingUser.auth_expiry = pinExpiry
-      existingUser.approved = false
-      existingUser.verified = false
-      await existingUser.save()
+    if (userDocument) {
+      userDocument.auth_code = userDocument.auth_code ?? Number(pin)
+      userDocument.auth_expiry = pinExpiry
+      userDocument.approved = false
+      userDocument.verified = false
+      await userDocument.save()
 
       await new Email({
-        firstName: existingUser.first_name,
-        lastName: existingUser.last_name,
-        email: existingUser.email,
+        firstName: userDocument.first_name,
+        lastName: userDocument.last_name,
+        email: userDocument.email,
       }).sendVerifyEmail(pin)
 
-      return existingUser.restricted()
+      return userDocument.restricted()
     }
 
     const newUser = await new UserModel({

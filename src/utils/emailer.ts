@@ -3,6 +3,7 @@ import ejs from 'ejs'
 import nodemailer from 'nodemailer'
 import env from '../env'
 import { capitalize } from './strGen'
+import { UserDocument } from '../models/users.model'
 
 interface RecipientData {
   firstName: string
@@ -66,11 +67,27 @@ export class Email {
   }
 
   async sendVerifyEmail(pin: string) {
-    await this.sendMsg({ template: 'verify-email', subject: 'Welcome On Board', pin })
+    await this.sendMsg({
+      template: 'verify-email',
+      subject: 'Welcome On Board',
+      pin,
+    })
   }
 
   async sendResetPasswordToken(pin: string) {
-    await this.sendMsg({ template: 'reset-pass', subject: 'Reset Password Token', pin })
+    await this.sendMsg({
+      template: 'reset-pass',
+      subject: 'Reset Password Token',
+      pin,
+    })
+  }
+
+  async sendResetPin(pin: string) {
+    await this.sendMsg({
+      template: 'reset-pin',
+      subject: 'Reset Pin',
+      pin,
+    })
   }
 
   async sendAutoRenewSuccess(source: string) {
@@ -87,6 +104,16 @@ export class Email {
       subject: 'Auto Renew Subscription Failure',
       pin: reason,
     })
+  }
+
+  static makeRecepiant = (userDocument: UserDocument) => {
+    const data: RecipientData = {
+      firstName: capitalize(userDocument.first_name),
+      lastName: capitalize(userDocument.last_name),
+      email: userDocument.email.toLowerCase(),
+    }
+
+    return data
   }
 }
 

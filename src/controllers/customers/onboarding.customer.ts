@@ -47,6 +47,15 @@ export class OnboardingController {
     })
   })
 
+  static resetPin = Catch.async(async ({ params }, res) => {
+    await OnboardingService.sendResetPin(params.email)
+
+    sendResponse({
+      res,
+      message: 'Please check your email address for new PIN',
+    })
+  })
+
   static verifyAccount = Catch.async(async (req, res) => {
     const { email, token } = req.body
 
