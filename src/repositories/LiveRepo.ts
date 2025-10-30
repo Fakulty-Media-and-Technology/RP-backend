@@ -140,12 +140,6 @@ export class LiveRepo {
   }
 
   static fetchLivesAggr = async ({ prevStages, sortStage, page, limit }: FetchLives) => {
-    const sortPaginateStages: PipelineStage[] = [
-      sortStage ?? { $sort: { _id: -1 } },
-      { $skip: skip(page, limit) },
-      { $limit: limit },
-    ]
-
     const aggr = await LiveModel.aggregate([
       ...prevStages,
 
@@ -262,7 +256,12 @@ export class LiveRepo {
         },
       },
 
-      ...sortPaginateStages,
+      sortStage ?? {
+        $sort: { engagements: -1 },
+      },
+
+      { $skip: skip(page, limit) },
+      { $limit: limit },
 
       {
         $lookup: {

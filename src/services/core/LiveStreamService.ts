@@ -1,5 +1,3 @@
-import env from '../../env'
-
 import { LiveModel, Live } from '../../models/lives.model'
 import { PaymentModel } from '../../models/payments.model'
 import { LoggedInUser } from '../../types'
@@ -16,6 +14,10 @@ import { UserRepo } from '../../repositories/UserRepo'
 import { Purge } from '../../utils/Purge'
 import { MediaManagement } from '../media-management'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
+import { UserDocument } from '../../models/users.model'
+import { ClientSession } from 'mongoose'
+import { ViewModel } from '../../models/view.model'
+import { CommentModel } from '../../models/comments.model'
 
 export type CreateLiveData = {
   clientId: string
@@ -68,7 +70,108 @@ type UpdateLiveActiveStateInput = {
 
 type ExtendLiveEventWithSessionInput = CreateClientWithSessionInput
 
+// RENAME
+type HandleSocketNewComment = {
+  userDocument: UserDocument
+  liveId: string
+  message: string
+}
+
+type HandleNewmemberInput = {
+  userDocument: UserDocument
+  liveId: string
+  membership: 'JOIN' | 'LEAVE'
+}
+
 export class LiveStreamService {
+  static handleSocketComment = async (
+    { message, liveId, userDocument }: HandleSocketNewComment,
+    session?: ClientSession,
+  ) => {
+    if (message.toString().length < 1) {
+      throw new OperationalError('A comment must have at least one character', 400)
+    }
+
+    const liveDocument = await LiveModel.findOne({
+      _id: liveId,
+      active: true,
+    })
+
+    if (!liveDocument) {
+      throw new OperationalError('invalid live Id', 404)
+    }
+
+    const commentDocument = await new CommentModel({
+      userId: userDocument._id,
+      message: message,
+      parentType: 'live',
+      parentId: liveId,
+    }).save({ session })
+
+    ++liveDocument.commentsCount
+    await liveDocument.computeEngagements(session)
+    return commentDocument
+  }
+
+  static handleSocketMembership = async (
+    { userDocument, liveId, membership }: HandleNewmemberInput,
+    session?: ClientSession,
+  ) => {
+    const liveDocument = await LiveModel.findById(liveId)
+
+    if (liveDocument == null) {
+      throw new OperationalError('Invalid event Id', 404)
+    }
+
+    switch (membership) {
+      case 'JOIN':
+        if (liveDocument.active == false) {
+          throw new OperationalError('Live is Inactive', 400)
+        }
+
+        // User may have viewed the content before joining
+        try {
+          await new ViewModel({
+            viewer: userDocument._id,
+            content: liveId,
+            contentType: 'live',
+          }).save({ session })
+
+          ++liveDocument.viewsCount
+        } catch {}
+
+        ++liveDocument.active_views
+        await liveDocument.computeEngagements(session)
+        break
+
+      case 'LEAVE':
+        const deletedViewDocument = await ViewModel.findOneAndDelete(
+          {
+            viewer: userDocument._id,
+            content: liveId,
+            contentType: 'live',
+          },
+          { session },
+        )
+
+        if (deletedViewDocument) return
+
+        --liveDocument.viewsCount
+        --liveDocument.active_views
+        await liveDocument.computeEngagements(session)
+        break
+
+      default:
+        console.error(
+          'Unkown membership for livestream socket session',
+          liveId,
+          'Membership',
+          membership,
+        )
+        break
+    }
+  }
+
   private static _extendLiveEventWithSession = async (
     { currentUser, data }: ExtendLiveEventWithSessionInput,
     session: MaybeSession,

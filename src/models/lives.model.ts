@@ -1,4 +1,4 @@
-import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
+import { ClientSession, HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { validCurrencies } from '../utils/currency'
 import { PhotoSchema } from './commonSchema'
 
@@ -117,6 +117,7 @@ const schema = new Schema(
       required: true,
     },
 
+    // TODO: Move to another collection
     views: [
       {
         type: Schema.Types.ObjectId,
@@ -126,6 +127,7 @@ const schema = new Schema(
 
     active_views: {
       type: Number,
+      default: 0,
     },
 
     sponsored: {
@@ -150,6 +152,7 @@ const schema = new Schema(
       },
     ],
 
+    // TODO: Move to another collection
     upcomingSubscribers: [
       {
         type: Schema.Types.ObjectId,
@@ -190,10 +193,11 @@ const schema = new Schema(
     timestamps: true,
 
     methods: {
-      async computeEngagements() {
+      async computeEngagements(session?: ClientSession) {
         try {
-          this.engagements = this.likesCount + this.commentsCount + this.viewsCount
-          await this.save()
+          this.engagements =
+            this.likesCount + this.commentsCount + this.viewsCount + this.active_views
+          await this.save({ session })
         } catch (e) {
           console.error('Error in LiveDocument.computeEngagements', e)
         }
