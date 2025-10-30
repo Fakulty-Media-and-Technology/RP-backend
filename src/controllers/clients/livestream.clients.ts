@@ -4,11 +4,11 @@ import { GetDefined } from '../../utils/GetDefined'
 import { sendResponse } from '../../utils/responder'
 
 export class ClientLiveStreamController {
-  static getLiveStreamCredentials = Catch.async(async ({ user }, res) => {
+  static getLiveStreamCredentials = Catch.async(async ({ user, query }, res) => {
     sendResponse({
       res,
       message: 'clients stream instances',
-      data: await LiveStreamService.getLiveStreamCredentials(GetDefined.loggedInUser(user)),
+      data: await LiveStreamService.getLiveStreamCredentials(GetDefined.loggedInUser(user), query),
     })
   })
 

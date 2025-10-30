@@ -73,7 +73,7 @@ export class SharedRoutes {
     livesRouter.put('/update-active/:liveId', SharedController.updateLiveActiveStatus)
     livesRouter.get('/estimate', ClientLiveStreamController.calculateEventCharges)
     livesRouter.delete('/delete/:liveId', SharedController.deleteLiveById)
-    this._router.use('', livesRouter)
+    this._router.use('/lives', livesRouter)
     return this
   }
 

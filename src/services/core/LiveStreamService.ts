@@ -18,6 +18,7 @@ import { UserDocument } from '../../models/users.model'
 import { ClientSession } from 'mongoose'
 import { ViewModel } from '../../models/view.model'
 import { CommentModel } from '../../models/comments.model'
+import { QueryParamsFeatures, ExpressRequestQuery } from '../../utils/QueryParamsFeatures'
 
 export type CreateLiveData = {
   clientId: string
@@ -41,11 +42,6 @@ export type CreateLiveData = {
   amount?: number
   currency?: string
 }
-
-type LiveFileUploader = (
-  params: { data: CreateLiveData; live: Live },
-  session: MaybeSession,
-) => Promise<void>
 
 type CreateClientWithSessionInput = {
   currentUser: LoggedInUser
@@ -260,10 +256,15 @@ export class LiveStreamService {
     return { estimated_cost: charges }
   }
 
-  static getLiveStreamCredentials = async (currentUser: LoggedInUser) => {
+  static getLiveStreamCredentials = async (
+    currentUser: LoggedInUser,
+    query: ExpressRequestQuery,
+  ) => {
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
+
     const [vidQualitySettled, liveSettled] = await Promise.allSettled([
       VidUploadUtils.getUserVideoQuality(currentUser._id.toString(), '720p'),
-      LiveRepo.getValidClientLive(currentUser._id.toString()),
+      LiveRepo.getValidClientLive(currentUser._id.toString(), page, limit),
     ])
 
     if (vidQualitySettled.status === 'rejected') {
@@ -273,6 +274,7 @@ export class LiveStreamService {
     if (liveSettled.status === 'rejected') {
       throw liveSettled.reason
     }
+
 
     const vidQuality = vidQualitySettled.value
     const liveAggrRes = liveSettled.value
@@ -326,36 +328,33 @@ export class LiveStreamService {
     // }
   }
 
-  private static _checkLivePayments = async (data: CreateLiveData, session: MaybeSession) => {
-    const confirmPayment = await PaymentModel.findOne({
-      _id: data.paymentId,
-      userId: data.clientId,
-      status: 'success',
-      isUsed: false,
-    })
-
-    if (!confirmPayment) {
-      throw new OperationalError('your payment is invalid', 400)
-    }
-
-    const charges = calcLiveCharges({
-      start: data.start,
-      expiry: data.expiry,
-      currency: confirmPayment.currency,
-    })
-
-    if (confirmPayment.amount !== charges) {
-      throw new OperationalError('amount must be the same as charge', 400)
-    }
-
-    await PaymentModel.findByIdAndUpdate(
-      confirmPayment._id,
-      {
-        is_used: true,
-        use_case: 'live schedule',
-      },
-      { session },
-    )
+  // private static _checkLivePayments = async (data: CreateLiveData, session: MaybeSession) => {
+  private static _checkLivePayments = async (_: CreateLiveData, __: MaybeSession) => {
+    // const confirmPayment = await PaymentModel.findOne({
+    //   _id: data.paymentId,
+    //   userId: data.clientId,
+    //   status: 'success',
+    //   isUsed: false,
+    // })
+    // if (!confirmPayment) {
+    //   throw new OperationalError('your payment is invalid', 400)
+    // }
+    // const charges = calcLiveCharges({
+    //   start: data.start,
+    //   expiry: data.expiry,
+    //   currency: confirmPayment.currency,
+    // })
+    // if (confirmPayment.amount !== charges) {
+    //   throw new OperationalError('amount must be the same as charge', 400)
+    // }
+    // await PaymentModel.findByIdAndUpdate(
+    //   confirmPayment._id,
+    //   {
+    //     is_used: true,
+    //     use_case: 'live schedule',
+    //   },
+    //   { session },
+    // )
   }
 
   private static _checkLiveClient = async (data: CreateLiveData) => {

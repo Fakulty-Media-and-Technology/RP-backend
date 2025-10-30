@@ -3,10 +3,12 @@ import { LiveModel, LiveSchema } from '../models/lives.model'
 import { skip } from '../utils/QueryParamsFeatures'
 import { toObjectId } from './VideoRepo'
 import { MongoDBObjectId } from '../types/general'
+import env from '../env'
 
 type FetchLives = {
   prevStages: PipelineStage[]
   sortStage?: PipelineStage.Sort
+  excludeExpired?: boolean
   page: number
   limit: number
 }
@@ -93,15 +95,15 @@ export class LiveRepo {
     })
   }
 
-  static getValidClientLive = async (clientId: string, page = 1, limit = 10) => {
+  static getValidClientLive = async (_: string, page: number, limit: number) => {
     return await this.fetchLivesAggr({
       prevStages: [
-        {
-          $match: {
-            client_id: toObjectId(clientId),
-            expiry: { $gte: new Date() },
-          },
-        },
+        // {
+        //   $match: {
+        //     client_id: toObjectId(clientId),
+        //     expiry: { $gte: new Date() },
+        //   },
+        // },
       ],
       page,
       limit,
@@ -139,46 +141,31 @@ export class LiveRepo {
     })
   }
 
-  static fetchLivesAggr = async ({ prevStages, sortStage, page, limit }: FetchLives) => {
-    const aggr = await LiveModel.aggregate([
+  static fetchLivesAggr = ({
+    prevStages,
+    sortStage,
+    page,
+    limit,
+    excludeExpired = true,
+  }: FetchLives) => {
+    const aggr = LiveModel.aggregate([
+      ...(excludeExpired ? [{ $match: { expiry: { $gte: new Date() } } }] : []),
       ...prevStages,
-
-      {
-        $lookup: {
-          from: 'poster_images',
-          localField: 'coverPhoto',
-          foreignField: '_id',
-          as: 'coverPhoto',
-          pipeline: [{ $project: { key: true, bucket: true } }],
-        },
-      },
 
       {
         $lookup: {
           from: 'users',
           localField: 'client_id',
           foreignField: '_id',
-          as: 'channelLogo',
+          as: 'clientDetails',
           pipeline: [
-            {
-              $set: {
-                hasPhoto: {
-                  $cond: {
-                    if: { $eq: [{ $ifNull: ['$photo', null] }, null] },
-                    then: false,
-                    else: true,
-                  },
-                },
-              },
-            },
-
-            { $match: { $expr: { $eq: ['$hasPhoto', true] } } },
+            // Will exclude lives without a channel logo
+            { $match: { photo: { $exists: true } } },
 
             {
               $project: {
-                key: '$photo.Key',
-                bucket: '$photo.Bucket',
-                _id: '$$REMOVE',
+                fullName: { $concat: ['$first_name', ' ', '$last_name'] },
+                photo: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$photo.Key'] },
               },
             },
           ],
@@ -213,36 +200,10 @@ export class LiveRepo {
       },
 
       {
-        $lookup: {
-          from: 'views',
-          foreignField: 'content',
-          localField: '_id',
-          as: 'views',
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'client_id',
-          foreignField: '_id',
-          as: 'clientDetails',
-
-          pipeline: [
-            {
-              $project: {
-                fullName: { $concat: ['$first_name', ' ', '$last_name'] },
-              },
-            },
-          ],
-        },
-      },
-      {
-        $addFields: {
-          viewsCount: { $size: '$views' },
+        $set: {
           streamKey: '$stream_key',
           vidClass: '$vid_class',
-          coverPhoto: { $first: '$coverPhoto' },
-          channelLogo: { $ifNull: [{ $first: '$channelLogo' }, null] },
+          coverPhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$coverPhoto.Key'] },
           previewVideoUploadDoc: { $ifNull: [{ $first: '$previewVideoUploads' }, null] },
           activeViews: '$active_views',
           featExpiry: '$feat_expiry',
@@ -251,10 +212,12 @@ export class LiveRepo {
       },
 
       {
-        $match: {
-          $or: [{ previewVideoUpload: null }, { previewVideoUploadDoc: { $ne: null } }],
+        $set: {
+          channelLogo: '$clientDetails.photo',
         },
       },
+
+      { $unset: ['clientDetails.photo'] },
 
       sortStage ?? {
         $sort: { engagements: -1 },
@@ -303,72 +266,7 @@ export class LiveRepo {
     match: PipelineStage.Match = { $match: {} },
   ) => {
     return await this.fetchLivesAggr({
-      prevStages: [
-        match,
-        {
-          $lookup: {
-            from: 'comments',
-            foreignField: 'parentId',
-            localField: '_id',
-            as: 'comments',
-
-            pipeline: [{ $match: { parentType: 'live' } }],
-          },
-        },
-        {
-          $lookup: {
-            from: 'ratings',
-            foreignField: 'parentId',
-            localField: '_id',
-            as: 'ratings',
-
-            pipeline: [
-              { $match: { parentType: 'live' } },
-              { $group: { _id: null, totalRatings: { $sum: '$rate' } } },
-            ],
-          },
-        },
-        {
-          $lookup: {
-            from: 'votes',
-            foreignField: 'live_id',
-            localField: '_id',
-            as: 'votes',
-          },
-        },
-        {
-          $lookup: {
-            from: 'donates',
-            foreignField: 'live_id',
-            localField: '_id',
-            as: 'donations',
-          },
-        },
-
-        {
-          $addFields: {
-            engagements: {
-              $sum: [
-                { $size: '$views' },
-                { $size: '$donations' },
-                { $size: '$votes' },
-                { $size: '$comments' },
-                { $ifNull: [{ $first: '$ratings.totalRatings' }, 0] },
-              ],
-            },
-          },
-        },
-
-        {
-          $project: {
-            donations: false,
-            comments: false,
-            ratings: false,
-            votes: false,
-            __v: false,
-          },
-        },
-      ],
+      prevStages: [match],
 
       page,
       limit,

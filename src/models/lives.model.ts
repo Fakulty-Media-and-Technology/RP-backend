@@ -37,11 +37,11 @@ const schema = new Schema(
       required: true,
     },
 
-    channelLogo: {
-      type: Schema.Types.ObjectId,
-      ref: 'poster_images',
-      default: null,
-    },
+    // channelLogo: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: 'poster_images',
+    //   default: null,
+    // },
 
     coverPhoto: {
       type: PhotoSchema,
@@ -207,6 +207,7 @@ const schema = new Schema(
 )
 
 schema.index({ engagements: -1 })
+schema.index({ expiry: -1 })
 schema.index({ category: 1 })
 schema.index({ views: 1 })
 

@@ -15,8 +15,6 @@ export class LiveMediaSourcesUtils {
         const response = {
           previewVideo: VidUploadUtils.getResSourceUrl(live.previewVideoUploadDoc, quality),
           stream_url: env.RP_HLS_URL + live.streamKey + '/index.m3u8' + signed,
-          coverPhoto: live.coverPhoto ? MediaAccess.getImageURL(live.coverPhoto.key) : null,
-          channelLogo: live.channelLogo ? MediaAccess.getImageURL(live.channelLogo.key) : null,
           previewVideoUploadDoc: undefined,
         }
 
