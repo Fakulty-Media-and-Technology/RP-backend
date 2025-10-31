@@ -36,6 +36,7 @@ export class Email {
     const html = await ejs.renderFile(templatePath, {
       name: `${this.firstName}, ${this.lastName}`,
       pin: pin,
+      footerYear: new Date().getFullYear(),
     })
 
     return html
