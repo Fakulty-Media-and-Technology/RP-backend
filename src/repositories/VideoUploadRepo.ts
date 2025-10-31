@@ -16,8 +16,6 @@ export class VideoUploadRepo {
       parentId,
     })
 
-  static fetchNotTranscoded = (skip: number, limit: number) =>
-    VideoUploadModel.find({ isTranscoded: false }).skip(skip).limit(limit)
 
   static updateWithParent = async (input: UpdateWithParentInput) => {
     const update = await VideoUploadModel.findOneAndUpdate(

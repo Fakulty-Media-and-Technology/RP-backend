@@ -2,25 +2,53 @@ import { LiveModel } from '../models/lives.model'
 import { VideoModel } from '../models/videos.model'
 import { S3 } from '../services/aws/s3'
 import { fetchUntranscodedVideoUploadDocumentsGenerator } from '../generators/fetchUntranscodedVideoUploads'
-
-// const stringify = (data: Object) => JSON.stringify(data, null, 2)
-// const laterInMins = (mins: number) => moment().add(mins, 'minutes').toDate()
+import { VideoUpload } from '../models/videoupload.model'
 
 export class CronTaskHandlers {
+  protected static _updateTranscodedDocumentParent = async (document: VideoUpload) => {
+    switch (document.parentType) {
+      case 'vod':
+        await VideoModel.findByIdAndUpdate(document.parentId, {
+          $set: {
+            isVideoReady: true,
+          },
+        })
+
+        break
+      case 'vod-trailer':
+        await VideoModel.findByIdAndUpdate(document.parentId, {
+          $set: {
+            isTrailerReady: true,
+          },
+        })
+
+        break
+
+      default:
+        break
+    }
+  }
+
+  protected static _updateVideoUploadDoc = async (document: VideoUpload) => {
+    try {
+      const resolutions = await S3.setResolutionsPairs(document.key)
+      document.resolutions = resolutions as any
+      document.isTranscoded = !!resolutions.length
+
+      if (!document.isTranscoded) {
+        return
+      }
+
+      await this._updateTranscodedDocumentParent(document)
+      await document.save()
+    } catch (error) {
+      console.error('Error updating isTranscoded for video upload document', document._id)
+    }
+  }
+
   static updateVidUploadsResolutions = async () => {
     for await (const videoUploadDouments of fetchUntranscodedVideoUploadDocumentsGenerator()) {
-      await Promise.all(
-        videoUploadDouments.map(async document => {
-          try {
-            const resolutions = await S3.setResolutionsPairs(document.key)
-            document.resolutions = resolutions as any
-            document.isTranscoded = !!resolutions.length
-            document.isTranscoded && (await document.save())
-          } catch (error) {
-            console.error('Error updating isTranscoded for video upload document', document._id)
-          }
-        }),
-      )
+      await Promise.all(videoUploadDouments.map(this._updateVideoUploadDoc))
     }
   }
 

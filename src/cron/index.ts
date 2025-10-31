@@ -6,7 +6,7 @@ export class CronTasks {
     // schedule('*/5 * * * *', this._handleLiveStream),
     // schedule('0 0 * * *', CronTaskHandlers.autoRenewSubscriptions),
     schedule('*/10 * * * *', CronTaskHandlers.expireFeaturedContents),
-    schedule('*/2 * * * *', CronTaskHandlers.updateVidUploadsResolutions),
+    schedule('* * * * *', CronTaskHandlers.updateVidUploadsResolutions), // Every minute
   ]
 
   // private async _handleLiveStream() {

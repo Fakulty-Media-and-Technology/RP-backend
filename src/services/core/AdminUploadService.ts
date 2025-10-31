@@ -220,7 +220,7 @@ export class AdminUploadService {
 
       const tVideoUploadDocument = UploadMediaUtils.getVideoUploadDocument(trailerUpload)
       tVideoUploadDocument.parentId = videoDocument._id
-      tVideoUploadDocument.parentType = 'trailer'
+      tVideoUploadDocument.parentType = 'vod-trailer'
       await tVideoUploadDocument.save({ session })
       videoDocument.trailerUpload = tVideoUploadDocument._id
     }
@@ -298,7 +298,7 @@ export class AdminUploadService {
       const trailerUpload = await MediaManagement.uploadAndInitiateMediaConvert(data.trailer)
       const videoUploadDocument = UploadMediaUtils.getVideoUploadDocument(trailerUpload)
       videoUploadDocument.parentId = episodeDocument._id
-      videoUploadDocument.parentType = 'trailer'
+      videoUploadDocument.parentType = 'episode-trailer'
       episodeDocument.trailerUpload = videoUploadDocument._id
       videoUploadDocument.save({ session })
     }
@@ -439,10 +439,10 @@ export class AdminUploadService {
 
       const videoUploadDocument = UploadMediaUtils.getVideoUploadDocument(trailerUpload)
       videoUploadDocument.parentId = videoDocument._id
-      videoUploadDocument.parentType = 'trailer'
+      videoUploadDocument.parentType = 'vod-trailer'
       videoDocument.trailerUpload = videoUploadDocument._id
       await videoUploadDocument.save({ session })
-      videoDocument.trailerLink = null as any
+      videoDocument.trailerLink = undefined as any
     }
 
     await videoDocument.save({ session })

@@ -1,14 +1,17 @@
-import { VideoUploadRepo } from '../repositories/VideoUploadRepo'
+import { VideoUploadModel } from '../models/videoupload.model'
 
 export async function* fetchUntranscodedVideoUploadDocumentsGenerator() {
-  const limit = 50
+  const limit = 10
   let skip = 0
 
   while (true) {
     try {
-      const videoUploadDocuments = await VideoUploadRepo.fetchNotTranscoded(skip, limit).sort({
-        _id: 1,
-      })
+      const videoUploadDocuments = await VideoUploadModel.find({ isTranscoded: false })
+        .skip(skip)
+        .limit(limit)
+        .sort({
+          _id: 1,
+        })
 
       if (videoUploadDocuments.length === 0) {
         break

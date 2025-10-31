@@ -103,10 +103,16 @@ const schema = new Schema(
       sparse: true,
     },
 
-    expiryDate: {
-      type: Date,
-      sparse: true,
-      default: Date.now,
+    expiryDate: Date,
+
+    isVideoReady: {
+      type: Boolean,
+      default: false,
+    },
+
+    isTrailerReady: {
+      type: Boolean,
+      defualt: false,
     },
 
     runtime: {
@@ -204,9 +210,16 @@ const schema = new Schema(
   },
 )
 
+schema.pre('save', function (next) {
+  this.isVideoReady = typeof this.videoLink === 'string' || false
+  this.isTrailerReady = typeof this.trailerLink === 'string' || false
+  next()
+})
+
 schema.index({ engagements: -1 })
+schema.index({ isVideoReady: 1, isTrailerReady: 1 }, { name: '_videosReady' })
 schema.index({ expiryDate: 1, upcoming: 1 }, { name: '_upcoming' })
-schema.index({ type: 1, title: 1, artistName: 1 }, { unique: true, name: '_uniqueTitle' })
+schema.index({ type: 1, title: 1 }, { unique: true, name: '_uniqueTitlePerType' })
 
 export const VideoModel = model('videos', schema)
 export type VideoSchema = InferSchemaType<typeof schema>

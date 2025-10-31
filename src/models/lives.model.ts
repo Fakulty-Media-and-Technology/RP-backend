@@ -60,6 +60,11 @@ const schema = new Schema(
       default: null,
     },
 
+    isPreviewVideoReady: {
+      default: false,
+      type: Boolean,
+    },
+
     categories: [
       {
         type: Schema.Types.ObjectId,

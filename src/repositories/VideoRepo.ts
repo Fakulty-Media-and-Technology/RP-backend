@@ -486,18 +486,36 @@ export class VideoRepo {
       ...prevStages,
 
       {
+        $set: {
+          trailerUpload: { $first: '$trailerUpload' },
+          videoUpload: { $first: '$videoUpload' },
+        },
+      },
+
+      {
+        $match: {
+          $or: [{ type: 'series' }, { $and: [{ isVideoReady: true }, { isTrailerReady: true }] }],
+        },
+      },
+
+      {
+        $set: {
+          landscapePhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$landscapePhoto.Key'] },
+          portraitPhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$portraitPhoto.Key'] },
+        },
+      },
+
+      sortStage,
+      { $skip: skip(page, limit) },
+      { $limit: limit },
+
+      {
         $lookup: {
           from: 'video_uploads',
           localField: 'videoUpload',
           foreignField: '_id',
           as: 'videoUpload',
           pipeline: [
-            {
-              $match: {
-                parentType: 'vod',
-                isTranscoded: true,
-              },
-            },
             {
               $project: {
                 resolutions: true,
@@ -515,54 +533,11 @@ export class VideoRepo {
           as: 'trailerUpload',
           pipeline: [
             {
-              $match: {
-                parentType: 'trailer',
-                isTranscoded: true,
-              },
-            },
-            {
               $project: {
                 resolutions: true,
               },
             },
           ],
-        },
-      },
-
-      {
-        $set: {
-          trailerUpload: { $first: '$trailerUpload' },
-          videoUpload: { $first: '$videoUpload' },
-        },
-      },
-
-      {
-        $match: {
-          $or: [
-            // series can have vids and trailers properties as null
-            { type: 'series' },
-
-            {
-              // videoLink and videoUpload are not null on the same document
-              // trailerLink and trailer are not null on the same document
-              $and: [
-                {
-                  $or: [{ videoLink: { $exists: true } }, { videoUpload: { $exists: true } }],
-                },
-
-                {
-                  $or: [{ trailerLink: { $exists: true } }, { trailerUpload: { $exists: true } }],
-                },
-              ],
-            },
-          ],
-        },
-      },
-
-      {
-        $set: {
-          landscapePhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$landscapePhoto.Key'] },
-          portraitPhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$portraitPhoto.Key'] },
         },
       },
 
@@ -626,14 +601,12 @@ export class VideoRepo {
 
       {
         $addFields: {
+          videoUpload: { $first: '$videoUpload' },
+          trailerUpload: { $first: '$trailerUpload' },
           viewsCount: { $ifNull: [{ $first: '$views.total' }, 0] },
           averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
         },
       },
-
-      sortStage,
-      { $skip: skip(page, limit) },
-      { $limit: limit },
 
       {
         $project: {
@@ -791,7 +764,6 @@ export interface VodCardResponse {
 }
 
 export interface VideoUpload {
-  _id: string
   resolutions: Resolution[]
 }
 

@@ -49,6 +49,16 @@ const schema = new Schema(
       default: null,
     },
 
+    isVideoReady: {
+      type: Boolean,
+      default: false,
+    },
+
+    isTrailerReady: {
+      type: Boolean,
+      default: false,
+    },
+
     commentsCount: {
       type: Number,
       default: 0,
