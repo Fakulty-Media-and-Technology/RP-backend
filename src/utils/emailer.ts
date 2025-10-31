@@ -19,6 +19,7 @@ interface SendMessageInput {
 
 interface MakeHtmlInput extends Omit<SendMessageInput, 'subject'> {}
 
+// TODO: REORGANIZE
 export class Email {
   private firstName: string
   private lastName: string
