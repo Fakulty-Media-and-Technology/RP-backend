@@ -1,16 +1,11 @@
-import { MediaAccess } from '../services/media-access'
-import { Episode, GetVideoSourceParams, Movie, Season } from '../types/movie'
+import { Episode, Season } from '../types/movie'
 import { OperationalError } from './OperationalError'
-import { getPromiseAllFulfilledResults } from './promises'
 import { VidUploadUtils, VideoQuality } from './VideoUploadUtils'
-
-import { UpcomingAggrRes } from '../types/upcoming'
-import { CastEnumService } from '../services/core/CastEnumService'
-import { VideoUpload, VodCardResponse } from '../repositories/VideoRepo'
+import { VodCardResponse } from '../repositories/VideoRepo'
 
 export class MovieMediaSourcesUtils {
   protected static _getMovieVideoSource = (
-    vid: VodCardResponse,
+    vid: VodCardResponse | Episode,
     routine: 'vid' | 'trailer',
     quality: VideoQuality,
   ) => {
@@ -24,49 +19,30 @@ export class MovieMediaSourcesUtils {
     }
   }
 
-  public static resolveSeasonsMediaSources = async (
-    seasons: Season[],
-    withMediaSources: boolean,
-    quality: VideoQuality,
-  ) => {
-    const seasonsWithSources = await Promise.all(
-      seasons.map(async season => {
-        season.episodes = await this.resolveEpisodesMediaSources(
-          season.episodes,
-          withMediaSources,
-          quality,
-        )
-
-        return season
-      }),
-    )
+  public static resolveSeasonsMediaSources = (seasons: Season[], quality: VideoQuality) => {
+    const seasonsWithSources = seasons.map(season => {
+      season.episodes = this.resolveEpisodesMediaSources(season.episodes, quality)
+      return season
+    })
 
     return seasonsWithSources as Season[]
   }
 
-  public static resolveEpisodesMediaSources = async (
-    episodes: Episode[],
-    _: boolean,
-    __: VideoQuality,
-  ) => {
-    const episodesWithSources = await Promise.all(
-      episodes.map(async episode => {
-        // if (!withMediaSources) return
+  public static resolveEpisodesMediaSources = (episodes: Episode[], quality: VideoQuality) => {
+    const episodesWithSources = episodes.map(episode => {
+      Object.assign(episode, {
+        video: this._getMovieVideoSource(episode, 'vid', quality),
+        trailer: this._getMovieVideoSource(episode, 'trailer', quality),
+        trailerUpload: undefined,
+        videoUpload: undefined,
+        trailerLink: undefined,
+        videoLink: undefined,
+      })
 
-        // Object.assign(episode, {
-        //   video: this._getMovieVideoSource(episode, 'vid', quality),
-        //   trailer: this._getMovieVideoSource(episode, 'trailer', quality),
-        //   trailerVideoUpload: undefined,
-        //   videoUpload: undefined,
-        //   trailerLink: undefined,
-        //   videoLink: undefined,
-        // })
+      return episode
+    })
 
-        return episode
-      }),
-    )
-
-    return episodesWithSources as unknown as Episode[]
+    return episodesWithSources
   }
 
   public static resolveMediaSources = (videoDocuments: VodCardResponse[], quality: VideoQuality) =>

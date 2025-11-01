@@ -3,25 +3,98 @@ import { VideoModel } from '../models/videos.model'
 import { S3 } from '../services/aws/s3'
 import { fetchUntranscodedVideoUploadDocumentsGenerator } from '../generators/fetchUntranscodedVideoUploads'
 import { VideoUpload } from '../models/videoupload.model'
+import { EpisodeModel } from '../models/episodes.model'
+import { OperationalError } from '../utils/OperationalError'
+import { AdModel } from '../models/admanager.model'
+import { Document } from 'mongoose'
+import { StringOrObjectId } from '../types'
+import { SeasonModel } from '../models/seasons.model'
 
 export class CronTaskHandlers {
-  protected static _updateTranscodedDocumentParent = async (document: VideoUpload) => {
-    switch (document.parentType) {
+  protected static checkTranscodedParentDocumentOrThrow = (
+    parentDocument: Document | null,
+    documentId: StringOrObjectId,
+  ) => {
+    if (parentDocument == null) {
+      new OperationalError(`Loose parent for video upload document with id: ${documentId}`, 404)
+    }
+  }
+
+  protected static _updateTranscodedDocumentParent = async ({
+    parentId,
+    parentType,
+    isTranscoded,
+    _id: videoUploadDocumentId,
+  }: VideoUpload) => {
+    if (!isTranscoded) {
+      throw new OperationalError('_updateTranscodedDocumentParent incorrectly called', 400)
+    }
+
+    switch (parentType) {
       case 'vod':
-        await VideoModel.findByIdAndUpdate(document.parentId, {
-          $set: {
+        this.checkTranscodedParentDocumentOrThrow(
+          await VideoModel.findByIdAndUpdate(parentId, {
             isVideoReady: true,
-          },
-        })
+          }),
+          videoUploadDocumentId,
+        )
 
         break
-      case 'vod-trailer':
-        await VideoModel.findByIdAndUpdate(document.parentId, {
-          $set: {
-            isTrailerReady: true,
-          },
-        })
 
+      case 'vod-trailer':
+        this.checkTranscodedParentDocumentOrThrow(
+          await VideoModel.findByIdAndUpdate(parentId, {
+            isTrailerReady: true,
+          }),
+          videoUploadDocumentId,
+        )
+
+        break
+
+      case 'episode':
+        this.checkTranscodedParentDocumentOrThrow(
+          await EpisodeModel.findByIdAndUpdate(parentId, {
+            isVideoReady: true,
+          }),
+          videoUploadDocumentId,
+        )
+
+        break
+
+      case 'episode-trailer':
+        this.checkTranscodedParentDocumentOrThrow(
+          await EpisodeModel.findByIdAndUpdate(parentId, {
+            isTrailerReady: true,
+          }),
+          videoUploadDocumentId,
+        )
+        break
+
+      case 'season-trailer':
+        this.checkTranscodedParentDocumentOrThrow(
+          await SeasonModel.findByIdAndUpdate(parentId, { isTrailerReady: true }),
+          videoUploadDocumentId,
+        )
+
+        break
+
+      case 'live':
+        this.checkTranscodedParentDocumentOrThrow(
+          await LiveModel.findByIdAndUpdate(parentId, { isPreviewVideoReady: true }),
+          videoUploadDocumentId,
+        )
+        break
+
+      case 'ad':
+        this.checkTranscodedParentDocumentOrThrow(
+          await AdModel.findByIdAndUpdate(parentId, { isVideoReady: true }),
+          videoUploadDocumentId,
+        )
+
+        break
+
+      case 'subtitle':
+        console.error('Transcode subtitle parent encountred')
         break
 
       default:

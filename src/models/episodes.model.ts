@@ -29,24 +29,20 @@ const schema = new Schema(
 
     trailerLink: {
       type: String,
-      default: null,
     },
 
     videoLink: {
       type: String,
-      default: null,
     },
 
     trailerUpload: {
       type: Schema.Types.ObjectId,
-      ref: 'trailer',
-      default: null,
+      ref: 'video_uploads',
     },
 
     videoUpload: {
       type: Schema.Types.ObjectId,
       ref: 'video_uploads',
-      default: null,
     },
 
     isVideoReady: {
@@ -63,10 +59,27 @@ const schema = new Schema(
       type: Number,
       default: 0,
     },
+
+    viewsCount: {
+      type: Number,
+      default: 0,
+    },
+
+    averageRating: {
+      type: Number,
+      default: 4.5,
+    },
   },
-  { timestamps: true },
+  { timestamps: true, versionKey: false },
 )
 
+schema.pre('save', function (next) {
+  this.isVideoReady = typeof this.videoLink === 'string'
+  this.isTrailerReady = typeof this.trailerLink === 'string'
+  next()
+})
+
+schema.index({ isVideoReady: 1, isTrailerReady: 1 })
 schema.index({ season: 1, title: 1 }, { unique: true })
 schema.index({ season: 1, episodeNumber: 1 }, { unique: true })
 

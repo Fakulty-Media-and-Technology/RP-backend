@@ -4,12 +4,12 @@ export const commentsParent = [...ratingsParent, 'live', 'season'] as const
 export const viewContents = [...assets, 'trailer'] as const
 
 export const videoUploadParents = [
-  'vod',
-  'vod-trailer',
-  'episode',
-  'episode-trailer',
-  'live',
-  // 'trailer', // schedule for deletion
-  'subtitle',
   'ad',
+  'vod',
+  'live',
+  'episode',
+  'subtitle',
+  'vod-trailer',
+  'episode-trailer',
+  'season-trailer',
 ] as const

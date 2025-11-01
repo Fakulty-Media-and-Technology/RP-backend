@@ -26,6 +26,11 @@ const schema = new Schema(
       required: true,
     },
 
+    isVideoReady: {
+      type: Boolean,
+      default: false,
+    },
+    
     videoUpload: {
       type: Schema.Types.ObjectId,
       required: true,

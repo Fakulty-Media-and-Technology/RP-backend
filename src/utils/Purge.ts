@@ -110,8 +110,8 @@ export class Purge {
             const episodes = await EpisodeModel.find({ season: season._id })
 
             episodes.forEach(async ep => {
-              this.videoUploadById(ep.videoUpload)
-              this.videoUploadById(ep.trailerUpload)
+              ep.videoUpload && this.videoUploadById(ep.videoUpload)
+              ep.trailerUpload && this.videoUploadById(ep.trailerUpload)
             })
 
             await SeasonModel.findByIdAndDelete(season._id)

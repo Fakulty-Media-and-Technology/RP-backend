@@ -6,6 +6,7 @@ import { AllVideoTypes } from '../utils/UploadMediaUtils'
 import { EpisodeModel } from '../models/episodes.model'
 import { MongoDBObjectId } from '../types/general'
 import env from '../env'
+import { isArrayBufferView } from 'node:util/types'
 
 export const toObjectId = (val: string) => new Types.ObjectId(val)
 
@@ -23,7 +24,7 @@ export type AddSeasonUtilAggrRes = {
   isMovieSeries: boolean
   totalPreviousSeasons: number
   totalEpisodesOfLastSeason: number
-  movieExpiryDate: Date | undefined
+  movieExpiryDate: Date | null
 }
 
 type FetchByCategAndCastParams = {
@@ -36,11 +37,10 @@ type FetchByCategAndCastParams = {
 export type AddEpisodeUtilAggrRes = {
   _id: string
   seasonTrailerLink: null
-  recentEpisodeTrailerLink: boolean
-  recentEpisodeVideoLink: boolean
-  isTrailerUploadVidTranscoded: boolean
-  isRecentEpisodeTrailerVidUploadTranscoded: boolean
-  isRecentEpisodeVidUploadTranscoded: boolean
+  previousEpisodeTrailerLink: string | null
+  previousEpisodeVideoLink: string | null
+  isLastEpisodeVideoReady: boolean
+  isLastEpisodeTrailerReady: boolean
   totalPreviousEpisodes: number
 }
 
@@ -75,9 +75,9 @@ export class VideoRepo {
 
   static totalSkitVideosCountQuery = () => this.totalVideosCountQuery({ type: 'skit' })
 
-  static addSeasonUtilAggr = async (vidId: string) => {
-    const aggr = await VideoModel.aggregate([
-      { $match: { _id: toObjectId(vidId) } },
+  static addSeasonUtilAggr = (videoId: string) => {
+    const aggr = VideoModel.aggregate([
+      { $match: { _id: toObjectId(videoId) } },
 
       {
         $lookup: {
@@ -88,6 +88,7 @@ export class VideoRepo {
 
           pipeline: [
             { $sort: { _id: -1 } },
+
             {
               $lookup: {
                 from: 'episodes',
@@ -104,130 +105,57 @@ export class VideoRepo {
         $project: {
           totalPreviousSeasons: { $size: '$seasons' },
           totalEpisodesOfLastSeason: { $size: { $ifNull: [{ $first: '$seasons.episodes' }, []] } },
-          isMovieSeries: '$is_series',
-          movieExpiryDate: { $ifNull: ['$expiry_date', undefined] },
+          isMovieSeries: { $eq: ['$type', 'series'] },
+          movieExpiryDate: { $ifNull: ['$expiryDate', null] },
         },
       },
     ])
 
-    return aggr as Array<AddSeasonUtilAggrRes>
+    return aggr as Aggregate<(undefined | AddSeasonUtilAggrRes)[]>
   }
 
   static addEpisodeUtilAggr = async (seasonId: string) => {
-    const seasonTrailerLookupStage: PipelineStage.Lookup = {
-      $lookup: {
-        from: 'trailers',
-        localField: 'trailer',
-        foreignField: '_id',
-        as: 'trailer',
-
-        pipeline: [
-          {
-            $lookup: {
-              from: 'video_uploads',
-              localField: 'video_upload',
-              foreignField: '_id',
-              as: 'trailerVidUpload',
-            },
-          },
-          {
-            $addFields: {
-              isTrailerVidTranscoded: {
-                $ifNull: [{ $first: '$trailerVidUpload.isTranscoded' }, null],
-              },
-            },
-          },
-        ],
-      },
-    }
-
-    const episodesLookupStage: PipelineStage.Lookup = {
-      $lookup: {
-        from: 'episodes',
-        localField: '_id',
-        foreignField: 'season',
-        as: 'episodes',
-
-        pipeline: [
-          { $sort: { _id: -1 } },
-
-          {
-            $lookup: {
-              from: 'video_uploads',
-              localField: 'videoUpload',
-              foreignField: '_id',
-              as: 'videoUploads',
-            },
-          },
-          {
-            $lookup: {
-              from: 'trailers',
-              localField: 'trailerUpload',
-              foreignField: '_id',
-              as: 'episodeTrailers',
-
-              pipeline: [
-                {
-                  $lookup: {
-                    from: 'video_uploads',
-                    localField: 'video_upload',
-                    foreignField: '_id',
-                    as: 'episodeTrailerVidUpload',
-                  },
-                },
-
-                {
-                  $addFields: {
-                    isEpisodeTrailerVidTranscoded: {
-                      $ifNull: [{ $first: '$episodeTrailerVidUpload.isTranscoded' }, null],
-                    },
-                  },
-                },
-              ],
-            },
-          },
-
-          {
-            $addFields: {
-              isEpisodeVidUploadTranscoded: {
-                $ifNull: [{ $first: '$videoUploads.isTranscoded' }, null],
-              },
-              isTrailerVidUploadTranscoded: {
-                $ifNull: [{ $first: '$episodeTrailers.isEpisodeTrailerVidTranscoded' }, null],
-              },
-            },
-          },
-        ],
-      },
-    }
-
     const aggr = await SeasonModel.aggregate([
       { $match: { _id: toObjectId(seasonId) } },
-      seasonTrailerLookupStage,
-      episodesLookupStage,
+
+      {
+        $lookup: {
+          from: 'episodes',
+          localField: '_id',
+          foreignField: 'season',
+          as: 'episodes',
+
+          pipeline: [
+            { $sort: { _id: -1 } },
+
+            {
+              $project: {
+                isTrailerReady: true,
+                trailerLink: true,
+                videoLink: true,
+                isVideoReady: true,
+              },
+            },
+          ],
+        },
+      },
 
       {
         $project: {
-          seasonTrailerLink: '$trailerLink',
-
-          recentEpisodeTrailerLink: {
+          previousEpisodeTrailerLink: {
             $ifNull: [{ $first: '$episodes.trailerLink' }, null],
           },
 
-          recentEpisodeVideoLink: {
+          previousEpisodeVideoLink: {
             $ifNull: [{ $first: '$episodes.videoLink' }, null],
           },
 
-          isTrailerUploadVidTranscoded: {
-            $ifNull: [{ $first: '$trailer.isTrailerVidTranscoded' }, null],
+          isLastEpisodeTrailerReady: {
+            $ifNull: [{ $first: '$episodes.isTrailerReady' }, false],
           },
 
-          isRecentEpisodeTrailerVidUploadTranscoded: {
-            $ifNull: [{ $first: '$episodes.isTrailerVidUploadTranscoded' }, null],
-          },
-
-          isRecentEpisodeVidUploadTranscoded: {
-            $ifNull: [{ $first: '$episodes.isEpisodeVidUploadTranscoded' }, null],
+          isLastEpisodeVideoReady: {
+            $ifNull: [{ $first: '$episodes.isVideoReady' }, false],
           },
 
           totalPreviousEpisodes: { $size: '$episodes' },
@@ -294,149 +222,9 @@ export class VideoRepo {
         },
       ],
 
-      sortStage: { $sort: { createdAt: -1 } },
+      // sortStage: { $sort: { createdAt: -1 } },
       page,
       limit,
-    })
-  }
-
-  private static _episodesPipeline = [
-    {
-      $lookup: {
-        from: 'video_uploads',
-        localField: '_id',
-        foreignField: 'parentId',
-        as: 'videoUpload',
-        pipeline: [
-          { $match: { isTranscoded: true } },
-          { $project: { key: true, isTranscoded: true, resolutions: true } },
-        ],
-      },
-    },
-    {
-      $lookup: {
-        from: 'trailers',
-        localField: '_id',
-        foreignField: 'video_id',
-        as: 'trailer',
-        pipeline: [
-          {
-            $lookup: {
-              from: 'video_uploads',
-              localField: '_id',
-              foreignField: 'parentId',
-              as: 'trailerVideoUpload',
-              pipeline: [
-                { $match: { isTranscoded: true } },
-                { $project: { key: true, isTranscoded: true, resolutions: true } },
-              ],
-            },
-          },
-
-          { $addFields: { trailerVideoUpload: { $first: '$trailerVideoUpload' } } },
-        ],
-      },
-    },
-
-    {
-      $lookup: {
-        from: 'ratings',
-        foreignField: 'parentId',
-        localField: '_id',
-        as: 'ratings',
-        pipeline: [{ $group: { _id: null, avgRating: { $avg: '$rate' } } }],
-      },
-    },
-
-    {
-      $lookup: {
-        from: 'views',
-        foreignField: 'content',
-        localField: '_id',
-        as: 'views',
-      },
-    },
-
-    {
-      $addFields: {
-        viewsCount: { $size: '$views' },
-        trailerVideoUpload: { $ifNull: [{ $first: '$trailer.trailerVideoUpload' }, null] },
-        videoUpload: { $ifNull: [{ $first: '$videoUpload' }, null] },
-        averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
-      },
-    },
-    {
-      $project: {
-        __v: false,
-        ratings: false,
-        views: false,
-        trailer: false,
-        subtitleUpload: false,
-        trailerUpload: false,
-      },
-    },
-  ]
-
-  private static _seasonPipeline: PipelineStage[] = [
-    {
-      $lookup: {
-        from: 'episodes',
-        localField: '_id',
-        foreignField: 'season',
-        as: 'episodes',
-        pipeline: this._episodesPipeline,
-      },
-    },
-
-    {
-      $lookup: {
-        from: 'views',
-        foreignField: 'content',
-        localField: '_id',
-        as: 'views',
-      },
-    },
-
-    {
-      $addFields: {
-        viewsCount: { $size: '$views' },
-      },
-    },
-
-    { $sort: { createdAt: -1 } },
-    { $project: { __v: false, trailer: false, views: false } },
-  ]
-
-  protected static _fetchEpisode = ({
-    prevStages,
-    limit,
-    skip,
-  }: {
-    prevStages: PipelineStage[]
-    limit: number
-    skip: number
-  }) => {
-    //
-    const res = EpisodeModel.aggregate([
-      ...prevStages,
-      ...this._episodesPipeline,
-      { $sort: { _id: 1 } },
-      { $skip: skip },
-      { $limit: limit },
-    ])
-
-    return res
-  }
-
-  static fetchEpisodeById = (id: string) => {
-    return this._fetchEpisode({
-      skip: 0,
-      limit: 1,
-      prevStages: [
-        {
-          $match: { _id: toObjectId(id) },
-        },
-      ],
     })
   }
 
@@ -445,10 +233,78 @@ export class VideoRepo {
       {
         $match: { video: toObjectId(videoId) },
       },
-      ...this._seasonPipeline,
-      { $sort: { _id: 1 } },
+
+      { $sort: { serial_number: 1 } },
       { $skip: skip(page, limit) },
-      { $limit: limit },
+      { $unset: '__v' },
+
+      {
+        $lookup: {
+          from: 'episodes',
+          localField: '_id',
+          foreignField: 'season',
+          as: 'episodes',
+          pipeline: [
+            {
+              $match: {
+                isVideoReady: true,
+                isTrailerReady: true,
+              },
+            },
+
+            {
+              $lookup: {
+                from: 'video_uploads',
+                localField: '_id',
+                foreignField: 'parentId',
+                as: 'videoUpload',
+                pipeline: [
+                  {
+                    $project: {
+                      parentType: true,
+                      resolutions: true,
+                    },
+                  },
+                  {
+                    $facet: {
+                      trailer: [
+                        {
+                          $match: {
+                            parentType: 'episode-trailer',
+                          },
+                        },
+                      ],
+                      video: [
+                        {
+                          $match: {
+                            parentType: 'episode',
+                          },
+                        },
+                      ],
+                    },
+                  },
+
+                  {
+                    $set: {
+                      trailer: { $first: '$trailer' },
+                      video: { $first: '$video' },
+                    },
+                  },
+                ],
+              },
+            },
+
+            {
+              $set: {
+                trailerUpload: { $ifNull: [{ $first: '$videoUpload.trailer' }, null] },
+                videoUpload: { $ifNull: [{ $first: '$videoUpload.video' }, null] },
+              },
+            },
+
+            { $unset: ['isVideoReady', 'isTrailerReady', '__v'] },
+          ],
+        },
+      },
     ])
 
     return aggr
@@ -486,13 +342,6 @@ export class VideoRepo {
       ...prevStages,
 
       {
-        $set: {
-          trailerUpload: { $first: '$trailerUpload' },
-          videoUpload: { $first: '$videoUpload' },
-        },
-      },
-
-      {
         $match: {
           $or: [{ type: 'series' }, { $and: [{ isVideoReady: true }, { isTrailerReady: true }] }],
         },
@@ -506,6 +355,7 @@ export class VideoRepo {
       },
 
       sortStage,
+
       { $skip: skip(page, limit) },
       { $limit: limit },
 

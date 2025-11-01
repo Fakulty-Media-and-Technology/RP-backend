@@ -99,28 +99,28 @@ export class AdminUploadService {
     data.video && UploadMediaUtils.allowMimetype(data.video, 'video', 'video must be a video file')
   }
 
-  static _validateWithMovieAndPrevSeasonsAggrResult = (res: AddSeasonUtilAggrRes[]) => {
-    if (res.length === 0) {
+  static _validateWithMovieAndPrevSeasonsAggrResult = (
+    aggregateResponse: (undefined | AddSeasonUtilAggrRes)[],
+  ) => {
+    const result = aggregateResponse[0]
+
+    if (result == null) {
       throw new OperationalError('invalid videoId', 404)
     }
 
-    const { totalEpisodesOfLastSeason, movieExpiryDate, totalPreviousSeasons, isMovieSeries } =
-      res[0]
-
-    if (!isMovieSeries) {
+    if (!result.isMovieSeries) {
       throw new OperationalError('movie is not a series', 403)
     }
 
-    if (totalPreviousSeasons > 0 && totalEpisodesOfLastSeason === 0) {
-      throw new OperationalError(
-        'Creating a new season when the most recent season has no episodes is not allowed',
-        403,
-      )
+    if (result.totalPreviousSeasons > 0 && result.totalEpisodesOfLastSeason === 0) {
+      throw new OperationalError('Last Season must have at least one Episode', 403)
     }
 
-    if (movieExpiryDate && new Date() > movieExpiryDate) {
+    if (result.movieExpiryDate && new Date() > result.movieExpiryDate) {
       throw new OperationalError('Movie has expired', 403)
     }
+
+    return result
   }
 
   static _validateWithSeasonAndPrevEpisodes = (aggrRes: AddEpisodeUtilAggrRes[]) => {
@@ -130,28 +130,22 @@ export class AdminUploadService {
 
     const [
       {
+        previousEpisodeTrailerLink,
+        previousEpisodeVideoLink,
+        isLastEpisodeTrailerReady,
+        isLastEpisodeVideoReady,
         totalPreviousEpisodes,
-        isRecentEpisodeTrailerVidUploadTranscoded,
-        isRecentEpisodeVidUploadTranscoded,
-        isTrailerUploadVidTranscoded,
-        seasonTrailerLink,
-        recentEpisodeTrailerLink,
-        recentEpisodeVideoLink,
       },
     ] = aggrRes
 
     if (totalPreviousEpisodes === 0) return
 
-    if (seasonTrailerLink === null && isTrailerUploadVidTranscoded === false) {
-      throw new OperationalError('season trailer upload video is still transcoding', 400)
+    if (previousEpisodeTrailerLink === null && isLastEpisodeTrailerReady === false) {
+      throw new OperationalError("Last Episode's trailer is still processing", 403)
     }
 
-    if (recentEpisodeTrailerLink === null && isRecentEpisodeTrailerVidUploadTranscoded === false) {
-      throw new OperationalError("previousEpisode's trailer video upload is still transcoding", 400)
-    }
-
-    if (recentEpisodeVideoLink === null && isRecentEpisodeVidUploadTranscoded === false) {
-      throw new OperationalError("previousEpisode's video is still transcoding", 400)
+    if (previousEpisodeVideoLink === null && isLastEpisodeVideoReady === false) {
+      throw new OperationalError("Last Episode's video is still processing", 403)
     }
   }
 
@@ -246,15 +240,15 @@ export class AdminUploadService {
     await withMongoDBSession(this._uploadVideoSession, input)
 
   static addSeason = async ({ videoId, adminId, description }: AddSeasonParams) => {
-    const aggrRes = await VideoRepo.addSeasonUtilAggr(videoId)
-
-    this._validateWithMovieAndPrevSeasonsAggrResult(aggrRes)
+    const aggrRes = this._validateWithMovieAndPrevSeasonsAggrResult(
+      await VideoRepo.addSeasonUtilAggr(videoId),
+    )
 
     return await SeasonModel.create({
       description,
       admin: adminId,
       video: videoId,
-      serial_number: aggrRes[0].totalPreviousSeasons + 1,
+      serial_number: aggrRes.totalPreviousSeasons + 1,
     })
   }
 
@@ -470,31 +464,24 @@ export class AdminUploadService {
       guranteeNumericResult(queryParams.limit, 1),
     )
 
-    return MovieMediaSourcesUtils.resolveMediaSources(
-      aggrgatedVideoDocuments,
-      '720p',
-    )
+    return MovieMediaSourcesUtils.resolveMediaSources(aggrgatedVideoDocuments, '720p')
   }
 
   static getSeasonsAndEpisodes = async (vidSeriesId: string, queryParams: any) => {
-    const videoDocument = await VideoModel.findById(vidSeriesId)
+    // const videoDocument = await VideoModel.findById(vidSeriesId)
 
-    if (videoDocument == null) {
-      throw new OperationalError('invalid video Id', 404)
-    }
+    // if (videoDocument == null) {
+    //   throw new OperationalError('invalid video Id', 404)
+    // }
 
-    if (videoDocument.type !== 'series') {
-      throw new OperationalError('video is not a series', 400)
-    }
+    // if (videoDocument.type !== 'series') {
+    //   throw new OperationalError('video is not a series', 400)
+    // }
 
     const { page, limit } = QueryParamsFeatures.paginagteParams(queryParams)
 
-    const seasons = await VideoRepo.fetchSeasonsAndEpisodes(vidSeriesId, page, limit)
-    const withMediaSources = this.resolveWithMediaSources(queryParams)
-
-    const seasonsWithMediaSources = await MovieMediaSourcesUtils.resolveSeasonsMediaSources(
-      seasons,
-      withMediaSources,
+    const seasonsWithMediaSources = MovieMediaSourcesUtils.resolveSeasonsMediaSources(
+      await VideoRepo.fetchSeasonsAndEpisodes(vidSeriesId, page, limit),
       '720p',
     )
 

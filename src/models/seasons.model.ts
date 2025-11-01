@@ -16,6 +16,16 @@ const schema = new Schema({
   serial_number: {
     type: Number,
     required: true,
+    index: true,
+  },
+
+  isTrailerReady: {
+    type: Boolean,
+    default: false,
+  },
+
+  traileraLink: {
+    type: String,
   },
 
   description: {
@@ -27,7 +37,17 @@ const schema = new Schema({
     type: Number,
     default: 0,
   },
+
+  viewsCount: {
+    type: Number,
+    default: 0,
+  },
 })
+
+// schema.pre('save', function (next) {
+//   this.isTrailerReady = typeof this.traileraLink === 'string'
+//   next()
+// })
 
 schema.index({ video: 1, serial_number: 1 }, { unique: true })
 

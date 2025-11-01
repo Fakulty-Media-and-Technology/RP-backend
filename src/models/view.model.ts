@@ -20,8 +20,6 @@ const schema = new Schema({
   },
 })
 
-// schema.index({ viewer: 1, content: 1 }, { unique: true })
-
 // on the off chance that two contents from have the same ID
 schema.index({ viewer: 1, content: 1, contentType: 1 }, { unique: true })
 
