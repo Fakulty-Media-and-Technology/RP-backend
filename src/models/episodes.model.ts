@@ -74,8 +74,10 @@ const schema = new Schema(
 )
 
 schema.pre('save', function (next) {
-  this.isVideoReady = typeof this.videoLink === 'string'
-  this.isTrailerReady = typeof this.trailerLink === 'string'
+  if (this.isNew) {
+    this.isVideoReady = typeof this.videoLink === 'string'
+    this.isTrailerReady = typeof this.trailerLink === 'string'
+  }
   next()
 })
 

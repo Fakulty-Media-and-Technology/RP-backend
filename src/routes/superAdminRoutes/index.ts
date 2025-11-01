@@ -55,6 +55,7 @@ superAdminRouter.use('/notifications', superAdminNotificationRouter)
 
 superAdminRouter.post(
   '/create-super-admin',
+  Multer.uploadSingleImage,
   requestValidator(createAdminORSuperAdminSchema),
   OnboardingController.createAdminORSuperAdmin('superadmin'),
 )

@@ -122,14 +122,6 @@ const schema = new Schema(
       required: true,
     },
 
-    // TODO: Move to another collection
-    views: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'users',
-      },
-    ],
-
     active_views: {
       type: Number,
       default: 0,

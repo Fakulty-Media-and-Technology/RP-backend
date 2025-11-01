@@ -5,7 +5,7 @@ import { sendResponse } from '../../utils/responder'
 import { UserSchema } from '../../models/users.model'
 
 export class OnboardingController {
-  static createAdminORSuperAdmin = (role: Extract<UserSchema['role'], 'superadmin' | 'admin'>) =>
+  static createAdminORSuperAdmin = (role: Extract<UserSchema['role'], 'superadmin' | 'admin' | 'giftcard-merchant'>) =>
     Catch.async(async (req, res) => {
       await OnboardingService.createUser({ data: req.body, role, image: req.file })
 

@@ -362,29 +362,39 @@ export class VideoRepo {
       {
         $lookup: {
           from: 'video_uploads',
-          localField: 'videoUpload',
-          foreignField: '_id',
+          localField: '_id',
+          foreignField: 'parentId',
           as: 'videoUpload',
           pipeline: [
             {
               $project: {
+                parentType: true,
                 resolutions: true,
               },
             },
-          ],
-        },
-      },
-
-      {
-        $lookup: {
-          from: 'video_uploads',
-          localField: 'trailerUpload',
-          foreignField: '_id',
-          as: 'trailerUpload',
-          pipeline: [
             {
-              $project: {
-                resolutions: true,
+              $facet: {
+                trailer: [
+                  {
+                    $match: {
+                      parentType: 'vod-trailer',
+                    },
+                  },
+                ],
+                video: [
+                  {
+                    $match: {
+                      parentType: 'vod',
+                    },
+                  },
+                ],
+              },
+            },
+
+            {
+              $set: {
+                trailer: { $first: '$trailer' },
+                video: { $first: '$video' },
               },
             },
           ],
@@ -412,61 +422,15 @@ export class VideoRepo {
       },
 
       {
-        $lookup: {
-          from: 'cast_enums',
-          foreignField: '_id',
-          localField: 'cast',
-          as: 'cast',
-          pipeline: [this._fetchVideoEnumProjectionStage],
+        $set: {
+          videoUpload: { $ifNull: [{ $first: '$videoUpload.video' }, null] },
+          trailerUpload: { $ifNull: [{ $first: '$videoUpload.trailer' }, null] },
         },
       },
 
-      {
-        $lookup: {
-          from: 'ratings',
-          foreignField: 'parentId',
-          localField: '_id',
-          as: 'ratings',
-
-          pipeline: [
-            {
-              $group: {
-                _id: null,
-                avgRating: { $avg: '$rate' },
-              },
-            },
-          ],
-        },
-      },
-
-      {
-        $lookup: {
-          from: 'views',
-          foreignField: 'content',
-          localField: '_id',
-          as: 'views',
-          pipeline: [{ $count: 'total' }],
-        },
-      },
-
-      {
-        $addFields: {
-          videoUpload: { $first: '$videoUpload' },
-          trailerUpload: { $first: '$trailerUpload' },
-          viewsCount: { $ifNull: [{ $first: '$views.total' }, 0] },
-          averageRating: { $ifNull: [{ $first: '$ratings.avgRating' }, 4.5] },
-        },
-      },
-
-      {
-        $project: {
-          views: false,
-          ratings: false,
-          __v: false,
-          updatedAt: false,
-        },
-      },
+      { $unset: ['updatedAt', '__v', 'ratings', 'isTrailerReady', 'isVideoReady'] },
     ])
+
     return aggr as Aggregate<VodCardResponse[]>
   }
 

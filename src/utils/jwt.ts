@@ -1,7 +1,7 @@
 import { sign, verify } from 'jsonwebtoken'
 import env from '../env'
 
-type Payload = {
+export type TokenPayload = {
   id: string
   email: string
   role: string
@@ -10,7 +10,7 @@ type Payload = {
 type TokenType = 'access' | 'refresh'
 
 export class TokenManager {
-  static decode = <T extends Payload>(token: string, type: TokenType) =>
+  static decode = <T extends TokenPayload>(token: string, type: TokenType) =>
     new Promise<T>((resolve, reject) => {
       const secret = type === 'access' ? env.JWT_SECRET : env.JWT_SECRET_REFRESH_TOKEN
 
@@ -20,11 +20,11 @@ export class TokenManager {
       })
     })
 
-  static sign = (type: TokenType, payload: Payload) => {
+  static sign = (type: TokenType, payload: TokenPayload) => {
     const isAccessToken = type === 'access'
     const secret = isAccessToken ? env.JWT_SECRET : env.JWT_SECRET_REFRESH_TOKEN
     return sign(payload, secret, { expiresIn: isAccessToken ? '7d' : '30d' })
   }
 
-  static logout = (payload: Payload) => sign(payload, env.JWT_SECRET, { expiresIn: '1' })
+  static logout = (payload: TokenPayload) => sign(payload, env.JWT_SECRET, { expiresIn: '1' })
 }

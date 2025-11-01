@@ -416,9 +416,10 @@ export class AdminUploadService {
       const videoUploadDocument = UploadMediaUtils.getVideoUploadDocument(videoUpload)
       videoUploadDocument.parentId = videoDocument._id
       videoUploadDocument.parentType = 'vod'
-      videoDocument.videoUpload = videoUploadDocument._id
       await videoUploadDocument.save({ session })
-      videoDocument.videoLink = null as any
+      videoDocument.videoUpload = videoUploadDocument._id
+      videoDocument.isVideoReady = false
+      videoDocument.videoLink = undefined as any
     }
 
     if (data.trailer) {
@@ -437,6 +438,7 @@ export class AdminUploadService {
       videoDocument.trailerUpload = videoUploadDocument._id
       await videoUploadDocument.save({ session })
       videoDocument.trailerLink = undefined as any
+      videoDocument.isTrailerReady = false
     }
 
     await videoDocument.save({ session })
@@ -468,16 +470,6 @@ export class AdminUploadService {
   }
 
   static getSeasonsAndEpisodes = async (vidSeriesId: string, queryParams: any) => {
-    // const videoDocument = await VideoModel.findById(vidSeriesId)
-
-    // if (videoDocument == null) {
-    //   throw new OperationalError('invalid video Id', 404)
-    // }
-
-    // if (videoDocument.type !== 'series') {
-    //   throw new OperationalError('video is not a series', 400)
-    // }
-
     const { page, limit } = QueryParamsFeatures.paginagteParams(queryParams)
 
     const seasonsWithMediaSources = MovieMediaSourcesUtils.resolveSeasonsMediaSources(

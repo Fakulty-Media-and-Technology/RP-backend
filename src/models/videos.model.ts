@@ -211,8 +211,10 @@ const schema = new Schema(
 )
 
 schema.pre('save', function (next) {
-  this.isVideoReady = typeof this.videoLink === 'string' || false
-  this.isTrailerReady = typeof this.trailerLink === 'string' || false
+  if (this.isNew) {
+    this.isVideoReady = typeof this.videoLink === 'string' || false
+    this.isTrailerReady = typeof this.trailerLink === 'string' || false
+  }
   next()
 })
 

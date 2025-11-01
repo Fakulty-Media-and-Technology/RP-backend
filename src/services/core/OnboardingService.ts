@@ -3,7 +3,7 @@ import { SettingsModel } from '../../models/userSettings.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { authCode } from '../../utils/strGen'
 import Email from '../../utils/emailer'
-import { TokenManager } from '../../utils/jwt'
+import { TokenManager, TokenPayload } from '../../utils/jwt'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
 import { ClientSession } from 'mongoose'
@@ -37,22 +37,8 @@ export class OnboardingService {
     }
   }
 
-  protected static _handleAuthCreds = async (user: UserDocument, password: string) => {
-    const [encPasswordResult, encPinResult] = await Promise.allSettled([
-      Password.encrypt(password),
-      Password.encrypt('1111'),
-    ])
-
-    if (encPasswordResult.status === 'rejected') {
-      throw encPasswordResult.reason
-    }
-
-    if (encPinResult.status === 'rejected') {
-      throw encPinResult.reason
-    }
-
-    user.password = encPasswordResult.value
-    user.pin = encPinResult.value
+  protected static _encryptPassword = async (userDocument: UserDocument, password: string) => {
+    userDocument.password = await Password.encrypt(password.trim())
   }
 
   static createUser = async ({ data, role, image }: CreateUserInput) => {
@@ -80,7 +66,7 @@ export class OnboardingService {
       )
     }
 
-    const user = new UserModel({
+    const userDocument = new UserModel({
       first_name: first_name,
       last_name: last_name,
       email: email,
@@ -95,34 +81,12 @@ export class OnboardingService {
     })
 
     const settled = await Promise.allSettled([
-      this._handleAuthCreds(user, password),
-      this._handleUserImageUpload(user, image),
+      this._encryptPassword(userDocument, password),
+      this._handleUserImageUpload(userDocument, image),
     ])
 
     throwReasonIfAny(settled)
-    await user.save()
-
-    if (role !== 'customer') {
-      return
-    }
-
-    const tokenPayload = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    }
-
-    const token = TokenManager.sign('access', tokenPayload)
-    const refToken = TokenManager.sign('refresh', tokenPayload)
-
-    return {
-      _id: user._id,
-      email: user.email,
-      role: user.role,
-      accessToken: token,
-      refreshToken: refToken,
-      verificationPin: user.pin,
-    }
+    await userDocument.save()
   }
 
   static sendResetPin = async (email: string) => {
@@ -184,17 +148,11 @@ export class OnboardingService {
       userDocument.approved = false
       userDocument.verified = false
       await userDocument.save()
-
-      await new Email({
-        firstName: userDocument.first_name,
-        lastName: userDocument.last_name,
-        email: userDocument.email,
-      }).sendVerifyEmail(pin)
-
+      await new Email(Email.makeRecepiant(userDocument)).sendVerifyEmail(pin)
       return userDocument.restricted()
     }
 
-    const newUser = await new UserModel({
+    const newUserDocument = await new UserModel({
       email,
       mobile,
       last_name,
@@ -206,49 +164,32 @@ export class OnboardingService {
       password: await Password.encrypt(password),
     }).save({ session })
 
-    await new Email({
-      firstName: newUser.first_name,
-      lastName: newUser.last_name,
-      email: newUser.email,
-    }).sendVerifyEmail(pin)
-
-    return newUser.restricted()
+    await new Email(Email.makeRecepiant(newUserDocument)).sendVerifyEmail(pin)
+    return newUserDocument.restricted()
   }
 
   private static _getPasswordResetTokenWithSession = async (
     email: string,
     session: MaybeSession,
   ) => {
-    // if the sendResetPasswordToken fails, updated to user will rollback. NEAT TRICK
-    const emailUser = await UserRepo.getByEmail(email)
+    const code = authCode(6)
 
-    if (!emailUser) {
-      throw new OperationalError('invalid email , user does not exist', 400)
-    }
-
-    const pin = authCode(6)
-
-    await UserModel.findOneAndUpdate(
-      {
-        _id: emailUser._id,
-        email: emailUser.email,
-      },
+    const userDocument = await UserModel.findOneAndUpdate(
+      { email },
       {
         auth_expiry: Date.now() + 10 * 60 * 1000, //code expires in 10 minutes
-        auth_code: pin,
+        auth_code: code,
       },
       {
         session,
       },
     )
 
-    const userData = {
-      firstName: emailUser.first_name,
-      lastName: emailUser.last_name,
-      email: emailUser.email,
+    if (!userDocument) {
+      throw new OperationalError('invalid email', 400)
     }
 
-    await new Email(userData).sendResetPasswordToken(pin)
+    await new Email(Email.makeRecepiant(userDocument)).sendResetPasswordToken(code)
   }
 
   private static _getVerificationTokenWithSession = async (
@@ -256,9 +197,8 @@ export class OnboardingService {
     session: MaybeSession,
   ) => {
     const pin = authCode(6)
-    const pinExpiry = Date.now() + 1000 * 60 * 5
 
-    const user = await UserModel.findOneAndUpdate(
+    const userDocument = await UserModel.findOneAndUpdate(
       {
         email: email,
       },
@@ -266,22 +206,16 @@ export class OnboardingService {
         verified: false,
         approved: false,
         auth_code: Number(pin),
-        auth_expiry: pinExpiry,
+        auth_expiry: Date.now() + 1000 * 60 * 5,
       },
       { session },
     )
 
-    if (user == null) {
+    if (userDocument == null) {
       throw new OperationalError('either user is already verified or does not exist', 400)
     }
 
-    const userData = {
-      firstName: user.first_name,
-      lastName: user.last_name,
-      email: user.email,
-    }
-
-    await new Email(userData).sendVerifyEmail(pin)
+    await new Email(Email.makeRecepiant(userDocument)).sendVerifyEmail(pin)
   }
 
   // ************* Public *************
@@ -302,10 +236,16 @@ export class OnboardingService {
   }
 
   static refreshAccessToken = async (refreshToken: string) => {
-    const authUser = await TokenManager.decode(refreshToken, 'refresh')
+    const payload = await TokenManager.decode(refreshToken, 'refresh')
+
+    const userDocument = await UserModel.findById(payload.id)
+
+    if (userDocument == null) {
+      throw new OperationalError('Please Login', 401)
+    }
 
     return {
-      accessToken: TokenManager.sign('access', authUser),
+      accessToken: TokenManager.sign('access', payload),
     }
   }
 
@@ -316,12 +256,12 @@ export class OnboardingService {
       throw new OperationalError('all input are required', 400)
     }
 
-    const pinUser = await UserModel.findOne({
+    const userDocument = await UserModel.findOne({
       email: email,
       auth_code: Number(pin),
     })
 
-    if (!pinUser) {
+    if (!userDocument) {
       throw new OperationalError('invalid credentials supplied', 400)
     }
 
@@ -329,7 +269,7 @@ export class OnboardingService {
       throw new OperationalError('paswords does not match', 400)
     }
 
-    if (Date.now() > Number(pinUser.auth_expiry)) {
+    if (Date.now() > Number(userDocument.auth_expiry)) {
       throw new OperationalError('password reset token has expired', 400)
     }
 
@@ -342,8 +282,8 @@ export class OnboardingService {
 
     await UserModel.findOneAndUpdate(
       {
-        _id: pinUser._id,
-        email: pinUser.email,
+        _id: userDocument._id,
+        email: userDocument.email,
       },
       {
         password: await Password.encrypt(password),
@@ -514,4 +454,3 @@ export class OnboardingService {
     }
   }
 }
-

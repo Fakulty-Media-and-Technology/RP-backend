@@ -50,7 +50,16 @@ const schema = new Schema(
 
     role: {
       type: String,
-      enum: ['customer', 'channel', 'tvshow', 'event', 'podcast', 'admin', 'superadmin'],
+      enum: [
+        'customer',
+        'channel',
+        'tvshow',
+        'event',
+        'podcast',
+        'admin',
+        'superadmin',
+        'giftcard-merchant',
+      ],
       default: 'customer',
       required: true,
     },
