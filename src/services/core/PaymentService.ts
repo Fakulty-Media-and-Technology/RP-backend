@@ -43,6 +43,7 @@ interface InitiatePaymentInput {
   currentUser: LoggedInUser
   useCase: PaymentUseCase
   method: PaymentMethod
+  isMobile: boolean
 
   fullName?: string
   email?: string
@@ -90,7 +91,7 @@ interface PrePaymentOperationsInput
 }
 
 interface HandleGatewayPaymentInput
-  extends Pick<InitiatePaymentInput, 'contestantId' | 'voteInfoId' | 'liveId'> {
+  extends Pick<InitiatePaymentInput, 'contestantId' | 'voteInfoId' | 'liveId' | 'isMobile'> {
   currentUser: LoggedInUser
   payment: PaymentDocument
   session: MaybeSession
@@ -575,6 +576,7 @@ export class PaymentService {
     liveId,
     contestantId,
     voteInfoId,
+    isMobile,
   }: HandleGatewayPaymentInput) => {
     await this._preGatewayPaymentOperations({
       session,
@@ -588,6 +590,14 @@ export class PaymentService {
       useCase: payment.useCase,
     })
 
+    const mobileResponse = {
+      paymentId: payment._id,
+    }
+
+    if (isMobile) {
+      return mobileResponse
+    }
+
     const initPaymentResponse = await Flutterwave.initializePayment({
       email: payment.email,
       currency: payment.currency,
@@ -596,11 +606,7 @@ export class PaymentService {
       transactionReference: payment._id.toString(),
     })
 
-    const response = Object.assign(initPaymentResponse, {
-      paymentId: payment._id,
-    })
-
-    return response
+    return Object.assign(initPaymentResponse, mobileResponse)
   }
 
   protected static _getVideoById = async (videoId: string | undefined) => {
@@ -764,6 +770,7 @@ export class PaymentService {
       voteInfoId,
       contestantId,
       method,
+      isMobile,
     }: InitiatePaymentInput,
     session: MaybeSession,
   ) => {
@@ -796,6 +803,7 @@ export class PaymentService {
           liveId,
           contestantId,
           voteInfoId,
+          isMobile,
         })
       case 'wallet':
         await this._handleWalletPayment({

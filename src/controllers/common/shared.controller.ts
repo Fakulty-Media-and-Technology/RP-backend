@@ -80,6 +80,7 @@ export class SharedController extends UploadMediaUtils {
   static startPayment = Catch.async(async (req, res) => {
     const response = await PaymentService.initiatePayment({
       currentUser: GetDefined.loggedInUser(req.user),
+      isMobile: req.useragent?.isMobile || false,
       ...req.body,
     })
 
