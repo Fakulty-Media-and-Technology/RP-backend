@@ -262,3 +262,84 @@ interface InititateBankTransferResponse {
   is_approved: number
   bank_name: string
 }
+
+export interface FlutterwaveV3WebhookTransferEvent {
+  event: 'transfer.completed'
+  'event.type': 'Transfer'
+  data: FlutterwaveV3WebhookTransferEventData
+}
+
+interface FlutterwaveV3WebhookTransferEventData {
+  id: number
+  account_number: string
+  bank_name: string
+  bank_code: string
+  fullname: string
+  created_at: string
+  currency: string
+  debit_currency: string
+  amount: number
+  fee: number
+  status: 'SUCCESSFUL' | 'FAILED'
+
+  /**
+   * transferDocumentID
+   */
+  reference: string
+
+  meta: null
+  narration: string
+  approver: null
+  complete_message: string
+  requires_approval: number
+  is_approved: number
+}
+
+export interface FlutterwaveV3WebhookPaymentEvent {
+  event: 'charge.completed'
+  data: FlutterwaveWebhookPaymentData
+}
+
+interface FlutterwaveWebhookPaymentData {
+  id: number
+
+  /**
+   * transactionDocumentId
+   */
+  tx_ref: string
+
+  flw_ref: string
+  device_fingerprint: string
+  amount: number
+  currency: string
+  charged_amount: number
+  app_fee: number
+  merchant_fee: number
+  processor_response: string
+  auth_model: string
+  ip: string
+  narration: string
+  status: 'successful' | 'failed'
+  payment_type: string
+  created_at: string
+  account_id: number
+  customer: FlutterwaveV3WebhookPaymentEventCustomer
+  card: FlutterwaveV3WebhookPaymentEventCard
+}
+
+interface FlutterwaveV3WebhookPaymentEventCard {
+  first_6digits: string
+  last_4digits: string
+  issuer: string
+  country: string
+  type: string
+  expiry: string
+}
+
+interface FlutterwaveV3WebhookPaymentEventCustomer {
+  id: number
+  name: string
+  phone_number: null
+  email: string
+  created_at: string
+}

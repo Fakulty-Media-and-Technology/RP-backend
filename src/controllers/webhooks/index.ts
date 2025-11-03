@@ -17,4 +17,11 @@ export class WebhooksController {
 
     res.sendStatus(200)
   })
+
+  static flutterwaveV3 = Catch.async(async (req, res) => {
+    // TODO: Validate Request
+    WebhooksService.flutterEvent(req.body)
+
+    res.sendStatus(200)
+  })
 }

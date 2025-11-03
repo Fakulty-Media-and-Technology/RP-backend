@@ -427,11 +427,53 @@ export class PaymentService {
     }
   }
 
-  static handleWebookEventByReference = async (reference: string) => {
+
+  // TODO: Handle For Flutter
+  protected static _handleFlutterwaveWebhookEventByReferenceTransaction = async (
+    reference: string,
+    session: MaybeSession,
+  ) => {
+    const transaction = await Paystack.verifyPayment(reference)
+
+    const payment = await PaymentRepo.updatePaymentStatus({
+      paymentId: reference,
+      session,
+      status: this._getStatusFromTransaction(transaction),
+    })
+
+    if (payment === null) {
+      throw new OperationalError(`Could not find payment for ref: ${reference}`, 400)
+    }
+
+    switch (payment.status) {
+      case 'success':
+        await this._postPaymentOperationsOnSuccess({
+          session,
+          transaction,
+          payment,
+        })
+        break
+      default:
+        throw new OperationalError(
+          'Unsuccessfull payment recieved on webhook. Id: ' + payment._id,
+          400,
+        )
+    }
+  }
+
+  static handlePaystackWebhookPaymentEventByReference = async (reference: string) => {
     try {
       await withMongoDBSession(this._handleWebhookEventByReferenceTransaction, reference)
     } catch (e: any) {
-      console.error('PaymentService.handleWebookEventByReference error', e.message || e)
+      console.error('PaymentService.handlePaystackWebhookPaymentEventByReference error', e.message || e)
+    }
+  }
+
+  static handleFLutterwaveWebhookPaymentEventByReference = async (reference: string) => {
+    try {
+      await withMongoDBSession(this._handleFlutterwaveWebhookEventByReferenceTransaction, reference)
+    } catch (e: any) {
+      console.error('PaymentService.handlePaystackWebhookPaymentEventByReference error', e.message || e)
     }
   }
 
@@ -818,7 +860,7 @@ export class PaymentService {
           localField: 'liveId',
           foreignField: '_id',
           as: 'liveDetails',
-     
+
           pipeline: [
             {
               $project: {
