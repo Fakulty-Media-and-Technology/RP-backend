@@ -5,7 +5,6 @@ const giftcardVideosSchema = new Schema(
   {
     admin_id: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
       required: true,
       index: true,
     },
@@ -33,6 +32,12 @@ const giftcardVideosSchema = new Schema(
       unique: true,
     },
 
+    creatorMode: {
+      type: String,
+      enum: ['RP', 'MERCHANT'],
+      default: 'RP',
+    },
+
     status: {
       type: String,
       enum: ['active', 'inactive', 'used'],
@@ -42,6 +47,7 @@ const giftcardVideosSchema = new Schema(
 
   {
     timestamps: true,
+    versionKey: false,
   },
 )
 

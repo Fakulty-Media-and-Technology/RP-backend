@@ -1,11 +1,17 @@
+import { ClientSession } from 'mongoose'
 import env from '../../env'
-import { GiftCardModel } from '../../models/giftcard.model'
+import { GiftCardMerchantModel } from '../../models/giftcard.merchant.model'
+import { GiftCard, GiftCardModel } from '../../models/giftcard.model'
 import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
-import { ValidCurrency } from '../../utils/currency'
+import { validCurrencies, ValidCurrency } from '../../utils/currency'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { OperationalError } from '../../utils/OperationalError'
-import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import {
+  ExpressRequestQuery,
+  guranteeNumericResult,
+  QueryParamsFeatures,
+} from '../../utils/QueryParamsFeatures'
 import { genRandUniqId } from '../../utils/strGen'
 
 interface CreateGiftCardInput {
@@ -19,19 +25,118 @@ interface RedeemGiftCardInput {
   giftCode: string
 }
 
+interface GetMerchanttCardsInput {
+  query: ExpressRequestQuery
+  merchantEmail: string
+  currency: string
+}
+
 export class GiftCardService {
-  protected static _getUniqueGiftCode = async (triesCount = 1): Promise<string> => {
-    if (triesCount >= 5) {
+  protected static _getUniqueGiftCode = async (triesCount = 0): Promise<string> => {
+    if (triesCount === 6) {
       throw new OperationalError('Cannot generate giftCode, please try again', 500)
     }
 
-    const uniq_code = genRandUniqId(11 + triesCount).toUpperCase()
+    const uniq_code = genRandUniqId(12 + triesCount).toUpperCase()
 
     const giftCard = await GiftCardModel.findOne({
       code: uniq_code,
     })
 
     return giftCard == null ? uniq_code : await this._getUniqueGiftCode(++triesCount)
+  }
+
+  protected static _generateMerchateGiftCodes = async (quantity: number) => {
+    // TODO: Use Promise.allSettled
+    const codes = await Promise.all(new Array(quantity).fill(0).map(this._getUniqueGiftCode))
+
+    return codes
+  }
+
+  protected static _getMerchant = async (email: string, session?: ClientSession) => {
+    let merchantDocument = await GiftCardMerchantModel.findOne({ email })
+
+    if (merchantDocument == null) {
+      merchantDocument = await new GiftCardMerchantModel({ email }).save({ session })
+    }
+
+    return merchantDocument
+  }
+
+  protected static _trimMerchatCards = (cards: GiftCard[]) =>
+    cards.map(card => ({
+      serialNumber: card.serialNumber,
+      code: card.code,
+      amount: card.amount,
+      currency: card.currency,
+    }))
+
+  static _getMerchantCardsSession = async (
+    { merchantEmail, currency, query }: GetMerchanttCardsInput,
+    session?: ClientSession,
+  ) => {
+    if (!validCurrencies.includes(currency as any)) {
+      throw new OperationalError(`Valid currencies are ${validCurrencies.join(' || ')}`, 400)
+    }
+
+    const amount = guranteeNumericResult(query.amount, 1)
+    const quantity = guranteeNumericResult(query.quantity, 1)
+    const merchantDocument = await this._getMerchant(merchantEmail)
+
+    const [codesSettled, recentSerialNumberSettled] = await Promise.allSettled([
+      this._generateMerchateGiftCodes(quantity),
+      GiftCardModel.find({}).sort({ serialNumber: -1 }).limit(1),
+    ])
+
+    if (codesSettled.status === 'rejected') {
+      throw new OperationalError('Error generating codes. Please try again', 500)
+    }
+    if (recentSerialNumberSettled.status === 'rejected') {
+      throw new OperationalError('Error generating Serial Number. Please try again', 500)
+    }
+
+    const codes = codesSettled.value
+    const lastSerialNumber = recentSerialNumberSettled.value[0]?.serialNumber ?? 0
+
+    const cards = await GiftCardModel.insertMany(
+      codes.map((code, i) => ({
+        admin_id: merchantDocument._id,
+        serialNumber: lastSerialNumber + i + 1,
+        amount,
+        currency,
+        code,
+        creatorMode: 'MERCHANT',
+        status: 'active',
+      })),
+      { session },
+    )
+
+    return this._trimMerchatCards(cards)
+  }
+
+  static getMerchantCards = async (params: GetMerchanttCardsInput) =>
+    await withMongoDBSession(this._getMerchantCardsSession, params)
+
+  static setMerchactCardIsUsed = async (code: string, merchantEmail: string) => {
+    const merchantDocument = await GiftCardMerchantModel.findOne({ email: merchantEmail })
+
+    if (merchantDocument == null) {
+      throw new OperationalError('Invalid Email address', 404)
+    }
+
+    const cardDocument = await GiftCardModel.findOne({
+      code,
+    })
+
+    if (
+      cardDocument == null ||
+      cardDocument.admin_id.toString() !== merchantDocument._id.toString()
+    ) {
+      throw new OperationalError('Invalid Code', 404)
+    }
+
+    cardDocument.status = 'used'
+    await cardDocument.save()
   }
 
   static create = async ({ currentAdmin, amount, currency }: CreateGiftCardInput) => {

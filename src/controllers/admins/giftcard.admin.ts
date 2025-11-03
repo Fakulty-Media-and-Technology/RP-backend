@@ -44,4 +44,25 @@ export class AdminGiftCardController {
       res,
     })
   })
+
+  static merchantNotifyIsUsed = Catch.async(async ({ params }, res) => {
+    await GiftCardService.setMerchactCardIsUsed(params.code, params.email)
+
+    sendResponse({
+      res,
+    })
+  })
+
+  static getMerchantCards = Catch.async(async ({ params, query }, res) => {
+    const cards = await GiftCardService.getMerchantCards({
+      query,
+      currency: params.currency,
+      merchantEmail: params.email,
+    })
+
+    sendResponse({
+      res,
+      data: cards,
+    })
+  })
 }
