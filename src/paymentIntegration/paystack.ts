@@ -113,21 +113,6 @@ export class Paystack {
 
     return response
   }
-
-  // static verifyTransfer = async (reference: string) => {
-  //   const response = await paystackClient.transfer.verify(reference)
-
-  //   type X = Extract<Awaited<ReturnType<typeof paystackClient.transfer.verify>>, 'VerifyTransfer'>
-
-  //   const y = {} sat X
-
-  //   y.
-
-  //       if (response.data == null || !response.status) {
-  //     throw new OperationalError(response.message, 400)
-  //   }
-
-  // }
 }
 
 export default Paystack

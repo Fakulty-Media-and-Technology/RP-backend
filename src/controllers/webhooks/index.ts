@@ -12,13 +12,18 @@ export class WebhooksController {
     const payshackHash = req.headers['x-paystack-signature']
 
     if (hash == payshackHash) {
-      WebhooksService.delegateHandler(req.body)
+      WebhooksService.paystackEvent(req.body)
     }
 
     res.sendStatus(200)
   })
 
   static flutterwaveV3 = Catch.async(async (req, res) => {
+    console.log(
+      'Is Incoming hash same as verif-hash header',
+      req.headers['verif-hash'] === env.FLUTTERWAVE_SECRET_HASH,
+    )
+
     // TODO: Validate Request
     WebhooksService.flutterEvent(req.body)
 

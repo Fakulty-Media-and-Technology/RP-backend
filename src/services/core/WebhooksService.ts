@@ -1,5 +1,8 @@
 import { PayoutSchema } from '../../models/payouts.model'
-import { FlutterwaveV3WebhookTransferEvent, FlutterwaveV3WebhookPaymentEvent } from '../../paymentIntegration/flutterwave'
+import {
+  FlutterwaveV3WebhookTransferEvent,
+  FlutterwaveV3WebhookPaymentEvent,
+} from '../../paymentIntegration/flutterwave'
 import { OperationalError } from '../../utils/OperationalError'
 import { PaymentService } from './PaymentService'
 import { PayoutService } from './PayoutService'
@@ -34,7 +37,7 @@ export class WebhooksService {
     return payoutStatus
   }
 
-  static flutterEvent = (
+  static flutterEvent = async (
     event: FlutterwaveV3WebhookTransferEvent | FlutterwaveV3WebhookPaymentEvent,
   ) => {
     const fLW_Event = event.event
@@ -42,6 +45,7 @@ export class WebhooksService {
     try {
       switch (fLW_Event) {
         case 'charge.completed':
+          await PaymentService.processFLWPaymentByReference(event.data.tx_ref)
           break
 
         case 'transfer.completed':
@@ -50,17 +54,19 @@ export class WebhooksService {
         default:
           throw new Error(`Unkown Event ${fLW_Event as any}`)
       }
-    } catch (e: any) {}
+    } catch (e: any) {
+      console.error('Error in WebhooksService.flutterEvent', e)
+    }
   }
 
-  static delegateHandler = async ({ event, reference, data }: DelegateServiceInput) => {
+  static paystackEvent = async ({ event, reference, data }: DelegateServiceInput) => {
     try {
       if (event === 'charge.success') {
         if (data == null) {
           throw new OperationalError('Expected data object for charge.success event', 500)
         }
 
-        await PaymentService.handlePaystackWebhookPaymentEventByReference(data.reference)
+        await PaymentService.processPaystackPaymentByReference(data.reference)
         return
       }
 

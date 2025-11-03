@@ -29,6 +29,7 @@ import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunn
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { toObjectId } from '../../repositories/VideoRepo'
+import { Flutterwave } from '../../paymentIntegration/flutterwave'
 
 type PaystackTransaction = Awaited<ReturnType<typeof Paystack.verifyPayment>>
 type PaymentStatus = PaymentSchema['status']
@@ -114,7 +115,7 @@ type ProcessVoteInput = Pick<InitiatePaymentInput, 'voteInfoId' | 'contestantId'
 
 type PostPaymentUsecaseHandlerInput = Pick<PostPaymentActionsInput, 'session' | 'payment'>
 
-type GetStatusFromTransaction = (t: PaystackTransaction) => PaymentStatus
+type GetStatusFromTransaction = (t: PaystackTransaction['status']) => PaymentStatus
 
 export class PaymentService {
   protected static _fetchVotePredicateDocumentsWithSharedLiveId = async ({
@@ -296,6 +297,7 @@ export class PaymentService {
     }
   }
 
+  // TODO: Remake to Flutterwave Model
   protected static _registerPaymentCardDetails = async ({
     transaction,
     payment,
@@ -325,26 +327,27 @@ export class PaymentService {
     }
   }
 
-  protected static _getStatusFromTransaction: GetStatusFromTransaction = ({ status }) => {
-    if (status === 'success') {
-      return 'success'
-    }
+  protected static _convertPaystactTranxStatusToPaymentStatus: GetStatusFromTransaction =
+    status => {
+      if (status === 'success') {
+        return 'success'
+      }
 
-    if (status === 'reversed') {
-      return 'reversed'
-    }
+      if (status === 'reversed') {
+        return 'reversed'
+      }
 
-    if (status === 'abandoned') {
-      return 'abandoned'
-    }
+      if (status === 'abandoned') {
+        return 'abandoned'
+      }
 
-    if (status === 'processing' || status === 'pending' || status === 'queued') {
-      console.error('Paystack is triggering webhooks for pending transactions. Status', status)
-      return 'pending'
-    }
+      if (status === 'processing' || status === 'pending' || status === 'queued') {
+        console.error('Paystack is triggering webhooks for pending transactions. Status', status)
+        return 'pending'
+      }
 
-    return 'failed'
-  }
+      return 'failed'
+    }
 
   protected static _topUpWallet = async ({ payment, session }: PostPaymentUsecaseHandlerInput) => {
     await WalletRepo.updateBalance({
@@ -395,7 +398,7 @@ export class PaymentService {
     })
   }
 
-  protected static _handleWebhookEventByReferenceTransaction = async (
+  protected static _processPaystackPaymentByReferenceSession = async (
     reference: string,
     session: MaybeSession,
   ) => {
@@ -404,7 +407,7 @@ export class PaymentService {
     const payment = await PaymentRepo.updatePaymentStatus({
       paymentId: reference,
       session,
-      status: this._getStatusFromTransaction(transaction),
+      status: this._convertPaystactTranxStatusToPaymentStatus(transaction.status),
     })
 
     if (payment === null) {
@@ -426,54 +429,78 @@ export class PaymentService {
         )
     }
   }
-
 
   // TODO: Handle For Flutter
-  protected static _handleFlutterwaveWebhookEventByReferenceTransaction = async (
+  protected static _processFLWPaymentByReferenceSession = async (
     reference: string,
     session: MaybeSession,
   ) => {
-    const transaction = await Paystack.verifyPayment(reference)
+    const transaction = await Flutterwave.verifyPaymentByReference(reference)
+
+    if (transaction == null) {
+      throw new OperationalError('FLw Could not find tx-ref ' + reference, 404)
+    }
 
     const payment = await PaymentRepo.updatePaymentStatus({
       paymentId: reference,
       session,
-      status: this._getStatusFromTransaction(transaction),
+      status: transaction.status === 'successful' ? 'success' : 'failed',
     })
 
     if (payment === null) {
       throw new OperationalError(`Could not find payment for ref: ${reference}`, 400)
     }
 
-    switch (payment.status) {
-      case 'success':
-        await this._postPaymentOperationsOnSuccess({
-          session,
-          transaction,
-          payment,
-        })
+    // REDO to FLW SPECS
+    //this._registerPaymentCardDetails(params)
+
+    const params = {
+      payment,
+      session,
+    }
+
+    switch (payment.useCase) {
+      case 'topup':
+        await this._topUpWallet(params)
         break
+
+      case 'live schedule ext':
+        await this._extendLive(params)
+        break
+
+      case 'donate':
+        await this._topUpClientsWallet(params)
+        break
+
+      case 'vote':
+        await this._updateVote(params)
+        break
+
+      // status already updated by the caller
+      case 'live schedule':
+        break
+
+      case 'subscription':
+        break
+
       default:
-        throw new OperationalError(
-          'Unsuccessfull payment recieved on webhook. Id: ' + payment._id,
-          400,
-        )
+        throw new OperationalError(`Unkown payment use case ${payment.useCase}`, 400)
     }
   }
 
-  static handlePaystackWebhookPaymentEventByReference = async (reference: string) => {
+  static processPaystackPaymentByReference = async (reference: string) => {
     try {
-      await withMongoDBSession(this._handleWebhookEventByReferenceTransaction, reference)
+      await withMongoDBSession(this._processPaystackPaymentByReferenceSession, reference)
     } catch (e: any) {
-      console.error('PaymentService.handlePaystackWebhookPaymentEventByReference error', e.message || e)
+      console.error('PaymentService._processPaystackPaymentByReference error', e.message || e)
     }
   }
 
-  static handleFLutterwaveWebhookPaymentEventByReference = async (reference: string) => {
+  static processFLWPaymentByReference = async (reference: string) => {
     try {
-      await withMongoDBSession(this._handleFlutterwaveWebhookEventByReferenceTransaction, reference)
+      await withMongoDBSession(this._processFLWPaymentByReferenceSession, reference)
     } catch (e: any) {
-      console.error('PaymentService.handlePaystackWebhookPaymentEventByReference error', e.message || e)
+      console.error('PaymentService._processPaystackPaymentByReference error', e.message || e)
     }
   }
 

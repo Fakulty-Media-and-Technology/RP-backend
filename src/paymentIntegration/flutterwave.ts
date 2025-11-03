@@ -30,10 +30,9 @@ export class Flutterwave {
     }
   }
 
-  // v3 flutterwave reactnative sdk is still in v3
-  static verifyPaymentTransaction = async (tx_ref: string) => {
+  static verifyPaymentByReference = async (reference: string) => {
     const data = await this._getV3ResponseData<VerifyPaymentResponseData>(
-      this._v3AxiosInstance.get(`/transactions/verify_by_reference?tx_ref=${tx_ref}`),
+      this._v3AxiosInstance.get(`/transactions/verify_by_reference?tx_ref=${reference}`),
     )
 
     return data
@@ -160,13 +159,24 @@ interface VerifyPaymentResponseData {
   auth_model: string
   ip: string
   narration: string
-  status: string
-  payment_type: string
+  status: 'successful'
+  payment_type: 'card'
   created_at: string
   account_id: number
   meta: Meta
   amount_settled: number
   customer: Customer
+  card: PaymentResponseCard
+}
+
+interface PaymentResponseCard {
+  first_6digits: string
+  last_4digits: string
+  issuer: string
+  country: string
+  type: string
+  token: string
+  expiry: string // "09/32"
 }
 
 interface Customer {
