@@ -71,7 +71,7 @@ export const intitiatePaymentSchema = {
     amount: Joi.number().strict().required(),
     currency: CURRENCY_SCHEMA.required(),
     fullName: STRING_SCHEMA,
-    method: STRING_SCHEMA.valid('paystack', 'wallet').required(),
+    method: STRING_SCHEMA.valid('flutterwave', 'wallet').required(),
 
     useCase: STRING_SCHEMA.valid(
       'subscription',

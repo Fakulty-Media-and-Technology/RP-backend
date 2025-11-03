@@ -8,6 +8,9 @@ export class ErrorUtils {
     }
 
     if (error.response) {
+      // TODO: REMOVE
+      console.dir({ serverResponse: error.response?.data || error.response }, { depth: null })
+
       throw new OperationalError(
         error.response?.data?.message ?? 'GET Response error',
         error.response.status,

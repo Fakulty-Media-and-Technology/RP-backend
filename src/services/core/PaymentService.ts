@@ -588,14 +588,13 @@ export class PaymentService {
       useCase: payment.useCase,
     })
 
-    const initPaymentResponse = await Paystack.initializePayment({
+    const initPaymentResponse = await Flutterwave.initializePayment({
       email: payment.email,
       currency: payment.currency,
       amount: payment.amount,
-      reference: payment._id.toString(),
+      fullname: currentUser.first_name + ' ' + currentUser.last_name,
+      transactionReference: payment._id.toString(),
     })
-
-    await payment.save({ session })
 
     const response = Object.assign(initPaymentResponse, {
       paymentId: payment._id,
@@ -789,7 +788,7 @@ export class PaymentService {
     })
 
     switch (payment.method) {
-      case 'paystack':
+      case 'flutterwave':
         return await this._handleGatewayPayment({
           currentUser,
           payment,

@@ -9,7 +9,7 @@ export class Flutterwave {
   protected static _v3AxiosInstance = axios.create({
     baseURL: 'https://api.flutterwave.com/v3',
     headers: {
-      'Content-Type': 'Content-Type: application/json',
+      'Content-Type': 'application/json',
       accept: 'application/json',
       Authorization: 'Bearer ' + env.FLUTTERWAVE_SECRET_KEY,
     },
@@ -28,6 +28,48 @@ export class Flutterwave {
     } catch (e) {
       ErrorUtils.transformAxiosResponseError(e)
     }
+  }
+
+  static initializePayment = async (params: {
+    transactionReference: string
+    amount: number
+    currency: string
+    email: string
+    fullname: string
+  }) => {
+    const payload = {
+      payment_type: 'card',
+      meta: {},
+      tx_ref: params.transactionReference,
+      amount: params.amount,
+      currency: params.currency,
+      redirect_url: `https://ee1e-102-88-35-157.ngrok-free.app`,
+
+      customer: {
+        email: params.email,
+        name: params.fullname,
+      },
+
+      customizations: {
+        title: 'Reeplay',
+        logo: 'https://fastly.picsum.photos/id/143/536/354.jpg?hmac=4e82-520BioqZ8ztlrq1E7sOEDdhAfq7R37hykBM7EE',
+      },
+    }
+
+    const data = await this._getV3ResponseData<InitilizePaymentResponse>(
+      this._v3AxiosInstance.post('https://api.flutterwave.com/v3/payments', payload),
+    )
+
+    if (data == null) {
+      throw new OperationalError('Could not Initialize payment', 500)
+    }
+
+    const response = {
+      reference: payload.tx_ref,
+      redirectUrl: data.link,
+    }
+
+    return response
   }
 
   static verifyPaymentByReference = async (reference: string) => {
@@ -118,6 +160,10 @@ export class Flutterwave {
   }
 }
 
+interface InitilizePaymentResponse {
+  link: string
+}
+
 interface InitiateNGNBankTransferParams {
   bankCode: string
   accountNumber: string
@@ -142,7 +188,7 @@ interface InitiateUSDankTransferParams {
 interface FlutterwaveV3ApiResponse<T> {
   status: string
   message: string
-  data: T | null
+  data: T
 }
 
 interface VerifyPaymentResponseData {
