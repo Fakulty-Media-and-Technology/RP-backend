@@ -781,7 +781,7 @@ export class PaymentService {
     fullName = fullName ?? `${currentUser.first_name} ${currentUser.last_name}`
     email = email?.toLowerCase() ?? currentUser.email
 
-    const payment = new PaymentModel({
+    const payment = await new PaymentModel({
       userId: currentUser._id,
       currency,
       fullName,
@@ -792,7 +792,7 @@ export class PaymentService {
       useCase,
       liveId,
       videoId,
-    })
+    }).save({ session })
 
     switch (payment.method) {
       case 'flutterwave':
