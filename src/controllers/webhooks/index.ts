@@ -19,15 +19,13 @@ export class WebhooksController {
   })
 
   static flutterwaveV3 = Catch.async(async (req, res) => {
-    console.log(
-      'Is Incoming hash same as verif-hash header',
-      req.headers['verif-hash'] === env.FLUTTERWAVE_SECRET_HASH,
-      { body: req.body },
-    )
+    if (req.headers['verif-hash'] !== env.FLUTTERWAVE_SECRET_HASH) {
+      console.error('🛑Invalid flutterwave signature.', req.headers)
+      res.sendStatus(403)
+      return
+    }
 
-    // TODO: Validate Request
     WebhooksService.flutterEvent(req.body)
-
     res.sendStatus(200)
   })
 }
