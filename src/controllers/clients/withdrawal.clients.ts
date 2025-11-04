@@ -16,15 +16,6 @@ export class ClientWithdrawalController {
     })
   })
 
-  // static reqPayoutEdit = Catch.async(async ({ user, params, body }, res) => {
-  //   await PayoutService.editPayout(GetDefined.loggedInUser(user), params.id, body)
-
-  //   sendResponse({
-  //     res,
-  //     message: 'Payout edited',
-  //   })
-  // })
-
   static payoutReqInfoAll = Catch.async(async ({ user, query }, res) => {
     sendResponse({
       res,

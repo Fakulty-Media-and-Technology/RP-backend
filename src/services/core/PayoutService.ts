@@ -1,6 +1,7 @@
 import env from '../../env'
 import { PayoutDocument, PayoutModel, PayoutSchema } from '../../models/payouts.model'
 import { WalletModel } from '../../models/wallet.model'
+import { Flutterwave } from '../../paymentIntegration/flutterwave'
 import Paystack from '../../paymentIntegration/paystack'
 import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
@@ -15,7 +16,7 @@ interface RequestPayoutInput {
   accountName: string
   bankName: string
   bankCode: string
-  bankType: string
+  bankType: string // TODO: REMOVE
   currency: ValidCurrency
   currentUser: LoggedInUser
 }
@@ -26,7 +27,7 @@ interface HandleWebhookOperationsInput {
 }
 
 export class PayoutService {
-  protected static _calcPercentOff = (amount: number, percent: number) => (amount * percent) / 100
+  protected static _getCharges = (amount: number, percent: number) => (amount * percent) / 100
 
   protected static _reqPayoutTransaction = async (
     {
@@ -37,7 +38,6 @@ export class PayoutService {
       bankName,
       currency,
       bankCode,
-      bankType,
     }: RequestPayoutInput,
     session: MaybeSession,
   ) => {
@@ -68,12 +68,11 @@ export class PayoutService {
       throw new OperationalError('insufficient funds', 400)
     }
 
-    const charges = this._calcPercentOff(amount, env.PAYOUT_SERVICE_CHARGE)
-    const earnings = amount - charges
+    const charges = this._getCharges(amount, env.PAYOUT_SERVICE_CHARGE)
 
     const payout = new PayoutModel({
       client_id: currentUser._id,
-      amount: earnings,
+      amount: amount - charges,
       currency,
       charges,
       accountNumber,
@@ -83,24 +82,24 @@ export class PayoutService {
 
     switch (currency) {
       case 'NGN':
+        await Flutterwave.initiateNGNbankTransfer({
+          accountNumber,
+          bankCode,
+          amount: payout.amount,
+          fullname: `${currentUser.first_name} ${currentUser.last_name}`,
+          reference: payout._id.toString(),
+          email: currentUser.email,
+        })
+
         wallet.NGNBalance = wallet.NGNBalance - amount
         break
       case 'USD':
+        // TODO:
         wallet.USDBalance = wallet.USDBalance - amount
         break
       default:
         break
     }
-
-    await Paystack.initiateTransfer({
-      reference: payout._id.toString(),
-      amount: earnings,
-      fullName: `${currentUser.first_name} ${currentUser.last_name}`,
-      bankCode,
-      accountNumber,
-      currency,
-      bankType,
-    })
 
     await payout.save({ session })
     await wallet.save({ session })
@@ -148,14 +147,13 @@ export class PayoutService {
     })
   }
 
-  static _handleWebhookOperationsTransaction = async (
+  static _handleWebhookOperationsByRefAndStatus = async (
     { reference, status }: HandleWebhookOperationsInput,
     session: MaybeSession,
   ) => {
     const payout = await PayoutModel.findByIdAndUpdate(reference, { $set: { status } }, { session })
 
     console.log('Payout handler called')
-
     console.dir({ reference, status, payout }, { depth: null })
 
     if (payout == null) {
@@ -165,11 +163,7 @@ export class PayoutService {
     // predicate for side effects
     switch (status) {
       case 'completed':
-        break
-
       case 'pending':
-        break
-
       case 'processing':
         break
 
@@ -188,7 +182,7 @@ export class PayoutService {
 
   static handleWebhookOperations = async (params: HandleWebhookOperationsInput) => {
     try {
-      await withMongoDBSession(this._handleWebhookOperationsTransaction, params)
+      await withMongoDBSession(this._handleWebhookOperationsByRefAndStatus, params)
     } catch (e: any) {
       console.error('PayoutService.handleWebhookOperations error', e.message || e)
     }

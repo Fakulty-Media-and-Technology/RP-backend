@@ -22,6 +22,7 @@ export class WebhooksController {
     console.log(
       'Is Incoming hash same as verif-hash header',
       req.headers['verif-hash'] === env.FLUTTERWAVE_SECRET_HASH,
+      { body: req.body },
     )
 
     // TODO: Validate Request

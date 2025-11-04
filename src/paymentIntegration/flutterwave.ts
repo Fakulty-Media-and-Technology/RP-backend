@@ -137,7 +137,7 @@ export class Flutterwave {
     bankCode,
     accountNumber,
     amount,
-    payoutId,
+    reference,
     fullname,
     email,
   }: InitiateNGNBankTransferParams) => {
@@ -147,7 +147,7 @@ export class Flutterwave {
       amount,
       narration,
       currency: 'NGN',
-      reference: payoutId,
+      reference,
       email,
       fullname,
     }
@@ -168,7 +168,7 @@ interface InitiateNGNBankTransferParams {
   bankCode: string
   accountNumber: string
   amount: number
-  payoutId: string
+  reference: string
   email: string
   fullname: string
 }
@@ -339,7 +339,7 @@ interface FlutterwaveV3WebhookTransferEventData {
   status: 'SUCCESSFUL' | 'FAILED'
 
   /**
-   * transferDocumentID
+   * payoutID
    */
   reference: string
 
@@ -360,7 +360,7 @@ interface FlutterwaveWebhookPaymentData {
   id: number
 
   /**
-   * transactionDocumentId
+   * paymentID
    */
   tx_ref: string
 

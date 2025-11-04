@@ -49,6 +49,10 @@ export class WebhooksService {
           break
 
         case 'transfer.completed':
+          await PayoutService.handleWebhookOperations({
+            reference: event.data.reference,
+            status: event.data.status === 'SUCCESSFUL' ? 'completed' : 'rejected',
+          })
           break
 
         default:
