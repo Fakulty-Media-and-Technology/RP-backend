@@ -31,4 +31,11 @@ export class ClientWithdrawalController {
       data: await PayoutService.requestPayoutInfoGroups(GetDefined.loggedInUser(user)),
     })
   })
+  static listBanks = Catch.async(async ({ params }, res) => {
+    sendResponse({
+      res,
+      message: '',
+      data: await PayoutService.listBanks(params.currency),
+    })
+  })
 }

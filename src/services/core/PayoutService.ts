@@ -5,7 +5,7 @@ import { Flutterwave } from '../../paymentIntegration/flutterwave'
 import Paystack from '../../paymentIntegration/paystack'
 import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
-import { ValidCurrency } from '../../utils/currency'
+import { validCurrencies, ValidCurrency } from '../../utils/currency'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
@@ -16,7 +16,6 @@ interface RequestPayoutInput {
   accountName: string
   bankName: string
   bankCode: string
-  bankType: string // TODO: REMOVE
   currency: ValidCurrency
   currentUser: LoggedInUser
 }
@@ -105,6 +104,16 @@ export class PayoutService {
     await wallet.save({ session })
   }
 
+  static listBanks = async (currency: string) => {
+    if (!validCurrencies.includes(currency as any)) {
+      throw new OperationalError(`Valid currencies are ${validCurrencies.join(' || ')}`, 404)
+    }
+
+    const country = currency.slice(0, -1)
+    const banks = await Flutterwave.listBanks(country)
+    return banks
+  }
+
   static requestPayout = async (params: RequestPayoutInput) => {
     await withMongoDBSession(this._reqPayoutTransaction, params)
   }
@@ -147,7 +156,7 @@ export class PayoutService {
     })
   }
 
-  static _handleWebhookOperationsByRefAndStatus = async (
+  protected static _handleWebhookOperationsByRefAndStatus = async (
     { reference, status }: HandleWebhookOperationsInput,
     session: MaybeSession,
   ) => {
@@ -188,3 +197,5 @@ export class PayoutService {
     }
   }
 }
+
+
