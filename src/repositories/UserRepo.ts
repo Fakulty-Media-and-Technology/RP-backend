@@ -138,7 +138,7 @@ export class UserRepo {
           pipeline: [
             {
               $sort: {
-                createdAt: -1,
+                _id: -1,
               },
             },
           ],
@@ -168,14 +168,6 @@ export class UserRepo {
       match,
       { $skip: skip(page, limit) },
       { $limit: limit },
-      {
-        $lookup: {
-          from: 'wallets',
-          foreignField: 'user_id',
-          localField: '_id',
-          as: 'wallets',
-        },
-      },
 
       {
         $lookup: {
@@ -245,7 +237,6 @@ export class UserRepo {
           role: true,
           email: true,
           joined: '$createdAt',
-          walletBal: { $ifNull: [{ $first: '$wallets.balance' }, 0] },
           substatus: {
             $cond: {
               if: { $eq: ['$verified', true] },

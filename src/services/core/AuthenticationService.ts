@@ -21,7 +21,7 @@ interface CreateUserInput {
   image?: Express.Multer.File
 }
 
-export class OnboardingService {
+export class AuthenticationService {
   protected static _handleUserImageUpload = async (user: UserDocument, image?: MulterFile) => {
     if (!image) return
 
@@ -304,7 +304,7 @@ export class OnboardingService {
     return await withMongoDBSession(this._createCustomerWithSession, data)
   }
 
-  static signIn = async (email: string, password: string) => {
+  protected static _sharedSigninSteps = async (email: string, password: string) => {
     const userDocument = GetDefined.userDocument(await UserRepo.getByEmail(email))
 
     if (!userDocument) {
@@ -324,36 +324,57 @@ export class OnboardingService {
       throw new OperationalError('incorrect password', 404)
     }
 
-    const pin = authCode(6)
+    return userDocument
+  }
 
-    // do not use session.
-    if (!userDocument.verified) {
-      await UserRepo.updateById(userDocument.id, {
-        auth_code: Number(pin),
-        auth_expiry: Date.now() + 1000 * 60 * 5,
-      })
+  static adminSignIn = async (email: string, password: string) => {
+    const adminDocument = await this._sharedSigninSteps(email, password)
 
-      await new Email({
-        firstName: userDocument.first_name,
-        lastName: userDocument.last_name,
-        email: userDocument.email,
-      }).sendVerifyEmail(pin)
-
-      throw new OperationalError('Please check your email for your verification code', 400)
+    if (
+      !['channel', 'tvshow', 'event', 'podcast', 'admin', 'superadmin'].includes(adminDocument.role)
+    ) {
+      throw new OperationalError('Admin login: not available to you', 400)
     }
 
-    const payload = TokenManager.makePayload(userDocument)
-    const token = TokenManager.sign('access', payload)
-    const refToken = TokenManager.sign('refresh', payload)
+    const tokenPayload = TokenManager.makePayload(adminDocument)
+    const token = TokenManager.sign('access', tokenPayload)
 
     return {
-      _id: userDocument._id,
-      email: userDocument.email,
-      role: userDocument.role,
-      accessToken: token,
-      refreshToken: refToken,
-      verificationPin: env.IS_PROD ? undefined : pin,
+      token,
+      tokenPayload,
     }
+  }
+
+  static signIn = async (email: string, password: string) => {
+    const userDocument = await this._sharedSigninSteps(email, password)
+
+    if (userDocument.verified) {
+      const payload = TokenManager.makePayload(userDocument)
+      const token = TokenManager.sign('access', payload)
+      const refToken = TokenManager.sign('refresh', payload)
+
+      return {
+        _id: userDocument._id,
+        email: userDocument.email,
+        role: userDocument.role,
+        accessToken: token,
+        refreshToken: refToken,
+      }
+    }
+
+    const pin = authCode(6)
+    await UserRepo.updateById(userDocument.id, {
+      auth_code: Number(pin),
+      auth_expiry: Date.now() + 1000 * 60 * 5,
+    })
+
+    await new Email({
+      firstName: userDocument.first_name,
+      lastName: userDocument.last_name,
+      email: userDocument.email,
+    }).sendVerifyEmail(pin)
+
+    throw new OperationalError('Please check your email for your verification code', 400)
   }
 
   static verifyAccount = async (email: string, token: number) => {

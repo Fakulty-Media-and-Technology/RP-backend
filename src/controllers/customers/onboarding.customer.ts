@@ -1,4 +1,4 @@
-import { OnboardingService } from '../../services/core/OnboardingService'
+import { AuthenticationService } from '../../services/core/AuthenticationService'
 import { Catch } from '../../utils/Catch'
 import { OperationalError } from '../../utils/OperationalError'
 import { sendResponse } from '../../utils/responder'
@@ -7,7 +7,7 @@ import { UserSchema } from '../../models/users.model'
 export class OnboardingController {
   static createAdminORSuperAdmin = (role: Extract<UserSchema['role'], 'superadmin' | 'admin' | 'giftcard-merchant'>) =>
     Catch.async(async (req, res) => {
-      await OnboardingService.createUser({ data: req.body, role, image: req.file })
+      await AuthenticationService.createUser({ data: req.body, role, image: req.file })
 
       sendResponse({
         res,
@@ -16,7 +16,7 @@ export class OnboardingController {
     })
 
   static clientsSignup = Catch.async(async (req, res) => {
-    await OnboardingService.createUser({
+    await AuthenticationService.createUser({
       data: req.body,
       role: req.body.client_type,
       image: req.file,
@@ -29,7 +29,7 @@ export class OnboardingController {
   })
 
   static customerSignup = Catch.async(async (req, res) => {
-    const customer = await OnboardingService.createCustomer(req.body)
+    const customer = await AuthenticationService.createCustomer(req.body)
 
     sendResponse({
       res,
@@ -39,7 +39,7 @@ export class OnboardingController {
   })
 
   static createPin = Catch.async(async ({ body }, res) => {
-    await OnboardingService.createPin(body)
+    await AuthenticationService.createPin(body)
 
     sendResponse({
       res,
@@ -48,7 +48,7 @@ export class OnboardingController {
   })
 
   static resetPin = Catch.async(async ({ params }, res) => {
-    await OnboardingService.sendResetPin(params.email)
+    await AuthenticationService.sendResetPin(params.email)
 
     sendResponse({
       res,
@@ -66,7 +66,7 @@ export class OnboardingController {
     sendResponse({
       res,
       message: 'user account verified',
-      data: await OnboardingService.verifyAccount(email, token),
+      data: await AuthenticationService.verifyAccount(email, token),
     })
   })
 
@@ -80,7 +80,7 @@ export class OnboardingController {
     sendResponse({
       res,
       message: 'Sign In successful',
-      data: await OnboardingService.signIn(email, password),
+      data: await AuthenticationService.signIn(email, password),
     })
   })
 
@@ -90,7 +90,7 @@ export class OnboardingController {
     sendResponse({
       res,
       message: 'access token is still valid',
-      data: { valid: await OnboardingService.validateToken(token, 'access') },
+      data: { valid: await AuthenticationService.validateToken(token, 'access') },
     })
   })
 
@@ -100,7 +100,7 @@ export class OnboardingController {
     sendResponse({
       res,
       message: 'refresh token is still valid',
-      data: { valid: await OnboardingService.validateToken(token, 'refresh') },
+      data: { valid: await AuthenticationService.validateToken(token, 'refresh') },
     })
   })
 
@@ -114,12 +114,12 @@ export class OnboardingController {
     sendResponse({
       res,
       message: 'new access token generated from refresh token',
-      data: await OnboardingService.refreshAccessToken(ref_token),
+      data: await AuthenticationService.refreshAccessToken(ref_token),
     })
   })
 
   static passwordChange = Catch.async(async ({ body }, res) => {
-    await OnboardingService.changePassword(body)
+    await AuthenticationService.changePassword(body)
     sendResponse({ res, message: 'password changed successfully' })
   })
 
@@ -130,7 +130,7 @@ export class OnboardingController {
       throw new OperationalError('required query.u_email must be a string', 400)
     }
 
-    await OnboardingService.getVerificationToken(u_email)
+    await AuthenticationService.getVerificationToken(u_email)
 
     sendResponse({
       res,
@@ -145,7 +145,7 @@ export class OnboardingController {
       throw new OperationalError('required body.email must be a string', 400)
     }
 
-    await OnboardingService.getPasswordResetToken(email)
+    await AuthenticationService.getPasswordResetToken(email)
 
     sendResponse({
       res,

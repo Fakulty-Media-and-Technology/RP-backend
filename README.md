@@ -273,7 +273,7 @@ src
  ┃ ┃ ┣ LiveService.ts
  ┃ ┃ ┣ LiveStreamService.ts
  ┃ ┃ ┣ NotificationService.ts
- ┃ ┃ ┣ OnboardingService.ts
+ ┃ ┃ ┣ AuthenticationService.ts
  ┃ ┃ ┣ PushNotificationService.ts
  ┃ ┃ ┣ VideoService.ts
  ┃ ┃ ┣ VoteService.ts
