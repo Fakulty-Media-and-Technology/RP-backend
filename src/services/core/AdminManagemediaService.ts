@@ -3,15 +3,13 @@ import { Request } from 'express'
 import { LiveSchema } from '../../models/lives.model'
 import { SubtitleModel } from '../../models/subtitle.model'
 import { OperationalError } from '../../utils/OperationalError'
-import { guranteeNumericResult } from '../../utils/QueryParamsFeatures'
+import { guranteeNumericResult, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VideoModel } from '../../models/videos.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { EpisodeModel } from '../../models/episodes.model'
 import { MediaManagement } from '../media-management'
-import { getPromiseAllFulfilledResults } from '../../utils/promises'
-import { PhotoUtils } from '../../utils/photoUtils'
 
 export type AddSubtitleData = {
   parentId: string
@@ -22,15 +20,10 @@ export type AddSubtitleData = {
 
 export class AdminManageMediaService {
   static searchClient = async (searchText: string, query: Request['query']) => {
-    const response = await UserRepo.adminFetchClientsBySearchAggr(
-      new RegExp(searchText, 'i'),
-      guranteeNumericResult(query.page, 1),
-      guranteeNumericResult(query.limit, 10),
-    )
-
-    return getPromiseAllFulfilledResults(
-      await Promise.allSettled(response.map(PhotoUtils.fetchUserAggrResPhoto)),
-    )
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
+    const regex = new RegExp(searchText, 'i')
+    const clients = await UserRepo.adminFetchClientsBySearchAggr(regex, page, limit)
+    return clients
   }
 
   static getLivesByType = async (type: string, query: Request['query']) => {

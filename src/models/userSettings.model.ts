@@ -47,6 +47,8 @@ const settingsSchema = new Schema(
   },
 )
 
+settingsSchema.index({ user_id: 1, video_quality: 1 }, { unique: true })
+
 export const SettingsModel = model('settings', settingsSchema)
 export type SettingsSchema = InferSchemaType<typeof settingsSchema>
 export type Settings = HydratedDocumentFromSchema<typeof settingsSchema>

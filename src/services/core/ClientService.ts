@@ -1,20 +1,14 @@
 import { Request } from 'express'
 import { PaymentRepo } from '../../repositories/PaymentRepo'
 import { UserRepo } from '../../repositories/UserRepo'
-import { guranteeNumericResult } from '../../utils/QueryParamsFeatures'
-import { getPromiseAllFulfilledResults } from '../../utils/promises'
-import { PhotoUtils } from '../../utils/photoUtils'
+import { guranteeNumericResult, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { OperationalError } from '../../utils/OperationalError'
 
 export class ClientService {
   static getAll = async (query: Request['query']) => {
-    const page = guranteeNumericResult(query.page, 1)
-    const limit = guranteeNumericResult(query.limit, 10)
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
     const clients = await UserRepo.adminFetchAllClientsAggr(page, limit)
-
-    return getPromiseAllFulfilledResults(
-      await Promise.allSettled(clients.map(PhotoUtils.fetchUserAggrResPhoto)),
-    )
+    return clients
   }
 
   static getOneById = async (clientId: string) => {
@@ -24,7 +18,7 @@ export class ClientService {
       throw new OperationalError('invalid Client Id', 404)
     }
 
-    return await PhotoUtils.fetchUserAggrResPhoto(client)
+    return client
   }
 
   static clientDeposits = async (query: Request['query']) => {

@@ -68,12 +68,10 @@ const schema = new Schema(
 
     auth_code: {
       type: Number,
-      default: undefined,
     },
 
     auth_expiry: {
       type: Number,
-      default: undefined,
     },
 
     verified: {
@@ -112,6 +110,15 @@ const schema = new Schema(
     toObject: { virtuals: true },
 
     methods: {
+      async resetAuthFeilds(save: boolean) {
+        this.auth_code = undefined
+        this.auth_expiry = undefined
+
+        if (save) {
+          await this.save()
+        }
+      },
+
       restricted() {
         const user = this.toObject()
 

@@ -216,6 +216,7 @@ export class AdminUploadService {
       tVideoUploadDocument.parentId = videoDocument._id
       tVideoUploadDocument.parentType = 'vod-trailer'
       await tVideoUploadDocument.save({ session })
+      videoDocument.isTrailerReady = false
       videoDocument.trailerUpload = tVideoUploadDocument._id
     }
 
@@ -229,6 +230,7 @@ export class AdminUploadService {
       videoUploploadDocument.parentId = videoDocument._id
       videoUploploadDocument.parentType = 'vod'
       await videoUploploadDocument.save({ session })
+      videoDocument.isVideoReady = false
       videoDocument.videoUpload = videoUploploadDocument._id
     }
 
@@ -294,6 +296,7 @@ export class AdminUploadService {
       videoUploadDocument.parentId = episodeDocument._id
       videoUploadDocument.parentType = 'episode-trailer'
       episodeDocument.trailerUpload = videoUploadDocument._id
+      episodeDocument.isTrailerReady = false
       videoUploadDocument.save({ session })
     }
 
@@ -303,6 +306,7 @@ export class AdminUploadService {
       videoUploadDocument.parentId = episodeDocument._id
       videoUploadDocument.parentType = 'episode'
       episodeDocument.videoUpload = videoUploadDocument._id
+      episodeDocument.isVideoReady = false
       videoUploadDocument.save({ session })
     }
 
@@ -419,7 +423,6 @@ export class AdminUploadService {
       await videoUploadDocument.save({ session })
       videoDocument.videoUpload = videoUploadDocument._id
       videoDocument.isVideoReady = false
-      videoDocument.videoLink = undefined as any
     }
 
     if (data.trailer) {
@@ -437,7 +440,6 @@ export class AdminUploadService {
       videoUploadDocument.parentType = 'vod-trailer'
       videoDocument.trailerUpload = videoUploadDocument._id
       await videoUploadDocument.save({ session })
-      videoDocument.trailerLink = undefined as any
       videoDocument.isTrailerReady = false
     }
 

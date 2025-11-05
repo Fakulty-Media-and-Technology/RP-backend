@@ -3,6 +3,7 @@ import { UserModel, UserSchema, UserDocument } from '../models/users.model'
 import { StringOrObjectId } from '../types'
 import { skip } from '../utils/QueryParamsFeatures'
 import { toObjectId } from './VideoRepo'
+import env from '../env'
 
 type UserRole = UserSchema['role']
 type UserRoles = Array<UserRole>
@@ -221,16 +222,25 @@ export class UserRepo {
           ],
         },
       },
+
       {
         $project: {
           fullname: {
             $concat: ['$first_name', ' ', '$last_name'],
           },
+
+          photo: {
+            $cond: {
+              if: { $eq: [{ $ifNull: ['$photo', null] }, null] },
+              then: null,
+              else: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$photo.Key'] },
+            },
+          },
+
           mobile: true,
           country: true,
           gender: true,
           dob: true,
-          photo: true,
           country_code: true,
           role: true,
           email: true,

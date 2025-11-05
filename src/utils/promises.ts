@@ -17,3 +17,11 @@ export const throwReasonIfAny = (settledResults: PromiseSettledResult<any>[]) =>
     }
   })
 }
+
+export const getValueOrThrowReason = <T>(result: PromiseSettledResult<T>) => {
+  if (result.status === 'rejected') {
+    throw result.reason
+  }
+
+  return result.value
+}

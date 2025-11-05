@@ -275,7 +275,6 @@ export class LiveStreamService {
       throw liveSettled.reason
     }
 
-
     const vidQuality = vidQualitySettled.value
     const liveAggrRes = liveSettled.value
     const lives = await LiveMediaSourcesUtils.resolveSources(liveAggrRes, vidQuality, true)
@@ -411,6 +410,7 @@ export class LiveStreamService {
       videoUploadDocument.parentId = liveDocument._id
       videoUploadDocument.parentType = 'live'
       liveDocument.previewVideoUpload = videoUploadDocument._id
+      liveDocument.isPreviewVideoReady = false
       await videoUploadDocument.save({ session })
     }
 
@@ -479,6 +479,7 @@ export class LiveStreamService {
       videoUploadDocument.parentId = liveDocument._id
       videoUploadDocument.parentType = 'live'
       liveDocument.previewVideoUpload = videoUploadDocument._id
+      liveDocument.isPreviewVideoReady = false
       await videoUploadDocument.save({ session })
     }
 

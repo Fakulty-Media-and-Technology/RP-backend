@@ -9,14 +9,21 @@ export class MovieMediaSourcesUtils {
     routine: 'vid' | 'trailer',
     quality: VideoQuality,
   ) => {
-    switch (routine) {
-      case 'vid':
-        return vid.videoLink ?? VidUploadUtils.getResSourceUrl(vid.videoUpload, quality)
-      case 'trailer':
-        return vid.trailerLink ?? VidUploadUtils.getResSourceUrl(vid.trailerUpload, quality)
-      default:
-        throw new OperationalError('invalid getVideoSource routine', 500)
+    let source: string | null = null
+
+    if (routine === 'vid') {
+      source = vid.videoUpload
+        ? VidUploadUtils.getResSourceUrl(vid.videoUpload, quality)
+        : vid.videoLink
     }
+
+    if (routine === 'trailer') {
+      source = vid.trailerLink
+        ? VidUploadUtils.getResSourceUrl(vid.trailerUpload, quality)
+        : vid.trailerLink
+    }
+
+    return source
   }
 
   public static resolveSeasonsMediaSources = (seasons: Season[], quality: VideoQuality) => {

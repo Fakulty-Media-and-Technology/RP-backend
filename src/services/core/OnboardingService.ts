@@ -3,15 +3,15 @@ import { SettingsModel } from '../../models/userSettings.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { authCode } from '../../utils/strGen'
 import Email from '../../utils/emailer'
-import { TokenManager, TokenPayload } from '../../utils/jwt'
+import { TokenManager } from '../../utils/jwt'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
-import { ClientSession } from 'mongoose'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import env from '../../env'
-import { MulterFile } from '../../types'
+import { MulterFile, StringOrObjectId } from '../../types'
 import { throwReasonIfAny } from '../../utils/promises'
 import { MediaManagement } from '../media-management'
+import { GetDefined } from '../../utils/GetDefined'
 
 type Role = UserSchema['role']
 
@@ -87,6 +87,18 @@ export class OnboardingService {
 
     throwReasonIfAny(settled)
     await userDocument.save()
+    this._autoCreateUserSettingsOnSignUp(userDocument._id)
+  }
+
+  protected static _autoCreateUserSettingsOnSignUp = async (newUserId: StringOrObjectId) => {
+    try {
+      await SettingsModel.create({
+        user_id: newUserId,
+        video_quality: '720p',
+      })
+    } catch (e) {
+      console.error('Error in creating settings for new user', newUserId)
+    }
   }
 
   static sendResetPin = async (email: string) => {
@@ -103,9 +115,7 @@ export class OnboardingService {
       throw new OperationalError('Invalid Email', 404)
     }
 
-    const recepiant = Email.makeRecepiant(userDocument)
-
-    await new Email(recepiant).sendResetPin(pin)
+    await new Email(Email.makeRecepiant(userDocument)).sendResetPin(pin)
   }
 
   private static _createCustomerWithSession = async (
@@ -130,12 +140,7 @@ export class OnboardingService {
       throw new OperationalError('pasword does not match', 400)
     }
 
-    if (!Password.isStrong(password)) {
-      throw new OperationalError(
-        'password is too weak: use capital, small letter, interger and not less than 8 character',
-        400,
-      )
-    }
+    Password.checkIsStrongPasswordOrThrow(password)
 
     const pin = authCode(6)
     const pinExpiry = Date.now() + 1000 * 60 * 5 // 5 mins
@@ -174,20 +179,18 @@ export class OnboardingService {
   ) => {
     const code = authCode(6)
 
-    const userDocument = await UserModel.findOneAndUpdate(
-      { email },
-      {
-        auth_expiry: Date.now() + 10 * 60 * 1000, //code expires in 10 minutes
-        auth_code: code,
-      },
-      {
-        session,
-      },
+    const userDocument = GetDefined.userDocument(
+      await UserModel.findOneAndUpdate(
+        { email },
+        {
+          auth_expiry: Date.now() + 10 * 60 * 1000, //code expires in 10 minutes
+          auth_code: code,
+        },
+        {
+          session,
+        },
+      ),
     )
-
-    if (!userDocument) {
-      throw new OperationalError('invalid email', 400)
-    }
 
     await new Email(Email.makeRecepiant(userDocument)).sendResetPasswordToken(code)
   }
@@ -198,22 +201,20 @@ export class OnboardingService {
   ) => {
     const pin = authCode(6)
 
-    const userDocument = await UserModel.findOneAndUpdate(
-      {
-        email: email,
-      },
-      {
-        verified: false,
-        approved: false,
-        auth_code: Number(pin),
-        auth_expiry: Date.now() + 1000 * 60 * 5,
-      },
-      { session },
+    const userDocument = GetDefined.userDocument(
+      await UserModel.findOneAndUpdate(
+        {
+          email,
+        },
+        {
+          verified: false,
+          approved: false,
+          auth_code: Number(pin),
+          auth_expiry: Date.now() + 1000 * 60 * 5,
+        },
+        { session },
+      ),
     )
-
-    if (userDocument == null) {
-      throw new OperationalError('either user is already verified or does not exist', 400)
-    }
 
     await new Email(Email.makeRecepiant(userDocument)).sendVerifyEmail(pin)
   }
@@ -237,15 +238,14 @@ export class OnboardingService {
 
   static refreshAccessToken = async (refreshToken: string) => {
     const payload = await TokenManager.decode(refreshToken, 'refresh')
-
-    const userDocument = await UserModel.findById(payload.id)
+    const userDocument = GetDefined.userDocument(await UserModel.findById(payload.id))
 
     if (userDocument == null) {
       throw new OperationalError('Please Login', 401)
     }
 
     return {
-      accessToken: TokenManager.sign('access', payload),
+      accessToken: TokenManager.sign('access', TokenManager.makePayload(userDocument)),
     }
   }
 
@@ -256,44 +256,24 @@ export class OnboardingService {
       throw new OperationalError('all input are required', 400)
     }
 
-    const userDocument = await UserModel.findOne({
-      email: email,
-      auth_code: Number(pin),
-    })
+    const userDocument = GetDefined.userDocument(
+      await UserModel.findOne({
+        email: email,
+        auth_code: Number(pin),
+      }),
+      'Invalid credentials supplied',
+    )
 
-    if (!userDocument) {
-      throw new OperationalError('invalid credentials supplied', 400)
-    }
+    Password.checkIsSameOrThrow(password, cpassword)
+    Password.checkIsStrongPasswordOrThrow(password)
 
-    if (password !== cpassword) {
-      throw new OperationalError('paswords does not match', 400)
-    }
-
-    if (Date.now() > Number(userDocument.auth_expiry)) {
+    if (userDocument.auth_expiry && Date.now() > Number(userDocument.auth_expiry)) {
+      await userDocument.resetAuthFeilds(true)
       throw new OperationalError('password reset token has expired', 400)
     }
 
-    if (!Password.isStrong(password)) {
-      throw new OperationalError(
-        'password is too weak, use capital & small letter, interger and not less than 8 character',
-        400,
-      )
-    }
-
-    await UserModel.findOneAndUpdate(
-      {
-        _id: userDocument._id,
-        email: userDocument.email,
-      },
-      {
-        password: await Password.encrypt(password),
-        auth_code: null,
-        auth_expiry: null,
-      },
-      {
-        upsert: true,
-      },
-    )
+    userDocument.password = await Password.encrypt(password)
+    await userDocument.resetAuthFeilds(true)
   }
 
   static getVerificationToken = async (email: string) => {
@@ -315,11 +295,9 @@ export class OnboardingService {
       throw new OperationalError('pins do not match', 404)
     }
 
-    const userExist = await UserModel.findOneAndUpdate({ email }, { $set: { pin } }, { new: true })
-
-    if (userExist === null) {
-      throw new OperationalError('User does not exist', 404)
-    }
+    GetDefined.userDocument(
+      await UserModel.findOneAndUpdate({ email }, { $set: { pin } }, { new: true }),
+    )
   }
 
   static createCustomer = async (data: Record<string, any>) => {
@@ -327,32 +305,20 @@ export class OnboardingService {
   }
 
   static signIn = async (email: string, password: string) => {
-    const userExist = await UserRepo.getByEmail(email)
+    const userDocument = GetDefined.userDocument(await UserRepo.getByEmail(email))
 
-    if (!userExist) {
+    if (!userDocument) {
       throw new OperationalError('user does not exist', 404)
     }
 
-    if (userExist.suspended) {
+    if (userDocument.suspended) {
       throw new OperationalError(
         'you have been suspended from using our services, contact the admin',
         404,
       )
     }
 
-    //create a customer settings DB if it doesn't exist
-    const userSettingDB = await SettingsModel.findOne({
-      user_id: userExist._id,
-    })
-
-    if (!userSettingDB) {
-      await SettingsModel.create({
-        user_id: userExist._id,
-        video_quality: '720p',
-      })
-    }
-
-    const passVerify = await Password.compare(password, userExist.password)
+    const passVerify = await Password.compare(password, userDocument.password)
 
     if (!passVerify) {
       throw new OperationalError('incorrect password', 404)
@@ -360,46 +326,30 @@ export class OnboardingService {
 
     const pin = authCode(6)
 
-    if (!userExist.verified) {
-      // do not use session.
-      await UserRepo.updateById(userExist.id, {
+    // do not use session.
+    if (!userDocument.verified) {
+      await UserRepo.updateById(userDocument.id, {
         auth_code: Number(pin),
         auth_expiry: Date.now() + 1000 * 60 * 5,
       })
 
-      // TODO: Send email
-
-      /**
-       *
-       */
-
-      /**
-       * await new Email({
-        firstName: userExist.first_name,
-        lastName: userExist.last_name,
-        email: userExist.email,
+      await new Email({
+        firstName: userDocument.first_name,
+        lastName: userDocument.last_name,
+        email: userDocument.email,
       }).sendVerifyEmail(pin)
-       */
 
-      // throw new OperationalError(
-      //   'user account not verified, check your email for verification code',
-      //   400,
-      // )
+      throw new OperationalError('Please check your email for your verification code', 400)
     }
 
-    const tokenPayload = {
-      id: userExist.id,
-      email: userExist.email,
-      role: userExist.role,
-    }
-
-    const token = TokenManager.sign('access', tokenPayload)
-    const refToken = TokenManager.sign('refresh', tokenPayload)
+    const payload = TokenManager.makePayload(userDocument)
+    const token = TokenManager.sign('access', payload)
+    const refToken = TokenManager.sign('refresh', payload)
 
     return {
-      _id: userExist._id,
-      email: userExist.email,
-      role: userExist.role,
+      _id: userDocument._id,
+      email: userDocument.email,
+      role: userDocument.role,
       accessToken: token,
       refreshToken: refToken,
       verificationPin: env.IS_PROD ? undefined : pin,
@@ -407,49 +357,40 @@ export class OnboardingService {
   }
 
   static verifyAccount = async (email: string, token: number) => {
-    const user = await UserRepo.getByEmail(email)
+    const userDocument = GetDefined.userDocument(await UserRepo.getByEmail(email))
 
-    if (!user) {
-      throw new OperationalError('user does not exist', 400)
-    }
-
-    if (user.suspended) {
+    if (userDocument.suspended) {
       throw new OperationalError(
         'you have been suspended from using our services, contact the admin',
         400,
       )
     }
 
-    if (user.verified) {
+    if (userDocument.verified) {
       throw new OperationalError('user account is already verified', 400)
     }
 
-    if (token != user.auth_code) {
+    if (token != userDocument.auth_code) {
       throw new OperationalError('invalid token', 400)
     }
 
-    if (user.auth_expiry && Date.now() > user.auth_expiry) {
+    if (userDocument.auth_expiry && Date.now() > userDocument.auth_expiry) {
       throw new OperationalError('token has expired!', 400)
     }
 
-    await UserRepo.updateById(user._id.toString(), {
+    await UserRepo.updateById(userDocument._id.toString(), {
       verified: true,
       approved: true,
       auth_code: null,
       auth_expiry: null,
     })
 
-    const tolenPayload = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    }
-
-    const authToken = TokenManager.sign('access', tolenPayload)
+    const payload = TokenManager.makePayload(userDocument)
+    const authToken = TokenManager.sign('access', payload)
 
     return {
-      ...tolenPayload,
-      _id: user.id,
+      ...payload,
+      _id: userDocument.id,
       token: authToken,
     }
   }
