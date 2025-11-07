@@ -311,6 +311,8 @@ export class AuthenticationService {
       throw new OperationalError('user does not exist', 404)
     }
 
+    userDocument.throwIfDeleted()
+
     if (userDocument.suspended) {
       throw new OperationalError(
         'you have been suspended from using our services, contact the admin',

@@ -1,11 +1,9 @@
 import { MediaAccess } from '../../../src/services/media-access'
-import { MediaManagement } from '../../../src/services/media-management'
 import { SuggestionModel } from '../../models/suggestions.model'
 import { UserModel } from '../../models/users.model'
-import { UserRepo } from '../../repositories/UserRepo'
-import { LoggedInUser } from '../../types'
+import { LoggedInUser, StringOrObjectId } from '../../types'
+import { denyGuestUser } from '../../utils/denyGuestUser'
 import { OperationalError } from '../../utils/OperationalError'
-import { isValidEmail } from '../../utils/validate'
 
 interface FetchCustomerProfileInput {
   currentUser: LoggedInUser
@@ -13,6 +11,16 @@ interface FetchCustomerProfileInput {
 }
 
 export class CustomerProfileService {
+  static deleteProfile = async (userId: StringOrObjectId) => {
+    await UserModel.findByIdAndUpdate(userId, {
+      $set: { deleted: true },
+    })
+
+    return {
+      accessToken: 'bad token',
+    }
+  }
+
   static fetchCustomerProfile = async ({
     currentUser,
     currentUserRoleHybrid,
@@ -141,9 +149,7 @@ export class CustomerProfileService {
   static createSuggestion = async (currentUser: LoggedInUser, message: string) => {
     const currentUserRole = currentUser.role as string
 
-    if (currentUserRole === 'guest') {
-      throw new OperationalError('you are not authenticated', 403)
-    }
+    denyGuestUser(currentUser)
 
     await SuggestionModel.create({
       message,

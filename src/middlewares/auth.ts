@@ -64,20 +64,22 @@ export class AuthMiddleware {
       }
 
       // this throws and is handled at the app layer
-      const authUser = await TokenManager.decode(token, 'access')
-      const user = await UserRepo.getUserById(authUser.id)
+      const { id } = await TokenManager.decode(token, 'access')
+      const userDocument = await UserRepo.getUserById(id)
 
-      if (user === null) {
+      if (userDocument === null) {
         throw new OperationalError('User does not exist', 401)
       }
 
-      if (user.suspended) {
+      userDocument.throwIfDeleted()
+
+      if (userDocument.suspended) {
         throw new OperationalError('You are suspended', 403)
       }
 
-      this._checkRolePermission(authHeaderkey, user)
+      this._checkRolePermission(authHeaderkey, userDocument)
 
-      req.user = user
+      req.user = userDocument
       next()
     })
 }

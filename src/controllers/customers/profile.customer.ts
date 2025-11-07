@@ -19,6 +19,16 @@ export class CustomerProfileController {
     })
   })
 
+  static deleteProfile = Catch.async(async ({ user }, res) => {
+    const currentUser = GetDefined.loggedInUser(user)
+    const badToken = await CustomerProfileService.deleteProfile(currentUser._id)
+
+    sendResponse({
+      res,
+      data: badToken,
+    })
+  })
+
   static createSuggestion = Catch.async(async ({ user, body }, res) => {
     await CustomerProfileService.createSuggestion(GetDefined.loggedInUser(user), body.message)
 

@@ -1,5 +1,6 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { PhotoSchema } from './commonSchema'
+import { OperationalError } from '../utils/OperationalError'
 
 const schema = new Schema(
   {
@@ -89,6 +90,11 @@ const schema = new Schema(
       default: false,
     },
 
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
+
     gender: {
       type: String,
       enum: ['male', 'female', 'nil'],
@@ -116,6 +122,12 @@ const schema = new Schema(
 
         if (save) {
           await this.save()
+        }
+      },
+
+      throwIfDeleted(error?: OperationalError) {
+        if (this.deleted) {
+          throw error ?? new OperationalError('User Not Found', 404)
         }
       },
 
