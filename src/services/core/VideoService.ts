@@ -3,7 +3,6 @@ import { LoggedInUser } from '../../types'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
-import { LiveService } from './LiveService'
 
 interface GetVodsByCategoryParams {
   categoryId: string
@@ -12,8 +11,6 @@ interface GetVodsByCategoryParams {
 }
 
 export class VideoService {
-  static Live = LiveService
-
   static searceByText = async (text: string) =>
     await VideoRepo.searchVodContentByRegex(new RegExp(text, 'i'))
 

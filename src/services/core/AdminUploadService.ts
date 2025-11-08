@@ -462,7 +462,7 @@ export class AdminUploadService {
     type: AllVideoTypes,
     queryParams: QueryParamsFeaturesOptions['queryParams'],
   ) => {
-    const aggrgatedVideoDocuments = await VideoRepo.fetchByType(
+    const aggrgatedVideoDocuments = await VideoRepo.adminFetchByType(
       type,
       guranteeNumericResult(queryParams.page, 1),
       guranteeNumericResult(queryParams.limit, 1),

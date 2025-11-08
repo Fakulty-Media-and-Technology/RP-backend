@@ -4,6 +4,7 @@ import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, guranteeNumericResult } from '../../utils/QueryParamsFeatures'
+import { LiveStreamService } from './LiveStreamService'
 import { VideoService } from './VideoService'
 
 type AddFeaturedInput = {
@@ -28,7 +29,7 @@ export class FeaturedService {
     const newFeatured =
       type === 'vod'
         ? await VideoService.addFeatured(id, expiry)
-        : await VideoService.Live.addFeatured(id, expiry)
+        : await LiveStreamService.addFeatured(id, expiry)
 
     if (newFeatured === null) {
       throw new OperationalError('Invalid Id', 404)

@@ -6,12 +6,10 @@ import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
 import { Password } from '../../utils/Password'
-
-import { guranteeNumericResult, QueryParamsFeaturesOptions } from '../../utils/QueryParamsFeatures'
+import { QueryParamsFeatures, QueryParamsFeaturesOptions } from '../../utils/QueryParamsFeatures'
 
 import { MediaManagement } from '../media-management'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
-import { AdminUploadService } from './AdminUploadService'
 
 function isValidEmail(email: string) {
   const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
@@ -66,26 +64,20 @@ export class DashboardService {
 
   static fetchVideosByType = async (
     type: any,
-    queryParams: QueryParamsFeaturesOptions['queryParams'],
+    query: QueryParamsFeaturesOptions['queryParams'],
   ) => {
     if (typeof type !== 'string') {
       throw new OperationalError('invalid or missing type', 400)
     }
 
-    const vids = await VideoRepo.fetchByType(
-      type as any,
-      guranteeNumericResult(queryParams.page, 1),
-      guranteeNumericResult(queryParams.limit, 10),
-    )
-
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
+    const vids = await VideoRepo.adminFetchByType(type as any, page, limit)
     return MovieMediaSourcesUtils.resolveMediaSources(vids, '720p')
   }
 
   static fetchChannels = async (query: QueryParamsFeaturesOptions['queryParams']) => {
-    return await LiveRepo.getChannels(
-      guranteeNumericResult(query.page, 1),
-      guranteeNumericResult(query.limit, 10),
-    )
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
+    return await LiveRepo.getChannels(page, limit)
   }
 
   static fetchBalanceAndUser = async () => {

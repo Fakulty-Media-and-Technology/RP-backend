@@ -6,6 +6,8 @@ import { sendResponse } from '../../utils/responder'
 
 export class CustomerNotificationController {
   static getNotifications = Catch.async(async ({ user, query }, res) => {
+
+    
     const data = await NotificationService.getNotifications({
       currentUser: GetDefined.loggedInUser(user),
       page: guranteeNumericResult(query.page, 1),

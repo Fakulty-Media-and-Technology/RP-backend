@@ -240,7 +240,14 @@ export class LiveStreamService {
     )
   }
 
-  // ************** Public ************88
+  // ************** Public ************
+
+  static searchByText = async (text: string) =>
+    await LiveRepo.searchLivesByTextReg(new RegExp(text, 'i'))
+
+  static getFeatured = async () => await LiveRepo.getFeatured()
+
+  static addFeatured = async (id: string, expiry: string) => await LiveRepo.addFeatured(id, expiry)
 
   static calcEventCharges = (start: string, expiry: string, currency: ValidCurrency) => {
     if (typeof start !== 'string' || typeof expiry !== 'string') {

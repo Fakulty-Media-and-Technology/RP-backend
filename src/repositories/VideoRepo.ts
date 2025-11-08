@@ -3,10 +3,8 @@ import { Video, VideoModel } from '../models/videos.model'
 import { skip } from '../utils/QueryParamsFeatures'
 import { SeasonModel } from '../models/seasons.model'
 import { AllVideoTypes } from '../utils/UploadMediaUtils'
-import { EpisodeModel } from '../models/episodes.model'
 import { MongoDBObjectId } from '../types/general'
 import env from '../env'
-import { isArrayBufferView } from 'node:util/types'
 
 export const toObjectId = (val: string) => new Types.ObjectId(val)
 
@@ -483,10 +481,12 @@ export class VideoRepo {
     })
   }
 
-  static fetchByType = async (type: AllVideoTypes, page = 1, limit = 20) => {
+  static adminFetchByType = async (type: AllVideoTypes, page = 1, limit = 20) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { type } }],
       sortStage: { $sort: { createdAt: -1 } },
+      excludeExpired: false,
+      excludePreReleased: false,
       page,
       limit,
     })
