@@ -189,4 +189,13 @@ export class AdminUploadController {
       message: `${type} deleted successfully`,
     })
   })
+
+  static checkVideoUploadTranscodedStatus = Catch.async(async ({ params }, res) => {
+    const isTranscoded = await AdminUploadService.checkIsTranscoded(params.id)
+
+    sendResponse({
+      res,
+      data: { isReady: isTranscoded },
+    })
+  })
 }

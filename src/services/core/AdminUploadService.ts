@@ -28,6 +28,7 @@ import { videoUploadParents } from '../../models/assets'
 import { ValidCurrency } from '../../utils/currency'
 import { addSeriesSchema, addMovieOrSkitSchema, addMusicVideoSchema } from '../../validations/admin'
 import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
+import { VideoUploadModel } from '../../models/videoupload.model'
 
 export class AdminUploadService {
   static resolveWithMediaSources = (queryParams: QueryParamsFeaturesOptions['queryParams']) =>
@@ -480,6 +481,16 @@ export class AdminUploadService {
     )
 
     return seasonsWithMediaSources
+  }
+
+  static checkIsTranscoded = async (videoUploadId: string) => {
+    const videoUploadDocument = await VideoUploadModel.findById(videoUploadId)
+
+    if (videoUploadDocument == null) {
+      throw new OperationalError('Not found', 404)
+    }
+
+    return videoUploadDocument.isTranscoded
   }
 }
 

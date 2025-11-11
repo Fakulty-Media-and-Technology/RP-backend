@@ -36,6 +36,7 @@ new SharedRoutes(superAdminRouter)
   .paymentHistory({ caller: 'Admin' })
   .contents()
   .enums()
+  .vidUpload()
 
 superAdminRouter.use('/clients', superAdminClientsRouter)
 superAdminRouter.use('/enums', superAdminEnumsRouter)

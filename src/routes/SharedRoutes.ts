@@ -41,6 +41,13 @@ export class SharedRoutes {
     this._router.use('/vods', vodsRouter)
   }
 
+  vidUpload() {
+    const router = Router()
+    router.get('/isready/:id', AdminUploadController.checkVideoUploadTranscodedStatus)
+    this._router.use('/vid-upload', router)
+    return this
+  }
+
   contents() {
     this.vods()
     this._router.get('/featured/contents/search/:text', AdminFeaturedController.searchContents)

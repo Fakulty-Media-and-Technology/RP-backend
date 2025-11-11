@@ -19,6 +19,7 @@ new SharedRoutes(clientsRouter)
   .paymentHistory({ caller: 'Others' })
   .enums()
   .paymentActions()
+  .vidUpload()
 
 clientsRouter.use('/livestream', clientLiveRouter)
 clientsRouter.use('/payouts', clientPayoutRouter)
