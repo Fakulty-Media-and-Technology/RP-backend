@@ -1,6 +1,7 @@
 import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mongoose'
 import { validCurrencies } from '../utils/currency'
 import { PhotoSchema } from './commonSchema'
+import { addYears, addYearsClone } from '../utils/date'
 
 export const videoTypes = ['movie', 'series', 'music-video', 'skit'] as const
 
@@ -211,10 +212,15 @@ const schema = new Schema(
 )
 
 schema.pre('save', function (next) {
-  if (this.isNew) {
-    this.isVideoReady = typeof this.videoLink === 'string' || false
-    this.isTrailerReady = typeof this.trailerLink === 'string' || false
+  if (this.isNew == false) return
+
+  this.isVideoReady = typeof this.videoLink === 'string' || false
+  this.isTrailerReady = typeof this.trailerLink === 'string' || false
+
+  if (this.expiryDate == null && this.releaseDate) {
+    this.expiryDate = addYearsClone(this.releaseDate, 1)
   }
+
   next()
 })
 
