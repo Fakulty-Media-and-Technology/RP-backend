@@ -153,15 +153,11 @@ export class UploadMediaUtils {
   }
 
   static checkFiles = (files?: RequestFiles) => {
-    if (files == null) {
-      throw new OperationalError('expected at least one file', 400)
-    }
-
     if (Array.isArray(files)) {
       throw new OperationalError('expected multiple files as an object', 400)
     }
 
-    return files
+    return files ? files : ({} as Record<string, any>)
   }
 
   static allowMimetype = (file: MulterFile, type: 'image' | 'video' | 'text', msg: string) => {

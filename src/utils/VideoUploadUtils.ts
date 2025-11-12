@@ -10,9 +10,14 @@ export class VidUploadUtils {
     quality: VideoQuality,
     signKey = MediaAccess.getSignedVideoURL,
   ) => {
-    if (videoUpload == null) return null
+    if (videoUpload == null) {
+      return null
+    }
+
     const nQuality = quality.replace('p', '')
+
     const res = videoUpload.resolutions.find(r => r.resolution.startsWith(nQuality))
+
     return res?.key ? signKey(res.key) : null
   }
 
