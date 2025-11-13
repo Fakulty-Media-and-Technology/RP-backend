@@ -3,8 +3,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install Nginx and curl
-RUN apk add --no-cache nginx curl
+# Install Nginx, curl, and netcat for health checks
+RUN apk add --no-cache nginx curl netcat-openbsd
 
 # Copy source files
 COPY . .
@@ -29,16 +29,38 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 # Create nginx directories
 RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp /run/nginx
 
-# Set Node.js to run on internal port 3001 (Nginx will proxy from 3000 to 3001)
-ENV PORT=3001
+# Expose required ports (Nginx on 3001, Node.js on 3000, other services as before)
+EXPOSE 3001 3000 1936 3445
 
-# Expose required ports (Nginx on 3000, other services as before)
-EXPOSE 3000 1936 3445
-
-# Create startup script
+# Create startup script that starts Node.js first, then Nginx
 RUN echo '#!/bin/sh' > /app/start.sh && \
-    echo 'nginx' >> /app/start.sh && \
-    echo 'exec npm start' >> /app/start.sh && \
+    echo 'set -e' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start Node.js app in background' >> /app/start.sh && \
+    echo 'npm start &' >> /app/start.sh && \
+    echo 'NODE_PID=$!' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Wait for Node.js to be ready (check if port 3000 is listening)' >> /app/start.sh && \
+    echo 'echo "Waiting for Node.js to start on port 3000..."' >> /app/start.sh && \
+    echo 'for i in $(seq 1 30); do' >> /app/start.sh && \
+    echo '  if nc -z 127.0.0.1 3000 2>/dev/null; then' >> /app/start.sh && \
+    echo '    echo "Node.js is ready!"' >> /app/start.sh && \
+    echo '    break' >> /app/start.sh && \
+    echo '  fi' >> /app/start.sh && \
+    echo '  echo "Attempt $i: Node.js not ready yet, waiting..."' >> /app/start.sh && \
+    echo '  sleep 1' >> /app/start.sh && \
+    echo 'done' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start Nginx in foreground' >> /app/start.sh && \
+    echo 'echo "Starting Nginx..."' >> /app/start.sh && \
+    echo 'nginx -g "daemon off;" &' >> /app/start.sh && \
+    echo 'NGINX_PID=$!' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Wait for either process to exit' >> /app/start.sh && \
+    echo 'wait -n $NODE_PID $NGINX_PID' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Exit with status of process that exited first' >> /app/start.sh && \
+    echo 'exit $?' >> /app/start.sh && \
     chmod +x /app/start.sh
 
 # Start both Nginx and Node.js app
