@@ -28,4 +28,9 @@ export class WebhooksController {
     WebhooksService.flutterEvent(req.body)
     res.sendStatus(200)
   })
+
+  static wavePayment = Catch.async(async (req, res) => {
+    console.log('Wave payment body', req.body, 'Authorization:', req.headers.Authorization)
+    res.sendStatus(200)
+  })
 }
