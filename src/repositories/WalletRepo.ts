@@ -3,7 +3,7 @@ import { StringOrObjectId } from '../types'
 import { getWalletCurrencyKey, ValidCurrency } from '../utils/currency'
 import { MaybeSession } from '../utils/mongoDbSessionRunner'
 
-export type WalletCurrencyKey = keyof Pick<WalletSchema, 'NGNBalance' | 'USDBalance'>
+export type WalletCurrencyKey = keyof Pick<WalletSchema, 'NGNBalance' | 'USDBalance' | 'GMDBalance'>
 
 interface UpdateBalanceInput {
   userId: StringOrObjectId

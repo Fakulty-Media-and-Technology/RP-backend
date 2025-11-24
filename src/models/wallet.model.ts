@@ -18,6 +18,11 @@ const walletSchema = new Schema(
       type: Number,
       default: 0,
     },
+
+    GMDBalance: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

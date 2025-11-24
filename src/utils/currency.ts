@@ -4,14 +4,15 @@ import { OperationalError } from './OperationalError'
 
 type PaymentCurrency = PaymentSchema['currency']
 
-export const validCurrencies = ['USD', 'NGN'] as const
+export const validCurrencies = ['USD', 'NGN', 'GMD'] as const
 
-export type ValidCurrency = (typeof validCurrencies)[number]
+export type ValidCurrency = PaymentCurrency
 
 export const getWalletCurrencyKey = (currency: ValidCurrency) => {
   const walletBalanceKeysToPaymentCurrencyMap: Record<PaymentCurrency, WalletCurrencyKey> = {
     NGN: 'NGNBalance',
     USD: 'USDBalance',
+    GMD: 'GMDBalance',
   }
 
   const currencyKey = walletBalanceKeysToPaymentCurrencyMap[currency]

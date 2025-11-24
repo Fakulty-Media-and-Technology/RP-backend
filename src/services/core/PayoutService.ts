@@ -2,7 +2,7 @@ import env from '../../env'
 import { PayoutDocument, PayoutModel, PayoutSchema } from '../../models/payouts.model'
 import { WalletModel } from '../../models/wallet.model'
 import { Flutterwave } from '../../paymentIntegration/flutterwave'
-import Paystack from '../../paymentIntegration/paystack'
+import { WavePayment } from '../../paymentIntegration/wave'
 import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
 import { validCurrencies, ValidCurrency } from '../../utils/currency'
@@ -62,7 +62,8 @@ export class PayoutService {
 
     if (
       (currency === 'NGN' && amount > wallet.NGNBalance) ||
-      (currency === 'USD' && amount > wallet.USDBalance)
+      (currency === 'USD' && amount > wallet.USDBalance) ||
+      (currency === 'GMD' && amount > wallet.GMDBalance)
     ) {
       throw new OperationalError('insufficient funds', 400)
     }
@@ -79,15 +80,20 @@ export class PayoutService {
       bankName,
     })
 
+    const fullname = `${currentUser.first_name} ${currentUser.last_name}`
+    const payoutReference = payout._id.toString()
+    const phoneNumber = currentUser.country_code + currentUser.mobile
+    const payoutAmount = payout.amount
+
     switch (currency) {
       case 'NGN':
         await Flutterwave.initiateNGNbankTransfer({
-          accountNumber,
           bankCode,
-          amount: payout.amount,
-          fullname: `${currentUser.first_name} ${currentUser.last_name}`,
-          reference: payout._id.toString(),
+          fullname,
+          accountNumber,
+          amount: payoutAmount,
           email: currentUser.email,
+          reference: payoutReference,
         })
 
         wallet.NGNBalance = wallet.NGNBalance - amount
@@ -96,6 +102,16 @@ export class PayoutService {
         // TODO:
         wallet.USDBalance = wallet.USDBalance - amount
         break
+
+      case 'GMD':
+        await WavePayment.payout({
+          fullname,
+          phoneNumber,
+          payoutReference,
+          amount: payoutAmount,
+        })
+
+        wallet.GMDBalance = wallet.GMDBalance - amount
       default:
         break
     }
@@ -197,5 +213,3 @@ export class PayoutService {
     }
   }
 }
-
-

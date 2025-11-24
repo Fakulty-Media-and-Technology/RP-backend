@@ -4,9 +4,9 @@ import { ErrorUtils } from '../utils/ErrorUtils'
 
 interface PayoutInput {
   amount: number
-  payourRef: string
+  payoutReference: string
   phoneNumber: string
-  userFullName: string
+  fullname: string
 }
 
 interface PaymentInput {
@@ -44,15 +44,15 @@ export class WavePayment {
   }
 
   // https://docs.wave.com/payout#payout-api
-  static payout = async ({ amount, payourRef, phoneNumber, userFullName }: PayoutInput) => {
+  static payout = async ({ amount, payoutReference, phoneNumber, fullname }: PayoutInput) => {
     try {
       const response = await axios.post(
         'https://api.wave.com/v1/payout',
         {
           receive_amount: amount,
           currency: 'GMD',
-          name: userFullName,
-          client_reference: payourRef,
+          name: fullname,
+          client_reference: payoutReference,
           mobile: phoneNumber,
         },
         {
