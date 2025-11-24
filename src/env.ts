@@ -88,6 +88,8 @@ export const env = getValidEnv({
   RP_HLS_HTTP_PORT: setToNumberWithDefault('RP_HLS_HTTP_PORT', 8888),
   RP_RTMP_PORT: setToNumberWithDefault('RP_RTMP_PORT', 1935),
 
+  WAVE_API_KEY: process.env.WAVE_API_KEY,
+
   get RP_RTMP_URL() {
     const baseURL = this.IS_PROD ? this.RP_RTMP_BASE_URL : `rmtp://localhost`
     const url = `${baseURL}:${this.RP_RTMP_PORT}/${this.RP_RTMP_APP_NAME}`
