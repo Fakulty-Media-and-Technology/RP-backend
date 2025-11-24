@@ -30,6 +30,7 @@ import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { toObjectId } from '../../repositories/VideoRepo'
 import { Flutterwave } from '../../paymentIntegration/flutterwave'
+import { WavePayment } from '../../paymentIntegration/wave'
 
 type PaystackTransaction = Awaited<ReturnType<typeof Paystack.verifyPayment>>
 type PaymentStatus = PaymentSchema['status']
@@ -590,14 +591,29 @@ export class PaymentService {
       useCase: payment.useCase,
     })
 
-    const mobileResponse = {
+    const mobileResponse: Record<string, any> = {
       paymentId: payment._id,
+    }
+
+    if (payment.method === 'wave') {
+      const redirectUrl = await WavePayment.accept({
+        amount: payment.amount,
+        paymentReference: payment._id.toString(),
+        phoneNumber: currentUser.country_code + currentUser.mobile,
+      })
+
+      if (redirectUrl == null) {
+        throw new OperationalError('No redirect URL from wave', 400)
+      }
+
+      return Object.assign(mobileResponse, { redirectUrl })
     }
 
     if (isMobile) {
       return mobileResponse
     }
 
+    // from web browser and the payment method is flutterwave
     const initPaymentResponse = await Flutterwave.initializePayment({
       email: payment.email,
       currency: payment.currency,
@@ -794,30 +810,28 @@ export class PaymentService {
       videoId,
     }).save({ session })
 
-    switch (payment.method) {
-      case 'flutterwave':
-        return await this._handleGatewayPayment({
-          currentUser,
-          payment,
-          session,
-          liveId,
-          contestantId,
-          voteInfoId,
-          isMobile,
-        })
-      case 'wallet':
-        await this._handleWalletPayment({
-          session,
-          currentUser,
-          liveId,
-          videoId,
-          payment,
-        })
-        break
-
-      default:
-        throw new OperationalError('Unsupported payment method', 400)
+    if (payment.method === 'wallet') {
+      await this._handleWalletPayment({
+        session,
+        currentUser,
+        liveId,
+        videoId,
+        payment,
+      })
+      return
     }
+
+    const response = await this._handleGatewayPayment({
+      currentUser,
+      payment,
+      session,
+      liveId,
+      contestantId,
+      voteInfoId,
+      isMobile,
+    })
+
+    return response
   }
 
   static getHistory = async (userId: string, query: ExpressRequestQuery) => {

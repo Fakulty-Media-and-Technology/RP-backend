@@ -68,7 +68,7 @@ const schema = new Schema(
 
     method: {
       type: String,
-      enum: ['wallet', 'flutterwave'],
+      enum: ['wallet', 'flutterwave', 'wave'],
       required: true,
     },
 

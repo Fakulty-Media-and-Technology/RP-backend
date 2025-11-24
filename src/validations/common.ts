@@ -1,4 +1,5 @@
 import Joi from 'joi'
+import { validCurrencies } from '../utils/currency'
 
 export const MONGO_DB_OBJECT_ID_REG = /^[0-9A-Fa-f]{24}$/
 export const NUMERIC_REG = /^\d+$/
@@ -7,7 +8,7 @@ export const FLOATS_REG = /[-+]?[0-9]*\.?[0-9]+/
 export const STRING_SCHEMA = Joi.string()
 export const MONGO_DB_OBJECT_ID_SCHEMA = Joi.string().pattern(MONGO_DB_OBJECT_ID_REG)
 export const MONGO_DB_OBJECT_ID_ARRAY_SCHEMA = Joi.array().items(MONGO_DB_OBJECT_ID_SCHEMA)
-export const CURRENCY_SCHEMA = STRING_SCHEMA.valid('USD', 'NGN')
+export const CURRENCY_SCHEMA = STRING_SCHEMA.valid(...validCurrencies)
 
 export const PHOTO_SCHEMA_WITH_CONTENT_TYPE = Joi.object({
   Bucket: STRING_SCHEMA.required(),
@@ -71,7 +72,7 @@ export const intitiatePaymentSchema = {
     amount: Joi.number().strict().required(),
     currency: CURRENCY_SCHEMA.required(),
     fullName: STRING_SCHEMA,
-    method: STRING_SCHEMA.valid('flutterwave', 'wallet').required(),
+    method: STRING_SCHEMA.valid('flutterwave', 'wallet', 'wave').required(),
 
     useCase: STRING_SCHEMA.valid(
       'subscription',
