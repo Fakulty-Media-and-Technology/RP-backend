@@ -25,7 +25,7 @@ import { superAdminNotificationRouter } from './notificationRoute'
 
 export const superAdminRouter = express.Router()
 
-superAdminRouter.post('/admins-signin', AdminOnboardingController.adminSignIn)
+superAdminRouter.post('/auth/login', AdminOnboardingController.adminSignIn)
 superAdminRouter.use(AuthMiddleware.authenticateRequest('superadmin-auth'))
 
 new SharedRoutes(superAdminRouter)
