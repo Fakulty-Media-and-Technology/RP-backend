@@ -1,5 +1,9 @@
 import { OperationalError } from '../../utils/OperationalError'
-import { guranteeNumericResult } from '../../utils/QueryParamsFeatures'
+import {
+  ExpressRequestQuery,
+  guranteeNumericResult,
+  QueryParamsFeatures,
+} from '../../utils/QueryParamsFeatures'
 import { LoggedInUser } from '../../types'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { VidUploadUtils } from '../../utils/VideoUploadUtils'
@@ -66,7 +70,7 @@ export class UpcomingService {
     }
   }
 
-  static customerFetch = async ({ currentUser, ...params }: CustomerFetchInput) => {
+  static customerFetch = async (currentUser: LoggedInUser, query: ExpressRequestQuery) => {
     denyGuestUser(currentUser)
 
     const videoQuality = await VidUploadUtils.getUserVideoQuality(
@@ -74,8 +78,7 @@ export class UpcomingService {
       '480p',
     )
 
-    const page = guranteeNumericResult(params.page, 1)
-    const limit = guranteeNumericResult(params.limit, 10)
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const [vods, lives] = await Promise.all([
       VideoRepo.fetchActiveUpcoming(page, limit),

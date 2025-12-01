@@ -126,7 +126,7 @@ export class LiveRepo {
   static fetchLivesByType = async (type: LiveSchema['type'], page: number, limit: number) => {
     return this.fetchLivesAggr({
       prevStages: [{ $match: { type } }],
-      sortStage: { $sort: { createdAt: -1 } },
+      // sortStage: { $sort: { createdAt: -1 } },
       page,
       limit,
     })
@@ -135,7 +135,7 @@ export class LiveRepo {
   static fetchRandom = async (limit = 3) => {
     return this.fetchLivesAggr({
       prevStages: [{ $sample: { size: limit * 2 } }],
-      sortStage: { $sort: { createdAt: -1 } },
+      // sortStage: { $sort: { createdAt: -1 } },
       page: 1,
       limit,
     })

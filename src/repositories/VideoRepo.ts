@@ -182,11 +182,11 @@ export class VideoRepo {
     return await this.fetchVideoAggr({
       prevStages: [
         {
-          $match: { upcoming: true },
+          $match: { releaseDate: { $gt: new Date() } },
         },
       ],
 
-      sortStage: { $sort: { _id: -1 } },
+      // sortStage: { $sort: { _id: -1 } },
       page,
       limit,
     })
@@ -196,11 +196,17 @@ export class VideoRepo {
     return await this.fetchVideoAggr({
       prevStages: [
         {
-          $match: { upcoming: true, active: true },
+          $match: {
+            releaseDate: { $gt: new Date() },
+
+            // upcoming: true, // Unsure what these do
+            active: true,
+          },
         },
       ],
 
-      sortStage: { $sort: { createdAt: -1 } },
+      excludePreReleased: false,
+      // sortStage: { $sort: { _id: -1 } },
       page,
       limit,
     })
@@ -327,7 +333,7 @@ export class VideoRepo {
   static fetchVideoAggr = ({
     prevStages,
     sortStage = {
-      $sort: { _id: -1 },
+      $sort: { engagements: -1 },
     },
     page,
     limit,
@@ -446,7 +452,6 @@ export class VideoRepo {
 
     return await this.fetchVideoAggr({
       prevStages: [match],
-      sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
     })
@@ -466,7 +471,6 @@ export class VideoRepo {
 
     return this.fetchVideoAggr({
       prevStages: [match],
-      sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
     })
@@ -475,7 +479,6 @@ export class VideoRepo {
   static fetchByCategory = async (catId: string, page: number, limit: number) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { category: toObjectId(catId) } }],
-      sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
     })
@@ -484,7 +487,7 @@ export class VideoRepo {
   static adminFetchByType = async (type: AllVideoTypes, page = 1, limit = 20) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { type } }],
-      sortStage: { $sort: { createdAt: -1 } },
+      // sortStage: { $sort: { createdAt: -1 } },
       excludeExpired: false,
       excludePreReleased: false,
       page,
@@ -511,7 +514,7 @@ export class VideoRepo {
   static fetchMostEngaged = (page = 1, limit = 5) => {
     return this.fetchVideoAggr({
       prevStages: [],
-      sortStage: { $sort: { engagements: -1 } },
+      // sortStage: { $sort: { engagements: -1 } },
       page,
       limit,
     })
@@ -519,7 +522,7 @@ export class VideoRepo {
   static fetchRandom = (limit = 3) => {
     return this.fetchVideoAggr({
       prevStages: [{ $sample: { size: limit * 2 } }],
-      sortStage: { $sort: { engagements: -1 } },
+      // sortStage: { $sort: { engagements: -1 } },
       page: 1,
       limit,
     })
@@ -535,9 +538,9 @@ export class VideoRepo {
           },
         },
       ],
-      sortStage: {
-        $sort: { engagements: -1 },
-      },
+      // sortStage: {
+      //   $sort: { engagements: -1 },
+      // },
       page,
       limit,
     })

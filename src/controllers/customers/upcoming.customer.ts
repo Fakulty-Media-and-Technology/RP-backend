@@ -9,11 +9,7 @@ import { sendResponse } from '../../utils/responder'
 
 export class CustomerUpcomingController {
   static fetch = Catch.async(async ({ query, user }, res) => {
-    const upcoming = await UpcomingService.customerFetch({
-      currentUser: GetDefined.loggedInUser(user),
-      page: query.page,
-      limit: query.limit,
-    })
+    const upcoming = await UpcomingService.customerFetch(GetDefined.loggedInUser(user), query)
 
     sendResponse({
       res,
