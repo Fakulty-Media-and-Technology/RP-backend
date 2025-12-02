@@ -159,6 +159,10 @@ export class GiftCardService {
       throw new OperationalError('Invalid Code', 404)
     }
 
+    if (cardDocument.status === 'used') {
+      throw new OperationalError('Gift card is used', 403)
+    }
+
     cardDocument.status = 'used'
     await cardDocument.save()
   }
