@@ -5,9 +5,17 @@ const schema = new Schema(
     email: {
       type: String,
       required: true,
+      lowecase: true,
+      trim: true,
       unique: true,
     },
+
+    password: {
+      type: String,
+      required: true,
+    },
   },
+
   { versionKey: false, timestamps: { createdAt: true } },
 )
 

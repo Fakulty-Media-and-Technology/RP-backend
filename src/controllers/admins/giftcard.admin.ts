@@ -46,7 +46,7 @@ export class AdminGiftCardController {
   })
 
   static merchantNotifyIsUsed = Catch.async(async ({ params }, res) => {
-    await GiftCardService.setMerchactCardIsUsed(params.code, params.email)
+    await GiftCardService.setMerchactCardIsUsed(params.code, params.email, params.password)
 
     sendResponse({
       res,
@@ -58,11 +58,21 @@ export class AdminGiftCardController {
       query,
       currency: params.currency,
       merchantEmail: params.email,
+      merchantPassword: params.password,
     })
 
     sendResponse({
       res,
       data: cards,
+    })
+  })
+
+  static createMerchant = Catch.async(async ({ body }, res) => {
+    await GiftCardService.createMerchant(body.email, body.password)
+
+    sendResponse({
+      res,
+      statusCode: 204,
     })
   })
 }

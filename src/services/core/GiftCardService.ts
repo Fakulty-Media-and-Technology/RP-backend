@@ -13,6 +13,7 @@ import {
   QueryParamsFeatures,
 } from '../../utils/QueryParamsFeatures'
 import { genRandUniqId } from '../../utils/strGen'
+import { Password } from '../../utils/Password'
 
 interface CreateGiftCardInput {
   currentAdmin: LoggedInUser
@@ -28,6 +29,7 @@ interface RedeemGiftCardInput {
 interface GetMerchanttCardsInput {
   query: ExpressRequestQuery
   merchantEmail: string
+  merchantPassword: string
   currency: string
 }
 
@@ -53,11 +55,34 @@ export class GiftCardService {
     return codes
   }
 
-  protected static _getMerchant = async (email: string, session?: ClientSession) => {
-    let merchantDocument = await GiftCardMerchantModel.findOne({ email })
+  static createMerchant = async (email: string, password: string) => {
+    email = email.toLocaleLowerCase()
+
+    const merchant = await GiftCardMerchantModel.findOne({ email }).select('email')
+
+    if (merchant) {
+      throw new OperationalError('Already exists', 400)
+    }
+
+    await GiftCardMerchantModel.create({
+      email,
+      password: await Password.encrypt(password.trim()),
+    })
+  }
+
+  protected static _getMerchant = async (email: string, password: string) => {
+    const merchantDocument = await GiftCardMerchantModel.findOne({
+      email: email.toLocaleLowerCase(),
+    })
 
     if (merchantDocument == null) {
-      merchantDocument = await new GiftCardMerchantModel({ email }).save({ session })
+      throw new OperationalError('Invalid email address', 401)
+    }
+
+    const isSamePassword = await Password.compare(password, merchantDocument.password)
+
+    if (!isSamePassword) {
+      throw new OperationalError('Invalid Password', 401)
     }
 
     return merchantDocument
@@ -72,16 +97,16 @@ export class GiftCardService {
     }))
 
   static _getMerchantCardsSession = async (
-    { merchantEmail, currency, query }: GetMerchanttCardsInput,
+    { merchantEmail, currency, query, merchantPassword }: GetMerchanttCardsInput,
     session?: ClientSession,
   ) => {
     if (!validCurrencies.includes(currency as any)) {
       throw new OperationalError(`Valid currencies are ${validCurrencies.join(' || ')}`, 400)
     }
 
+    const merchantDocument = await this._getMerchant(merchantEmail, merchantPassword)
     const amount = guranteeNumericResult(query.amount, 1)
     const quantity = guranteeNumericResult(query.quantity, 1)
-    const merchantDocument = await this._getMerchant(merchantEmail)
 
     const [codesSettled, recentSerialNumberSettled] = await Promise.allSettled([
       this._generateMerchateGiftCodes(quantity),
@@ -117,13 +142,12 @@ export class GiftCardService {
   static getMerchantCards = async (params: GetMerchanttCardsInput) =>
     await withMongoDBSession(this._getMerchantCardsSession, params)
 
-  static setMerchactCardIsUsed = async (code: string, merchantEmail: string) => {
-    const merchantDocument = await GiftCardMerchantModel.findOne({ email: merchantEmail })
-
-    if (merchantDocument == null) {
-      throw new OperationalError('Invalid Email address', 404)
-    }
-
+  static setMerchactCardIsUsed = async (
+    code: string,
+    merchantEmail: string,
+    merchantPassword: string,
+  ) => {
+    const merchantDocument = await this._getMerchant(merchantEmail, merchantPassword)
     const cardDocument = await GiftCardModel.findOne({
       code,
     })
