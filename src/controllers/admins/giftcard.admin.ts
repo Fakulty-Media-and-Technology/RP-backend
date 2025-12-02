@@ -72,7 +72,7 @@ export class AdminGiftCardController {
 
     sendResponse({
       res,
-      statusCode: 204,
+      message: 'Success',
     })
   })
 }
