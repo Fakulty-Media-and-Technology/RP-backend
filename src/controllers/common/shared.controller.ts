@@ -673,7 +673,7 @@ export class SharedController extends UploadMediaUtils {
 
   static bannerContents = Catch.async(async (req, res) => {
     const page = guranteeNumericResult(req.query.page, 1)
-    const limit = guranteeNumericResult(req.query.limit, 1)
+    const limit = guranteeNumericResult(req.query.limit, 10)
 
     const vidQuality = await VidUploadUtils.getUserVideoQuality(
       GetDefined.loggedInUser(req.user)._id.toString(),
@@ -691,17 +691,17 @@ export class SharedController extends UploadMediaUtils {
 
     //
 
-    if (lives.length + vods.length < 10) {
-      lives = await LiveMediaSourcesUtils.resolveSources(
-        await LiveRepo.getMostEngaged(page, limit),
-        vidQuality,
-      )
+    // if (lives.length + vods.length < 10) {
+    //   lives = await LiveMediaSourcesUtils.resolveSources(
+    //     await LiveRepo.getMostEngaged(page, limit),
+    //     vidQuality,
+    //   )
 
-      vods = MovieMediaSourcesUtils.resolveMediaSources(
-        await VideoRepo.fetchMostEngaged(page, limit),
-        vidQuality,
-      )
-    }
+    //   vods = MovieMediaSourcesUtils.resolveMediaSources(
+    //     await VideoRepo.fetchMostEngaged(page, limit),
+    //     vidQuality,
+    //   )
+    // }
 
     // TODO: This is hackey. Optimize and Polish
     lives = getPromiseAllFulfilledResults(

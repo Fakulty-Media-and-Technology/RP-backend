@@ -45,7 +45,6 @@ customerRouter.get('/verification/get-token', OnboardingController.getVerificati
 customerRouter.post('/signup/verifyaccount', OnboardingController.verifyAccount)
 customerRouter.use('/general', GeneralRouter)
 customerRouter.use('/pass-reset', PasswordResetRouter)
-
 customerRouter.get('/pin-reset/:email', OnboardingController.resetPin)
 
 customerRouter.use('/ads', AdsRouter)
