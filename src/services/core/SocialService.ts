@@ -272,31 +272,31 @@ export class SocialService {
   }
 
   protected static _computeRatingsParentStats = async (ratingsDocument: Rating | null) => {
-    try {
-      if (ratingsDocument == null) return
+    // try {
+    if (ratingsDocument == null) return
 
-      switch (ratingsDocument.parentType) {
-        case 'vod':
-          const videoDocument = await VideoModel.findById(ratingsDocument.parentId)
+    switch (ratingsDocument.parentType) {
+      case 'vod':
+        const videoDocument = await VideoModel.findById(ratingsDocument.parentId)
 
-          if (videoDocument == null) return
+        if (videoDocument == null) return
 
-          const [stats] = await RatingsRepo.parentRatingsStats(videoDocument._id.toString())
+        const [stats] = await RatingsRepo.parentRatingsStats(videoDocument._id.toString())
 
-          videoDocument.averageRating =
-            stats?.totalStats[0]?.averageRating || videoDocument.averageRating
+        videoDocument.averageRating =
+          stats?.totalStats[0]?.averageRating || videoDocument.averageRating
 
-          videoDocument.totalRatings =
-            stats?.totalStats[0]?.totalRatingsDocuments || videoDocument.totalRatings
-          videoDocument.computeEngagements()
-          break
+        videoDocument.totalRatings =
+          stats?.totalStats[0]?.totalRatingsDocuments || videoDocument.totalRatings
+        videoDocument.computeEngagements()
+        return videoDocument.averageRating
 
-        default:
-          break
-      }
-    } catch (e) {
-      console.error('Error computing ratings parents stats', ratingsDocument, 'Reason', e)
+      default:
+        throw new OperationalError('Unsupported ratin parent', 404)
     }
+    // } catch (e) {
+    //   console.error('Error computing ratings parents stats', ratingsDocument, 'Reason', e)
+    // }
   }
 
   // ********* Ratings
@@ -310,9 +310,9 @@ export class SocialService {
       { new: true, upsert: true },
     )
 
-    this._computeRatingsParentStats(ratingsDocument)
+    const averagteRating = await this._computeRatingsParentStats(ratingsDocument)
 
-    return ratingsDocument
+    return Object.assign(ratingsDocument, { averagteRating: averagteRating ?? 4.5 })
   }
 
   static getRatings = async (parentId: string) => {
