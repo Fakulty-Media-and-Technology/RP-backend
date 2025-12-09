@@ -63,6 +63,7 @@ new SharedRoutes(customerRouter)
   .paymentActions()
   .paymentHistory({ caller: 'Others' })
   .contents()
+  .enums()
 
 customerRouter.use('/profile', ProfileRouter)
 customerRouter.use('/upcoming', UpcomingRouter)

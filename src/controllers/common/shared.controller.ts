@@ -50,7 +50,7 @@ type LiveEventsType =
 
 export class SharedController extends UploadMediaUtils {
   static getVodMetaBy = Catch.async(async (req, res) => {
-    const videoDocument = await VideoModel.findById(req.params.vodId).select('averageRating')
+    const videoDocument = await VideoModel.findById(req.params.vodId).select('averageRating viewsCount')
 
     sendResponse({
       res,

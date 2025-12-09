@@ -5,6 +5,7 @@ import { MediaManagement } from '../media-management'
 import { CastEnumDocument, CastEnumModel, CastEnumSchema } from '../../models/castEnum.model'
 import { getPromiseAllFulfilledResults } from '../../utils/promises'
 import { PhotoUtils } from '../../utils/photoUtils'
+import { VideoModel } from '../../models/videos.model'
 
 interface CreateCastInput {
   title: string
@@ -111,12 +112,29 @@ export class CastEnumService {
   }
 
   static getCasts = async (query: ExpressRequestQuery) => {
-    const features = new QueryParamsFeatures(CastEnumRepo.getAllCasts(), {
+    const apiFeaturesConfig = {
       defaultLimit: 30,
       defaultPage: 1,
       queryParams: query,
-    })
+    }
 
+    // This is a quick patch. It's slow. It's Slow
+    if (typeof query.vodId === 'string') {
+      const videoDocument = await VideoModel.findById(query.vodId).select('cast')
+
+      if (videoDocument == null) {
+        throw new OperationalError('Not found', 404)
+      }
+
+      const features = new QueryParamsFeatures(
+        CastEnumModel.find({ _id: { $in: videoDocument.cast } }),
+        apiFeaturesConfig,
+      )
+
+      return this.setCastsWithPhotoUrl(await features.paginate().query)
+    }
+
+    const features = new QueryParamsFeatures(CastEnumRepo.getAllCasts(), apiFeaturesConfig)
     const casts = await features.paginate().query
     return this.setCastsWithPhotoUrl(casts)
   }
