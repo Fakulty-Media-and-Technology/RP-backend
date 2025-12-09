@@ -60,7 +60,9 @@ export const updateUserProfileSchema = {
     ),
     dob: STRING_SCHEMA.isoDate(),
     country: STRING_SCHEMA,
-  }).and('password', 'prevPassword'),
+  })
+    .and('password', 'prevPassword'),
+    // .with('countryCode ', 'mobile'),
 
   params: Joi.object({
     userId: MONGO_DB_OBJECT_ID_SCHEMA.required(),

@@ -192,6 +192,18 @@ export class VideoRepo {
     })
   }
 
+  static fetchMany = (page: number, limit: number) =>
+    this.fetchVideoAggr({
+      prevStages: [
+        {
+          $match: {},
+        },
+      ],
+
+      page,
+      limit,
+    })
+
   static fetchActiveUpcoming = async (page = 1, limit = 10) => {
     return await this.fetchVideoAggr({
       prevStages: [

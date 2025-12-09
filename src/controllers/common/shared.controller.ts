@@ -49,6 +49,26 @@ type LiveEventsType =
   | 'podcasts popular'
 
 export class SharedController extends UploadMediaUtils {
+  static getVodMetaBy = Catch.async(async (req, res) => {
+    const videoDocument = await VideoModel.findById(req.params.vodId).select('averageRating')
+
+    sendResponse({
+      res,
+      data: videoDocument,
+    })
+  })
+
+  static getllVods = Catch.async(async (req, res) => {
+    const { page, limit } = QueryParamsFeatures.paginagteParams(req.query)
+    const quality = await  VidUploadUtils.getUserVideoQuality(GetDefined.loggedInUser(req.user)._id.toString())
+    const videoDocuments = await VideoRepo.fetchMany(page, limit)
+
+    sendResponse({
+      res,
+      data: MovieMediaSourcesUtils.resolveMediaSources(videoDocuments, quality),
+    })
+  })
+
   static checkContentCosts = (_: Request, res: Response) => {
     const costs = PaymentService.checkContentCosts()
 

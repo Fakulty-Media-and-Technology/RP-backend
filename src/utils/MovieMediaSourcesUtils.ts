@@ -47,7 +47,7 @@ export class MovieMediaSourcesUtils {
     return episodesWithSources
   }
 
-  public static resolveMediaSources = (videoDocuments: VodCardResponse[], quality: VideoQuality) =>
+  static resolveMediaSources = (videoDocuments: VodCardResponse[], quality: VideoQuality) =>
     videoDocuments.map(videoDocument =>
       Object.assign(videoDocument, {
         video: this._getMovieVideoSource(videoDocument, 'vid', quality),
