@@ -149,7 +149,14 @@ export class LiveRepo {
     excludeExpired = true,
   }: FetchLives) => {
     const aggr = LiveModel.aggregate([
-      ...(excludeExpired ? [{ $match: { expiry: { $gte: new Date() } } }] : []),
+      ...(excludeExpired
+        ? [
+            {
+              $match: { $expr: { $gt: ['$expiry', '$$NOW'] } },
+            },
+          ]
+        : []),
+
       ...prevStages,
 
       {

@@ -292,7 +292,7 @@ export class SocialService {
         return videoDocument.averageRating
 
       default:
-        throw new OperationalError('Unsupported ratin parent', 404)
+        throw new OperationalError('Unsupported ratings parent', 404)
     }
     // } catch (e) {
     //   console.error('Error computing ratings parents stats', ratingsDocument, 'Reason', e)
