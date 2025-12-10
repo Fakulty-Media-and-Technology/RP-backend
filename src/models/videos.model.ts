@@ -2,6 +2,7 @@ import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mong
 import { validCurrencies } from '../utils/currency'
 import { PhotoSchema } from './commonSchema'
 import { addYears, addYearsClone } from '../utils/date'
+import { MaybeSession } from '../utils/mongoDbSessionRunner'
 
 export const videoTypes = ['movie', 'series', 'music-video', 'skit'] as const
 
@@ -195,19 +196,6 @@ const schema = new Schema(
   },
   {
     timestamps: true,
-
-    methods: {
-      async computeEngagements() {
-        try {
-          this.engagements =
-            this.likesCount + this.viewsCount + this.commentsCount + this.totalRatings
-
-          await this.save()
-        } catch (e) {
-          console.error('Error computing engagements for VOD with ID', this._id, 'Reason', e)
-        }
-      },
-    },
   },
 )
 

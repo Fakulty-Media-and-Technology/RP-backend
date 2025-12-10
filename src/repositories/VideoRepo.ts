@@ -5,6 +5,9 @@ import { SeasonModel } from '../models/seasons.model'
 import { AllVideoTypes } from '../utils/UploadMediaUtils'
 import { MongoDBObjectId } from '../types/general'
 import env from '../env'
+import { MaybeSession } from '../utils/mongoDbSessionRunner'
+import { StringOrObjectId } from '../types'
+import { isDate } from 'moment'
 
 export const toObjectId = (val: string) => new Types.ObjectId(val)
 
@@ -56,7 +59,37 @@ type FetchSimilarByGenreIdInput = {
   limit: number
 }
 
+type ComputeTotalEngagementsInput = {
+  session: MaybeSession
+  id: StringOrObjectId
+  property: 'likesCount' | 'commentsCount'
+  by: number
+}
+
 export class VideoRepo {
+  static computeEngagements = async ({
+    session,
+    id,
+    property,
+    by,
+  }: ComputeTotalEngagementsInput) => {
+    const update = await VideoModel.updateOne(
+      { _id: id },
+      [
+        {
+          $set: {
+            [property]: { $add: [`$${property}`, by] },
+          },
+        },
+
+        { $set: { engagements: { $add: ['$likesCount', '$commentsCount'] } } },
+      ],
+      { session },
+    )
+
+    return update
+  }
+
   static addFeatured = (id: string, expiry: string) =>
     VideoModel.findByIdAndUpdate(id, {
       featured: true,

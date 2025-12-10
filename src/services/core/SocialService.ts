@@ -2,7 +2,7 @@ import { QueryOptions, UpdateQuery } from 'mongoose'
 import { Comment, CommentModel } from '../../models/comments.model'
 import { Rating, RatingModel } from '../../models/rating.model'
 import { ReactionModel } from '../../models/reaction.model'
-import { toObjectId } from '../../repositories/VideoRepo'
+import { toObjectId, VideoRepo } from '../../repositories/VideoRepo'
 import { OperationalError } from '../../utils/OperationalError'
 import { VideoModel } from '../../models/videos.model'
 import { EpisodeModel } from '../../models/episodes.model'
@@ -109,40 +109,33 @@ export class SocialService {
       $inc: { commentsCount: incCount },
     }
 
-    let parent: any = null
-
     switch (comment.parentType) {
       case 'vod':
-        const videoDocument = await VideoModel.findByIdAndUpdate(parentId, update, options)
-
-        if (videoDocument) {
-          videoDocument.computeEngagements()
-        }
-
-        parent = videoDocument
+        await VideoRepo.computeEngagements({
+          by: incCount,
+          session,
+          id: parentId,
+          property: 'commentsCount',
+        })
 
         break
 
       case 'episode':
-        parent = await EpisodeModel.findByIdAndUpdate(parentId, update, options)
+        await EpisodeModel.findByIdAndUpdate(parentId, update, options)
         break
 
       case 'live':
-        parent = await LiveModel.findByIdAndUpdate(parentId, update, options)
+        await LiveModel.findByIdAndUpdate(parentId, update, options)
         break
 
       case 'season':
-        parent = await SeasonModel.findByIdAndUpdate(parentId, update, options)
+        await SeasonModel.findByIdAndUpdate(parentId, update, options)
         break
       default:
         if (isCreateAction) {
           throw new OperationalError(`Allowed parents type are ${commentsParent.join(' - ')}`, 400)
         }
         break
-    }
-
-    if (isCreateAction && parent == null) {
-      throw new OperationalError('invalid parentId or parentType pair', 404)
     }
   }
 
@@ -272,7 +265,6 @@ export class SocialService {
   }
 
   protected static _computeRatingsParentStats = async (ratingsDocument: Rating | null) => {
-    // try {
     if (ratingsDocument == null) return
 
     switch (ratingsDocument.parentType) {
@@ -281,22 +273,20 @@ export class SocialService {
 
         if (videoDocument == null) return
 
-        const [stats] = await RatingsRepo.parentRatingsStats(videoDocument._id.toString())
+        const [stats] = await RatingsRepo.parentRatingsStats(ratingsDocument.parentId.toString())
 
         videoDocument.averageRating =
           stats?.totalStats[0]?.averageRating || videoDocument.averageRating
 
         videoDocument.totalRatings =
           stats?.totalStats[0]?.totalRatingsDocuments || videoDocument.totalRatings
-        videoDocument.computeEngagements()
+
+        await videoDocument.save()
         return videoDocument.averageRating
 
       default:
         throw new OperationalError('Unsupported ratings parent', 404)
     }
-    // } catch (e) {
-    //   console.error('Error computing ratings parents stats', ratingsDocument, 'Reason', e)
-    // }
   }
 
   // ********* Ratings

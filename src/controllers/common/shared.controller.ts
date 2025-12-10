@@ -50,7 +50,9 @@ type LiveEventsType =
 
 export class SharedController extends UploadMediaUtils {
   static getVodMetaBy = Catch.async(async (req, res) => {
-    const videoDocument = await VideoModel.findById(req.params.vodId).select('averageRating viewsCount')
+    const videoDocument = await VideoModel.findById(req.params.vodId).select(
+      'averageRating viewsCount',
+    )
 
     sendResponse({
       res,
@@ -60,7 +62,9 @@ export class SharedController extends UploadMediaUtils {
 
   static getllVods = Catch.async(async (req, res) => {
     const { page, limit } = QueryParamsFeatures.paginagteParams(req.query)
-    const quality = await  VidUploadUtils.getUserVideoQuality(GetDefined.loggedInUser(req.user)._id.toString())
+    const quality = await VidUploadUtils.getUserVideoQuality(
+      GetDefined.loggedInUser(req.user)._id.toString(),
+    )
     const videoDocuments = await VideoRepo.fetchMany(page, limit)
 
     sendResponse({
@@ -524,8 +528,12 @@ export class SharedController extends UploadMediaUtils {
       contentType: 'vod',
     })
 
-    ++videoDocument.likesCount
-    videoDocument.computeEngagements()
+    await VideoRepo.computeEngagements({
+      session: undefined,
+      property: 'likesCount',
+      by: 1,
+      id: videoDocument._id,
+    })
 
     sendResponse({
       res,
@@ -533,38 +541,38 @@ export class SharedController extends UploadMediaUtils {
     })
   })
 
-  protected static _computeViewParentEngagements = async (viewDocument: ViewDocument) => {
-    try {
-      switch (viewDocument.contentType) {
-        case 'vod':
-          const videoDocument = await VideoModel.findById(viewDocument.content)
+  // protected static _computeViewParentEngagements = async (viewDocument: ViewDocument) => {
+  //   try {
+  //     switch (viewDocument.contentType) {
+  //       case 'vod':
+  //         await VideoRepo.computeEngagements({
+  //           session: undefined,
+  //           property: 'viewsCount',
+  //           by: 1,
+  //           id: viewDocument.,
+  //         })
 
-          if (videoDocument == null) return
+  //         break
 
-          ++videoDocument.viewsCount
-          videoDocument.computeEngagements()
-
-          break
-
-        default:
-          break
-      }
-    } catch (e) {
-      console.error('Error in _computeParentEngagements', e)
-    }
-  }
+  //       default:
+  //         break
+  //     }
+  //   } catch (e) {
+  //     console.error('Error in _computeParentEngagements', e)
+  //   }
+  // }
 
   static viewContent = Catch.async(async (req, res) => {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    const viewDocument = await ViewModel.create({
+    await ViewModel.create({
       viewer: user._id,
       content: req.body.content,
       contentType: req.body.contentType,
     })
 
-    this._computeViewParentEngagements(viewDocument)
+    // await this._computeViewParentEngagements(viewDocument)
 
     sendResponse({
       res,
@@ -604,14 +612,16 @@ export class SharedController extends UploadMediaUtils {
       throw new OperationalError('Like Not Found', 404)
     }
 
-    const videoDocument = await VideoModel.findById(deletedLikeDocument.content)
-
-    if (videoDocument == null) {
-      throw new OperationalError('Content Not Found', 404)
+    if (deletedLikeDocument.contentType !== 'vod') {
+      return
     }
 
-    --videoDocument.likesCount
-    videoDocument.computeEngagements()
+    await VideoRepo.computeEngagements({
+      session: undefined,
+      property: 'likesCount',
+      by: -1,
+      id: deletedLikeDocument.content,
+    })
 
     sendResponse({
       res,
