@@ -16,7 +16,7 @@ export class CustomerSettingsService {
         user_id: currentUser._id,
       },
       {
-        $push: { interest },
+        $set: { interest },
       },
       {
         upsert: true,
