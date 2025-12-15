@@ -36,6 +36,7 @@ const giftcardVideosSchema = new Schema(
       type: String,
       enum: ['RP', 'MERCHANT'],
       default: 'RP',
+      index: true,
     },
 
     status: {

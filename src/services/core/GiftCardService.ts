@@ -219,10 +219,20 @@ export class GiftCardService {
     await card.save()
   }
 
-  static fetch = async (query: ExpressRequestQuery) => {
+  static fetch = async ({ type, ...query }: ExpressRequestQuery) => {
+    if (type != null && type !== 'RP' && type !== 'MERCHANT') {
+      throw new OperationalError('optional type must be MERCHANT || RP', 400)
+    }
+    
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const cards = await GiftCardModel.aggregate([
+      {
+        $match: {
+          creatorMode: type ?? 'RP',
+        },
+      },
+
       {
         $sort: {
           _id: -1,
