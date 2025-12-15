@@ -107,6 +107,19 @@ export class GiftCardService {
     const merchantDocument = await this._getMerchant(merchantEmail, merchantPassword)
     const amount = guranteeNumericResult(query.amount, 1)
     const quantity = guranteeNumericResult(query.quantity, 1)
+    const maxBatchSize = 5
+
+    if (quantity > maxBatchSize) {
+      throw new OperationalError(`Maximum of ${maxBatchSize} cards are allowed per batch`, 400)
+    }
+
+    if ((currency === 'NGN' || currency === 'GMD') && amount > 100_000) {
+      throw new OperationalError('Maximum amount is 100,000', 400)
+    }
+
+    if (currency === 'USD' && amount > 1000) {
+      throw new OperationalError('Maximum amount is 1000', 400)
+    }
 
     const [codesSettled, recentSerialNumberSettled] = await Promise.allSettled([
       this._generateMerchateGiftCodes(quantity),
