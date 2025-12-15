@@ -25,7 +25,7 @@ export class AuthenticationService {
   protected static _handleUserImageUpload = async (user: UserDocument, image?: MulterFile) => {
     if (!image) return
 
-    const { Bucket, Key } = await MediaManagement.storeImage(image)
+    const { Bucket, Key } = await MediaManagement.storeImageAndSubtitle(image)
 
     if (Bucket == null) {
       throw new OperationalError('could not upload photo', 500)

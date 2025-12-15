@@ -58,7 +58,7 @@ export class AdminPayoutService {
     }
 
     if (payout.user?.photo?.Key) {
-      payout.photoUrl = MediaAccess.getImageURL(payout.user.photo.Key)
+      payout.photoUrl = MediaAccess.getImageAndSubtitleURL(payout.user.photo.Key)
     }
 
     return payout

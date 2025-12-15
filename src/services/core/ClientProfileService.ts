@@ -11,7 +11,7 @@ export class ClientProfileService {
 
   static fetchClientProfile = async (currentUser: LoggedInUser) => {
     const profile = hidePrivateProps(currentUser)
-    const photo_url = !profile.photo ? null : MediaAccess.getImageURL(profile.photo.Key)
+    const photo_url = !profile.photo ? null : MediaAccess.getImageAndSubtitleURL(profile.photo.Key)
 
     profile.photo = undefined
 

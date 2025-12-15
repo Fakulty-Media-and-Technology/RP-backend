@@ -111,7 +111,7 @@ export class MediaService {
     imageFile: MulterFile,
     userDocument: UserDocument,
   ) => {
-    const { Bucket, Key } = await MediaManagement.storeImage(imageFile)
+    const { Bucket, Key } = await MediaManagement.storeImageAndSubtitle(imageFile)
 
     if (!Bucket) {
       throw new OperationalError('error updating image', 500)
@@ -169,28 +169,26 @@ export class MediaService {
   }
 
   static getPhotoUrl = async (_: string, key: string) => {
-    return MediaAccess.getImageURL(key)
+    return MediaAccess.getImageAndSubtitleURL(key)
   }
 
   static getSubtitleUrl = async (_: string, key: string) => {
-    return await MediaAccess.getSubtitleURL(key)
+    return await MediaAccess.getImageAndSubtitleURL(key)
   }
 
   static getSubtitles = async (parentId: string) => {
     const subtitles = await SubtitleModel.find({ video_id: parentId })
 
-    return await Promise.all(
-      subtitles.map(async subtitle => {
-        return {
-          ...subtitle.toObject(),
-          src: await MediaAccess.getSubtitleURL(subtitle.key),
-          createdAt: undefined,
-          updatedAt: undefined,
-          video_id: undefined,
-          parentType: undefined,
-          __v: undefined,
-        }
-      }),
-    )
+    return subtitles.map(subtitle => {
+      return {
+        ...subtitle.toObject(),
+        src: MediaAccess.getImageAndSubtitleURL(subtitle.key),
+        createdAt: undefined,
+        updatedAt: undefined,
+        video_id: undefined,
+        parentType: undefined,
+        __v: undefined,
+      }
+    })
   }
 }

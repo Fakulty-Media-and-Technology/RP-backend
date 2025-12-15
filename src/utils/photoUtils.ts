@@ -7,7 +7,7 @@ export class PhotoUtils {
 
     const withPhotoUrL = {
       ...pureCast,
-      photoUrl: MediaAccess.getImageURL(cast.key),
+      photoUrl: MediaAccess.getImageAndSubtitleURL(cast.key),
       bucket: undefined,
       key: undefined,
       __v: undefined,

@@ -77,7 +77,7 @@ export class NotificationService {
       throw new OperationalError('photo file is required', 400)
     }
 
-    const photoUpload = await MediaManagement.storeImage(photoFile)
+    const photoUpload = await MediaManagement.storeImageAndSubtitle(photoFile)
 
     if (photoUpload.Key == null || photoUpload.Bucket == null) {
       throw new OperationalError('error processing photo upload', 500)
@@ -130,7 +130,7 @@ export class NotificationService {
         photoUri:
           notification.adminNotification.photo == null
             ? null
-            : MediaAccess.getImageURL(notification.adminNotification.photo.Key),
+            : MediaAccess.getImageAndSubtitleURL(notification.adminNotification.photo.Key),
       })
 
       return result
@@ -195,7 +195,7 @@ export class NotificationService {
     const notificationsWithUrls = notifications.map(async notification => {
       return {
         ...notification,
-        thumbnail_url: await MediaAccess.getImageURL(notification.thumbnail.Key),
+        thumbnail_url: await MediaAccess.getImageAndSubtitleURL(notification.thumbnail.Key),
       }
     })
 

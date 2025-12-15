@@ -391,7 +391,7 @@ export class LiveStreamService {
     }
 
     if (coverPhotoFile) {
-      const photoUpload = await MediaManagement.storeImage(coverPhotoFile, liveDocument.expiry)
+      const photoUpload = await MediaManagement.storeImageAndSubtitle(coverPhotoFile, liveDocument.expiry)
 
       if (liveDocument.coverPhoto) {
         MediaManagement.deleteObject(liveDocument.coverPhoto.Key, liveDocument.coverPhoto.Bucket)
@@ -468,7 +468,7 @@ export class LiveStreamService {
     })
 
     if (data.coverPhoto) {
-      const photoUpload = await MediaManagement.storeImage(data.coverPhoto, liveDocument.expiry)
+      const photoUpload = await MediaManagement.storeImageAndSubtitle(data.coverPhoto, liveDocument.expiry)
 
       liveDocument.coverPhoto = {
         Key: photoUpload.Key,

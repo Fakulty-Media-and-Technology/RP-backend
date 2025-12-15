@@ -106,7 +106,7 @@ export class VoteService {
       contact: data.contact,
     })
 
-    const photoUpload = await MediaManagement.storeImage(data.photoFile)
+    const photoUpload = await MediaManagement.storeImageAndSubtitle(data.photoFile)
 
     if (!photoUpload.Key || !photoUpload.Bucket) {
       throw new OperationalError('could not upload photo please try again', 500)
@@ -133,7 +133,7 @@ export class VoteService {
     const contestantInfoWithPhotoUrl = contestantInfo.map(event => {
       return {
         ...event.toObject(),
-        photo_url: MediaAccess.getImageURL(event.photo.Key),
+        photo_url: MediaAccess.getImageAndSubtitleURL(event.photo.Key),
       }
     })
 
@@ -163,7 +163,7 @@ export class VoteService {
     return contestants.map(async contestant => {
       return {
         ...contestant.toObject(),
-        photo_url: MediaAccess.getImageURL(contestant.photo.Key),
+        photo_url: MediaAccess.getImageAndSubtitleURL(contestant.photo.Key),
         photo: undefined,
         __v: undefined,
       }

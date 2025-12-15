@@ -29,7 +29,7 @@ export class AdManagerService {
       : '720p'
 
     return ads.map(ad => ({
-      photoUrl: MediaAccess.getImageURL(ad.photo.Key),
+      photoUrl: MediaAccess.getImageAndSubtitleURL(ad.photo.Key),
       videoUrl: VidUploadUtils.getResSourceUrl(ad.videoUpload, videoQuality),
       photo: undefined,
       videoUpload: undefined,
@@ -39,7 +39,7 @@ export class AdManagerService {
 
   protected static _uploadMedia = async ({ videoFile, imageFile, expire }: UploadMediaInput) => {
     const [imageUploadResult, videoUploadResult] = await Promise.allSettled([
-      MediaManagement.storeImage(imageFile, expire),
+      MediaManagement.storeImageAndSubtitle(imageFile, expire),
       MediaManagement.uploadAndInitiateMediaConvert(videoFile, expire),
     ])
 

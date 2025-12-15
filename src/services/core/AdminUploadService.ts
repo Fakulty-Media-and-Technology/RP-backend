@@ -69,8 +69,8 @@ export class AdminUploadService {
     expire?: Date,
   ) => {
     const [portraitUpload, landscapeUpload] = await Promise.all([
-      MediaManagement.storeImage(portraitFile, expire),
-      MediaManagement.storeImage(landscapeFile, expire),
+      MediaManagement.storeImageAndSubtitle(portraitFile, expire),
+      MediaManagement.storeImageAndSubtitle(landscapeFile, expire),
     ])
 
     return {
@@ -380,7 +380,7 @@ export class AdminUploadService {
     videoDocument.upcoming = data.upcoming || videoDocument.upcoming
 
     if (data.portraitPoster) {
-      const potraitUpload = await MediaManagement.storeImage(data.portraitPoster, expiry)
+      const potraitUpload = await MediaManagement.storeImageAndSubtitle(data.portraitPoster, expiry)
 
       if (videoDocument.portraitPhoto) {
         MediaManagement.deleteObject(
@@ -396,7 +396,7 @@ export class AdminUploadService {
     }
 
     if (data.landscapePoster) {
-      const newLandscapePoster = await MediaManagement.storeImage(data.landscapePoster, expiry)
+      const newLandscapePoster = await MediaManagement.storeImageAndSubtitle(data.landscapePoster, expiry)
 
       if (videoDocument.landscapePhoto) {
         MediaManagement.deleteObject(

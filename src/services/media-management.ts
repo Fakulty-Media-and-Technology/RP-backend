@@ -15,7 +15,7 @@ type UploadVideoInput = {
   expire: Date | undefined
 }
 
-export type StoreResponse = Awaited<ReturnType<typeof MediaManagement.storeImage>>
+export type StoreResponse = Awaited<ReturnType<typeof MediaManagement.storeImageAndSubtitle>>
 
 export class MediaManagement {
   private static _genUniqueKey = () => crypto.randomBytes(8).toString('hex') + Date.now()
@@ -71,11 +71,11 @@ export class MediaManagement {
     }
   }
 
-  static storeSubtitle = async (file: MulterFile, expire?: Date) => {
-    return await this._storeObjectFile(file, AwsUtils.buckets.reeplay, expire)
-  }
+  // static storeSubtitle = async (file: MulterFile, expire?: Date) => {
+  //   return await this._storeObjectFile(file, AwsUtils.buckets.replayImages, expire)
+  // }
 
-  static storeImage = async (file: MulterFile, expire?: Date) => {
+  static storeImageAndSubtitle = async (file: MulterFile, expire?: Date) => {
     return await this._storeObjectFile(file, AwsUtils.buckets.replayImages, expire)
   }
 

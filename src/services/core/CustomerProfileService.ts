@@ -140,7 +140,7 @@ export class CustomerProfileService {
     return {
       data: {
         profile: profile[0],
-        photo_url: MediaAccess.getImageURL(userPhoto.Key),
+        photo_url: MediaAccess.getImageAndSubtitleURL(userPhoto.Key),
       },
       message: 'Client profile fetched',
     }
