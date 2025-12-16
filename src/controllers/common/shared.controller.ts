@@ -541,38 +541,38 @@ export class SharedController extends UploadMediaUtils {
     })
   })
 
-  // protected static _computeViewParentEngagements = async (viewDocument: ViewDocument) => {
-  //   try {
-  //     switch (viewDocument.contentType) {
-  //       case 'vod':
-  //         await VideoRepo.computeEngagements({
-  //           session: undefined,
-  //           property: 'viewsCount',
-  //           by: 1,
-  //           id: viewDocument.,
-  //         })
+  protected static _computeViewParentEngagements = async (viewDocument: ViewDocument) => {
+    try {
+      switch (viewDocument.contentType) {
+        case 'vod':
+          await VideoModel.findByIdAndUpdate(viewDocument.content, { $inc: { viewsCount: 1 } })
+          break
 
-  //         break
-
-  //       default:
-  //         break
-  //     }
-  //   } catch (e) {
-  //     console.error('Error in _computeParentEngagements', e)
-  //   }
-  // }
+        default:
+          break
+      }
+    } catch (e) {
+      console.error('Error in _computeParentEngagements', e)
+    }
+  }
 
   static viewContent = Catch.async(async (req, res) => {
     const user = GetDefined.loggedInUser(req.user)
     denyGuestUser(user)
 
-    await ViewModel.create({
-      viewer: user._id,
-      content: req.body.content,
-      contentType: req.body.contentType,
-    })
+    try {
+      const viewDocument = await ViewModel.create({
+        viewer: user._id,
+        content: req.body.content,
+        contentType: req.body.contentType,
+      })
 
-    // await this._computeViewParentEngagements(viewDocument)
+      this._computeViewParentEngagements(viewDocument)
+    } catch (e: any) {
+      if (e.code !== 11000) {
+        throw e
+      }
+    }
 
     sendResponse({
       res,
