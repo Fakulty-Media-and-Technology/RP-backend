@@ -46,7 +46,7 @@ export const createReplySchema = {
     message: STRING_SCHEMA.required(),
     parentType: STRING_SCHEMA.valid('vod', 'episode').required(),
     parentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-    parentCommentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    parentCommentId: MONGO_DB_OBJECT_ID_SCHEMA,
     parentReplyId: MONGO_DB_OBJECT_ID_SCHEMA,
   }),
 }

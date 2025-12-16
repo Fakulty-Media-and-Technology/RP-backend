@@ -2,7 +2,7 @@ import { QueryOptions, UpdateQuery } from 'mongoose'
 import { Comment, CommentModel } from '../../models/comments.model'
 import { Rating, RatingModel } from '../../models/rating.model'
 import { ReactionModel } from '../../models/reaction.model'
-import { toObjectId, VideoRepo } from '../../repositories/VideoRepo'
+import { VideoRepo } from '../../repositories/VideoRepo'
 import { OperationalError } from '../../utils/OperationalError'
 import { VideoModel } from '../../models/videos.model'
 import { EpisodeModel } from '../../models/episodes.model'
@@ -10,15 +10,9 @@ import { LiveModel } from '../../models/lives.model'
 import { SeasonModel } from '../../models/seasons.model'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
 import { commentsParent } from '../../models/assets'
-import {
-  Author,
-  CommentsRepo,
-  GetCommentsResponse,
-  GetRepliesResponse,
-} from '../../repositories/CommentsRepo'
+import { CommentsRepo } from '../../repositories/CommentsRepo'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
-import { MediaAccess } from '../media-access'
-import { getPromiseAllFulfilledResults } from '../../utils/promises'
+
 import { MongoDBObjectId } from '../../types/general'
 import { RatingsRepo } from '../../repositories/ReatingsRepo'
 
