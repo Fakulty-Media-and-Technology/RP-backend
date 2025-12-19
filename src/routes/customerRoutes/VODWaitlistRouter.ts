@@ -3,7 +3,7 @@ import { VODWaitlistController } from '../../controllers/customers/VodWaitlist.c
 
 export const VODWaitlistRouter = Router()
 
-VODWaitlistRouter.get('/', VODWaitlistController.fetch)
+VODWaitlistRouter.route('/').get(VODWaitlistController.fetch).delete(VODWaitlistController.clear)
 
 VODWaitlistRouter.route('/:videoId')
   .post(VODWaitlistController.add)

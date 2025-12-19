@@ -31,6 +31,14 @@ export class VODWaitlistService {
     )
   }
 
+  static clear = async (currentUserId: MongoDBObjectId) => {
+    await VodWaitlistModel.findOneAndUpdate(
+      { userId: currentUserId },
+      { $set: { vods: [] } },
+      { upsert: true },
+    )
+  }
+
   static remove = async (currentUserId: MongoDBObjectId, vodId: string) => {
     await VodWaitlistModel.findOneAndUpdate({ userId: currentUserId }, { $pull: { vods: vodId } })
   }

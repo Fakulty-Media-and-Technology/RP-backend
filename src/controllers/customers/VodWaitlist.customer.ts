@@ -32,6 +32,14 @@ export class VODWaitlistController {
     })
   })
 
+  static clear = Catch.async(async (req, res) => {
+    await VODWaitlistService.clear(GetDefined.loggedInUser(req.user)._id)
+
+    sendResponse({
+      res,
+    })
+  })
+
   static fetch = Catch.async(async (req, res) => {
     const videos = await VODWaitlistService.fetch(GetDefined.loggedInUser(req.user)._id, req.query)
 
