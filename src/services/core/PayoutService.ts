@@ -54,6 +54,10 @@ export class PayoutService {
       )
     }
 
+    if (currency === 'GMD') {
+      throw new OperationalError('Contact management to withdraw for this currency', 400)
+    }
+
     const wallet = await WalletModel.findOne({ userId: currentUser._id })
 
     if (wallet == null) {
@@ -62,8 +66,7 @@ export class PayoutService {
 
     if (
       (currency === 'NGN' && amount > wallet.NGNBalance) ||
-      (currency === 'USD' && amount > wallet.USDBalance) ||
-      (currency === 'GMD' && amount > wallet.GMDBalance)
+      (currency === 'USD' && amount > wallet.USDBalance)
     ) {
       throw new OperationalError('insufficient funds', 400)
     }
@@ -82,7 +85,7 @@ export class PayoutService {
 
     const fullname = `${currentUser.first_name} ${currentUser.last_name}`
     const payoutReference = payout._id.toString()
-    const phoneNumber = currentUser.country_code + currentUser.mobile
+    // const phoneNumber = currentUser.country_code + currentUser.mobile
     const payoutAmount = payout.amount
 
     switch (currency) {
@@ -103,15 +106,15 @@ export class PayoutService {
         wallet.USDBalance = wallet.USDBalance - amount
         break
 
-      case 'GMD':
-        await WavePayment.payout({
-          fullname,
-          phoneNumber,
-          payoutReference,
-          amount: payoutAmount,
-        })
+      // case 'GMD':
+      //   await WavePayment.payout({
+      //     fullname,
+      //     phoneNumber,
+      //     payoutReference,
+      //     amount: payoutAmount,
+      //   })
 
-        wallet.GMDBalance = wallet.GMDBalance - amount
+      //   wallet.GMDBalance = wallet.GMDBalance - amount
       default:
         break
     }
