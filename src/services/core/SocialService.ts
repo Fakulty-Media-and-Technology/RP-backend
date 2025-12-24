@@ -263,20 +263,24 @@ export class SocialService {
 
     switch (ratingsDocument.parentType) {
       case 'vod':
-        const videoDocument = await VideoModel.findById(ratingsDocument.parentId)
-
-        if (videoDocument == null) return
-
         const [stats] = await RatingsRepo.parentRatingsStats(ratingsDocument.parentId.toString())
 
-        videoDocument.averageRating =
-          stats?.totalStats[0]?.averageRating || videoDocument.averageRating
+       const result =  await VideoModel.updateOne({ _id: ratingsDocument.parentId }, [
+          {
+            $set: {
+              averageRating: { $ifNull: [stats?.totalStats[0]?.averageRating, '$averageRating'] },
+              totalRatings: {
+                $ifNull: [stats?.totalStats[0]?.totalRatingsDocuments, '$totalRatings'],
+              },
+            },
+          },
+        ])
 
-        videoDocument.totalRatings =
-          stats?.totalStats[0]?.totalRatingsDocuments || videoDocument.totalRatings
+        if(result.matchedCount === 0){
+          throw new OperationalError('Invalid vod id', 404)
+        }
 
-        await videoDocument.save()
-        return videoDocument.averageRating
+        break
 
       default:
         throw new OperationalError('Unsupported ratings parent', 404)
@@ -294,9 +298,9 @@ export class SocialService {
       { new: true, upsert: true },
     )
 
-    const averagteRating = await this._computeRatingsParentStats(ratingsDocument)
+    await this._computeRatingsParentStats(ratingsDocument)
 
-    return Object.assign(ratingsDocument, { averagteRating: averagteRating ?? 4.5 })
+    return ratingsDocument
   }
 
   static getRatings = async (parentId: string) => {
