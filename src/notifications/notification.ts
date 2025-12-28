@@ -1,52 +1,52 @@
-import { TokenMessage } from 'firebase-admin/lib/messaging/messaging-api'
 import admin from '../firebase/firebase'
 import { NotificationModel } from '../models/notifications.model'
 import { UserDeviceModel } from '../models/userDevice.model'
-import { Notification as NotificationType } from '../models/notifications.model'
-
-interface NotificationData {
-  user_id: string
-  type: NotificationType['type']
-  _id: string
-}
 
 // ! this is not used anywhere
 export class Notification {
   static sendPushNotification = async (title: string, body: string, notificationData: any) => {
-    // Get all user devices
     const userDevices = await UserDeviceModel.find({
       user_id: notificationData.user_id,
     })
 
+    const payload = {
+      ...notificationData,
+      notification: { title, body },
+      click_action: 'NOTIFICATION_CLICK',
+      notification_id: notificationData._id.toString(),
+      type: notificationData.type,
+    }
+
     const results = await Promise.allSettled(
       userDevices.map(device => {
-        const message: TokenMessage = {
+        return admin.messaging().send({
           token: device.device_token,
-          notification: { title, body },
+          data: payload,
+          notification: payload.notification,
+
           android: {
             priority: 'high',
+
             notification: {
-              channelId: 'default_channel',
               sound: 'default',
             },
           },
+
           apns: {
+            headers: {
+              'apns-priority': '10',
+              'apns-push-type': 'alert',
+            },
+            
             payload: {
               aps: {
+                alert: payload.notification,
                 sound: 'default',
+                // contentAvailable: true,
               },
             },
           },
-          data: {
-            ...notificationData,
-            click_action: 'NOTIFICATION_CLICK',
-            // Add any additional data needed by the frontend
-            notification_id: notificationData._id.toString(),
-            type: notificationData.type,
-          },
-        }
-
-        return admin.messaging().send(message)
+        })
       }),
     )
 
