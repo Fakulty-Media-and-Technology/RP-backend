@@ -14,6 +14,7 @@ const userdeviceSchema = new Schema(
     device_token: {
       type: String,
       required: true,
+      index: true,
     },
     device_type: {
       type: String,

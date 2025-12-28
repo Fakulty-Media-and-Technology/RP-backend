@@ -5,7 +5,7 @@ import { sendResponse } from '../../utils/responder'
 
 export class CustomerPushNotificationController {
   static registerDeviceToken = Catch.async(async ({ user, body }, res) => {
-    await NotificationService.Push.setDeviceToken(GetDefined.loggedInUser(user).id, body)
+    await NotificationService.Push.updateDeviceToken(GetDefined.loggedInUser(user).id, body)
 
     sendResponse({
       res,
