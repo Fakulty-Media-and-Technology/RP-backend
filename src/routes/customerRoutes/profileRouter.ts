@@ -4,4 +4,4 @@ import { CustomerProfileController } from '../../controllers/customers/profile.c
 export const router = Router()
 
 router.get('/fetch', CustomerProfileController.customerProfileFetch)
-router.get('/delete', CustomerProfileController.deleteProfile)
+router.delete('/delete', CustomerProfileController.deleteProfile)
