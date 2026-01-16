@@ -501,6 +501,7 @@ export class VideoRepo {
       prevStages: [match],
       page,
       limit,
+      sortStage: { $sort: { _id: -1 } },
     })
   }
 
@@ -520,6 +521,7 @@ export class VideoRepo {
       prevStages: [match],
       page,
       limit,
+      sortStage: { $sort: { _id: -1 } },
     })
   }
 
@@ -528,6 +530,7 @@ export class VideoRepo {
       prevStages: [{ $match: { category: toObjectId(catId) } }],
       page,
       limit,
+      sortStage: { $sort: { _id: -1 } },
     })
   }
 
@@ -585,11 +588,10 @@ export class VideoRepo {
           },
         },
       ],
-      // sortStage: {
-      //   $sort: { engagements: -1 },
-      // },
+
       page,
       limit,
+      sortStage: { $sort: { _id: -1 } },
     })
   }
 }
