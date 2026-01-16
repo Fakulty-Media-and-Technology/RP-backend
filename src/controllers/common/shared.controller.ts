@@ -65,7 +65,7 @@ export class SharedController extends UploadMediaUtils {
     const quality = await VidUploadUtils.getUserVideoQuality(
       GetDefined.loggedInUser(req.user)._id.toString(),
     )
-    const videoDocuments = await VideoRepo.fetchMany(page, limit)
+    const videoDocuments = await VideoRepo.fetchFromLatest(page, limit)
 
     sendResponse({
       res,

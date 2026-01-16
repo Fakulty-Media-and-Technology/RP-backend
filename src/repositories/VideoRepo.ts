@@ -225,13 +225,15 @@ export class VideoRepo {
     })
   }
 
-  static fetchMany = (page: number, limit: number) =>
+  static fetchFromLatest = (page: number, limit: number) =>
     this.fetchVideoAggr({
       prevStages: [
         {
           $match: {},
         },
       ],
+
+      sortStage: { $sort: { _id: -1 } },
 
       page,
       limit,
