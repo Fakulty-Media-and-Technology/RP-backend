@@ -43,9 +43,9 @@ exports.createNewArrivalNotification = async (content: any) => {
   const savedNotifications = await NotificationModel.insertMany(notifications)
 
   // Send push notifications
-  await Promise.all(
-    savedNotifications.map(notification =>
-      Notification.sendPushNotification(notification.title, notification.body, notification),
-    ),
-  )
+  // await Promise.all(
+  //   savedNotifications.map(notification =>
+  //     // Notification.sendPushNotification(notification.title, notification.body, notification),
+  //   ),
+  // )
 }
