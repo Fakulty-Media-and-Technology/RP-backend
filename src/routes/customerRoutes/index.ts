@@ -20,6 +20,7 @@ import { router as ProfileRouter } from './../customerRoutes/profileRouter'
 import { router as EnumsRouter } from './../customerRoutes/enumsRouter'
 import { router as WatchedRouter } from './watchedRouter'
 import { router as AdsRouter } from './addsRouter'
+import { router as PushNotificationRouter } from './pushNotificationRouter'
 import { RecentSearchRouter } from './recentSearchRouter'
 import { VODWaitlistRouter } from './VODWaitlistRouter'
 
@@ -75,7 +76,7 @@ customerRouter.use('/enums', EnumsRouter)
 customerRouter.use('/live/events', LivesRouter)
 customerRouter.use('/livestream', LivestreamRouter)
 customerRouter.use('/subscription', SubscriptionRuuter)
-// customerRouter.use('/notification', PushNotificationRouter)
+customerRouter.use('/notification', PushNotificationRouter)
 // customerRouter.use('/notifications', NotificationsRouter)
 customerRouter.use('/recent-search', RecentSearchRouter)
 customerRouter.use('/watched', WatchedRouter)
