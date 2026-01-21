@@ -1,60 +1,58 @@
 import admin from '../firebase/firebase'
 import { NotificationModel } from '../models/notifications.model'
-import { UserDeviceModel } from '../models/userDevice.model'
+
+interface NotificationPayload {
+  title: string
+  body: string
+  type: string
+  metadata: Record<string, any>
+  image?: string
+}
 
 // ! this is not used anywhere
 export class Notification {
-  static sendPushNotification = async (title: string, body: string, notificationData: any) => {
-    const userDevices = await UserDeviceModel.find({
-      user_id: notificationData.user_id,
-    })
-
-    const payload = {
-      ...notificationData,
-      notification: { title, body },
-      click_action: 'NOTIFICATION_CLICK',
-      notification_id: notificationData._id.toString(),
-      type: notificationData.type,
+  static sendPushNotification = async (token: string, payload: NotificationPayload) => {
+    const OSNotification: Pick<NotificationPayload, 'title' | 'body'> = {
+      title: payload.title,
+      body: payload.body,
     }
 
-    const results = await Promise.allSettled(
-      userDevices.map(device => {
-        return admin.messaging().send({
-          token: device.device_token,
-          data: payload,
-          notification: payload.notification,
+    try {
+      await admin.messaging().send({
+        token,
+        data: {
+          ...payload,
+          metadata: JSON.stringify(payload.metadata),
+          ...(payload.image && { image: payload.image }),
+        },
+        notification: OSNotification,
 
-          android: {
-            priority: 'high',
+        android: {
+          priority: 'high',
 
-            notification: {
+          notification: {
+            sound: 'default',
+          },
+        },
+
+        apns: {
+          headers: {
+            'apns-priority': '10',
+            'apns-push-type': 'alert',
+          },
+
+          payload: {
+            aps: {
+              alert: OSNotification,
               sound: 'default',
+              // contentAvailable: true,
             },
           },
-
-          apns: {
-            headers: {
-              'apns-priority': '10',
-              'apns-push-type': 'alert',
-            },
-            
-            payload: {
-              aps: {
-                alert: payload.notification,
-                sound: 'default',
-                // contentAvailable: true,
-              },
-            },
-          },
-        })
-      }),
-    )
-
-    results.forEach(result => {
-      if (result.status === 'rejected') {
-        console.error(`Error sending Push notification:`, result.reason)
-      }
-    })
+        },
+      })
+    } catch (e) {
+      console.log('sendPushNotification error', e)
+    }
   }
 
   static createNotification = async (data: Record<string, any>) => {
