@@ -5,7 +5,7 @@ node_modules
 tempMedia
 
 # FIREBASE ADMIN SECRET
-fb-secret.json
+# fb-secret.json
 
 # 
 home
