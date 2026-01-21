@@ -1,3 +1,4 @@
+import { TokenMessage } from 'firebase-admin/lib/messaging/messaging-api'
 import admin from '../firebase/firebase'
 import { NotificationModel } from '../models/notifications.model'
 
@@ -17,39 +18,51 @@ export class Notification {
       body: payload.body,
     }
 
-    try {
-      await admin.messaging().send({
-        token,
-        data: {
-          ...payload,
-          metadata: JSON.stringify(payload.metadata),
-          ...(payload.image && { image: payload.image }),
+    const message: TokenMessage = {
+      token,
+      data: {
+        ...payload,
+        metadata: JSON.stringify(payload.metadata),
+        ...(payload.image && { image: payload.image }),
+      },
+      notification: OSNotification,
+
+      android: {
+        priority: 'high',
+
+        notification: {
+          sound: 'default',
+          ...(payload.image && {
+            imageUrl: payload.image,
+          }),
         },
-        notification: OSNotification,
+      },
 
-        android: {
-          priority: 'high',
+      apns: {
+        headers: {
+          'apns-priority': '10',
+          'apns-push-type': 'alert',
+        },
 
-          notification: {
+        payload: {
+          aps: {
+            alert: OSNotification,
             sound: 'default',
+            mutableContent: !!payload.image,
+            // contentAvailable: true,
           },
         },
 
-        apns: {
-          headers: {
-            'apns-priority': '10',
-            'apns-push-type': 'alert',
-          },
+        ...(payload.image && {
+          fcmOptions: { imageUrl: payload.image },
+        }),
+      },
+    }
 
-          payload: {
-            aps: {
-              alert: OSNotification,
-              sound: 'default',
-              // contentAvailable: true,
-            },
-          },
-        },
-      })
+    console.dir({ message }, { depth: null })
+
+    try {
+      await admin.messaging().send(message)
     } catch (e) {
       console.log('sendPushNotification error', e)
     }
@@ -62,3 +75,5 @@ export class Notification {
     })
   }
 }
+
+
