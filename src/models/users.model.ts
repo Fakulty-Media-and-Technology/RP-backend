@@ -109,6 +109,12 @@ const schema = new Schema(
       trim: true,
       lowercase: true,
     },
+
+    videoQuality: {
+      type: String,
+      enum: ['480p', '720p', '1080p'],
+      required: true,
+    },
   },
   {
     timestamps: true,
@@ -150,6 +156,14 @@ const schema = new Schema(
     },
   },
 )
+
+schema.pre('validate', function (next) {
+  if (this.isNew) {
+    this.videoQuality = this.role === 'customer' ? '480p' : '720p'
+  }
+
+  next()
+})
 
 schema.index({ country_code: 1, mobile: 1 }, { unique: true })
 

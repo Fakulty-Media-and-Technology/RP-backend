@@ -2,6 +2,9 @@ import { FilterQuery, UpdateQuery } from 'mongoose'
 import { SettingsModel, SettingsSchema } from '../../models/userSettings.model'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
+import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
+import { denyGuestUser } from '../../utils/denyGuestUser'
+import { UserModel } from '../../models/users.model'
 
 type PushPull = 'pull' | 'push'
 
@@ -49,11 +52,16 @@ export class CustomerSettingsService {
     })
   }
 
-  static setNotificationSettings = async (currentUser: LoggedInUser, data: Record<string, any>) => {
-    if ((currentUser.role as string) === 'guest') {
-      throw new OperationalError('you are not authenticated', 403)
-    }
-
+  protected static _setSettingsSession = async (
+    {
+      currentUser,
+      data,
+    }: {
+      currentUser: LoggedInUser
+      data: Record<string, any>
+    },
+    session: MaybeSession,
+  ) => {
     const {
       video_quality,
       allow_notifications,
@@ -63,7 +71,7 @@ export class CustomerSettingsService {
       live_channels,
     } = data
 
-    await SettingsModel.findOneAndUpdate(
+    const settingsDocument = await SettingsModel.findOneAndUpdate(
       {
         user_id: currentUser.id,
       },
@@ -77,7 +85,21 @@ export class CustomerSettingsService {
       },
       {
         upsert: true,
+        session,
       },
     )
+
+    if (video_quality && settingsDocument != null) {
+      await UserModel.findByIdAndUpdate(currentUser._id, { $set: { videoQuality: video_quality } })
+    }
+  }
+
+  static setNotificationSettings = async (currentUser: LoggedInUser, data: Record<string, any>) => {
+    denyGuestUser(currentUser)
+
+    await withMongoDBSession(this._setSettingsSession, {
+      currentUser,
+      data,
+    })
   }
 }

@@ -6,6 +6,7 @@ const settingsSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      unique: true,
     },
     interest: {
       type: [String],
@@ -52,3 +53,5 @@ settingsSchema.index({ user_id: 1, video_quality: 1 }, { unique: true })
 export const SettingsModel = model('settings', settingsSchema)
 export type SettingsSchema = InferSchemaType<typeof settingsSchema>
 export type Settings = HydratedDocumentFromSchema<typeof settingsSchema>
+
+
