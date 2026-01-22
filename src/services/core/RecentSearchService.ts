@@ -5,6 +5,7 @@ import {
 } from '../../models/recentSearch.model'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { VideoRepo } from '../../repositories/VideoRepo'
+import { LoggedInUser } from '../../types'
 import { MongoDBObjectId } from '../../types/general'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
@@ -75,28 +76,8 @@ export class RecentSearchService {
     saturatedLives: await LiveMediaSourcesUtils.resolveSources(lives, quality),
   })
 
-  protected static _fetchSearchAndQuality = async (userId: string) => {
-    const [qualityResult, searchResult] = await Promise.allSettled([
-      VidUploadUtils.getUserVideoQuality(userId, '720p'),
-      RecentSearchModel.findOne({ user: userId }),
-    ])
-
-    if (qualityResult.status === 'rejected') {
-      throw qualityResult.reason
-    }
-
-    if (searchResult.status === 'rejected') {
-      throw searchResult.reason
-    }
-
-    return {
-      quality: qualityResult.value,
-      recentSearch: searchResult.value,
-    }
-  }
-
-  static fetch = async (userId: string) => {
-    const { quality, recentSearch } = await this._fetchSearchAndQuality(userId)
+  static fetch = async (currentUser: LoggedInUser) => {
+    const recentSearch = await RecentSearchModel.findOne({ user: currentUser._id })
 
     if (recentSearch == null || recentSearch.contents.length == 0) {
       return []
@@ -118,7 +99,7 @@ export class RecentSearchService {
     const { saturatedLives, saturatedVods } = await this._saturateMediaSources({
       vods,
       lives,
-      quality,
+      quality: currentUser.videoQuality,
     })
 
     return {

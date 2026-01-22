@@ -25,22 +25,8 @@ export class VideoService {
   }: GetVodsByCategoryParams) => {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const [vodsResult, qualityResult] = await Promise.allSettled([
-      VideoRepo.fetchByCategory(categoryId, page, limit),
-      VidUploadUtils.getUserVideoQuality(currentUser._id.toString()),
-    ])
-
-    if (vodsResult.status === 'rejected') {
-      throw vodsResult.reason
-    }
-
-    if (qualityResult.status === 'rejected') {
-      throw qualityResult.reason
-    }
-
-    const vods = vodsResult.value
-    const vidQuality = qualityResult.value
-    const hydratedVods = MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality)
+    const vods = await VideoRepo.fetchByCategory(categoryId, page, limit)
+    const hydratedVods = MovieMediaSourcesUtils.resolveMediaSources(vods, currentUser.videoQuality)
     return hydratedVods
   }
 }

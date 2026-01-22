@@ -24,7 +24,7 @@ export class WatchedController {
 
   static continueWatching = Catch.async(async (req, res) => {
     const watched = await WatchedService.fetchContinueWatching(
-      GetDefined.loggedInUser(req.user)._id.toString(),
+      GetDefined.loggedInUser(req.user),
       req.query,
     )
 

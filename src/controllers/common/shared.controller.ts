@@ -60,16 +60,15 @@ export class SharedController extends UploadMediaUtils {
     })
   })
 
-  static getllVods = Catch.async(async (req, res) => {
+  static getAllVods = Catch.async(async (req, res) => {
     const { page, limit } = QueryParamsFeatures.paginagteParams(req.query)
-    const quality = await VidUploadUtils.getUserVideoQuality(
-      GetDefined.loggedInUser(req.user)._id.toString(),
-    )
+    const { videoQuality } = GetDefined.loggedInUser(req.user)
+
     const videoDocuments = await VideoRepo.fetchFromLatest(page, limit)
 
     sendResponse({
       res,
-      data: MovieMediaSourcesUtils.resolveMediaSources(videoDocuments, quality),
+      data: MovieMediaSourcesUtils.resolveMediaSources(videoDocuments, videoQuality),
     })
   })
 
@@ -378,26 +377,19 @@ export class SharedController extends UploadMediaUtils {
   })
 
   static getFeaturedVods = Catch.async(async ({ query, user }, res) => {
-    const vidQuality = await VidUploadUtils.getUserVideoQuality(
-      GetDefined.loggedInUser(user)._id.toString(),
-    )
-
+    const { videoQuality } = GetDefined.loggedInUser(user)
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const vods = await VideoRepo.fetchFeatured(page, limit)
 
     sendResponse({
       res,
-      data: MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality),
+      data: MovieMediaSourcesUtils.resolveMediaSources(vods, videoQuality),
       message: 'featured contents fetched successful',
     })
   })
 
   static getSimilarByCastId = Catch.async(async ({ query, user, params }, res) => {
-    const vidQuality = await VidUploadUtils.getUserVideoQuality(
-      GetDefined.loggedInUser(user)._id.toString(),
-    )
-
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const vods = await VideoRepo.fetchSimilarByCastId({
@@ -409,15 +401,16 @@ export class SharedController extends UploadMediaUtils {
 
     sendResponse({
       res,
-      data: MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality),
+      data: MovieMediaSourcesUtils.resolveMediaSources(
+        vods,
+        GetDefined.loggedInUser(user).videoQuality,
+      ),
       message: '',
     })
   })
 
   static getSimilarByGenreId = Catch.async(async ({ query, user, params }, res) => {
-    const vidQuality = await VidUploadUtils.getUserVideoQuality(
-      GetDefined.loggedInUser(user)._id.toString(),
-    )
+    const { videoQuality } = GetDefined.loggedInUser(user)
 
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
@@ -430,7 +423,7 @@ export class SharedController extends UploadMediaUtils {
 
     sendResponse({
       res,
-      data: MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality),
+      data: MovieMediaSourcesUtils.resolveMediaSources(vods, videoQuality),
       message: '',
     })
   })
@@ -438,9 +431,7 @@ export class SharedController extends UploadMediaUtils {
   static getByCategoryIdAndAndGenreId = Catch.async(async ({ query, user, params }, res) => {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const vidQuality = await VidUploadUtils.getUserVideoQuality(
-      GetDefined.loggedInUser(user)._id.toString(),
-    )
+    const { videoQuality } = GetDefined.loggedInUser(user)
 
     const vods = await VideoRepo.fetchByCategAndCast({
       page,
@@ -451,24 +442,19 @@ export class SharedController extends UploadMediaUtils {
 
     sendResponse({
       res,
-      data: MovieMediaSourcesUtils.resolveMediaSources(vods, vidQuality),
+      data: MovieMediaSourcesUtils.resolveMediaSources(vods, videoQuality),
       message: '',
     })
   })
 
   static randomSuggestions = Catch.async(async ({ query, user }, res) => {
-    const userId = GetDefined.loggedInUser(user)._id.toString()
+    const { videoQuality } = GetDefined.loggedInUser(user)
     const { limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const [vidQualityResult, vodsRepoReult, liveRepoResult] = await Promise.allSettled([
-      VidUploadUtils.getUserVideoQuality(userId),
+    const [vodsRepoReult, liveRepoResult] = await Promise.allSettled([
       VideoRepo.fetchRandom(limit),
       LiveRepo.fetchRandom(limit),
     ])
-
-    if (vidQualityResult.status == 'rejected') {
-      throw vidQualityResult.reason
-    }
 
     if (vodsRepoReult.status == 'rejected') {
       throw vodsRepoReult.reason
@@ -478,11 +464,9 @@ export class SharedController extends UploadMediaUtils {
       throw liveRepoResult.reason
     }
 
-    const vidQuality = vidQualityResult.value
-
     const response = {
-      vods: MovieMediaSourcesUtils.resolveMediaSources(vodsRepoReult.value, vidQuality),
-      lives: await LiveMediaSourcesUtils.resolveSources(liveRepoResult.value, vidQuality),
+      vods: MovieMediaSourcesUtils.resolveMediaSources(vodsRepoReult.value, videoQuality),
+      lives: await LiveMediaSourcesUtils.resolveSources(liveRepoResult.value, videoQuality),
     }
 
     sendResponse({

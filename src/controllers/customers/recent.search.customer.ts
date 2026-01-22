@@ -17,7 +17,7 @@ export class RecentSearchController {
   })
 
   static fetchMany = Catch.async(async ({ user }, res) => {
-    const search = await RecentSearchService.fetch(GetDefined.loggedInUser(user)._id.toString())
+    const search = await RecentSearchService.fetch(GetDefined.loggedInUser(user))
 
     sendResponse({
       res,

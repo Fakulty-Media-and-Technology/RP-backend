@@ -3,11 +3,11 @@ import { Catch } from '../../utils/Catch'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminFeaturedController {
-  static searchContents = Catch.async(async ({ params: { text } }, res) => {
+  static searchContents = Catch.async(async ({ params: { text }, user }, res) => {
     sendResponse({
       res,
       message: 'contents fetched successful',
-      data: await FeaturedService.searchVideosByText(text),
+      data: await FeaturedService.searchVideosByText(text, user),
     })
   })
 

@@ -10,6 +10,7 @@ import { SeasonModel } from '../../models/seasons.model'
 import { VideoModel } from '../../models/videos.model'
 import { EpisodeModel } from '../../models/episodes.model'
 import { AdminUploadService } from './AdminUploadService'
+import { LoggedInUser } from '../../types'
 
 interface CreateWatchedTimeInput extends Omit<WatchedSchema, 'userId' | 'createdAt' | 'updatedAt'> {
   currentUserId: string
@@ -38,56 +39,38 @@ export class WatchedService {
     )
   }
 
-  static fetchContinueWatching = async (userId: string, query: ExpressRequestQuery) => {
+  static fetchContinueWatching = async (user: LoggedInUser, query: ExpressRequestQuery) => {
+    const quality = user.videoQuality
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const [settingsResult, watchedResults] = await Promise.allSettled([
-      SettingsModel.findOne({ user_id: userId }),
-
-      //
-      WatchedModel.aggregate([
-        {
-          $match: {
-            $expr: {
-              $and: [
-                { $eq: ['$userId', { $toObjectId: userId }] },
-                { $lt: ['$duration', '$totalDuration'] },
-              ],
-            },
+    // This entire s**t is a quick patch from higher up. TODO: Please revisit
+    const watechedResults = (await WatchedModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $and: [{ $eq: ['$userId', user._id] }, { $lt: ['$duration', '$totalDuration'] }],
           },
         },
+      },
 
-        {
-          $project: {
-            userId: false,
-            __v: false,
-            createdAt: false,
-            updatedAt: false,
-          },
+      {
+        $project: {
+          userId: false,
+          __v: false,
+          createdAt: false,
+          updatedAt: false,
         },
+      },
 
-        { $set: { watchedDocumentId: '$_id', _id: '$$REMOVE' } },
-        { $sort: { updatedAt: -1 } },
-        { $skip: skip },
-        { $limit: limit },
-      ]) as Aggregate<(WatchedSchema & { _id: Types.ObjectId })[]>,
-    ])
-
-    if (settingsResult.status === 'rejected') {
-      throw settingsResult.reason
-    }
-
-    if (watchedResults.status === 'rejected') {
-      throw watchedResults.reason
-    }
-
-    const quality = settingsResult.value?.video_quality ?? '480p'
-
-    // This entire sh*t is a quick patch from higher up. TODO: Please revisit
+      { $set: { watchedDocumentId: '$_id', _id: '$$REMOVE' } },
+      { $sort: { updatedAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+    ])) as (WatchedSchema & { _id: Types.ObjectId })[]
 
     return getPromiseAllFulfilledResults(
       await Promise.allSettled(
-        watchedResults.value.map(async watched => {
+        watechedResults.map(async watched => {
           switch (watched.parentType) {
             case 'vod':
               const [vod] = MovieMediaSourcesUtils.resolveMediaSources(
