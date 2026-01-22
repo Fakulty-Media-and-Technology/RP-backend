@@ -76,11 +76,3 @@ export class Notification {
   }
 }
 
-// Notification.sendPushNotification('', {
-//   title: 'Hello my PM',
-//   body: 'Come and eat',
-//   image: 'https://cdn.taronapp.com/image8f89c33bffff1767090580859',
-//   // image: 'https://cdn.taronapp.com/imagef7dd24bfd6041760885965567',
-//   type: 'TEST',
-//   metadata: {},
-// })
