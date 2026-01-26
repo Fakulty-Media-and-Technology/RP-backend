@@ -3,8 +3,13 @@ import { UserModel } from '../../models/users.model'
 import { UserRepo } from '../../repositories/UserRepo'
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
+import { Notification, NotificationPayload } from '../../notifications/notification'
 
 export class AdminUsersService {
+  static sendAdminMainTopicPushNotification = (payload: NotificationPayload) => {
+    Notification.sendTopicPushNotification(Notification.adminMainTopic, payload)
+  }
+
   static fetchAll = async (query: ExpressRequestQuery) => {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
     const users = await UserRepo.adminFetchAllCustomersAggr(page, limit)

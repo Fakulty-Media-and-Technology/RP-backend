@@ -111,8 +111,8 @@ export class UpcomingService {
         throw new OperationalError('No subscription found', 404)
       }
 
-      Notification.withUserTokens(currentUser._id, token => {
-        Notification.unsubscribeFromTopic(firebaseTopic, token)
+      Notification.withUserTokens(currentUser._id, tokens => {
+        Notification.unsubscribeFromTopic(firebaseTopic, tokens)
       })
       return
     }
@@ -133,8 +133,8 @@ export class UpcomingService {
         contentType: subContentType,
       })
 
-      Notification.withUserTokens(currentUser._id, token => {
-        Notification.subscribeToTopic(firebaseTopic, token)
+      Notification.withUserTokens(currentUser._id, tokens => {
+        Notification.subscribeToTopic(firebaseTopic, tokens)
       })
     } catch (e: any) {
       if (e.code === 11000) {

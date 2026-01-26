@@ -1,4 +1,5 @@
 import { UserDeviceModel } from '../../models/userDevice.model'
+import { Notification } from '../../notifications/notification'
 
 export class PushNotificationService {
   static updateDeviceToken = async (currentUserId: string, data: Record<string, any>) => {
@@ -15,5 +16,7 @@ export class PushNotificationService {
       },
       { upsert: true },
     )
+
+    Notification.subscribeToTopic(Notification.adminMainTopic, device_token)
   }
 }

@@ -407,3 +407,13 @@ export const createContestantSchema = {
     contact: STRING_SCHEMA.required(),
   }),
 }
+
+export const sendPushNotificationSchema = {
+  body: Joi.object({
+    title: STRING_SCHEMA.required(),
+    body: STRING_SCHEMA.required(),
+    type: STRING_SCHEMA,
+    image: STRING_SCHEMA,
+    metadata: Joi.object(),
+  }),
+}

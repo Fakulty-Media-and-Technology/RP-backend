@@ -1,11 +1,17 @@
-import { TokenMessage, TopicMessage } from 'firebase-admin/lib/messaging/messaging-api'
+import {
+  AndroidNotification,
+  ApnsConfig,
+  BaseMessage,
+  TokenMessage,
+  TopicMessage,
+} from 'firebase-admin/lib/messaging/messaging-api'
 import admin from '../firebase/firebase'
 import { NotificationModel } from '../models/notifications.model'
 import { UserDeviceModel } from '../models/userDevice.model'
 import mongoose from 'mongoose'
 import { LIVE_CONTENT_SUB, VOD_CONTENT_SUB } from '../models/content.subscribers.model'
 
-interface NotificationPayload {
+export interface NotificationPayload {
   title: string
   body: string
   type: string
@@ -16,19 +22,23 @@ interface NotificationPayload {
 type MakeUpcomingTopicPrefix = typeof VOD_CONTENT_SUB | typeof LIVE_CONTENT_SUB
 
 export class Notification {
+  static adminMainTopic = 'ADMIN_MAIN'
+
   static makeContentTopic = (id: string, prefix: MakeUpcomingTopicPrefix) =>
     `${prefix}_UPCOMING_${id}`
 
   static withUserTokens = (
     userId: string | mongoose.Types.ObjectId,
-    callback: (token: string) => void | Promise<void>,
+    callback: (token: string[]) => void | Promise<void>,
     maxTokens = 5,
   ) => {
     UserDeviceModel.find({ user_id: userId })
       .select('device_token')
       .sort({ _id: -1 })
       .limit(maxTokens)
-      .then(documents => documents.forEach(document => callback(document.device_token)))
+      .then(documents => {
+        callback(documents.map(document => document.device_token))
+      })
       .catch(e => console.error('withUserTokens Error', e))
   }
 
@@ -55,103 +65,71 @@ export class Notification {
     body: payload.body,
   })
 
-  static sendTopicPushNotification = async (topic: string, payload: NotificationPayload) => {
+  protected static _makeBaseFirebaseMessage = (payload: NotificationPayload): BaseMessage => {
     const OSNotification = this._makeOSPushNotification(payload)
 
-    const message: TopicMessage = {
-      topic,
-      data: {
-        ...payload,
-        metadata: JSON.stringify(payload.metadata),
-        ...(payload.image && { image: payload.image }),
+    const data: BaseMessage['data'] = {
+      title: payload.title,
+      body: payload.body,
+      type: payload.type,
+      metadata: JSON.stringify(payload.metadata),
+    }
+
+    const androidNotification: AndroidNotification = {
+      sound: 'default',
+    }
+
+    const apnConfiguration: ApnsConfig = {
+      headers: {
+        'apns-priority': '10',
+        'apns-push-type': 'alert',
       },
-      notification: OSNotification,
 
-      android: {
-        priority: 'high',
-
-        notification: {
+      payload: {
+        aps: {
+          alert: OSNotification,
           sound: 'default',
-          ...(payload.image && {
-            imageUrl: payload.image,
-          }),
+          mutableContent: !!payload.image,
+          // contentAvailable: true,
+          // badge: 1,
         },
-      },
-
-      apns: {
-        headers: {
-          'apns-priority': '10',
-          'apns-push-type': 'alert',
-        },
-
-        payload: {
-          aps: {
-            alert: OSNotification,
-            sound: 'default',
-            mutableContent: !!payload.image,
-            // contentAvailable: true,
-          },
-        },
-
-        ...(payload.image && {
-          fcmOptions: { imageUrl: payload.image },
-        }),
       },
     }
 
+    if (typeof payload.image === 'string') {
+      data.image = payload.image
+      androidNotification.imageUrl = payload.image
+      apnConfiguration.fcmOptions = {
+        imageUrl: payload.image,
+      }
+    }
+
+    return {
+      data,
+      android: {
+        priority: 'high',
+        notification: OSNotification,
+      },
+
+      apns: apnConfiguration,
+    }
+  }
+
+  static sendTopicPushNotification = async (topic: string, payload: NotificationPayload) => {
+    const message = this._makeBaseFirebaseMessage(payload)
+
     try {
-      await admin.messaging().send(message)
+      await admin.messaging().send({ ...message, topic })
     } catch (e) {
       console.log('sendTopicPushNotification error', e)
     }
   }
 
   static sendTokenPushNotification = async (token: string, payload: NotificationPayload) => {
-    const OSNotification = this._makeOSPushNotification(payload)
-
-    const message: TokenMessage = {
-      token,
-      data: {
-        ...payload,
-        metadata: JSON.stringify(payload.metadata),
-        ...(payload.image && { image: payload.image }),
-      },
-      notification: OSNotification,
-
-      android: {
-        priority: 'high',
-
-        notification: {
-          sound: 'default',
-          ...(payload.image && {
-            imageUrl: payload.image,
-          }),
-        },
-      },
-
-      apns: {
-        headers: {
-          'apns-priority': '10',
-          'apns-push-type': 'alert',
-        },
-
-        payload: {
-          aps: {
-            alert: OSNotification,
-            sound: 'default',
-            mutableContent: !!payload.image,
-            // contentAvailable: true,
-          },
-        },
-
-        ...(payload.image && {
-          fcmOptions: { imageUrl: payload.image },
-        }),
-      },
-    }
+    const message = this._makeBaseFirebaseMessage(payload)
 
     try {
-      await admin.messaging().send(message)
+      await admin.messaging().send({ ...message, token })
     } catch (e) {
       console.log('sendTokenPushNotification error', e)
     }
