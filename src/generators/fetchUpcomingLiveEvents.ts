@@ -20,3 +20,24 @@ export async function* liveEvents24hReminderGenerator({ batchSize = 200 }: { bat
     }
   }
 }
+
+export async function* liveEvents1hrReminderGenerator({ batchSize = 200 }: { batchSize?: number }) {
+  let skip = 0
+
+  while (true) {
+    try {
+      const batch = await LiveRepo.get1hReminderDocuments(skip, batchSize)
+
+      if (!batch.length) {
+        break
+      }
+
+      yield batch
+
+      skip += batchSize
+    } catch (e) {
+      console.error('liveEvents24hReminderGenerator', e)
+      break
+    }
+  }
+}

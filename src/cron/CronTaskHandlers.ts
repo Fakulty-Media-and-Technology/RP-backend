@@ -9,7 +9,10 @@ import { AdModel } from '../models/admanager.model'
 import { Document } from 'mongoose'
 import { StringOrObjectId } from '../types'
 import { SeasonModel } from '../models/seasons.model'
-import { liveEvents24hReminderGenerator } from '../generators/fetchUpcomingLiveEvents'
+import {
+  liveEvents1hrReminderGenerator,
+  liveEvents24hReminderGenerator,
+} from '../generators/fetchUpcomingLiveEvents'
 import { Notification } from '../notifications/notification'
 import { formatTimeWithTimezone } from '../utils/date'
 
@@ -153,6 +156,47 @@ export class CronTaskHandlers {
     }
   }
 
+  static handleOneHourLiveEventPushReminder = async () => {
+    console.log('handleOneHourLiveEventPushReminder started')
+
+    const batchGenerator = liveEvents1hrReminderGenerator({
+      batchSize: 20,
+    })
+
+    for await (const liveDocuments of batchGenerator) {
+      liveDocuments.forEach(async liveDocument => {
+        const liveId = liveDocument._id.toString()
+        try {
+          Notification.sendTopicPushNotification(
+            Notification.makeUpcomingContentTopic(liveId, 'LIVE'),
+            {
+              title: 'Countdown',
+              type: 'LIVE_EVENT_REMINDER',
+              body: `1 hour to showtime! ${liveDocument.title} starts soon`,
+              image: liveDocument.coverPhoto,
+              metadata: { liveId },
+            },
+          )
+
+          await LiveModel.findByIdAndUpdate(liveId, {
+            $set: {
+              reminder1hSentAt: new Date(),
+            },
+          })
+        } catch (err: any) {
+          console.error('handleOneHourLiveEventPushReminder error', err)
+
+          await LiveModel.findByIdAndUpdate(liveId, {
+            $inc: { reminder1hAttemptCount: 1 },
+            $set: {
+              reminder1hLastError: err.message ?? 'handleOneHourLiveEventPushReminder error',
+            },
+          })
+        }
+      })
+    }
+  }
+  
   static handle24HourLiveEventPushReminder = async () => {
     console.log('handle24HourLiveEventPushReminder started')
 
@@ -164,16 +208,18 @@ export class CronTaskHandlers {
       liveDocuments.forEach(async liveDocument => {
         const liveId = liveDocument._id.toString()
         try {
-          const fcmTopic = Notification.makeUpcomingContentTopic(liveId, 'LIVE')
           const message = `Are you set? Tomorrow ${liveDocument.title} goes LIVE by ${formatTimeWithTimezone(liveDocument.start)} on Reeplay`
 
-          Notification.sendTopicPushNotification(fcmTopic, {
-            title: 'Countdown',
-            type: 'LIVE_EVENT_REMINDER',
-            body: message,
-            image: liveDocument.coverPhoto,
-            metadata: { liveId },
-          })
+          Notification.sendTopicPushNotification(
+            Notification.makeUpcomingContentTopic(liveId, 'LIVE'),
+            {
+              title: 'Countdown',
+              type: 'LIVE_EVENT_REMINDER',
+              body: message,
+              image: liveDocument.coverPhoto,
+              metadata: { liveId },
+            },
+          )
 
           await LiveModel.findByIdAndUpdate(liveId, {
             $set: {

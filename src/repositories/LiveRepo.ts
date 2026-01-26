@@ -73,6 +73,58 @@ export class LiveRepo {
       WithMongoDBObjectID<Pick<LiveSchema, 'start' | 'title'> & { coverPhoto?: string }>[]
     >
 
+  static get1hReminderDocuments = (skip: number, limit: number) =>
+    LiveModel.aggregate([
+      {
+        $match: {
+          reminder1hSentAt: null,
+          $expr: {
+            $and: [
+              {
+                $gte: [
+                  '$start',
+                  {
+                    $dateAdd: {
+                      startDate: '$$NOW',
+                      unit: 'hour',
+                      amount: 1,
+                    },
+                  },
+                ],
+              },
+
+              {
+                $lt: [
+                  '$start',
+                  {
+                    $dateAdd: {
+                      startDate: '$$NOW',
+                      unit: 'hour',
+                      amount: 2,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+
+      {
+        $project: {
+          start: true,
+          title: true,
+          coverPhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$coverPhoto.Key'] },
+        },
+      },
+      { $sort: { start: 1 } },
+
+      { $skip: skip },
+      { $limit: limit },
+    ]) as Aggregate<
+      WithMongoDBObjectID<Pick<LiveSchema, 'start' | 'title'> & { coverPhoto?: string }>[]
+    >
+
   static totalActiveLiveQuery = () => LiveModel.find({ active: true })
 
   static fetchActiveUpcoming = async (page: number, limit: number) => {

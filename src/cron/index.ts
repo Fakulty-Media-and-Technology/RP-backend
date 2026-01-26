@@ -6,6 +6,7 @@ export class CronTasks {
     schedule('*/10 * * * *', CronTaskHandlers.expireFeaturedContents),
     schedule('* * * * *', CronTaskHandlers.updateVidUploadsResolutions),
     schedule('0 * * * *', CronTaskHandlers.handle24HourLiveEventPushReminder),
+    schedule('0 * * * *', CronTaskHandlers.handleOneHourLiveEventPushReminder),
   ]
 
   start() {

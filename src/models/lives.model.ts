@@ -111,12 +111,28 @@ const schema = new Schema(
       index: true,
     },
 
+    reminder1hSentAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
     reminder24hAttemptCount: {
       type: Number,
       default: 0,
     },
 
+    reminder1hAttemptCount: {
+      type: Number,
+      default: 0,
+    },
+
     reminder24hLastError: {
+      type: String,
+      default: null,
+    },
+
+    reminder1hLastError: {
       type: String,
       default: null,
     },
@@ -207,6 +223,7 @@ schema.index({ views: 1 })
 schema.index({
   start: 1,
   reminder24hSentAt: 1,
+  reminder1hSentAt: 1,
 })
 
 export const LiveModel = model('lives', schema)
