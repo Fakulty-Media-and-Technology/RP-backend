@@ -14,7 +14,7 @@ const schema = new Schema(
     },
 
     contentType: {
-      type: Schema,
+      type: String,
       enum: ['VOD', 'LIVE'],
       required: true,
     },
