@@ -10,6 +10,7 @@ import { Document } from 'mongoose'
 import { StringOrObjectId } from '../types'
 import { SeasonModel } from '../models/seasons.model'
 import {
+  liveEvents10MReminderGenerator,
   liveEvents1hrReminderGenerator,
   liveEvents24hReminderGenerator,
 } from '../generators/fetchUpcomingLiveEvents'
@@ -167,16 +168,13 @@ export class CronTaskHandlers {
       liveDocuments.forEach(async liveDocument => {
         const liveId = liveDocument._id.toString()
         try {
-          Notification.sendTopicPushNotification(
-            Notification.makeContentTopic(liveId, 'LIVE'),
-            {
-              title: 'Countdown',
-              type: 'LIVE_EVENT_REMINDER',
-              body: `1 hour to showtime! ${liveDocument.title} starts soon`,
-              image: liveDocument.coverPhoto,
-              metadata: { liveId },
-            },
-          )
+          Notification.sendTopicPushNotification(Notification.makeContentTopic(liveId, 'LIVE'), {
+            title: 'Countdown',
+            type: 'LIVE_EVENT_REMINDER',
+            body: `1 hour to showtime! ${liveDocument.title} starts soon`,
+            image: liveDocument.coverPhoto,
+            metadata: { liveId },
+          })
 
           await LiveModel.findByIdAndUpdate(liveId, {
             $set: {
@@ -196,11 +194,11 @@ export class CronTaskHandlers {
       })
     }
   }
-  
+
   static handle24HourLiveEventPushReminder = async () => {
     console.log('handle24HourLiveEventPushReminder started')
 
-    const batchGenerator = liveEvents24hReminderGenerator({
+    const batchGenerator = liveEvents1hrReminderGenerator({
       batchSize: 20,
     })
 
@@ -210,16 +208,13 @@ export class CronTaskHandlers {
         try {
           const message = `Are you set? Tomorrow ${liveDocument.title} goes LIVE by ${formatTimeWithTimezone(liveDocument.start)} on Reeplay`
 
-          Notification.sendTopicPushNotification(
-            Notification.makeContentTopic(liveId, 'LIVE'),
-            {
-              title: 'Countdown',
-              type: 'LIVE_EVENT_REMINDER',
-              body: message,
-              image: liveDocument.coverPhoto,
-              metadata: { liveId },
-            },
-          )
+          Notification.sendTopicPushNotification(Notification.makeContentTopic(liveId, 'LIVE'), {
+            title: 'Countdown',
+            type: 'LIVE_EVENT_REMINDER',
+            body: message,
+            image: liveDocument.coverPhoto,
+            metadata: { liveId },
+          })
 
           await LiveModel.findByIdAndUpdate(liveId, {
             $set: {
@@ -233,6 +228,44 @@ export class CronTaskHandlers {
             $inc: { reminder24hAttemptCount: 1 },
             $set: {
               reminder24hLastError: err.message ?? 'handle24HourLiveEventPushReminder error',
+            },
+          })
+        }
+      })
+    }
+  }
+  static handle10MinutesLiveEventPushReminder = async () => {
+    console.log('handle10MinutesLiveEventPushReminder started')
+
+    const batchGenerator = liveEvents10MReminderGenerator({
+      batchSize: 20,
+    })
+
+    for await (const liveDocuments of batchGenerator) {
+      liveDocuments.forEach(async liveDocument => {
+        const liveId = liveDocument._id.toString()
+
+        try {
+          Notification.sendTopicPushNotification(Notification.makeContentTopic(liveId, 'LIVE'), {
+            title: 'Countdown',
+            type: 'LIVE_EVENT_REMINDER',
+            body: `${liveDocument.title} starts in 10 mins. Ready?`,
+            image: liveDocument.coverPhoto,
+            metadata: { liveId },
+          })
+
+          await LiveModel.findByIdAndUpdate(liveId, {
+            $set: {
+              reminder10mSentAt: new Date(),
+            },
+          })
+        } catch (err: any) {
+          console.error('handle10MinutesLiveEventPushReminder error', err)
+
+          await LiveModel.findByIdAndUpdate(liveId, {
+            $inc: { reminder10MinutesAttemptCount: 1 },
+            $set: {
+              reminder10MinutesError: err.message ?? 'handle10MinutesLiveEventPushReminder error',
             },
           })
         }

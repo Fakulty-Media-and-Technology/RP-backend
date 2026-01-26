@@ -117,7 +117,18 @@ const schema = new Schema(
       index: true,
     },
 
+    reminder10mSentAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
     reminder24hAttemptCount: {
+      type: Number,
+      default: 0,
+    },
+
+    reminder10MinutesAttemptCount: {
       type: Number,
       default: 0,
     },
@@ -128,6 +139,11 @@ const schema = new Schema(
     },
 
     reminder24hLastError: {
+      type: String,
+      default: null,
+    },
+
+    reminder10MinutesError: {
       type: String,
       default: null,
     },
@@ -224,6 +240,7 @@ schema.index({
   start: 1,
   reminder24hSentAt: 1,
   reminder1hSentAt: 1,
+  reminder10mSentAt: 1
 })
 
 export const LiveModel = model('lives', schema)
