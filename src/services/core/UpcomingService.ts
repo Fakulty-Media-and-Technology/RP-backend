@@ -6,15 +6,11 @@ import {
 } from '../../utils/QueryParamsFeatures'
 import { LoggedInUser } from '../../types'
 import { denyGuestUser } from '../../utils/denyGuestUser'
-import { VidUploadUtils } from '../../utils/VideoUploadUtils'
 import { VideoRepo } from '../../repositories/VideoRepo'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
-import { Video, VideoModel } from '../../models/videos.model'
-import { Live, LiveModel } from '../../models/lives.model'
-import { FilterQuery, UpdateQuery } from 'mongoose'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
-import { getPromiseAllFulfilledResults } from '../../utils/promises'
+import { ContentSubscribersModel } from '../../models/content.subscribers.model'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
@@ -44,10 +40,6 @@ type AdminFetchInput = {
   limit: unknown
 }
 
-type CustomerFetchInput = AdminFetchInput & {
-  currentUser: LoggedInUser
-}
-
 type IsSubscribedInput = {
   currentUser: LoggedInUser
   contentId: string
@@ -72,12 +64,7 @@ export class UpcomingService {
 
   static customerFetch = async (currentUser: LoggedInUser, query: ExpressRequestQuery) => {
     denyGuestUser(currentUser)
-
-    const videoQuality = await VidUploadUtils.getUserVideoQuality(
-      currentUser._id.toString(),
-      '480p',
-    )
-
+    const { videoQuality } = currentUser
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const [vods, lives] = await Promise.all([
@@ -103,28 +90,31 @@ export class UpcomingService {
   }: customerSubscriptionInput) => {
     denyGuestUser(currentUser)
 
-    const sharedFilter: FilterQuery<Live | Video> = {
-      _id: contentId,
-      upcoming: true,
+    if (action === 'unsubscribe') {
+      const deletedSubDocument = await ContentSubscribersModel.findOneAndDelete({
+        user: currentUser._id,
+        content: contentId,
+        contentType: contentType === 'live' ? 'LIVE' : 'VOD',
+      })
+
+      if (deletedSubDocument == null) {
+        throw new OperationalError('No subscription found', 404)
+      }
+
+      return
     }
 
-    const sharedUpdate: UpdateQuery<Live | Video> = {
-      [action === 'subscribe' ? '$addToSet' : '$pull']: {
-        upcomingSubscribers: currentUser._id,
-      },
-      new: true,
-    }
-
-    let upcoming: Live | Video | null
-
-    if (contentType === 'live') {
-      upcoming = await LiveModel.findOneAndUpdate(sharedFilter, sharedUpdate)
-    } else {
-      upcoming = await VideoModel.findOneAndUpdate(sharedFilter, sharedUpdate)
-    }
-
-    if (upcoming === null) {
-      throw new OperationalError('content not found or is not an upcoming content ', 400)
+    try {
+      await ContentSubscribersModel.create({
+        user: currentUser._id,
+        content: contentId,
+        contentType: contentType === 'live' ? 'LIVE' : 'VOD',
+      })
+    } catch (e: any) {
+      if (e.code === 11000) {
+        throw new OperationalError('Already Sunscribed', 400)
+      }
+      throw e
     }
   }
 
@@ -135,13 +125,12 @@ export class UpcomingService {
   }: IsSubscribedInput) => {
     denyGuestUser(currentUser)
 
-    const cond: FilterQuery<Live | Video> = {
-      _id: contentId,
-      upcomingSubscribers: currentUser._id,
-    }
+    const subDocument = await ContentSubscribersModel.findOne({
+      user: currentUser._id,
+      content: contentId,
+      contentType: contentType === 'live' ? 'LIVE' : 'VOD',
+    })
 
-    return Boolean(
-      contentType === 'live' ? await LiveModel.findOne(cond) : await VideoModel.findOne(cond),
-    )
+    return !!subDocument
   }
 }
