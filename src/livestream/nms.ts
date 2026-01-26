@@ -84,7 +84,7 @@ export class MediaStream {
   private _config = {
     rtmp: {
       port: env.RP_RTMP_PORT,
-      chunk_size: 60000,
+      chunk_size: 4096,
       gop_cache: true,
       ping: 30,
       ping_timeout: 60,
