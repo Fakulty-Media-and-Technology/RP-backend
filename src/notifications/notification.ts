@@ -1,6 +1,8 @@
 import { TokenMessage } from 'firebase-admin/lib/messaging/messaging-api'
 import admin from '../firebase/firebase'
 import { NotificationModel } from '../models/notifications.model'
+import { UserDeviceModel } from '../models/userDevice.model'
+import mongoose from 'mongoose'
 
 interface NotificationPayload {
   title: string
@@ -10,8 +12,35 @@ interface NotificationPayload {
   image?: string
 }
 
-// ! this is not used anywhere
 export class Notification {
+  static withUserTokens = (
+    userId: string | mongoose.Types.ObjectId,
+    callback: (token: string) => void | Promise<void>,
+    maxTokens = 5,
+  ) => {
+    UserDeviceModel.find({ user_id: userId })
+      .select('device_token')
+      .sort({ _id: -1 })
+      .limit(maxTokens)
+      .then(documents => documents.forEach(document => callback(document.device_token)))
+      .catch(e => console.error('withUserTokens Error', e))
+  }
+
+  static subscribeToTopic = async (topic: string, tokens: string | string[]) => {
+    try {
+      await admin.messaging().subscribeToTopic(tokens, topic)
+    } catch (e) {
+      console.error('Firebase Admin Sub topic error', 'TOPIC: ', topic, 'ERROR ', e)
+    }
+  }
+  static unsubscribeFromTopic = async (topic: string, tokens: string | string[]) => {
+    try {
+      await admin.messaging().unsubscribeFromTopic(tokens, topic)
+    } catch (e) {
+      console.error('Firebase Admin UNSub FROM topic error', 'TOPIC: ', topic, 'ERROR ', e)
+    }
+  }
+
   static sendPushNotification = async (token: string, payload: NotificationPayload) => {
     const OSNotification: Pick<NotificationPayload, 'title' | 'body'> = {
       title: payload.title,
@@ -59,8 +88,6 @@ export class Notification {
       },
     }
 
-    console.dir({ message }, { depth: null })
-
     try {
       await admin.messaging().send(message)
     } catch (e) {
@@ -75,4 +102,3 @@ export class Notification {
     })
   }
 }
-

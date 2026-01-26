@@ -23,7 +23,8 @@ const userdeviceSchema = new Schema(
     },
   },
   {
-    timestamps: true,
+    timestamps: false,
+    versionKey: false,
   },
 )
 

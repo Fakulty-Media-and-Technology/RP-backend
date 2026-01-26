@@ -11,6 +11,7 @@ import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { ContentSubscribersModel } from '../../models/content.subscribers.model'
+import { Notification } from '../../notifications/notification'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
@@ -90,17 +91,23 @@ export class UpcomingService {
   }: customerSubscriptionInput) => {
     denyGuestUser(currentUser)
 
+    const subContentType = contentType === 'live' ? 'LIVE' : 'VOD'
+    const firebaseTopic = `${subContentType}_UPCOMING_${contentId}`
+
     if (action === 'unsubscribe') {
       const deletedSubDocument = await ContentSubscribersModel.findOneAndDelete({
         user: currentUser._id,
         content: contentId,
-        contentType: contentType === 'live' ? 'LIVE' : 'VOD',
+        contentType: subContentType,
       })
 
       if (deletedSubDocument == null) {
         throw new OperationalError('No subscription found', 404)
       }
 
+      Notification.withUserTokens(currentUser._id, token => {
+        Notification.unsubscribeFromTopic(firebaseTopic, token)
+      })
       return
     }
 
@@ -108,11 +115,15 @@ export class UpcomingService {
       await ContentSubscribersModel.create({
         user: currentUser._id,
         content: contentId,
-        contentType: contentType === 'live' ? 'LIVE' : 'VOD',
+        contentType: subContentType,
+      })
+
+      Notification.withUserTokens(currentUser._id, token => {
+        Notification.subscribeToTopic(firebaseTopic, token)
       })
     } catch (e: any) {
       if (e.code === 11000) {
-        throw new OperationalError('Already Sunscribed', 400)
+        throw new OperationalError('Already Subscribed', 400)
       }
       throw e
     }
