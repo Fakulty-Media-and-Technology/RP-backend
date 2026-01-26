@@ -21,3 +21,12 @@ export const addYearsClone = (date: Date, years: number) => {
 export const setToStartOfDay = (date: Date) => {
   date.setHours(0, 0, 0, 0)
 }
+
+export const formatTimeWithTimezone = (date: Date, timeZone = 'UTC') =>
+  new Intl.DateTimeFormat('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone,
+    timeZoneName: 'short',
+  }).format(date)

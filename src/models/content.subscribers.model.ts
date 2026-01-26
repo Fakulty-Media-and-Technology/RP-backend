@@ -1,4 +1,7 @@
-import { Schema, model } from 'mongoose'
+import { InferSchemaType, Schema, model } from 'mongoose'
+
+export const VOD_CONTENT_SUB = 'VOD'
+export const LIVE_CONTENT_SUB = 'LIVE'
 
 const schema = new Schema(
   {
@@ -15,7 +18,7 @@ const schema = new Schema(
 
     contentType: {
       type: String,
-      enum: ['VOD', 'LIVE'],
+      enum: [VOD_CONTENT_SUB, LIVE_CONTENT_SUB],
       required: true,
     },
 
@@ -30,3 +33,4 @@ const schema = new Schema(
 schema.index({ user: 1, content: 1, contentType: 1 }, { name: '_uniqueSubcription', unique: true })
 
 export const ContentSubscribersModel = model('content-subscribers', schema)
+export type ContentSubscribersSchema = InferSchemaType<typeof schema>

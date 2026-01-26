@@ -37,22 +37,10 @@ const schema = new Schema(
       required: true,
     },
 
-    // channelLogo: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: 'poster_images',
-    //   default: null,
-    // },
-
     coverPhoto: {
       type: PhotoSchema,
       required: true,
     },
-
-    // coverPhoto: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: 'poster_images',
-    //   required: true,
-    // },
 
     previewVideoUpload: {
       type: Schema.Types.ObjectId,
@@ -117,6 +105,22 @@ const schema = new Schema(
       required: true,
     },
 
+    reminder24hSentAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
+    reminder24hAttemptCount: {
+      type: Number,
+      default: 0,
+    },
+
+    reminder24hLastError: {
+      type: String,
+      default: null,
+    },
+
     expiry: {
       type: Date,
       required: true,
@@ -146,14 +150,6 @@ const schema = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: 'category_enums',
-      },
-    ],
-
-    // TODO: Move to another collection
-    upcomingSubscribers: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'users',
       },
     ],
 
@@ -207,6 +203,11 @@ schema.index({ engagements: -1 })
 schema.index({ expiry: -1 })
 schema.index({ category: 1 })
 schema.index({ views: 1 })
+
+schema.index({
+  start: 1,
+  reminder24hSentAt: 1,
+})
 
 export const LiveModel = model('lives', schema)
 export type LiveSchema = InferSchemaType<typeof schema>

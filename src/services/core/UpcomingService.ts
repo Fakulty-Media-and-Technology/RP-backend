@@ -10,7 +10,11 @@ import { VideoRepo } from '../../repositories/VideoRepo'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
-import { ContentSubscribersModel } from '../../models/content.subscribers.model'
+import {
+  ContentSubscribersModel,
+  LIVE_CONTENT_SUB,
+  VOD_CONTENT_SUB,
+} from '../../models/content.subscribers.model'
 import { Notification } from '../../notifications/notification'
 import { LiveModel } from '../../models/lives.model'
 import { VideoModel } from '../../models/videos.model'
@@ -93,8 +97,8 @@ export class UpcomingService {
   }: customerSubscriptionInput) => {
     denyGuestUser(currentUser)
 
-    const subContentType = contentType === 'live' ? 'LIVE' : 'VOD'
-    const firebaseTopic = `${subContentType}_UPCOMING_${contentId}`
+    const subContentType = contentType === 'live' ? LIVE_CONTENT_SUB : VOD_CONTENT_SUB
+    const firebaseTopic = Notification.makeUpcomingContentTopic(contentId, subContentType)
 
     if (action === 'unsubscribe') {
       const deletedSubDocument = await ContentSubscribersModel.findOneAndDelete({

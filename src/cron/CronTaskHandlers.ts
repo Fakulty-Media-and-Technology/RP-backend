@@ -9,6 +9,9 @@ import { AdModel } from '../models/admanager.model'
 import { Document } from 'mongoose'
 import { StringOrObjectId } from '../types'
 import { SeasonModel } from '../models/seasons.model'
+import { liveEvents24hReminderGenerator } from '../generators/fetchUpcomingLiveEvents'
+import { Notification } from '../notifications/notification'
+import { formatTimeWithTimezone } from '../utils/date'
 
 export class CronTaskHandlers {
   protected static checkTranscodedParentDocumentOrThrow = (
@@ -147,6 +150,47 @@ export class CronTaskHandlers {
       await VideoModel.updateMany(filter, { $set: { featured: false } })
     } catch (error: any) {
       console.log('Cron Error: expire featured content', error.message ?? error)
+    }
+  }
+
+  static handle24HourLiveEventPushReminder = async () => {
+    console.log('handle24HourLiveEventPushReminder started')
+
+    const batchGenerator = liveEvents24hReminderGenerator({
+      batchSize: 20,
+    })
+
+    for await (const liveDocuments of batchGenerator) {
+      liveDocuments.forEach(async liveDocument => {
+        const liveId = liveDocument._id.toString()
+        try {
+          const fcmTopic = Notification.makeUpcomingContentTopic(liveId, 'LIVE')
+          const message = `Are you set? Tomorrow ${liveDocument.title} goes LIVE by ${formatTimeWithTimezone(liveDocument.start)} on Reeplay`
+
+          Notification.sendTopicPushNotification(fcmTopic, {
+            title: 'Countdown',
+            type: 'LIVE_EVENT_REMINDER',
+            body: message,
+            image: liveDocument.coverPhoto,
+            metadata: { liveId },
+          })
+
+          await LiveModel.findByIdAndUpdate(liveId, {
+            $set: {
+              reminder24hSentAt: new Date(),
+            },
+          })
+        } catch (err: any) {
+          console.error('handle24HourLiveEventPushReminder error', err)
+
+          await LiveModel.findByIdAndUpdate(liveId, {
+            $inc: { reminder24hAttemptCount: 1 },
+            $set: {
+              reminder24hLastError: err.message ?? 'handle24HourLiveEventPushReminder error',
+            },
+          })
+        }
+      })
     }
   }
 }

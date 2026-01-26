@@ -1,8 +1,8 @@
-import { FilterQuery, PipelineStage } from 'mongoose'
+import { Aggregate, FilterQuery, PipelineStage } from 'mongoose'
 import { LiveModel, LiveSchema } from '../models/lives.model'
 import { skip } from '../utils/QueryParamsFeatures'
 import { toObjectId } from './VideoRepo'
-import { MongoDBObjectId } from '../types/general'
+import { MongoDBObjectId, WithMongoDBObjectID } from '../types/general'
 import env from '../env'
 
 type FetchLives = {
@@ -20,6 +20,58 @@ export class LiveRepo {
       feat_expiry: new Date(expiry),
     })
   }
+
+  static get24hReminderDocuments = (skip: number, limit: number) =>
+    LiveModel.aggregate([
+      {
+        $match: {
+          reminder24hSentAt: null,
+          $expr: {
+            $and: [
+              {
+                $gte: [
+                  '$start',
+                  {
+                    $dateAdd: {
+                      startDate: '$$NOW',
+                      unit: 'hour',
+                      amount: 24,
+                    },
+                  },
+                ],
+              },
+
+              {
+                $lt: [
+                  '$start',
+                  {
+                    $dateAdd: {
+                      startDate: '$$NOW',
+                      unit: 'hour',
+                      amount: 25,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+
+      {
+        $project: {
+          start: true,
+          title: true,
+          coverPhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$coverPhoto.Key'] },
+        },
+      },
+      { $sort: { start: 1 } },
+
+      { $skip: skip },
+      { $limit: limit },
+    ]) as Aggregate<
+      WithMongoDBObjectID<Pick<LiveSchema, 'start' | 'title'> & { coverPhoto?: string }>[]
+    >
 
   static totalActiveLiveQuery = () => LiveModel.find({ active: true })
 
