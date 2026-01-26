@@ -27,6 +27,6 @@ const schema = new Schema(
   { timestamps: false, versionKey: false },
 )
 
-schema.index({ user: 1, content: 1, contentType: 1 }, { name: '_uniqueSubcription' })
+schema.index({ user: 1, content: 1, contentType: 1 }, { name: '_uniqueSubcription', unique: true })
 
 export const ContentSubscribersModel = model('content-subscribers', schema)

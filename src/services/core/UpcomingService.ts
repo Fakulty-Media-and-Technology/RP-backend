@@ -12,6 +12,8 @@ import { LiveRepo } from '../../repositories/LiveRepo'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { ContentSubscribersModel } from '../../models/content.subscribers.model'
 import { Notification } from '../../notifications/notification'
+import { LiveModel } from '../../models/lives.model'
+import { VideoModel } from '../../models/videos.model'
 
 export type CustomerSubScriptionActionType = 'subscribe' | 'unsubscribe'
 
@@ -109,6 +111,15 @@ export class UpcomingService {
         Notification.unsubscribeFromTopic(firebaseTopic, token)
       })
       return
+    }
+
+    const content =
+      contentType === 'live'
+        ? await LiveModel.findById(contentId)
+        : await VideoModel.findById(contentId)
+
+    if (content == null) {
+      throw new OperationalError('Invalid Content', 404)
     }
 
     try {
