@@ -98,7 +98,7 @@ export class UpcomingService {
     denyGuestUser(currentUser)
 
     const subContentType = contentType === 'live' ? LIVE_CONTENT_SUB : VOD_CONTENT_SUB
-    const firebaseTopic = Notification.makeUpcomingContentTopic(contentId, subContentType)
+    const firebaseTopic = Notification.makeContentTopic(contentId, subContentType)
 
     if (action === 'unsubscribe') {
       const deletedSubDocument = await ContentSubscribersModel.findOneAndDelete({

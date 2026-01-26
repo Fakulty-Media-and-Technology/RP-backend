@@ -16,7 +16,7 @@ interface NotificationPayload {
 type MakeUpcomingTopicPrefix = typeof VOD_CONTENT_SUB | typeof LIVE_CONTENT_SUB
 
 export class Notification {
-  static makeUpcomingContentTopic = (id: string, prefix: MakeUpcomingTopicPrefix) =>
+  static makeContentTopic = (id: string, prefix: MakeUpcomingTopicPrefix) =>
     `${prefix}_UPCOMING_${id}`
 
   static withUserTokens = (

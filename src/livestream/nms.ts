@@ -3,8 +3,32 @@ import ffmpegInstaller from '@ffmpeg-installer/ffmpeg'
 
 import env from '../env'
 import { Assets } from '../utils/Assets'
-// import { Catch } from '../utils/Catch'
-// import { LiveModel } from '../models/lives.model'
+import { Catch } from '../utils/Catch'
+import { LiveModel } from '../models/lives.model'
+import { OperationalError } from '../utils/OperationalError'
+import { Notification } from '../notifications/notification'
+
+const checkedValidLivestreamByStreamKey = async (streamKey: string | null | undefined) => {
+  const now = new Date()
+
+  if (streamKey == null) {
+    throw new OperationalError('Expected a stream key', 404)
+  }
+
+  const liveDocument = await LiveModel.findOne({ stream_key: streamKey })
+    .select('expiry title coverPhoto')
+    .lean()
+
+  if (liveDocument == null) {
+    throw new OperationalError(`Stream key: ${streamKey} is invalid`, 404)
+  }
+
+  if (liveDocument.expiry < now) {
+    throw new OperationalError(`Stream key: ${streamKey} belongs to an expired event`, 400)
+  }
+
+  return liveDocument
+}
 
 export class MediaStream {
   nms: NodeMediaServer
@@ -14,29 +38,40 @@ export class MediaStream {
   }
 
   initiate() {
-    // this.nms.on(
-    //   'prePublish',
-    //   Catch.NMSPrePublishAsync(async (id, streamPath) => {
-    //     const session = this.nms.getSession(id)
-    //     const streamKey = streamPath.split('/').pop() as string
+    this.nms.on(
+      'prePublish',
+      Catch.NMSPrePublishAsync(async (id, streamPath) => {
+        const session = this.nms.getSession(id)
+        const streamKey = streamPath.split('/').pop()
 
-    //     const live = await LiveModel.findOne({ stream_key: streamKey })
+        try {
+          const liveDocument = await checkedValidLivestreamByStreamKey(streamKey)
+          const liveId = liveDocument._id.toString()
+          const image =
+            liveDocument.coverPhoto && `${env.CDN_IMAGES_BASE_URL}/${liveDocument.coverPhoto.Key}`
 
-    //     if (live === null || !live.active || live.expired) {
-    //       // @ts-ignore
-    //       session.sendStatusMessage(
-    //         // @ts-ignore
-    //         session.publishStreamId,
-    //         'error',
-    //         'NetStream.publish.Unauthorized',
-    //         'Publisehr: Authorization required.',
-    //       )
-    //       // @ts-ignore
-    //       session.reject()
-    //       return
-    //     }
-    //   }),
-    // )
+          Notification.sendTopicPushNotification(Notification.makeContentTopic(liveId, 'LIVE'), {
+            title: 'Update',
+            type: 'LIVE_EVENT_REMINDER',
+            body: `It's LIVE now: ${liveDocument.title} Tap to Join`,
+            image,
+            metadata: { liveId },
+          })
+        } catch (e) {
+          console.error('Publish livestream error', e)
+          // @ts-ignore
+          session.sendStatusMessage(
+            // @ts-ignore
+            session.publishStreamId,
+            'error',
+            'NetStream.publish.Unauthorized',
+            'Publisehr: Authorization required.',
+          )
+          // @ts-ignore
+          session.reject()
+        }
+      }),
+    )
 
     this.nms.run()
   }

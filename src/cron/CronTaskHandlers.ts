@@ -168,7 +168,7 @@ export class CronTaskHandlers {
         const liveId = liveDocument._id.toString()
         try {
           Notification.sendTopicPushNotification(
-            Notification.makeUpcomingContentTopic(liveId, 'LIVE'),
+            Notification.makeContentTopic(liveId, 'LIVE'),
             {
               title: 'Countdown',
               type: 'LIVE_EVENT_REMINDER',
@@ -211,7 +211,7 @@ export class CronTaskHandlers {
           const message = `Are you set? Tomorrow ${liveDocument.title} goes LIVE by ${formatTimeWithTimezone(liveDocument.start)} on Reeplay`
 
           Notification.sendTopicPushNotification(
-            Notification.makeUpcomingContentTopic(liveId, 'LIVE'),
+            Notification.makeContentTopic(liveId, 'LIVE'),
             {
               title: 'Countdown',
               type: 'LIVE_EVENT_REMINDER',
