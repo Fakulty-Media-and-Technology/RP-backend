@@ -5,3 +5,4 @@ export const router = Router()
 
 router.post('/device/register', CustomerPushNotificationController.registerDeviceToken)
 router.post('/device/update', CustomerPushNotificationController.updateDeviceToken)
+router.delete('/device/remove', CustomerPushNotificationController.deleteDeviceToken)

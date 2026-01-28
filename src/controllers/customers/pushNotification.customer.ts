@@ -9,7 +9,7 @@ export class CustomerPushNotificationController {
 
     sendResponse({
       res,
-      message: 'FCM device token registered successfully',
+      message: '',
     })
   })
 
@@ -18,7 +18,16 @@ export class CustomerPushNotificationController {
 
     sendResponse({
       res,
-      message: 'FCM device token updated successfully',
+      message: '',
+    })
+  })
+
+  static deleteDeviceToken = Catch.async(async ({ user, body }, res) => {
+    await NotificationService.Push.deleteToken(GetDefined.loggedInUser(user).id, body.fcmToken)
+
+    sendResponse({
+      res,
+      message: '',
     })
   })
 }

@@ -9,7 +9,6 @@ import { fetchManyUsersByFilterGenerator, Filter } from '../../generators/fetchA
 import { UserNotificationModel } from '../../models/customer.notification.model'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { NotificationRepo } from '../../repositories/NotificationRepo'
-import { getPromiseAllFulfilledResults } from '../../utils/promises'
 
 interface GetNotificationsInput {
   currentUser: LoggedInUser
