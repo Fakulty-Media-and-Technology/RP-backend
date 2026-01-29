@@ -3,12 +3,15 @@ import { Catch } from '../../utils/Catch'
 import { sendResponse } from '../../utils/responder'
 
 export class AdminUsersController {
-  static sendMainPushNotification = Catch.async(async ({ body }, res) => {
-    AdminUsersService.sendAdminMainTopicPushNotification({
-      ...body,
-      metadata: body.metadata ?? {},
-      type: body.type || 'MAIN_ADMIN_TOPIC_NOTIFICATION',
-    })
+  static sendMainPushNotification = Catch.async(async ({ body, file }, res) => {
+    await AdminUsersService.sendAdminMainTopicPushNotification(
+      {
+        ...body,
+        metadata: typeof body.metadata === 'string' ? JSON.parse(body.metadata) : {},
+        type: body.type || 'MAIN_ADMIN_TOPIC_NOTIFICATION',
+      },
+      file,
+    )
 
     sendResponse({
       res,

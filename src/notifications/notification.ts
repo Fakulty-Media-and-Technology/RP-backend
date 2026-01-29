@@ -115,13 +115,20 @@ export class Notification {
     }
   }
 
-  static sendTopicPushNotification = async (topic: string, payload: NotificationPayload) => {
+  static sendTopicPushNotification = async (
+    topic: string,
+    payload: NotificationPayload,
+    throwError = false,
+  ) => {
     const message = this._makeBaseFirebaseMessage(payload)
 
     try {
       await admin.messaging().send({ ...message, topic })
     } catch (e) {
       console.log('sendTopicPushNotification error', e)
+      if (throwError) {
+        throw e
+      }
     }
   }
 

@@ -4,10 +4,30 @@ import { UserRepo } from '../../repositories/UserRepo'
 import { OperationalError } from '../../utils/OperationalError'
 import { ExpressRequestQuery, QueryParamsFeatures } from '../../utils/QueryParamsFeatures'
 import { Notification, NotificationPayload } from '../../notifications/notification'
+import { MulterFile } from '../../types'
+import { MediaManagement } from '../media-management'
+import env from '../../env'
 
 export class AdminUsersService {
-  static sendAdminMainTopicPushNotification = (payload: NotificationPayload) => {
-    Notification.sendTopicPushNotification(Notification.adminMainTopic, payload)
+  static sendAdminMainTopicPushNotification = async (
+    payload: Omit<NotificationPayload, 'image'>,
+    imageFile?: MulterFile,
+  ) => {
+    let image: string | undefined = undefined
+
+    if (imageFile) {
+      const upload = await MediaManagement.storeImageAndSubtitle(imageFile)
+      image = env.CDN_IMAGES_BASE_URL + '/' + upload.Key
+    }
+
+    await Notification.sendTopicPushNotification(
+      Notification.adminMainTopic,
+      {
+        ...payload,
+        image,
+      },
+      true,
+    )
   }
 
   static fetchAll = async (query: ExpressRequestQuery) => {

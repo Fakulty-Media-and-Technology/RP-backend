@@ -413,7 +413,6 @@ export const sendPushNotificationSchema = {
     title: STRING_SCHEMA.required(),
     body: STRING_SCHEMA.required(),
     type: STRING_SCHEMA,
-    image: STRING_SCHEMA,
-    metadata: Joi.object(),
+    metadata: Joi.alternatives().try(Joi.string(), Joi.object()),
   }),
 }
