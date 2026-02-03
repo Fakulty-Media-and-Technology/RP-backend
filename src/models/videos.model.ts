@@ -200,7 +200,7 @@ const schema = new Schema(
 )
 
 schema.pre('save', function (next) {
-  if (this.isNew == false) return
+  if (this.isNew == false) return next()
 
   this.isVideoReady = typeof this.videoLink === 'string' || false
   this.isTrailerReady = typeof this.trailerLink === 'string' || false
