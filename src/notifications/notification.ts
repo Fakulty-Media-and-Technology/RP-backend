@@ -77,6 +77,7 @@ export class Notification {
 
     const androidNotification: AndroidNotification = {
       sound: 'default',
+      ...OSNotification,
     }
 
     const apnConfiguration: ApnsConfig = {
@@ -108,7 +109,7 @@ export class Notification {
       data,
       android: {
         priority: 'high',
-        notification: OSNotification,
+        notification: androidNotification,
       },
 
       apns: apnConfiguration,
@@ -135,6 +136,8 @@ export class Notification {
   static sendTokenPushNotification = async (token: string, payload: NotificationPayload) => {
     const message = this._makeBaseFirebaseMessage(payload)
 
+    // console.dir(message, { depth: null })
+
     try {
       await admin.messaging().send({ ...message, token })
     } catch (e) {
@@ -149,3 +152,4 @@ export class Notification {
     })
   }
 }
+
