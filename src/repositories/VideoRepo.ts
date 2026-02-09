@@ -16,6 +16,7 @@ export type FetchVideosParams = {
   sortStage?: PipelineStage.Sort
   excludePreReleased?: boolean
   excludeExpired?: boolean
+  populateCasts?: boolean
   page: number
   limit: number
 }
@@ -386,6 +387,7 @@ export class VideoRepo {
     limit,
     excludePreReleased = true,
     excludeExpired = true,
+    populateCasts = false,
   }: FetchVideosParams) => {
     const aggr = VideoModel.aggregate([
       ...(excludePreReleased ? [this._excludePreleasedVODSMatchStage] : []),
@@ -480,6 +482,27 @@ export class VideoRepo {
       },
 
       { $unset: ['updatedAt', '__v', 'ratings', 'isTrailerReady', 'isVideoReady'] },
+
+      ...(populateCasts
+        ? [
+            {
+              $lookup: {
+                from: 'cast_enums',
+                foreignField: '_id',
+                localField: 'cast',
+                as: 'cast',
+                pipeline: [
+                  {
+                    $set: {
+                      photoUrl: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$key'] },
+                    },
+                  },
+                  { $unset: ['key', '__v', 'bucket'] },
+                ],
+              },
+            },
+          ]
+        : []),
     ])
 
     return aggr as Aggregate<VodCardResponse[]>
