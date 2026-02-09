@@ -225,6 +225,10 @@ export class GiftCardService {
       throw new OperationalError('optional type must be MERCHANT || RP', 400)
     }
 
+    if (typeof currency === 'string' && !validCurrencies.includes(currency as any)) {
+      throw new OperationalError(`Supported currencies are ${validCurrencies.join(' || ')}`, 400)
+    }
+
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const cards = await GiftCardRepo.withNames({
