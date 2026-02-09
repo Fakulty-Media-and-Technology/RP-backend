@@ -7,7 +7,6 @@ import { MongoDBObjectId } from '../types/general'
 import env from '../env'
 import { MaybeSession } from '../utils/mongoDbSessionRunner'
 import { StringOrObjectId } from '../types'
-import { isDate } from 'moment'
 
 export const toObjectId = (val: string) => new Types.ObjectId(val)
 
@@ -560,9 +559,10 @@ export class VideoRepo {
   static adminFetchByType = async (type: AllVideoTypes, page = 1, limit = 20) => {
     return await this.fetchVideoAggr({
       prevStages: [{ $match: { type } }],
-      // sortStage: { $sort: { createdAt: -1 } },
+      // sortStage: { $sort: { _id: -1 } },
       excludeExpired: false,
       excludePreReleased: false,
+      populateCasts: true,
       page,
       limit,
     })
