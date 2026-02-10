@@ -5,6 +5,7 @@ import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunn
 import {
   AddEpisodeUtilAggrRes,
   AddSeasonUtilAggrRes,
+  FetchVideosParams,
   toObjectId,
   VideoRepo,
 } from '../../repositories/VideoRepo'
@@ -19,7 +20,7 @@ import {
 
 import { Purge } from '../../utils/Purge'
 import { SeasonModel } from '../../models/seasons.model'
-import { Types } from 'mongoose'
+import { PipelineStage, Types } from 'mongoose'
 import { MediaManagement, UploadAndTranscodeConfig } from '../media-management'
 import { EpisodeModel } from '../../models/episodes.model'
 import { MulterFile, StringOrObjectId } from '../../types'
@@ -464,14 +465,24 @@ export class AdminUploadService {
 
   static getVideos = async (
     type: AllVideoTypes,
-    queryParams: QueryParamsFeaturesOptions['queryParams'],
+    query: QueryParamsFeaturesOptions['queryParams'],
   ) => {
-    const aggrgatedVideoDocuments = await VideoRepo.adminFetchByType(
-      type,
-      guranteeNumericResult(queryParams.page, 1),
-      guranteeNumericResult(queryParams.limit, 1),
-    )
+    const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
+    const queryParams: FetchVideosParams = {
+      prevStages: [{ $match: { type } }],
+      excludeExpired: false,
+      excludePreReleased: false,
+      populateCasts: true,
+      page,
+      limit,
+    }
+
+    if (query.sortby === 'RECENT') {
+      queryParams.sortStage = { $sort: { _id: -1 } }
+    }
+
+    const aggrgatedVideoDocuments = await VideoRepo.adminFetchByType(queryParams)
     return MovieMediaSourcesUtils.resolveMediaSources(aggrgatedVideoDocuments, '720p')
   }
 

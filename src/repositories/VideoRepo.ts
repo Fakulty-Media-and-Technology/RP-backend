@@ -556,17 +556,7 @@ export class VideoRepo {
     })
   }
 
-  static adminFetchByType = async (type: AllVideoTypes, page = 1, limit = 20) => {
-    return await this.fetchVideoAggr({
-      prevStages: [{ $match: { type } }],
-      // sortStage: { $sort: { _id: -1 } },
-      excludeExpired: false,
-      excludePreReleased: false,
-      populateCasts: true,
-      page,
-      limit,
-    })
-  }
+  static adminFetchByType = (params: FetchVideosParams) => this.fetchVideoAggr(params)
 
   static fetchById = async (id: string) => {
     return await this.fetchVideoAggr({
