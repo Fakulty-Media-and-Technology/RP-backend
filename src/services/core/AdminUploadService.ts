@@ -164,7 +164,7 @@ export class AdminUploadService {
       genre: data.genre ?? [],
       category: data.category ?? [],
       cast: data.cast ?? [],
-      defaultRating: data.defaultRating,
+      defaultRating: data.defaultRating ? +data.defaultRating : undefined,
       releaseDate: data.releasedDate,
       expiryDate: data.expiryDate,
       videoLink: data.videoLink,
@@ -396,7 +396,10 @@ export class AdminUploadService {
     }
 
     if (data.landscapePoster) {
-      const newLandscapePoster = await MediaManagement.storeImageAndSubtitle(data.landscapePoster, expiry)
+      const newLandscapePoster = await MediaManagement.storeImageAndSubtitle(
+        data.landscapePoster,
+        expiry,
+      )
 
       if (videoDocument.landscapePhoto) {
         MediaManagement.deleteObject(
