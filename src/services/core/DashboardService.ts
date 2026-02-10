@@ -1,7 +1,7 @@
 import { LiveRepo } from '../../repositories/LiveRepo'
 import { SubscriptionRepo } from '../../repositories/SubscriptionRepo'
 import { UserRepo } from '../../repositories/UserRepo'
-import { VideoRepo } from '../../repositories/VideoRepo'
+import { FetchVideosParams, VideoRepo } from '../../repositories/VideoRepo'
 import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser } from '../../types'
 import { OperationalError } from '../../utils/OperationalError'
@@ -71,7 +71,21 @@ export class DashboardService {
     }
 
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
-    const vids = await VideoRepo.adminFetchByType(type as any, page, limit)
+
+    const queryParams: FetchVideosParams = {
+      prevStages: [{ $match: { type } }],
+      excludeExpired: false,
+      excludePreReleased: false,
+      populateCasts: true,
+      page,
+      limit,
+    }
+
+    if (query.sortby === 'RECENT') {
+      queryParams.sortStage = { $sort: { _id: -1 } }
+    }
+
+    const vids = await VideoRepo.adminFetchByType(queryParams)
     return MovieMediaSourcesUtils.resolveMediaSources(vids, '720p')
   }
 
