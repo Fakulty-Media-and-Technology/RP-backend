@@ -118,7 +118,7 @@ export class SharedRoutes {
   }
 
   fetchSubtitles() {
-    this._router.get('/subtitles/fetch/:parentId', SharedController.getSubtitles)
+    this._router.route('/subtitles/fetch/:parentId/:type').get(SharedController.getSubtitles)
     return this
   }
 

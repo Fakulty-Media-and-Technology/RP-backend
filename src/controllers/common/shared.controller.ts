@@ -245,7 +245,7 @@ export class SharedController extends UploadMediaUtils {
   static getSubtitles = Catch.async(async (req, res) => {
     sendResponse({
       res,
-      data: await MediaService.getSubtitles(req.params.parentId),
+      data: await MediaService.getSubtitles(req.params.parentId, req.params.type),
     })
   })
 

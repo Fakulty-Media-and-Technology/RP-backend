@@ -5,6 +5,9 @@ import { AdminManageMediaService } from '../../services/core/AdminManagemediaSer
 import { SharedController } from '../common/shared.controller'
 import { validate } from '../../middlewares/requestValidator'
 import { addSubtitleSchema } from '../../validations/admin'
+import { SubtitleModel } from '../../models/subtitle.model'
+import { OperationalError } from '../../utils/OperationalError'
+import { MediaManagement } from '../../services/media-management'
 
 export class AdminManageSharedController extends SharedController {
   static searchClient = Catch.async(async (req, res) => {
@@ -27,21 +30,21 @@ export class AdminManageSharedController extends SharedController {
     })
   })
 
-  //TODO delete and edit channel
-
-
-
   static deleteSubtitle = Catch.async(async (req, res) => {
-    req.body.subtitle = req.file
+    const subtitleDocument = await SubtitleModel.findByIdAndDelete(req.params.id)
 
-    validate(addSubtitleSchema, req.body)
+    if (subtitleDocument == null) {
+      throw new OperationalError('Invalid Subtitle', 404)
+    }
+
+    MediaManagement.deleteObject(subtitleDocument.key, subtitleDocument.bucket)
 
     sendResponse({
       res,
-      message: 'subtitle added successfully',
-      data: await AdminManageMediaService.addSubtitle(req.body),
+      message: 'Deleted',
     })
   })
+
   static addSubtitle = Catch.async(async (req, res) => {
     req.body.subtitle = req.file
 

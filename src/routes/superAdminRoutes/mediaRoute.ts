@@ -28,3 +28,5 @@ superAdminMediaRouter.post(
   Multer.uploadSingleSubtitle,
   AdminManageSharedController.addSubtitle,
 )
+
+superAdminMediaRouter.delete('/delete-subtitle/:id', AdminManageSharedController.deleteSubtitle)
