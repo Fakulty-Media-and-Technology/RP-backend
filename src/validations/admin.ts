@@ -126,6 +126,8 @@ export const addMusicVideoSchema = Joi.object({
 
   description: STRING_SCHEMA,
 
+  genre: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
+
   // files
   landscapePoster: Joi.object().required(),
   portraitPoster: Joi.object().required(),
