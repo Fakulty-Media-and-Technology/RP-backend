@@ -191,7 +191,7 @@ export const editVideoSchema = Joi.object({
 
 export const addSubtitleSchema = Joi.object({
   parentId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-  parentType: STRING_SCHEMA.valid('vod', 'episode').required(),
+  parentType: STRING_SCHEMA.valid('vod', 'episode', 'series').required(),
   language: STRING_SCHEMA.required(),
   subtitle: Joi.object().required(),
 })

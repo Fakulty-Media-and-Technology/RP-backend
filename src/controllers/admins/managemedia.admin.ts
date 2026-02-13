@@ -28,6 +28,20 @@ export class AdminManageSharedController extends SharedController {
   })
 
   //TODO delete and edit channel
+
+
+
+  static deleteSubtitle = Catch.async(async (req, res) => {
+    req.body.subtitle = req.file
+
+    validate(addSubtitleSchema, req.body)
+
+    sendResponse({
+      res,
+      message: 'subtitle added successfully',
+      data: await AdminManageMediaService.addSubtitle(req.body),
+    })
+  })
   static addSubtitle = Catch.async(async (req, res) => {
     req.body.subtitle = req.file
 

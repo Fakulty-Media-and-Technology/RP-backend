@@ -9,7 +9,7 @@ const subtitleSchema = new Schema(
 
     parentType: {
       type: String,
-      enum: ['vod', 'episode'],
+      enum: ['vod', 'episode', 'series'],
       required: true,
     },
 
