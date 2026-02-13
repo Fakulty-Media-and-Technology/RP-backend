@@ -173,22 +173,28 @@ export class MediaService {
   }
 
   static getSubtitleUrl = async (_: string, key: string) => {
-    return await MediaAccess.getImageAndSubtitleURL(key)
+    return MediaAccess.getImageAndSubtitleURL(key)
   }
 
   static getSubtitles = async (parentId: string) => {
-    const subtitles = await SubtitleModel.find({ video_id: parentId })
+    const subtitles = await SubtitleModel.find({ video_id: parentId }).select(
+      'key createdAt updatedAt',
+    )
 
-    return subtitles.map(subtitle => {
+    const subsWithSrcUrls = subtitles.map(subtitle => {
       return {
         ...subtitle.toObject(),
         src: MediaAccess.getImageAndSubtitleURL(subtitle.key),
-        createdAt: undefined,
-        updatedAt: undefined,
-        video_id: undefined,
-        parentType: undefined,
-        __v: undefined,
+        key: undefined,
+        // createdAt: undefined,
+        // updatedAt: undefined,
+        // bucket: undefined,
+        // video_id: undefined,
+        // parentType: undefined,
+        // __v: undefined,
       }
     })
+
+    return subsWithSrcUrls
   }
 }
