@@ -41,7 +41,7 @@ export class AdsController {
   })
 
   static fetchMany = Catch.async(async ({ query, user }, res) => {
-    const ads = await AdManagerService.getMany(GetDefined.loggedInUser(user)._id.toString(), query)
+    const ads = await AdManagerService.getMany(GetDefined.loggedInUser(user).videoQuality, query)
 
     sendResponse({
       res,
@@ -50,8 +50,11 @@ export class AdsController {
     })
   })
 
-  static fetchRandom = Catch.async(async ({ query }, res) => {
-    const ads = await AdManagerService.getRandom(query.type)
+  static fetchRandom = Catch.async(async ({ query, user }, res) => {
+    const ads = await AdManagerService.getRandom(
+      GetDefined.loggedInUser(user).videoQuality,
+      query.type,
+    )
 
     sendResponse({
       res,

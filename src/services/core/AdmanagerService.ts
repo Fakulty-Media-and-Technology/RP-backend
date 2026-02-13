@@ -23,18 +23,20 @@ interface UploadMediaInput {
 }
 
 export class AdManagerService {
-  protected static _resolveMediaSources = async (ads: FetchAdResult[], userId?: string) => {
-    const videoQuality: VideoQuality = userId
-      ? await VidUploadUtils.getUserVideoQuality(userId)
-      : '720p'
+  protected static _resolveMediaSources = (ads: FetchAdResult[], quality?: VideoQuality) => {
+    return ads.map(ad => {
+      const photoUrl = MediaAccess.getImageAndSubtitleURL(ad.photo.Key)
+      const videoUrl = VidUploadUtils.getResSourceUrl(ad.videoUpload, quality ?? '720p')
 
-    return ads.map(ad => ({
-      photoUrl: MediaAccess.getImageAndSubtitleURL(ad.photo.Key),
-      videoUrl: VidUploadUtils.getResSourceUrl(ad.videoUpload, videoQuality),
-      photo: undefined,
-      videoUpload: undefined,
-      __v: undefined,
-    }))
+      return Object.assign(ad, {
+        photoUrl,
+        videoUrl,
+        videoUpload: undefined,
+        photo: undefined,
+        __v: undefined,
+        isVideoReady: undefined,
+      })
+    })
   }
 
   protected static _uploadMedia = async ({ videoFile, imageFile, expire }: UploadMediaInput) => {
@@ -84,7 +86,6 @@ export class AdManagerService {
       expire: expireAt,
     })
 
-    
     const adDocument = new AdModel({
       title,
       type,
@@ -110,7 +111,7 @@ export class AdManagerService {
     return adDocument
   }
 
-  static getMany = async (currentUserId: string, query: ExpressRequestQuery) => {
+  static getMany = async (videoQuality: VideoQuality, query: ExpressRequestQuery) => {
     const { skip, limit } = QueryParamsFeatures.paginagteParams(query)
 
     const ads = await AdManagerRepo.fetchMany({
@@ -119,12 +120,12 @@ export class AdManagerService {
       type: query.type,
     })
 
-    return await this._resolveMediaSources(ads, currentUserId)
+    return this._resolveMediaSources(ads, videoQuality)
   }
 
-  static getRandom = async (type: unknown) => {
+  static getRandom = async (videoQuality: VideoQuality, type: unknown) => {
     const ads = await AdManagerRepo.fetcRandom(type)
-    return await this._resolveMediaSources(ads)
+    return this._resolveMediaSources(ads, videoQuality)
   }
 
   static deleteAd = async (addId: string) => {
