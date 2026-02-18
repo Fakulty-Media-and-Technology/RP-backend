@@ -4,11 +4,49 @@ import { LiveModel } from '../models/lives.model'
 import { OperationalError } from './OperationalError'
 import { genRandUniqId } from './strGen'
 import { validCurrencies, ValidCurrency } from './currency'
+import { Notification } from '../notifications/notification'
 
 interface CalculateEventChargesParams {
   start: string
   expiry: string
   currency: ValidCurrency
+}
+
+export const checkedValidLivestreamByStreamKey = async (streamKey: string) => {
+  const now = new Date()
+
+  const liveDocument = await LiveModel.findOne({ stream_key: streamKey })
+    .select('expiry title coverPhoto')
+    .lean()
+
+  if (liveDocument == null) {
+    throw new OperationalError(`Stream key: ${streamKey} is invalid`, 404)
+  }
+
+  if (liveDocument.expiry < now) {
+    throw new OperationalError(`Stream key: ${streamKey} belongs to an expired event`, 400)
+  }
+
+  return liveDocument
+}
+
+export const handleRTMPStreamPublish = async (streamKey: unknown) => {
+  if (typeof streamKey !== 'string') {
+    throw new OperationalError('Expected a stream key - Got: ' + streamKey, 404)
+  }
+
+  const liveDocument = await checkedValidLivestreamByStreamKey(streamKey)
+  const liveId = liveDocument._id.toString()
+  const image =
+    liveDocument.coverPhoto && `${env.CDN_IMAGES_BASE_URL}/${liveDocument.coverPhoto.Key}`
+
+  Notification.sendTopicPushNotification(Notification.makeContentTopic(liveId, 'LIVE'), {
+    title: 'Update',
+    type: 'LIVE_EVENT_REMINDER',
+    body: `It's LIVE now: ${liveDocument.title} Tap to Join`,
+    image,
+    metadata: { liveId },
+  })
 }
 
 export const getUniqueStreamKey = async (triesCount = 1): Promise<string> => {
