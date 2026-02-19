@@ -5,7 +5,7 @@ import { requestValidator } from '../middlewares/requestValidator'
 
 import {
   authorizePaymentSchema,
-  intitiatePaymentSchema,
+  initiatePaymentSchema,
   updateUserProfileSchema,
 } from '../validations/common'
 
@@ -105,7 +105,7 @@ export class SharedRoutes {
   paymentActions() {
     this._router.post(
       '/initiate-payment',
-      requestValidator(intitiatePaymentSchema),
+      requestValidator(initiatePaymentSchema),
       SharedController.startPayment,
     )
 

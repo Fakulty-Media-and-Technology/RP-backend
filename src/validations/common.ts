@@ -60,16 +60,22 @@ export const updateUserProfileSchema = {
     ),
     dob: STRING_SCHEMA.isoDate(),
     country: STRING_SCHEMA,
-  })
-    .and('password', 'prevPassword'),
-    // .with('countryCode ', 'mobile'),
+  }).and('password', 'prevPassword'),
+  // .with('countryCode ', 'mobile'),
 
   params: Joi.object({
     userId: MONGO_DB_OBJECT_ID_SCHEMA.required(),
   }),
 }
 
-export const intitiatePaymentSchema = {
+const requiredForUseCases = (...useCases: string[]) =>
+  Joi.when('useCase', {
+    is: Joi.valid(...useCases),
+    then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
+    otherwise: Joi.forbidden(),
+  })
+
+export const initiatePaymentSchema = {
   body: Joi.object({
     amount: Joi.number().strict().required(),
     currency: CURRENCY_SCHEMA.required(),
@@ -90,45 +96,19 @@ export const intitiatePaymentSchema = {
 
     email: Joi.when('useCase', {
       is: 'live schedule',
-      then: STRING_SCHEMA.required().email(),
+      then: STRING_SCHEMA.email().required(),
       otherwise: STRING_SCHEMA.email(),
     }),
 
-    liveId: Joi.when('useCase', {
-      is: 'live schedule ext',
-      then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-      otherwise: Joi.when('useCase', {
-        is: 'donate',
-        then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-        otherwise: Joi.when('useCase', {
-          is: 'live-watch-exclusive',
-          then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-          otherwise: Joi.forbidden(),
-        }),
-      }),
-    }),
-
-    videoId: Joi.when('useCase', {
-      is: 'video-watch-premium',
-      then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-      otherwise: Joi.when('useCase', {
-        is: 'video-watch-exclusive',
-        then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-        otherwise: Joi.forbidden(),
-      }),
-    }),
-
-    voteInfoId: Joi.when('useCase', {
-      is: 'vote',
-      then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-      otherwise: Joi.forbidden(),
-    }),
-
-    contestantId: Joi.when('useCase', {
-      is: 'vote',
-      then: MONGO_DB_OBJECT_ID_SCHEMA.required(),
-      otherwise: Joi.forbidden(),
-    }),
+    liveId: requiredForUseCases(
+      'live schedule ext',
+      'donate',
+      'live-watch-exclusive',
+      'live schedule',
+    ),
+    videoId: requiredForUseCases('video-watch-premium', 'video-watch-exclusive'),
+    voteInfoId: requiredForUseCases('vote'),
+    contestantId: requiredForUseCases('vote'),
   }),
 }
 

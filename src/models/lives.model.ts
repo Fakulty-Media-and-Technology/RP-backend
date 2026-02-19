@@ -13,8 +13,7 @@ const schema = new Schema(
     payment_id: {
       type: Schema.Types.ObjectId,
       ref: 'payments',
-      required: true,
-      index: true,
+      sparse: true,
     },
 
     title: {
@@ -76,6 +75,11 @@ const schema = new Schema(
     },
 
     active: {
+      type: Boolean,
+      default: false,
+    },
+
+    isPaidFor: {
       type: Boolean,
       default: false,
     },
@@ -240,7 +244,7 @@ schema.index({
   start: 1,
   reminder24hSentAt: 1,
   reminder1hSentAt: 1,
-  reminder10mSentAt: 1
+  reminder10mSentAt: 1,
 })
 
 export const LiveModel = model('lives', schema)

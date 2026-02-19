@@ -22,7 +22,7 @@ import { PaymentRepo } from '../../repositories/PaymentRepo'
 import { WalletRepo } from '../../repositories/WalletRepo'
 import { LoggedInUser, StringOrObjectId } from '../../types'
 import { CalcUtils } from '../../utils/Calc'
-import { ValidCurrency } from '../../utils/currency'
+import { getWalletCurrencyKey, ValidCurrency } from '../../utils/currency'
 import { addDays, addHours, setToStartOfDay } from '../../utils/date'
 import { denyGuestUser } from '../../utils/denyGuestUser'
 import { MaybeSession, withMongoDBSession } from '../../utils/mongoDbSessionRunner'
@@ -201,7 +201,7 @@ export class PaymentService {
   }: PrePaymentOperationsInput) => {
     switch (useCase) {
       case 'live schedule':
-        await this._registerLiveClientByEmailAddr({
+        await this.setLiveClientAsPaymentUser({
           currentUserRole: currentUserRole,
           email,
           useCase,
@@ -210,7 +210,7 @@ export class PaymentService {
         break
 
       case 'live schedule ext':
-        await this._registerLiveClientByEmailAddr({
+        await this.setLiveClientAsPaymentUser({
           currentUserRole,
           email,
           useCase,
@@ -360,6 +360,27 @@ export class PaymentService {
     })
   }
 
+  protected static _settleLiveSchedulePayment = async ({
+    payment,
+    session,
+  }: PostPaymentUsecaseHandlerInput) => {
+    const liveDocument = await LiveModel.findByIdAndUpdate(
+      payment.liveId,
+      {
+        $set: { payment_id: payment._id },
+      },
+      { session },
+    )
+
+    if (liveDocument == null) {
+      throw new OperationalError('Invalid live Id for payment: ' + payment._id, 404)
+    }
+
+    if (liveDocument.payment_id) {
+      throw new OperationalError('Duplicate Live Schedule payment. paymentId: ' + payment._id, 400)
+    }
+  }
+
   protected static _extendLive = async ({ session, payment }: PostPaymentUsecaseHandlerInput) => {
     const live = await LiveModel.findOne({ paymentExtentions: payment._id })
 
@@ -478,16 +499,22 @@ export class PaymentService {
         await this._updateVote(params)
         break
 
-      // status already updated by the caller
       case 'live schedule':
+        try {
+          await this._settleLiveSchedulePayment(params)
+        } catch (e) {
+          await this._topUpWallet(params) // refund
+          throw e
+        }
         break
 
       case 'subscription':
-        break
-
       default:
         throw new OperationalError(`Unkown payment use case ${payment.useCase}`, 400)
     }
+
+    payment.isUsed = true
+    await payment.save({ session })
   }
 
   static processPaystackPaymentByReference = async (reference: string) => {
@@ -516,7 +543,7 @@ export class PaymentService {
     return clientRoles.includes(role)
   }
 
-  protected static _registerLiveClientByEmailAddr = async ({
+  protected static setLiveClientAsPaymentUser = async ({
     currentUserRole,
     email,
     payment,
@@ -717,6 +744,23 @@ export class PaymentService {
     videoId,
   }: HandleWalletPaymentInput) => {
     switch (payment.useCase) {
+      case 'live schedule':
+        const liveDocument = await LiveModel.findByIdAndUpdate(
+          liveId,
+          { $set: { payment_id: payment._id } },
+          { session },
+        )
+
+        if (liveDocument == null) {
+          throw new OperationalError('Invalid Live ID', 404)
+        }
+
+        if (liveDocument.payment_id) {
+          throw new OperationalError('Already Paid for', 403)
+        }
+
+        break
+
       case 'live-watch-exclusive':
         const live = await this._validateWatchExclusiveLive(payment, liveId)
 
@@ -770,6 +814,7 @@ export class PaymentService {
       throw new OperationalError('insufficient funds', 403)
     }
 
+    payment.isUsed = true
     await payment.save({ session })
   }
 

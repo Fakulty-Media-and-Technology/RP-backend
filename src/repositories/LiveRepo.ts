@@ -9,6 +9,7 @@ type FetchLives = {
   prevStages: PipelineStage[]
   sortStage?: PipelineStage.Sort
   excludeExpired?: boolean
+  includeIsPaidFor?: boolean
   page: number
   limit: number
 }
@@ -300,17 +301,22 @@ export class LiveRepo {
     page,
     limit,
     excludeExpired = true,
+    includeIsPaidFor = true,
   }: FetchLives) => {
     const aggr = LiveModel.aggregate([
       ...(excludeExpired
         ? [
             {
-              $match: { $expr: { $gt: ['$expiry', '$$NOW'] } },
+              $match: { expiry: { $gt: new Date() } },
             },
           ]
         : []),
 
       ...prevStages,
+
+      {
+        $match: { isPaidFor: includeIsPaidFor },
+      },
 
       {
         $lookup: {
