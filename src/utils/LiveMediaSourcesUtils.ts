@@ -1,5 +1,4 @@
 import env from '../env'
-import { MediaAccess } from '../services/media-access'
 import { LiveAggrRes } from '../types/Live'
 import { signCred } from './live'
 

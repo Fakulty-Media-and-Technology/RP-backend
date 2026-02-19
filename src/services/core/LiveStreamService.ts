@@ -269,22 +269,10 @@ export class LiveStreamService {
   ) => {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const [vidQualitySettled, liveSettled] = await Promise.allSettled([
-      VidUploadUtils.getUserVideoQuality(currentUser._id.toString(), '720p'),
-      LiveRepo.getValidClientLive(currentUser._id.toString(), page, limit),
-    ])
+    const liveResults = await LiveRepo.getValidClientLive(currentUser._id.toString(), page, limit)
+    const quality = currentUser.videoQuality ?? '720p'
 
-    if (vidQualitySettled.status === 'rejected') {
-      throw vidQualitySettled.reason
-    }
-
-    if (liveSettled.status === 'rejected') {
-      throw liveSettled.reason
-    }
-
-    const vidQuality = vidQualitySettled.value
-    const liveAggrRes = liveSettled.value
-    const lives = await LiveMediaSourcesUtils.resolveSources(liveAggrRes, vidQuality, true)
+    const lives = await LiveMediaSourcesUtils.resolveSources(liveResults, quality, true)
     return lives
   }
 
@@ -391,7 +379,10 @@ export class LiveStreamService {
     }
 
     if (coverPhotoFile) {
-      const photoUpload = await MediaManagement.storeImageAndSubtitle(coverPhotoFile, liveDocument.expiry)
+      const photoUpload = await MediaManagement.storeImageAndSubtitle(
+        coverPhotoFile,
+        liveDocument.expiry,
+      )
 
       if (liveDocument.coverPhoto) {
         MediaManagement.deleteObject(liveDocument.coverPhoto.Key, liveDocument.coverPhoto.Bucket)
@@ -468,7 +459,10 @@ export class LiveStreamService {
     })
 
     if (data.coverPhoto) {
-      const photoUpload = await MediaManagement.storeImageAndSubtitle(data.coverPhoto, liveDocument.expiry)
+      const photoUpload = await MediaManagement.storeImageAndSubtitle(
+        data.coverPhoto,
+        liveDocument.expiry,
+      )
 
       liveDocument.coverPhoto = {
         Key: photoUpload.Key,

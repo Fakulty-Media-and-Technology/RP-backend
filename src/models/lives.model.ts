@@ -79,11 +79,6 @@ const schema = new Schema(
       default: false,
     },
 
-    isPaidFor: {
-      type: Boolean,
-      default: false,
-    },
-
     expired: {
       type: Boolean,
       default: false,

@@ -9,7 +9,7 @@ type FetchLives = {
   prevStages: PipelineStage[]
   sortStage?: PipelineStage.Sort
   excludeExpired?: boolean
-  includeIsPaidFor?: boolean
+  includeOnlyHasPaid?: boolean
   page: number
   limit: number
 }
@@ -249,18 +249,19 @@ export class LiveRepo {
     })
   }
 
-  static getValidClientLive = async (_: string, page: number, limit: number) => {
+  static getValidClientLive = async (clientId: string, page: number, limit: number) => {
     return await this.fetchLivesAggr({
       prevStages: [
-        // {
-        //   $match: {
-        //     client_id: toObjectId(clientId),
-        //     expiry: { $gte: new Date() },
-        //   },
-        // },
+        {
+          $match: {
+            client_id: toObjectId(clientId),
+          },
+        },
       ],
       page,
       limit,
+      includeOnlyHasPaid: true,
+      // excludeExpired: false
     })
   }
 
@@ -301,9 +302,11 @@ export class LiveRepo {
     page,
     limit,
     excludeExpired = true,
-    includeIsPaidFor = true,
+    includeOnlyHasPaid = true,
   }: FetchLives) => {
     const aggr = LiveModel.aggregate([
+      ...(includeOnlyHasPaid ? [{ $match: { payment_id: { $exists: true } } }] : []),
+
       ...(excludeExpired
         ? [
             {
@@ -313,10 +316,6 @@ export class LiveRepo {
         : []),
 
       ...prevStages,
-
-      {
-        $match: { isPaidFor: includeIsPaidFor },
-      },
 
       {
         $lookup: {
@@ -368,6 +367,7 @@ export class LiveRepo {
       {
         $set: {
           streamKey: '$stream_key',
+          hasPaid: { $gt: ['$payment_id', null] },
           vidClass: '$vid_class',
           coverPhoto: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$coverPhoto.Key'] },
           previewVideoUploadDoc: { $ifNull: [{ $first: '$previewVideoUploads' }, null] },
