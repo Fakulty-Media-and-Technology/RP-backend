@@ -37,7 +37,6 @@ export type CreateLiveData = {
   previewVideo?: Express.Multer.File
   sponsored?: boolean
   popular?: boolean
-  paymentId: string
   creatorType: 'admin' | 'client'
   amount?: number
   currency?: string
@@ -312,55 +311,13 @@ export class LiveStreamService {
   }
 
   private static _checkLiveOngoinStreams = async (data: CreateLiveData) => {
-    const _ = await LiveModel.findOne({
+    const liveDocument = await LiveModel.exists({
       client_id: data.clientId,
-      expiry: { $lte: new Date() },
-    })
+      expiry: { $lt: new Date() },
+    }).select('_id')
 
-    // if (live) {
-    //   throw new OperationalError('all previous live must first expire', 403)
-    // }
-  }
-
-  // private static _checkLivePayments = async (data: CreateLiveData, session: MaybeSession) => {
-  private static _checkLivePayments = async (_: CreateLiveData, __: MaybeSession) => {
-    // const confirmPayment = await PaymentModel.findOne({
-    //   _id: data.paymentId,
-    //   userId: data.clientId,
-    //   status: 'success',
-    //   isUsed: false,
-    // })
-    // if (!confirmPayment) {
-    //   throw new OperationalError('your payment is invalid', 400)
-    // }
-    // const charges = calcLiveCharges({
-    //   start: data.start,
-    //   expiry: data.expiry,
-    //   currency: confirmPayment.currency,
-    // })
-    // if (confirmPayment.amount !== charges) {
-    //   throw new OperationalError('amount must be the same as charge', 400)
-    // }
-    // await PaymentModel.findByIdAndUpdate(
-    //   confirmPayment._id,
-    //   {
-    //     is_used: true,
-    //     use_case: 'live schedule',
-    //   },
-    //   { session },
-    // )
-  }
-
-  private static _checkLiveClient = async (data: CreateLiveData) => {
-    const vclient_id = await UserRepo.getClientByRolesAndId(data.clientId, [
-      'channel',
-      'event',
-      'podcast',
-      'tvshow',
-    ])
-
-    if (!vclient_id) {
-      throw new OperationalError('assigned user not found', 400)
+    if (liveDocument) {
+      throw new OperationalError('Previous live event must expire', 403)
     }
   }
 
@@ -428,14 +385,7 @@ export class LiveStreamService {
   }
 
   private static _createLiveSession = async (data: CreateLiveData, session: MaybeSession) => {
-    const settled = await Promise.allSettled([
-      this._checkLiveClient(data),
-      this._checkLiveOngoinStreams(data),
-    ])
-
-    throwReasonIfAny(settled)
-
-    await this._checkLivePayments(data, session)
+    await this._checkLiveOngoinStreams(data)
 
     const liveDocument = new LiveModel({
       client_id: data.clientId,
@@ -453,7 +403,6 @@ export class LiveStreamService {
       sponsored: data.sponsored,
       popular: data.popular,
       location: data.location,
-      payment_id: data.paymentId,
       amount: data.amount,
       currency: data.currency,
     })
