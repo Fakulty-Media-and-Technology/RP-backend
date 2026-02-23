@@ -434,6 +434,10 @@ export class LiveStreamService {
     }
 
     await liveDocument.save({ session })
+
+    return {
+      liveId: liveDocument._id.toString(),
+    }
   }
 
   static createLive = async (data: CreateLiveData) => {
