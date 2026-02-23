@@ -14,9 +14,13 @@ import { WithWorkerThread } from './utils/WithWorkerThread'
 
 const { PORT } = env
 
+// Use Node Media Server only if USE_NMS is explicitly set to 'true'
+// When using nginx-rtmp, set USE_NMS=false
+const USE_NMS = process.env.USE_NMS === 'true'
+
 const app = reeplayApp()
 const httpServer = createServer(app)
-const mediaStream = new MediaStream()
+const mediaStream = USE_NMS ? new MediaStream() : null
 const io = new Server(httpServer, {
   cors: { origin: '*' },
 })
@@ -37,8 +41,14 @@ connectMongoDB().then(conn => {
     console.log('Sockets initited successfully')
     WithWorkerThread.manageJobs('START')
     console.log('Cron Workers initited successfully')
-    mediaStream.initiate()
-    console.log('RTMP-HLS PIPE initited successfully')
+    
+    if (mediaStream) {
+      mediaStream.initiate()
+      console.log('RTMP-HLS PIPE initited successfully (Node Media Server)')
+    } else {
+      console.log('Using external nginx-rtmp for RTMP streaming')
+    }
+    
     setInterval(() => purgeOldTempMediaFiles(), 600000) // every ten minutes
   })
 })
@@ -68,7 +78,9 @@ function shutdown(exception: string) {
     console.log('IO Websocket closed')
 
     await WithWorkerThread.manageJobs('STOP')
-    mediaStream.close()
+    if (mediaStream) {
+      mediaStream.close()
+    }
     await mongoose.connection.close(true)
     console.log('Mongoose connection closed')
     httpServer.close()
