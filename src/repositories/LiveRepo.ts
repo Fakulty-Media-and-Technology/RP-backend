@@ -249,18 +249,18 @@ export class LiveRepo {
     })
   }
 
-  static getValidClientLive = async (clientId: string, page: number, limit: number) => {
+  static getValidClientLive = async (clientId: MongoDBObjectId, page: number, limit: number) => {
     return await this.fetchLivesAggr({
       prevStages: [
         {
           $match: {
-            client_id: toObjectId(clientId),
+            client_id: clientId,
           },
         },
       ],
       page,
       limit,
-      includeOnlyHasPaid: true,
+      includeOnlyHasPaid: false,
       // excludeExpired: false
     })
   }

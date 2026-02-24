@@ -268,7 +268,7 @@ export class LiveStreamService {
   ) => {
     const { page, limit } = QueryParamsFeatures.paginagteParams(query)
 
-    const liveResults = await LiveRepo.getValidClientLive(currentUser._id.toString(), page, limit)
+    const liveResults = await LiveRepo.getValidClientLive(currentUser._id, page, limit)
     const quality = currentUser.videoQuality ?? '720p'
 
     const lives = await LiveMediaSourcesUtils.resolveSources(liveResults, quality, true)
