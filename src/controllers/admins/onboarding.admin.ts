@@ -24,4 +24,25 @@ export class AdminOnboardingController {
       },
     })
   })
+
+  static adminClientSignInForce = Catch.async(async (req, res) => {
+    const { email } = req.body
+
+    if (typeof email !== 'string') {
+      throw new OperationalError('Email is Required', 400)
+    }
+
+    const { token, tokenPayload } = await AuthenticationService.adminForceClientSignIn(email)
+
+    sendResponse({
+      res,
+      message: 'Admin SignIn successfull',
+      statusCode: 201,
+      data: {
+        ...tokenPayload,
+        _id: tokenPayload.id,
+        token,
+      },
+    })
+  })
 }

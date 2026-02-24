@@ -28,6 +28,9 @@ export const superAdminRouter = express.Router()
 superAdminRouter.post('/auth/login', AdminOnboardingController.adminSignIn)
 superAdminRouter.use(AuthMiddleware.authenticateRequest('superadmin-auth'))
 
+// This should be reviewed for legal reason
+superAdminRouter.post('/client-redirect/login', AdminOnboardingController.adminClientSignInForce)
+
 new SharedRoutes(superAdminRouter)
   .lives('Admin')
   .fetchSubtitles()

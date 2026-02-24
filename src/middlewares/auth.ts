@@ -63,7 +63,7 @@ export class AuthMiddleware {
         return next()
       }
 
-      // this throws and is handled at the app layer
+      // this throws and is handled at the application layer
       const { id } = await TokenManager.decode(token, 'access')
       const userDocument = await UserRepo.getUserById(id)
 

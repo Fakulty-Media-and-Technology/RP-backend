@@ -305,7 +305,7 @@ export class AuthenticationService {
   }
 
   protected static _sharedSigninSteps = async (email: string, password: string) => {
-    const userDocument = GetDefined.userDocument(await UserRepo.getByEmail(email))
+    const userDocument = GetDefined.userDocument(await UserRepo.getByEmail(email.toLowerCase()))
 
     if (!userDocument) {
       throw new OperationalError('user does not exist', 404)
@@ -329,6 +329,16 @@ export class AuthenticationService {
     return userDocument
   }
 
+  private static _getUserAuthPayload = (userDocument: UserDocument) => {
+    const tokenPayload = TokenManager.makePayload(userDocument)
+    const token = TokenManager.sign('access', tokenPayload)
+
+    return {
+      token,
+      tokenPayload,
+    }
+  }
+
   static adminSignIn = async (email: string, password: string) => {
     const adminDocument = await this._sharedSigninSteps(email, password)
 
@@ -338,13 +348,21 @@ export class AuthenticationService {
       throw new OperationalError('Admin login: not available to you', 400)
     }
 
-    const tokenPayload = TokenManager.makePayload(adminDocument)
-    const token = TokenManager.sign('access', tokenPayload)
+    return this._getUserAuthPayload(adminDocument)
+  }
 
-    return {
-      token,
-      tokenPayload,
+  static adminForceClientSignIn = async (email: string) => {
+    const clientDocument = await UserModel.findOne({ email: email.toLowerCase() })
+
+    if (clientDocument == null) {
+      throw new OperationalError('Invalid email address', 404)
     }
+
+    if (!['channel', 'tvshow', 'event', 'podcast'].includes(clientDocument.role)) {
+      throw new OperationalError('Only client details can be retrived', 400)
+    }
+
+    return this._getUserAuthPayload(clientDocument)
   }
 
   static signIn = async (email: string, password: string) => {
