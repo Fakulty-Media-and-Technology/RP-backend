@@ -1,0 +1,52 @@
+# Dockerfile for nginx-rtmp + Node.js combined
+# Based on tiangolo/nginx-rtmp with Node.js added
+# Domain: obs.reeplay.app
+
+FROM tiangolo/nginx-rtmp:latest
+
+# Install Node.js 20, ffmpeg, and utilities
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ffmpeg \
+    curl \
+    ca-certificates \
+    gnupg && \
+    mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create directories
+RUN mkdir -p /tmp/hls && chmod 755 /tmp/hls
+RUN mkdir -p /app
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Install Node.js dependencies
+RUN npm ci
+
+# Copy the rest of the application
+COPY . .
+
+# Build TypeScript if needed
+RUN npm run build || true
+
+# Create nginx-rtmp log directory and forward logs to Docker stdout/stderr
+RUN mkdir -p /var/log/nginx-rtmp && \
+    ln -sf /dev/stdout /var/log/nginx-rtmp/access.log && \
+    ln -sf /dev/stderr /var/log/nginx-rtmp/error.log
+
+# Copy custom nginx configuration
+COPY docker/nginx-rtmp.conf /etc/nginx/nginx-rtmp.conf
+
+# Expose ports:
+# 1936 - RTMP
+# 8080 - HLS HTTP
+EXPOSE  1936 8080
+
