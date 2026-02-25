@@ -29,7 +29,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install Node.js dependencies
-RUN npm ci --omit=dev
+RUN npm ci
 
 # Copy the rest of the application
 COPY . .
@@ -37,8 +37,9 @@ COPY . .
 # Build TypeScript if needed
 RUN npm run build || true
 
-# Forward nginx-rtmp logs to Docker stdout/stderr
-RUN ln -sf /dev/stdout /var/log/nginx-rtmp/access.log && \
+# Create nginx-rtmp log directory and forward logs to Docker stdout/stderr
+RUN mkdir -p /var/log/nginx-rtmp && \
+    ln -sf /dev/stdout /var/log/nginx-rtmp/access.log && \
     ln -sf /dev/stderr /var/log/nginx-rtmp/error.log
 
 # Copy custom nginx configuration
