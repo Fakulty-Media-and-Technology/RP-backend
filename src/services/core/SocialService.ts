@@ -265,7 +265,7 @@ export class SocialService {
       case 'vod':
         const [stats] = await RatingsRepo.parentRatingsStats(ratingsDocument.parentId.toString())
 
-       const result =  await VideoModel.updateOne({ _id: ratingsDocument.parentId }, [
+        const result = await VideoModel.updateOne({ _id: ratingsDocument.parentId }, [
           {
             $set: {
               averageRating: { $ifNull: [stats?.totalStats[0]?.averageRating, '$averageRating'] },
@@ -276,7 +276,7 @@ export class SocialService {
           },
         ])
 
-        if(result.matchedCount === 0){
+        if (result.matchedCount === 0) {
           throw new OperationalError('Invalid vod id', 404)
         }
 

@@ -16,7 +16,6 @@ export class CustomerUpcomingController {
       data: upcoming,
     })
   })
-  
 
   static subscription = (action: CustomerSubScriptionActionType) =>
     Catch.async(async ({ user, params: { id, contentType } }, res) => {

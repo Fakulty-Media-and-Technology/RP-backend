@@ -89,7 +89,6 @@ export const env = getValidEnv({
   // RP_HLS_HTTP_PORT: setToNumberWithDefault('RP_HLS_HTTP_PORT', 8888),
   // RP_RTMP_PORT: setToNumberWithDefault('RP_RTMP_PORT', 1935),
 
-
   get RP_RTMP_SERVER_URL() {
     return this.IS_PROD ? this.RP_RTMP_BASE_URL : `rmtp://localhost/live`
   },

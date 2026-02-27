@@ -30,7 +30,7 @@ const schema = new Schema(
       type: Boolean,
       default: false,
     },
-    
+
     videoUpload: {
       type: Schema.Types.ObjectId,
       required: true,

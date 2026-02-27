@@ -1,21 +1,26 @@
 # RTMP & HLS Logging Setup Guide
 
 ## Overview
+
 Your nginx-rtmp config now logs:
+
 - **RTMP Streaming**: When users connect to stream (publish), disconnect, and when streams are played
 - **HLS Pulling**: When users pull HLS content with client IP and stream information
 
 ## Log Files Created
 
 ### 1. RTMP Stream Events
+
 **Location**: `/var/log/nginx/rtmp-stream.log`
 
 Logs when:
+
 - User starts streaming to RTMP (PUBLISH)
-- User stops streaming (DONE)  
+- User stops streaming (DONE)
 - User starts playing a stream (PLAY)
 
 Example output:
+
 ```
 [Mon Feb 26 10:15:30 UTC 2026] [RTMP PUBLISH] Stream started: mystream from 192.168.1.100
 [Mon Feb 26 10:15:35 UTC 2026] [RTMP PLAY] Stream being played: mystream from 192.168.1.101
@@ -23,11 +28,13 @@ Example output:
 ```
 
 ### 2. HLS Pull Logs
+
 **Location**: `/var/log/nginx/hls-access.log`
 
 Logs HLS segment/playlist requests with client IP and bandwidth info.
 
 Example output:
+
 ```
 [HLS] 2026-02-26T10:15:30+00:00 | Client: 192.168.1.101 | Stream: /hls/mystream/index.m3u8 | Status: 200 | Size: 2048 bytes
 [HLS] 2026-02-26T10:15:33+00:00 | Client: 192.168.1.101 | Stream: /hls/mystream/0.ts | Status: 200 | Size: 512000 bytes
@@ -36,11 +43,12 @@ Example output:
 ## How to View Logs
 
 ### Option 1: Inside Docker Container
+
 ```bash
 # Tail RTMP logs
 docker exec -it <container_name> tail -f /var/log/nginx/rtmp-stream.log
 
-# Tail HLS logs  
+# Tail HLS logs
 docker exec -it <container_name> tail -f /var/log/nginx/hls-access.log
 
 # Watch both simultaneously
@@ -48,6 +56,7 @@ docker exec -it <container_name> tail -f /var/log/nginx/rtmp-stream.log /var/log
 ```
 
 ### Option 2: Using the Monitoring Script
+
 ```bash
 # If logs are mounted to your host:
 chmod +x docker/monitor-streams.sh
@@ -55,6 +64,7 @@ chmod +x docker/monitor-streams.sh
 ```
 
 ### Option 3: Docker Logs
+
 ```bash
 # View realtime container logs (if using docker logs)
 docker logs -f <container_name>
@@ -85,6 +95,7 @@ services:
 ```
 
 Then create the logs directory:
+
 ```bash
 mkdir -p logs/rtmp logs/hls
 ```
@@ -92,12 +103,14 @@ mkdir -p logs/rtmp logs/hls
 ## What Information You Get
 
 ✅ **RTMP Streaming Section Shows**:
+
 - Timestamp of event
 - Event type (PUBLISH/DONE/PLAY)
 - Stream name (stream key)
 - Client IP address
 
 ✅ **HLS Pulling Section Shows**:
+
 - Timestamp of request
 - Client IP
 - Which file was requested (playlist or video segment)

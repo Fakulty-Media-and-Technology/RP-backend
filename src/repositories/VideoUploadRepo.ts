@@ -16,7 +16,6 @@ export class VideoUploadRepo {
       parentId,
     })
 
-
   static updateWithParent = async (input: UpdateWithParentInput) => {
     const update = await VideoUploadModel.findOneAndUpdate(
       {

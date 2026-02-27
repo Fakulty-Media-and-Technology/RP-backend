@@ -13,12 +13,10 @@ services:
     networks:
       - reeplay
 
-
 volumes:
   mongodb_data:
 
 networks:
   reeplay:
     name: reeplay
-
 # docker compose -f rtmp-compose.yml up -d
