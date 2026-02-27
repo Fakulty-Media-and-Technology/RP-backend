@@ -20,7 +20,6 @@ import { LiveRepo } from '../../repositories/LiveRepo'
 import { VideoRepo, VodCardResponse } from '../../repositories/VideoRepo'
 import { LiveAggrRes } from '../../types/Live'
 import { denyGuestUser } from '../../utils/denyGuestUser'
-import { signCred } from '../../utils/live'
 import { LiveMediaSourcesUtils } from '../../utils/LiveMediaSourcesUtils'
 import { MovieMediaSourcesUtils } from '../../utils/MovieMediaSourcesUtils'
 import { QueryParamsFeatures, guranteeNumericResult } from '../../utils/QueryParamsFeatures'
@@ -758,8 +757,7 @@ export class SharedController extends UploadMediaUtils {
       throw new OperationalError('stream event has expired', 400)
     }
 
-    const signed = `?sign=${signCred(event.stream_key, event.expiry)}`
-    const stream_url = `${env.RP_HLS_URL}${event.stream_key}/index.m3u8` + signed
+    const stream_url = `${env.RP_PLAYBACK_URL}${event.stream_key}/index.m3u8`
 
     const data = {
       live_data: event,

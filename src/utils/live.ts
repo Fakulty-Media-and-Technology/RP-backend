@@ -1,5 +1,4 @@
 import env from '../env'
-import crypto from 'node:crypto'
 import { LiveModel } from '../models/lives.model'
 import { OperationalError } from './OperationalError'
 import { genRandUniqId } from './strGen'
@@ -90,15 +89,4 @@ export const calcLiveCharges = ({ start, expiry, currency }: CalculateEventCharg
   const hoursDifference = (expiryDate.getTime() - startDate.getTime()) / (60 * 60000)
   const charge = hoursDifference * getChargesFromEnv(currency)
   return charge
-}
-
-export const signCred = (streamKey: string, expiryDate: Date) => {
-  const dateStamp = Math.ceil(expiryDate.getTime() / 1000)
-
-  const hash = crypto
-    .createHash('md5')
-    .update(`/${env.RP_RTMP_APP_NAME}/${streamKey}-${dateStamp}-${env.RP_RMTP_AUTH_SECRET}`)
-    .digest('hex')
-
-  return `${dateStamp}-${hash}`
 }

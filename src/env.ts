@@ -70,6 +70,7 @@ export const env = getValidEnv({
 
   // *** payments
   PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
+  WAVE_API_KEY: process.env.WAVE_API_KEY,
 
   // *** charges
   EVENT_HOURLY_CHARGES_NGN: setToNumberWithDefault('EVENT_HOURLY_CHARGES_NGN', 10000),
@@ -84,24 +85,17 @@ export const env = getValidEnv({
   RP_RTMP_APP_NAME: process.env.RP_RTMP_APP_NAME,
   RP_RTMP_BASE_URL: process.env.RP_RTMP_BASE_URL,
   RP_HLS_BASE_URL: process.env.RP_HLS_BASE_URL,
-  RP_RMTP_AUTH_SECRET: process.env.RP_RMTP_AUTH_SECRET,
-  RP_HLS_HTTP_PORT: setToNumberWithDefault('RP_HLS_HTTP_PORT', 8888),
-  RP_RTMP_PORT: setToNumberWithDefault('RP_RTMP_PORT', 1935),
+  // RP_RMTP_AUTH_SECRET: process.env.RP_RMTP_AUTH_SECRET,
+  // RP_HLS_HTTP_PORT: setToNumberWithDefault('RP_HLS_HTTP_PORT', 8888),
+  // RP_RTMP_PORT: setToNumberWithDefault('RP_RTMP_PORT', 1935),
 
-  WAVE_API_KEY: process.env.WAVE_API_KEY,
 
-  get RP_RTMP_URL() {
-    const baseURL = this.IS_PROD ? this.RP_RTMP_BASE_URL : `rmtp://localhost`
-    const url = `${baseURL}:${this.RP_RTMP_PORT}/${this.RP_RTMP_APP_NAME}`
-    return url
+  get RP_RTMP_SERVER_URL() {
+    return this.IS_PROD ? this.RP_RTMP_BASE_URL : `rmtp://localhost/live`
   },
 
-  get RP_HLS_URL() {
-    const baseURL = this.IS_PROD
-      ? this.RP_HLS_BASE_URL
-      : `http://localhost:${this.RP_HLS_HTTP_PORT}`
-
-    return `${baseURL}/${this.RP_RTMP_APP_NAME}/`
+  get RP_PLAYBACK_URL() {
+    return this.IS_PROD ? this.RP_HLS_BASE_URL : `http://localhost/live/`
   },
 
   get IS_PROD() {
