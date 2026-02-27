@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile.nginx-rtmp
     container_name: reeplay-rtmp
     ports:
-      - '1936:1936'
+      - '1935:1935'
       - '8080:8080'
     restart: unless-stopped
     networks:
