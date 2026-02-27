@@ -42,11 +42,10 @@ RUN mkdir -p /var/log/nginx-rtmp && \
     ln -sf /dev/stdout /var/log/nginx-rtmp/access.log && \
     ln -sf /dev/stderr /var/log/nginx-rtmp/error.log
 
-# Copy custom nginx configuration
-COPY docker/nginx-rtmp.conf /etc/nginx/nginx-rtmp.conf
+# Copy custom nginx configuration as the active nginx config
+COPY docker/nginx-rtmp.conf /etc/nginx/nginx.conf
 
 # Expose ports:
 # 1936 - RTMP
 # 8080 - HLS HTTP
 EXPOSE  1936 8080
-
