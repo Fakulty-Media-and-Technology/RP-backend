@@ -173,6 +173,7 @@ export const editVideoSchema = Joi.object({
   cast: MONGO_DB_OBJECT_ID_ARRAY_SCHEMA,
 
   amount: Joi.number().strict(),
+  currency: Joi.string().valid('USD', 'NGN', 'GMD'),
 
   // files
   landscapePoster: Joi.object(),
