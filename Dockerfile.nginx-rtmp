@@ -45,6 +45,15 @@ RUN mkdir -p /var/log/nginx-rtmp && \
 # Copy custom nginx configuration as the active nginx config
 COPY docker/nginx-rtmp.conf /etc/nginx/nginx.conf
 
+# Set a higher file descriptor limit before nginx starts.
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'set -e' >> /app/start.sh && \
+    echo 'ulimit -n 4096' >> /app/start.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /app/start.sh && \
+    chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]
+
 # Expose ports:
 # 1936 - RTMP
 # 8080 - HLS HTTP
