@@ -36,9 +36,10 @@ export class ErrorMiddleware {
           error = new OperationalError(message, 400)
           break
         }
+        default:
         // Let it fall through to default
         console.log(error.name, error.message)
-      default:
+
         error = new OperationalError(
           error.message || 'Unkown application error',
           error.statusCode || 500,
@@ -50,6 +51,7 @@ export class ErrorMiddleware {
     const isOperationalError = error instanceof OperationalError
     const message = isOperationalError ? error.message : 'something went wrong please try again'
     const statusCode = isOperationalError ? error.statusCode : 500
+    statusCode.toString().startsWith('5') || !isOperationalError  && console.log('Express Error middleware Middleware🛑', error)
 
     sendResponse({
       res,
@@ -57,7 +59,6 @@ export class ErrorMiddleware {
       statusCode,
     })
 
-    !isOperationalError && console.log('Express Error middleware Middleware🛑', error)
   }
 
   static wildRoute = ({ method, originalUrl }: Request, _: Response, next: NextFunction) => {
