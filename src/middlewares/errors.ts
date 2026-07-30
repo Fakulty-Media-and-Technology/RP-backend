@@ -38,7 +38,7 @@ export class ErrorMiddleware {
         }
         default:
         // Let it fall through to default
-        console.log(error.name, error.message)
+        console.log('🛑500 ERROR', error)
 
         error = new OperationalError(
           error.message || 'Unkown application error',
