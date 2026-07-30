@@ -16,7 +16,7 @@ export class AdminClientsController {
     sendResponse({
       res,
       message: 'Client fetched successful',
-      data: await ClientService.getOneById(clientId),
+      data: await ClientService.getOneById(clientId as string),
       statusCode: 200,
     })
   })

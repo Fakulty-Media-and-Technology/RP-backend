@@ -128,8 +128,8 @@ export class Purge {
   static vod = async (videoDocument: Video) => {
     await Promise.allSettled([
       this.subtitlesByParentId(videoDocument._id),
-      this.videoUploadById(videoDocument.videoUpload),
-      this.videoUploadById(videoDocument.trailerUpload),
+      videoDocument.videoUpload ? this.videoUploadById(videoDocument.videoUpload) : Promise.resolve(),
+      videoDocument.trailerUpload ? this.videoUploadById(videoDocument.trailerUpload) : Promise.resolve(),
     ])
 
     if (videoDocument.type === 'series') {

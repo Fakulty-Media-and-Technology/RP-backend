@@ -2,7 +2,6 @@ import { HydratedDocumentFromSchema, InferSchemaType, Schema, model } from 'mong
 import { validCurrencies } from '../utils/currency'
 import { PhotoSchema } from './commonSchema'
 import { addYears, addYearsClone } from '../utils/date'
-import { MaybeSession } from '../utils/mongoDbSessionRunner'
 
 export const videoTypes = ['movie', 'series', 'music-video', 'skit'] as const
 
