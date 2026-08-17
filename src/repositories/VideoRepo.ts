@@ -215,13 +215,17 @@ export class VideoRepo {
     return await this.fetchVideoAggr({
       prevStages: [
         {
-          $match: { releaseDate: { $gt: new Date() } },
+          $match: {
+            releaseDate: { $gt: new Date() }
+          },
         },
       ],
 
-      // sortStage: { $sort: { _id: -1 } },
+      sortStage: { $sort: { releaseDate: 1 } },
       page,
       limit,
+      excludePreReleased: false,
+      excludeExpired: false
     })
   }
 
@@ -484,23 +488,23 @@ export class VideoRepo {
 
       ...(populateCasts
         ? [
-            {
-              $lookup: {
-                from: 'cast_enums',
-                foreignField: '_id',
-                localField: 'cast',
-                as: 'cast',
-                pipeline: [
-                  {
-                    $set: {
-                      photoUrl: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$key'] },
-                    },
+          {
+            $lookup: {
+              from: 'cast_enums',
+              foreignField: '_id',
+              localField: 'cast',
+              as: 'cast',
+              pipeline: [
+                {
+                  $set: {
+                    photoUrl: { $concat: [env.CDN_IMAGES_BASE_URL, '/', '$key'] },
                   },
-                  { $unset: ['key', '__v', 'bucket'] },
-                ],
-              },
+                },
+                { $unset: ['key', '__v', 'bucket'] },
+              ],
             },
-          ]
+          },
+        ]
         : []),
     ])
 

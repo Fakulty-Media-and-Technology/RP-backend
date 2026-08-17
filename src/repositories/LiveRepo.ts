@@ -187,7 +187,8 @@ export class LiveRepo {
 
   static fetchUpcoming = async (page: number, limit: number) => {
     return await this.fetchLivesAggr({
-      prevStages: [{ $match: { upcoming: true } }],
+      prevStages: [{ $match: { start: { $gt: new Date() } } }],
+      includeOnlyHasPaid: false,
       page,
       limit,
     })
@@ -309,10 +310,10 @@ export class LiveRepo {
 
       ...(excludeExpired
         ? [
-            {
-              $match: { expiry: { $gt: new Date() } },
-            },
-          ]
+          {
+            $match: { expiry: { $gt: new Date() } },
+          },
+        ]
         : []),
 
       ...prevStages,
