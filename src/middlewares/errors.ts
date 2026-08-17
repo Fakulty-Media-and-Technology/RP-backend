@@ -37,7 +37,6 @@ export class ErrorMiddleware {
           break
         }
         default:
-        // Let it fall through to default
         console.log('🛑500 ERROR', error)
 
         error = new OperationalError(

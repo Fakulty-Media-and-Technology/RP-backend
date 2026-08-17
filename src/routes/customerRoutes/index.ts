@@ -48,8 +48,8 @@ customerRouter.use('/general', GeneralRouter)
 customerRouter.use('/pass-reset', PasswordResetRouter)
 customerRouter.get('/pin-reset/:email', OnboardingController.resetPin)
 
-customerRouter.use('/ads', AdsRouter)
 
+customerRouter.use('/ads', AdsRouter)
 customerRouter.use(AuthMiddleware.authenticateRequest('customer-auth'))
 
 customerRouter.post(

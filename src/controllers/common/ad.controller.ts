@@ -6,6 +6,7 @@ import { UploadMediaUtils } from '../../utils/UploadMediaUtils'
 import { validate } from '../../middlewares/requestValidator'
 import { createAdSchema } from '../../validations/admin'
 import { GetDefined } from '../../utils/GetDefined'
+import { UserSchema } from '../../models/users.model'
 
 export class AdsController {
   static create = Catch.async(async (req, res) => {
@@ -51,8 +52,19 @@ export class AdsController {
   })
 
   static fetchRandom = Catch.async(async ({ query, user }, res) => {
+
+
+    let vidQuality: UserSchema['videoQuality']
+
+
+    try {
+      vidQuality = GetDefined.loggedInUser(user).videoQuality
+    } catch (e) {
+      vidQuality = '720p'
+    }
+
     const ads = await AdManagerService.getRandom(
-      GetDefined.loggedInUser(user).videoQuality,
+      vidQuality,
       query.type,
     )
 
