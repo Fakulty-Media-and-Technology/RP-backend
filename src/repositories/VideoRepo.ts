@@ -250,7 +250,7 @@ export class VideoRepo {
           $match: {
             releaseDate: { $gt: new Date() },
 
-            // upcoming: true, // Unsure what these do
+            upcoming: true, // Unsure what these do
             active: true,
           },
         },
